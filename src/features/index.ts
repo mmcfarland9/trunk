@@ -4,12 +4,7 @@ export {
   updateStatusMeta,
 } from './status'
 
-export {
-  updateStats,
-  buildBranchProgress,
-  updateBranchProgress,
-  getBranchLabel,
-} from './progress'
+export { updateStats, buildBranchProgress, updateScopedProgress } from './progress'
 
 export {
   updateVisibility,
@@ -25,8 +20,6 @@ export { setupHoverBranch } from './hover-branch'
 
 export {
   handleExport,
-  handleCopySummary,
-  buildSummary,
   handleReset,
   handleImport,
 } from './import-export'

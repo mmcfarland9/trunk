@@ -44,6 +44,7 @@ export type AppElements = {
   statusMessage: HTMLParagraphElement
   statusMeta: HTMLParagraphElement
   importInput: HTMLInputElement
+  debugCheckbox: HTMLInputElement
 }
 
 export type AppContext = {
@@ -54,10 +55,3 @@ export type AppContext = {
   branchProgressItems: BranchProgressItem[]
   editor: EditorApi
 }
-
-export type TrunkLabelTitle = string
-export type TrunkLabelNotes = string
-export type BranchLabelTitle = string
-export type BranchLabelNotes = string
-export type LeafLabelTitle = string
-export type LeafLabelNotes = string

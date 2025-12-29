@@ -37,6 +37,19 @@ button.circle {
   transform: translate(-50%, -50%) scale(0.9);
 }
 
+/* Sub-circles: stay as small circles during fade-out */
+.sub-circle.is-hidden {
+  transform: translate(-50%, -50%);
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  width: var(--leaf-preview-size);
+  height: var(--leaf-preview-size);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: 0;
+  border-radius: 50%;
+}
+
 .circle:hover,
 .circle:focus-visible {
   border-color: var(--wood);
@@ -69,14 +82,20 @@ button.circle {
   left: 0;
   top: 0;
   border-width: 1.5px;
-  border-color: var(--wood-mid);
+  border-color: var(--wood-light);
+  transition: border-color 200ms ease;
 }
 
 .main-circle[data-filled='true'] {
   background: var(--paper);
-  border-color: var(--wood-mid);
-  color: var(--wood);
+  border-color: var(--wood-light);
+  color: var(--wood-mid);
   font-weight: 600;
+}
+
+.main-circle:hover,
+.main-circle:focus-visible {
+  border-color: var(--wood);
 }
 
 .main-circle.is-active {
@@ -92,28 +111,36 @@ button.circle {
 
 .canvas.is-zoomed .branch.is-active .main-circle {
   transform: translate(-50%, -50%) scale(1.05);
+  border-color: var(--wood);
 }
 
-/* Sub circles (leaves) */
+/* Sub circles (leaves) - default is a circle */
 .sub-circle {
-  min-width: 36px;
-  min-height: 40px;
-  width: max-content;
-  max-width: none;
-  height: auto;
+  width: 36px;
+  height: 36px;
+  min-width: 0;
+  min-height: 0;
   font-size: 0.6rem;
   background: var(--paper);
   border-color: var(--border);
-  padding: 8px 12px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* Filled leaves reshape to fit content */
+.sub-circle[data-filled='true'] {
+  width: max-content;
+  height: auto;
+  min-width: 36px;
+  min-height: 44px;
+  max-width: none;
+  padding: 16px 22px;
   line-height: 0.85;
-  border-radius: 14px;
+  border-radius: 16px;
   white-space: pre-line;
   overflow-wrap: normal;
   word-break: normal;
   hyphens: none;
-}
-
-.sub-circle[data-filled='true'] {
   background: var(--leaf);
   border-color: var(--leaf);
   color: var(--paper);
@@ -129,10 +156,14 @@ button.circle {
   padding: 0;
   font-size: 0;
   color: transparent;
-  background: var(--leaf);
-  border-color: var(--leaf);
   box-shadow: none;
   border-radius: 50%;
+  border-color: var(--border-strong);
+}
+
+.canvas.is-previewing .branch.is-preview .sub-circle[data-filled='true'] {
+  background: var(--leaf);
+  border-color: var(--leaf);
 }
 
 .canvas.is-zooming .branch.is-active .sub-circle {

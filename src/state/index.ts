@@ -3,8 +3,6 @@ export {
   lastSavedAt,
   saveState,
   clearState,
-  getCircleData,
-  setCircleData,
   deleteCircleData,
   hasCircleData,
 } from './circle-state'

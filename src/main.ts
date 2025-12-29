@@ -9,6 +9,7 @@ import {
   startWind,
   setFocusedCircle,
   updateFocus,
+  setDebugHoverZone,
 } from './ui'
 import {
   setStatus,
@@ -97,6 +98,11 @@ resetButton.addEventListener('click', () => handleReset(ctx, importExportCallbac
 
 // Wire up import
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
+
+// Wire up debug toggle
+domResult.elements.debugCheckbox.addEventListener('change', (e) => {
+  setDebugHoverZone((e.target as HTMLInputElement).checked)
+})
 
 // Wire up next button
 domResult.elements.nextButton.addEventListener('click', () => {

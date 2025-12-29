@@ -2,7 +2,6 @@ import type { AppContext, CircleData } from '../types'
 import { circleState, saveState, clearState, hasCircleData } from '../state'
 import { syncCircle, setCircleLabel, setFocusedCircle, updateFocus } from '../ui'
 import { flashStatus, updateStatusMeta } from './status'
-import { getBranchLabel } from './progress'
 
 export type ImportExportCallbacks = {
   onUpdateStats: () => void
@@ -26,81 +25,6 @@ export function handleExport(ctx: AppContext): void {
   link.remove()
   URL.revokeObjectURL(url)
   flashStatus(ctx.elements, 'Exported JSON file.', 'success')
-}
-
-export async function handleCopySummary(ctx: AppContext): Promise<void> {
-  const summary = buildSummary(ctx)
-  if (!summary.trim()) {
-    flashStatus(ctx.elements, 'Nothing to copy yet.', 'warning')
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(summary)
-    flashStatus(ctx.elements, 'Summary copied to clipboard.', 'success')
-  } catch (error) {
-    const fallback = document.createElement('textarea')
-    fallback.value = summary
-    fallback.setAttribute('readonly', 'true')
-    fallback.style.position = 'absolute'
-    fallback.style.left = '-9999px'
-    document.body.append(fallback)
-    fallback.select()
-    document.execCommand('copy')
-    fallback.remove()
-    flashStatus(ctx.elements, 'Summary copied with fallback.', 'success')
-  }
-}
-
-export function buildSummary(ctx: AppContext): string {
-  const { branches } = ctx
-  const lines: string[] = []
-  const purpose = circleState.center
-
-  if (purpose?.label || purpose?.note) {
-    const title = purpose.label || 'Purpose'
-    lines.push(`Purpose: ${title}`)
-    if (purpose.note) {
-      lines.push(`${purpose.note}`)
-    }
-    lines.push('')
-  }
-
-  branches.forEach((branch, index) => {
-    const mainId = branch.main.dataset.circleId || ''
-    const mainData = circleState[mainId]
-    const subEntries = branch.subs
-      .map((sub, subIndex) => ({
-        element: sub,
-        data: circleState[sub.dataset.circleId || ''],
-        index: subIndex,
-      }))
-      .filter((entry) => Boolean(entry.data))
-
-    if (!mainData && subEntries.length === 0) {
-      return
-    }
-
-    const branchTitle = getBranchLabel(branch.main, index)
-    lines.push(branchTitle)
-
-    if (mainData?.note) {
-      lines.push(`  Note: ${mainData.note}`)
-    }
-
-    subEntries.forEach((entry) => {
-      const subLabel = entry.data?.label?.trim() || `Leaf ${entry.index + 1}`
-      if (entry.data?.note) {
-        lines.push(`  - ${subLabel}: ${entry.data.note}`)
-      } else {
-        lines.push(`  - ${subLabel}`)
-      }
-    })
-
-    lines.push('')
-  })
-
-  return lines.join('\n').trim()
 }
 
 export function handleReset(ctx: AppContext, callbacks: ImportExportCallbacks): void {
@@ -156,10 +80,8 @@ export async function handleImport(
 
       const label = typeof (value as CircleData).label === 'string' ? (value as CircleData).label.trim() : ''
       const noteValue = typeof (value as CircleData).note === 'string' ? (value as CircleData).note.trim() : ''
-      const legacyDetail =
-        typeof (value as { detail?: unknown }).detail === 'string'
-          ? (value as { detail?: unknown }).detail.trim()
-          : ''
+      const detailRaw = (value as { detail?: unknown }).detail
+      const legacyDetail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
       const note = noteValue || legacyDetail
 
       if (!label && !note) return

@@ -15,8 +15,8 @@
 }
 
 .header-logo {
-  width: 72px;
-  height: 72px;
+  width: 108px;
+  height: 108px;
   object-fit: contain;
   margin-left: auto;
 }
@@ -44,4 +44,23 @@
   gap: 1rem;
   align-items: center;
   margin-top: -8px;
+  position: relative;
+}
+
+.debug-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  cursor: pointer;
+  user-select: none;
+  z-index: 100;
+}
+
+.debug-toggle input {
+  cursor: pointer;
 }

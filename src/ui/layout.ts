@@ -1,4 +1,5 @@
 import type { AppContext } from '../types'
+import { GUIDE_ANIMATION_DURATION } from '../constants'
 import {
   getViewMode,
   getActiveBranchIndex,
@@ -25,9 +26,12 @@ const WIND_LEAF_AMPLITUDE = 10
 const WIND_BLOOM_PULSE = 0.04
 const WIND_SPEED_MIN = 0.35
 const WIND_SPEED_MAX = 0.7
+const PREVIEW_FADE_DURATION = 500
 let guideAnimationId = 0
 let windAnimationId = 0
 let windStartTime = 0
+let previewStartTime = 0
+let lastHoveredBranch: number | null = null
 
 export function positionNodes(ctx: AppContext): void {
   const { canvas } = ctx.elements
@@ -45,8 +49,8 @@ export function positionNodes(ctx: AppContext): void {
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
   const isBranchView = viewMode === 'branch' && activeBranchIndex !== null
-  const radiusX = Math.max(base * 0.42, width * 0.36)
-  const radiusY = height * 0.3
+  const radiusX = Math.max(base * 0.42, width * 0.34)
+  const radiusY = height * 0.34
   let activeBranchX = centerX
   let activeBranchY = centerY
 
@@ -108,7 +112,7 @@ export function positionNodes(ctx: AppContext): void {
   }
 }
 
-export function animateGuideLines(ctx: AppContext, duration = 520): void {
+export function animateGuideLines(ctx: AppContext, duration = GUIDE_ANIMATION_DURATION): void {
   if (windAnimationId) {
     drawGuideLines(ctx)
     return
@@ -144,6 +148,14 @@ export function startWind(ctx: AppContext): void {
   windAnimationId = window.requestAnimationFrame(tick)
 }
 
+let debugHoverZone = true
+const HOVER_MIN_RADIUS_RATIO = 0.55
+const HOVER_MAX_RADIUS_RATIO = 1.35
+
+export function setDebugHoverZone(enabled: boolean): void {
+  debugHoverZone = enabled
+}
+
 function drawGuideLines(ctx: AppContext): void {
   const { canvas, center, guideLayer } = ctx.elements
   const { branches } = ctx
@@ -162,6 +174,94 @@ function drawGuideLines(ctx: AppContext): void {
   const activeBranchIndex = getActiveBranchIndex()
   const hoveredBranchIndex = getHoveredBranchIndex()
   const lineFragment = document.createDocumentFragment()
+
+  // Debug: draw hover trigger zone
+  if (debugHoverZone && viewMode === 'overview') {
+    const centerX = rect.width / 2
+    const centerY = rect.height / 2
+
+    // Get ellipse radii from branches at cardinal positions
+    // Branch 0 is at top (-π/2), Branch 2 is at right (0)
+    const branchTop = branches[0]
+    const branchRight = branches[2]
+    if (branchTop && branchRight) {
+      const topRect = branchTop.main.getBoundingClientRect()
+      const rightRect = branchRight.main.getBoundingClientRect()
+      const topY = topRect.top - rect.top + topRect.height / 2
+      const rightX = rightRect.left - rect.left + rightRect.width / 2
+
+      const ringRadiusY = Math.abs(centerY - topY)
+      const ringRadiusX = Math.abs(rightX - centerX)
+
+      const minRadiusX = ringRadiusX * HOVER_MIN_RADIUS_RATIO
+      const minRadiusY = ringRadiusY * HOVER_MIN_RADIUS_RATIO
+      const maxRadiusX = ringRadiusX * HOVER_MAX_RADIUS_RATIO
+      const maxRadiusY = ringRadiusY * HOVER_MAX_RADIUS_RATIO
+
+      // Draw the minimum radius ellipse (red dashed)
+      const debugEllipseMin = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
+      debugEllipseMin.setAttribute('cx', `${centerX}`)
+      debugEllipseMin.setAttribute('cy', `${centerY}`)
+      debugEllipseMin.setAttribute('rx', `${minRadiusX}`)
+      debugEllipseMin.setAttribute('ry', `${minRadiusY}`)
+      debugEllipseMin.setAttribute('fill', 'none')
+      debugEllipseMin.setAttribute('stroke', 'red')
+      debugEllipseMin.setAttribute('stroke-width', '2')
+      debugEllipseMin.setAttribute('stroke-dasharray', '8 4')
+      debugEllipseMin.setAttribute('opacity', '0.7')
+      lineFragment.append(debugEllipseMin)
+
+      // Draw the maximum radius ellipse (red dashed)
+      const debugEllipseMax = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
+      debugEllipseMax.setAttribute('cx', `${centerX}`)
+      debugEllipseMax.setAttribute('cy', `${centerY}`)
+      debugEllipseMax.setAttribute('rx', `${maxRadiusX}`)
+      debugEllipseMax.setAttribute('ry', `${maxRadiusY}`)
+      debugEllipseMax.setAttribute('fill', 'none')
+      debugEllipseMax.setAttribute('stroke', 'red')
+      debugEllipseMax.setAttribute('stroke-width', '2')
+      debugEllipseMax.setAttribute('stroke-dasharray', '8 4')
+      debugEllipseMax.setAttribute('opacity', '0.7')
+      lineFragment.append(debugEllipseMax)
+
+      // Get actual branch angles from their current positions
+      const branchAngles = branches.map((b) => {
+        const bRect = b.main.getBoundingClientRect()
+        const bx = bRect.left - rect.left + bRect.width / 2
+        const by = bRect.top - rect.top + bRect.height / 2
+        return Math.atan2(by - centerY, bx - centerX)
+      })
+
+      // Draw sector boundaries at midpoint between adjacent branches
+      for (let i = 0; i < branches.length; i++) {
+        const nextIndex = (i + 1) % branches.length
+        const angle1 = branchAngles[i]
+        const angle2 = branchAngles[nextIndex]
+
+        // Find midpoint angle (handling wraparound)
+        let diff = angle2 - angle1
+        if (diff > Math.PI) diff -= Math.PI * 2
+        if (diff < -Math.PI) diff += Math.PI * 2
+        const midAngle = angle1 + diff / 2
+
+        // Points on ellipse at this angle
+        const startX = centerX + Math.cos(midAngle) * minRadiusX
+        const startY = centerY + Math.sin(midAngle) * minRadiusY
+        const endX = centerX + Math.cos(midAngle) * maxRadiusX
+        const endY = centerY + Math.sin(midAngle) * maxRadiusY
+
+        const debugLine = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+        debugLine.setAttribute('x1', `${startX}`)
+        debugLine.setAttribute('y1', `${startY}`)
+        debugLine.setAttribute('x2', `${endX}`)
+        debugLine.setAttribute('y2', `${endY}`)
+        debugLine.setAttribute('stroke', 'red')
+        debugLine.setAttribute('stroke-width', '1.5')
+        debugLine.setAttribute('opacity', '0.6')
+        lineFragment.append(debugLine)
+      }
+    }
+  }
 
   if (viewMode === 'branch' && activeBranchIndex !== null) {
     const branch = branches[activeBranchIndex]
@@ -231,6 +331,16 @@ function drawGuideLines(ctx: AppContext): void {
     })
 
     if (hoveredBranchIndex !== null) {
+      // Track when preview started for fade-in
+      if (lastHoveredBranch !== hoveredBranchIndex) {
+        previewStartTime = performance.now()
+        lastHoveredBranch = hoveredBranchIndex
+      }
+
+      const elapsed = performance.now() - previewStartTime
+      const fadeProgress = Math.min(elapsed / PREVIEW_FADE_DURATION, 1)
+      const lineOpacity = 0.4 * fadeProgress
+
       const branch = branches[hoveredBranchIndex]
       if (branch) {
         const mainRect = branch.main.getBoundingClientRect()
@@ -253,9 +363,11 @@ function drawGuideLines(ctx: AppContext): void {
           const endX = subCenter.x - unitX * (subRadius + LEAF_GAP)
           const endY = subCenter.y - unitY * (subRadius + LEAF_GAP)
 
-          appendLine(lineFragment, startX, startY, endX, endY, 'leaf')
+          appendLine(lineFragment, startX, startY, endX, endY, 'leaf', lineOpacity)
         })
       }
+    } else {
+      lastHoveredBranch = null
     }
   }
 
@@ -346,7 +458,8 @@ function appendLine(
   startY: number,
   endX: number,
   endY: number,
-  variant: 'branch' | 'leaf' | 'trunk'
+  variant: 'branch' | 'leaf' | 'trunk',
+  opacity?: number
 ): void {
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
   line.setAttribute('x1', `${startX}`)
@@ -358,6 +471,9 @@ function appendLine(
     line.classList.add('sub-line')
   } else if (variant === 'trunk') {
     line.classList.add('trunk-line')
+  }
+  if (opacity !== undefined) {
+    line.style.opacity = `${opacity}`
   }
   fragment.append(line)
 }

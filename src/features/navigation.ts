@@ -1,4 +1,5 @@
 import type { AppContext, ViewMode } from '../types'
+import { ZOOM_TRANSITION_DURATION, EDITOR_OPEN_DELAY } from '../constants'
 import {
   getViewMode,
   setViewModeState,
@@ -79,7 +80,7 @@ export function setViewMode(
     }
     zoomTimeoutId = window.setTimeout(() => {
       ctx.elements.canvas.classList.remove('is-zooming')
-    }, 420)
+    }, ZOOM_TRANSITION_DURATION)
   }
 
   ctx.editor.close()
@@ -126,7 +127,7 @@ export function enterBranchView(
   if (openEditor) {
     window.setTimeout(() => {
       ctx.editor.open(target, getCirclePlaceholder(target))
-    }, 220)
+    }, EDITOR_OPEN_DELAY)
   }
 }
 
@@ -170,7 +171,7 @@ export function openCircleForEditing(
     window.setTimeout(() => {
       setFocusedCircle(circle, ctx, (t) => updateFocus(t, ctx))
       ctx.editor.open(circle, getCirclePlaceholder(circle))
-    }, 220)
+    }, EDITOR_OPEN_DELAY)
     return
   }
 

@@ -99,10 +99,10 @@ const LEAF_TARGET_RATIO = 16 / 9
 const LEAF_LINE_PENALTY = 0.06
 const DEFAULT_LEAF_METRICS = {
   fontSize: 9.6,
-  lineHeight: 9.6,
-  paddingX: 20,
-  paddingY: 12,
-  font: '400 9.6px sans-serif',
+  lineHeight: 8.16,
+  paddingX: 44,
+  paddingY: 32,
+  font: '500 9.6px sans-serif',
 }
 const leafMeasureContext = document.createElement('canvas').getContext('2d')
 

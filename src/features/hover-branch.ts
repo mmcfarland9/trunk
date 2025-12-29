@@ -1,11 +1,12 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex } from '../state'
+import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedCircle } from '../state'
 import { enterBranchView, updateVisibility } from './navigation'
+import { updateScopedProgress } from './progress'
 import type { NavigationCallbacks } from './navigation'
+import { updateFocus } from '../ui'
 
-const SECTOR_COUNT = 8
-const SECTOR_ANGLE = (Math.PI * 2) / SECTOR_COUNT
 const HOVER_MIN_RADIUS_RATIO = 0.55
+const HOVER_MAX_RADIUS_RATIO = 1.35
 
 export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
   const { canvas } = ctx.elements
@@ -14,6 +15,10 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
     if (getHoveredBranchIndex() !== null) {
       setHoveredBranchIndex(null)
       updateVisibility(ctx)
+      // Revert sidebar to focused circle
+      const focused = getFocusedCircle()
+      updateFocus(focused, ctx)
+      updateScopedProgress(ctx, focused)
     }
   }
 
@@ -32,24 +37,38 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
     const y = event.clientY - rect.top
     const dx = x - centerX
     const dy = y - centerY
-    const radius = Math.hypot(dx, dy)
-    const ringRadius = getBranchRingRadius(ctx, centerX, centerY, rect)
+    const ellipseRadii = getEllipseRadii(ctx, rect, centerX, centerY)
 
-    if (!ringRadius || radius < ringRadius * HOVER_MIN_RADIUS_RATIO) {
+    if (!ellipseRadii) {
       clearHover()
       return
     }
 
-    const hoveredIndex = getBranchIndexFromAngle(dx, dy)
+    // Normalize to ellipse space (if on ellipse, normalized distance = 1)
+    const normalizedDist = Math.hypot(dx / ellipseRadii.x, dy / ellipseRadii.y)
+
+    if (normalizedDist < HOVER_MIN_RADIUS_RATIO || normalizedDist > HOVER_MAX_RADIUS_RATIO) {
+      clearHover()
+      return
+    }
+
+    const hoveredIndex = getBranchIndexFromPosition(ctx, rect, dx, dy)
     if (hoveredIndex !== getHoveredBranchIndex()) {
       setHoveredBranchIndex(hoveredIndex)
       updateVisibility(ctx)
+      // Update sidebar to show hovered branch
+      const branch = ctx.branches[hoveredIndex]
+      if (branch) {
+        updateFocus(branch.main, ctx)
+        updateScopedProgress(ctx, branch.main)
+      }
     }
   }
 
   function handleClick(event: MouseEvent): void {
     if (getViewMode() !== 'overview') return
     const target = event.target as HTMLElement | null
+    if (target?.closest('.circle-editor')) return
     if (target?.closest('button.circle')) return
 
     const hoveredIndex = getHoveredBranchIndex()
@@ -63,29 +82,61 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
   canvas.addEventListener('click', handleClick)
 }
 
-function getBranchRingRadius(
+function getEllipseRadii(
   ctx: AppContext,
+  canvasRect: DOMRect,
   centerX: number,
-  centerY: number,
-  canvasRect: DOMRect
-): number | null {
-  const branch = ctx.branches[0]
-  if (!branch) return null
+  centerY: number
+): { x: number; y: number } | null {
+  // Branch 0 is at top (-π/2), Branch 2 is at right (0)
+  const branchTop = ctx.branches[0]
+  const branchRight = ctx.branches[2]
+  if (!branchTop || !branchRight) return null
 
-  const baseX = Number.parseFloat(branch.wrapper.dataset.baseX || '')
-  const baseY = Number.parseFloat(branch.wrapper.dataset.baseY || '')
-  if (Number.isFinite(baseX) && Number.isFinite(baseY)) {
-    return Math.hypot(baseX - centerX, baseY - centerY)
-  }
+  const topRect = branchTop.main.getBoundingClientRect()
+  const rightRect = branchRight.main.getBoundingClientRect()
+  const topY = topRect.top - canvasRect.top + topRect.height / 2
+  const rightX = rightRect.left - canvasRect.left + rightRect.width / 2
 
-  const rect = branch.main.getBoundingClientRect()
-  const x = rect.left - canvasRect.left + rect.width / 2
-  const y = rect.top - canvasRect.top + rect.height / 2
-  return Math.hypot(x - centerX, y - centerY)
+  const radiusY = Math.abs(centerY - topY)
+  const radiusX = Math.abs(rightX - centerX)
+
+  if (radiusX === 0 || radiusY === 0) return null
+
+  return { x: radiusX, y: radiusY }
 }
 
-function getBranchIndexFromAngle(dx: number, dy: number): number {
-  const angle = Math.atan2(dy, dx)
-  const normalized = (angle + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2)
-  return Math.floor((normalized + SECTOR_ANGLE / 2) / SECTOR_ANGLE) % SECTOR_COUNT
+function getBranchIndexFromPosition(
+  ctx: AppContext,
+  canvasRect: DOMRect,
+  dx: number,
+  dy: number
+): number {
+  const { branches } = ctx
+  const mouseAngle = Math.atan2(dy, dx)
+  const centerX = canvasRect.width / 2
+  const centerY = canvasRect.height / 2
+
+  // Get actual angles of each branch from their current positions
+  const branchAngles = branches.map((b) => {
+    const bRect = b.main.getBoundingClientRect()
+    const bx = bRect.left - canvasRect.left + bRect.width / 2
+    const by = bRect.top - canvasRect.top + bRect.height / 2
+    return Math.atan2(by - centerY, bx - centerX)
+  })
+
+  // Find which branch the mouse is closest to (angularly)
+  let closestIndex = 0
+  let smallestDiff = Math.PI * 2
+
+  for (let i = 0; i < branchAngles.length; i++) {
+    let diff = Math.abs(mouseAngle - branchAngles[i])
+    if (diff > Math.PI) diff = Math.PI * 2 - diff
+    if (diff < smallestDiff) {
+      smallestDiff = diff
+      closestIndex = i
+    }
+  }
+
+  return closestIndex
 }

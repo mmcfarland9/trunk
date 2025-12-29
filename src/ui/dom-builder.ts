@@ -1,7 +1,6 @@
 import type { AppElements, BranchNode } from '../types'
 import { BRANCH_COUNT, SUB_CIRCLE_COUNT } from '../constants'
-import { circleState } from '../state'
-import { setCircleLabel } from './circle-ui'
+import { syncCircle } from './circle-ui'
 import ampersandImage from '../../assets/ampersand_alpha.png'
 
 export type DomBuilderResult = {
@@ -145,7 +144,16 @@ export function buildApp(
     canvas.append(wrapper)
   }
 
-  mapPanel.append(canvas)
+  // Debug checkbox
+  const debugLabel = document.createElement('label')
+  debugLabel.className = 'debug-toggle'
+  const debugCheckbox = document.createElement('input')
+  debugCheckbox.type = 'checkbox'
+  debugCheckbox.checked = true
+  const debugText = document.createTextNode(' Show debug guide lines')
+  debugLabel.append(debugCheckbox, debugText)
+
+  mapPanel.append(canvas, debugLabel)
 
   // Side Panel
   const sidePanel = document.createElement('aside')
@@ -193,6 +201,7 @@ export function buildApp(
     statusMessage: sidePanel.querySelector<HTMLParagraphElement>('.status-message')!,
     statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,
     importInput,
+    debugCheckbox,
   }
 
   // Wire up button handlers (will be connected to features in main.ts)
@@ -218,16 +227,7 @@ function initializeCircle(
     circleLookup.set(circleId, element)
   }
   element.dataset.placeholder = placeholder
-
-  const defaultLabel = element.dataset.defaultLabel || ''
-  const stored = circleId ? circleState[circleId] : undefined
-  const storedLabel = stored?.label?.trim() || ''
-  const label = storedLabel || defaultLabel
-
-  setCircleLabel(element, label)
-
-  const hasContent = Boolean(stored && (stored.note?.trim() || (storedLabel && storedLabel !== defaultLabel)))
-  element.dataset.filled = hasContent ? 'true' : 'false'
+  syncCircle(element)
 
   element.addEventListener('click', (event) => {
     event.stopPropagation()

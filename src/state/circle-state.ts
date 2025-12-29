@@ -66,14 +66,6 @@ export function clearState(): void {
   }
 }
 
-export function getCircleData(circleId: string): CircleData | undefined {
-  return circleState[circleId]
-}
-
-export function setCircleData(circleId: string, data: CircleData): void {
-  circleState[circleId] = data
-}
-
 export function deleteCircleData(circleId: string): void {
   delete circleState[circleId]
 }

@@ -1,20 +1,14 @@
 import type { AppContext } from '../types'
-import { TOTAL_CIRCLES } from '../constants'
+import { TOTAL_CIRCLES, SUB_CIRCLE_COUNT } from '../constants'
 import { circleState, getFocusedCircle } from '../state'
 
 export function updateStats(
   ctx: AppContext,
   findNextOpenCircle: (from?: HTMLButtonElement | null) => HTMLButtonElement | null
 ): void {
-  const { progressCount, progressFill, nextButton } = ctx.elements
-  const { allCircles } = ctx
+  const { nextButton } = ctx.elements
 
-  const filled = allCircles.filter((circle) => circle.dataset.filled === 'true').length
-
-  progressCount.textContent = `${filled} of ${TOTAL_CIRCLES} nodes filled`
-
-  const progress = TOTAL_CIRCLES ? Math.round((filled / TOTAL_CIRCLES) * 100) : 0
-  progressFill.style.width = `${progress}%`
+  updateScopedProgress(ctx, getFocusedCircle())
 
   const next = findNextOpenCircle(getFocusedCircle())
   if (next) {
@@ -26,6 +20,30 @@ export function updateStats(
   }
 
   updateBranchProgress(ctx)
+}
+
+export function updateScopedProgress(ctx: AppContext, target: HTMLButtonElement | null): void {
+  const { progressCount, progressFill } = ctx.elements
+  const { branches, allCircles } = ctx
+
+  // If target is a branch or leaf, scope to that branch
+  const branchIndex = target?.dataset.branchIndex
+  if (branchIndex !== undefined) {
+    const branch = branches[Number(branchIndex)]
+    if (branch) {
+      const filledLeaves = branch.subs.filter((sub) => sub.dataset.filled === 'true').length
+      progressCount.textContent = `${filledLeaves} of ${SUB_CIRCLE_COUNT} leaves filled`
+      const progress = Math.round((filledLeaves / SUB_CIRCLE_COUNT) * 100)
+      progressFill.style.width = `${progress}%`
+      return
+    }
+  }
+
+  // Otherwise show total progress
+  const filled = allCircles.filter((circle) => circle.dataset.filled === 'true').length
+  progressCount.textContent = `${filled} of ${TOTAL_CIRCLES} nodes filled`
+  const progress = TOTAL_CIRCLES ? Math.round((filled / TOTAL_CIRCLES) * 100) : 0
+  progressFill.style.width = `${progress}%`
 }
 
 export function buildBranchProgress(ctx: AppContext, onBranchClick: (index: number) => void): void {
