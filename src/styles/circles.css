@@ -1,0 +1,160 @@
+button.circle {
+  appearance: none;
+  font: inherit;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.circle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all 180ms ease;
+  text-align: center;
+  padding: 0 8px;
+  line-height: 1.2;
+}
+
+.canvas.is-zooming .circle {
+  transition-duration: 480ms;
+  transition-timing-function: ease-in-out;
+}
+
+.circle.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.circle:hover,
+.circle:focus-visible {
+  border-color: var(--wood);
+  box-shadow: var(--shadow-lifted);
+  outline: none;
+}
+
+.circle.is-focused {
+  border-color: var(--wood);
+  box-shadow: 0 0 0 3px var(--wood-soft), var(--shadow);
+}
+
+.circle.is-active {
+  border-color: var(--wood);
+  background: var(--wood-soft);
+}
+
+.circle[data-filled='false'] {
+  color: var(--ink-faint);
+  border-color: var(--border);
+}
+
+/* Main circles (branches) */
+.main-circle {
+  width: 72px;
+  height: 72px;
+  font-size: 0.9rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  left: 0;
+  top: 0;
+  border-width: 1.5px;
+}
+
+.main-circle[data-filled='true'] {
+  background: var(--wood-soft);
+  border-color: var(--wood);
+  color: var(--wood);
+  font-weight: 600;
+}
+
+.canvas.is-zoomed .branch.is-active .main-circle {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+/* Sub circles (leaves) */
+.sub-circle {
+  width: 36px;
+  height: 36px;
+  font-size: calc(0.65rem * var(--leaf-label-scale, 1));
+  background: var(--paper);
+  border-color: var(--border);
+}
+
+.sub-circle[data-filled='true'] {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.canvas.is-zooming .branch.is-active .sub-circle {
+  transition-delay: var(--leaf-delay, 0ms);
+}
+
+/* Trunk */
+.center-circle {
+  width: 120px;
+  height: 120px;
+  left: 50%;
+  top: 50%;
+  background: var(--wood);
+  border: none;
+  box-shadow: 0 3px 16px rgba(107, 68, 35, 0.3);
+  z-index: 5;
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: all 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.center-circle:hover,
+.center-circle:focus-visible {
+  transform: translate(-50%, -50%) scale(1.02);
+  box-shadow: 0 6px 28px rgba(139, 90, 43, 0.35);
+}
+
+.center-circle.is-minimized {
+  width: 48px;
+  height: 48px;
+  font-size: 0;
+  left: var(--minimized-x, 48px);
+  top: var(--minimized-y, 48px);
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(107, 68, 35, 0.25);
+  transition: all 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.center-circle.is-minimized:hover,
+.center-circle.is-minimized:focus-visible {
+  transform: translate(-50%, -50%) scale(1.08);
+  opacity: 1;
+  box-shadow: 0 4px 16px rgba(107, 68, 35, 0.35);
+}
+
+.center-circle.is-minimized .center-title {
+  opacity: 0;
+}
+
+.center-title {
+  text-transform: uppercase;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  transition: opacity 200ms ease;
+}

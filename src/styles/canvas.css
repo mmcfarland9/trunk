@@ -1,0 +1,115 @@
+.canvas {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  aspect-ratio: 4 / 3;
+  overflow: visible;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center;
+  transition: transform 480ms ease-in-out;
+  will-change: transform;
+}
+
+.guide-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.guide-line {
+  stroke: var(--mahogany);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.45;
+}
+
+.guide-line.sub-line {
+  stroke: var(--mahogany);
+  stroke-width: 1;
+  opacity: 0.4;
+}
+
+.canvas.is-zoomed .guide-line {
+  stroke: var(--mahogany);
+  opacity: 0.45;
+}
+
+.canvas.is-zoomed .guide-line.sub-line {
+  stroke: var(--mahogany);
+  opacity: 0.4;
+}
+
+.canvas.is-zoomed {
+  transform: translate3d(var(--zoom-drift-x, 0), var(--zoom-drift-y, 0), 0) scale(1.06);
+}
+
+.branch {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 1;
+  transition: left 280ms ease, top 280ms ease, opacity 200ms ease;
+  will-change: left, top, opacity;
+}
+
+.branch.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.branch.is-active {
+  z-index: 3;
+}
+
+.canvas.is-zooming .branch {
+  transition-duration: 480ms;
+  transition-timing-function: ease-in-out;
+}
+
+.zoom-title {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+  transition: opacity 200ms ease;
+  z-index: 6;
+}
+
+.zoom-title.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zoom-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.4rem 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms ease;
+  z-index: 6;
+}
+
+.zoom-button.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zoom-button:hover,
+.zoom-button:focus-visible {
+  color: var(--ink);
+  outline: none;
+}

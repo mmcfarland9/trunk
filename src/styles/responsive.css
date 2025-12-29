@@ -1,0 +1,70 @@
+@media (max-width: 960px) {
+  body {
+    padding: 2rem 1.5rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-actions {
+    justify-content: flex-start;
+  }
+
+  .app-body {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .side-panel {
+    order: 2;
+  }
+
+  .canvas {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 1.5rem 1rem;
+  }
+
+  .app-shell {
+    gap: 2rem;
+  }
+
+  .main-circle {
+    width: 70px;
+    height: 70px;
+    font-size: 0.9rem;
+  }
+
+  .sub-circle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .center-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .zoom-title {
+    top: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .zoom-button {
+    top: 1rem;
+    left: 1rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .action-button {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+  }
+}
