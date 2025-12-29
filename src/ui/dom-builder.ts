@@ -33,12 +33,13 @@ export function buildApp(
   const header = document.createElement('header')
   header.className = 'app-header'
 
-  const titleBlock = document.createElement('div')
-  titleBlock.className = 'header-text'
-  titleBlock.innerHTML = `<h1><img src="${ampersandImage}" alt="" class="header-mark" /><span class="header-title">Harada</span></h1>`
-
   const actions = document.createElement('div')
   actions.className = 'app-actions'
+
+  const logo = document.createElement('img')
+  logo.className = 'header-logo'
+  logo.src = ampersandImage
+  logo.alt = 'Harada mark'
 
   const importButton = document.createElement('button')
   importButton.type = 'button'
@@ -63,7 +64,7 @@ export function buildApp(
   importButton.addEventListener('click', () => importInput.click())
 
   actions.append(importButton, exportButton, resetButton)
-  header.append(titleBlock, actions, importInput)
+  header.append(actions, logo, importInput)
 
   // Body
   const body = document.createElement('div')
@@ -95,11 +96,7 @@ export function buildApp(
   centerLabel.textContent = 'Purpose'
   center.append(centerLabel)
 
-  const zoomTitle = document.createElement('div')
-  zoomTitle.className = 'zoom-title is-hidden'
-  zoomTitle.setAttribute('aria-hidden', 'true')
-
-  canvas.append(center, zoomTitle)
+  canvas.append(center)
 
   // Initialize trunk
   initializeCircle(center, 'Purpose', circleLookup, onCircleClick)
@@ -185,7 +182,6 @@ export function buildApp(
     canvas,
     center,
     guideLayer,
-    zoomTitle,
     sidePanel,
     focusMeta: sidePanel.querySelector<HTMLParagraphElement>('.focus-meta')!,
     focusTitle: sidePanel.querySelector<HTMLParagraphElement>('.focus-title')!,

@@ -1,39 +1,24 @@
 .app-shell {
-  width: min(1280px, 100%);
+  width: min(1400px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.25rem;
+  height: 100%;
   animation: fade-in 600ms ease;
 }
 
 .app-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
-.header-text h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 52px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1;
-  color: var(--ink);
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-}
-
-.header-mark {
-  width: 104px;
-  height: 104px;
-  flex-shrink: 0;
-}
-
-.header-title {
-  position: relative;
-  top: -5px;
+.header-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-left: auto;
 }
 
 .app-actions {
@@ -46,14 +31,17 @@
 
 .app-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 3rem;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 2rem;
   align-items: start;
+  flex: 1;
+  min-height: 0;
 }
 
 .map-panel {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
+  margin-top: -8px;
 }

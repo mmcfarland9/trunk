@@ -21,6 +21,7 @@ import {
   enterBranchView,
   findNextOpenCircle,
   openCircleForEditing,
+  setupHoverBranch,
   handleExport,
   handleReset,
   handleImport,
@@ -35,7 +36,10 @@ if (!app) {
 // Navigation callbacks (will be wired after context is created)
 const navCallbacks = {
   onPositionNodes: () => positionNodes(ctx),
-  onUpdateStats: () => updateStats(ctx, (from) => findNextOpenCircle(ctx.allCircles, from)),
+  onUpdateStats: () => {
+    updateStats(ctx, (from) => findNextOpenCircle(ctx.allCircles, from))
+    positionNodes(ctx)
+  },
 }
 
 const importExportCallbacks = {
@@ -139,3 +143,4 @@ window.addEventListener('resize', () => positionNodes(ctx))
 // Initial positioning
 positionNodes(ctx)
 startWind(ctx)
+setupHoverBranch(ctx, navCallbacks)

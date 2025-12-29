@@ -33,7 +33,6 @@ export type AppElements = {
   canvas: HTMLDivElement
   center: HTMLButtonElement
   guideLayer: SVGSVGElement
-  zoomTitle: HTMLDivElement
   sidePanel: HTMLElement
   focusMeta: HTMLParagraphElement
   focusTitle: HTMLParagraphElement

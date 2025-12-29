@@ -60,7 +60,7 @@ button.circle {
 }
 
 /* Main circles (branches) */
-.main-circle {
+.circle.main-circle {
   width: 72px;
   height: 72px;
   font-size: 0.9rem;
@@ -69,13 +69,25 @@ button.circle {
   left: 0;
   top: 0;
   border-width: 1.5px;
+  border-color: var(--wood-mid);
 }
 
 .main-circle[data-filled='true'] {
-  background: var(--wood-soft);
-  border-color: var(--wood);
+  background: var(--paper);
+  border-color: var(--wood-mid);
   color: var(--wood);
   font-weight: 600;
+}
+
+.main-circle.is-active {
+  background: var(--paper);
+  border-color: var(--wood);
+}
+
+.branch.is-preview .main-circle {
+  background: var(--paper);
+  border-color: var(--wood);
+  color: var(--wood);
 }
 
 .canvas.is-zoomed .branch.is-active .main-circle {
@@ -84,11 +96,21 @@ button.circle {
 
 /* Sub circles (leaves) */
 .sub-circle {
-  width: 36px;
-  height: 36px;
-  font-size: calc(0.65rem * var(--leaf-label-scale, 1));
+  min-width: 36px;
+  min-height: 40px;
+  width: max-content;
+  max-width: none;
+  height: auto;
+  font-size: 0.6rem;
   background: var(--paper);
   border-color: var(--border);
+  padding: 8px 12px;
+  line-height: 0.85;
+  border-radius: 14px;
+  white-space: pre-line;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 .sub-circle[data-filled='true'] {
@@ -96,6 +118,21 @@ button.circle {
   border-color: var(--leaf);
   color: var(--paper);
   font-weight: 600;
+}
+
+.canvas.is-previewing .branch.is-preview .sub-circle {
+  width: var(--leaf-preview-size);
+  height: var(--leaf-preview-size);
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  padding: 0;
+  font-size: 0;
+  color: transparent;
+  background: var(--leaf);
+  border-color: var(--leaf);
+  box-shadow: none;
+  border-radius: 50%;
 }
 
 .canvas.is-zooming .branch.is-active .sub-circle {
@@ -130,11 +167,11 @@ button.circle {
 }
 
 .center-circle.is-minimized {
-  width: 48px;
-  height: 48px;
+  width: 84px;
+  height: 84px;
   font-size: 0;
-  left: var(--minimized-x, 48px);
-  top: var(--minimized-y, 48px);
+  left: var(--minimized-x, 50%);
+  top: var(--minimized-y, 50%);
   opacity: 0.85;
   box-shadow: 0 2px 8px rgba(107, 68, 35, 0.25);
   transition: all 320ms cubic-bezier(0.4, 0, 0.2, 1);

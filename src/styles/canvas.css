@@ -1,10 +1,13 @@
 .canvas {
   position: relative;
-  width: 100%;
-  max-width: 920px;
-  aspect-ratio: 4 / 3;
+  --canvas-max-height: max(320px, calc(100vh - 210px));
+  width: min(100%, 1100px, calc(var(--canvas-max-height) * 16 / 9));
+  aspect-ratio: 16 / 9;
   overflow: visible;
-  transform: translate3d(0, 0, 0) scale(1);
+  --camera-x: 0px;
+  --camera-y: 0px;
+  --camera-scale: 1;
+  transform: translate3d(var(--camera-x), var(--camera-y), 0) scale(var(--camera-scale));
   transform-origin: center;
   transition: transform 480ms ease-in-out;
   will-change: transform;
@@ -32,6 +35,13 @@
   opacity: 0.4;
 }
 
+.guide-line.trunk-line {
+  stroke: var(--mahogany);
+  stroke-width: 1.4;
+  opacity: 0.35;
+  stroke-dasharray: 1.5 6;
+}
+
 .canvas.is-zoomed .guide-line {
   stroke: var(--mahogany);
   opacity: 0.45;
@@ -42,8 +52,12 @@
   opacity: 0.4;
 }
 
+.canvas.is-zoomed .guide-line.trunk-line {
+  opacity: 0.35;
+}
+
 .canvas.is-zoomed {
-  transform: translate3d(var(--zoom-drift-x, 0), var(--zoom-drift-y, 0), 0) scale(1.06);
+  --camera-scale: 1.06;
 }
 
 .branch {
@@ -64,27 +78,22 @@
   z-index: 3;
 }
 
+.branch.is-preview {
+  z-index: 2;
+}
+
 .canvas.is-zooming .branch {
   transition-duration: 480ms;
   transition-timing-function: ease-in-out;
 }
 
-.zoom-title {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: var(--ink-faint);
-  transition: opacity 200ms ease;
-  z-index: 6;
+.canvas.is-previewing .sub-circle {
+  transition-duration: 520ms;
+  transition-timing-function: ease-out;
 }
 
-.zoom-title.is-hidden {
-  opacity: 0;
-  pointer-events: none;
+.canvas.is-previewing .branch.is-preview .sub-circle {
+  opacity: 0.7;
 }
 
 .zoom-button {

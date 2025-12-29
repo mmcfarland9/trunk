@@ -1,6 +1,6 @@
 @media (max-width: 960px) {
   body {
-    padding: 2rem 1.5rem;
+    padding: 1rem 1rem;
   }
 
   .app-header {
@@ -12,27 +12,36 @@
     justify-content: flex-start;
   }
 
+  .header-logo {
+    align-self: flex-end;
+  }
+
   .app-body {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+
+  .map-panel {
+    margin-top: -6px;
   }
 
   .side-panel {
     order: 2;
   }
 
-  .canvas {
-    aspect-ratio: 1 / 1;
-  }
 }
 
 @media (max-width: 720px) {
   body {
-    padding: 1.5rem 1rem;
+    padding: 0.85rem 0.75rem;
   }
 
   .app-shell {
-    gap: 2rem;
+    gap: 1.1rem;
+  }
+
+  .map-panel {
+    margin-top: -4px;
   }
 
   .main-circle {
@@ -51,14 +60,14 @@
     height: 100px;
   }
 
-  .zoom-title {
-    top: 1rem;
-    font-size: 0.85rem;
-  }
-
   .zoom-button {
     top: 1rem;
     left: 1rem;
+  }
+
+  .header-logo {
+    width: 64px;
+    height: 64px;
   }
 }
 

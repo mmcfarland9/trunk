@@ -12,7 +12,6 @@ export {
 } from './progress'
 
 export {
-  updateZoomTitle,
   updateVisibility,
   setViewMode,
   returnToOverview,
@@ -21,6 +20,8 @@ export {
   openCircleForEditing,
 } from './navigation'
 export type { NavigationCallbacks } from './navigation'
+
+export { setupHoverBranch } from './hover-branch'
 
 export {
   handleExport,

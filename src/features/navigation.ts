@@ -3,6 +3,7 @@ import {
   getViewMode,
   setViewModeState,
   getActiveBranchIndex,
+  getHoveredBranchIndex,
   getFocusedCircle,
   isBranchView,
 } from '../state'
@@ -13,7 +14,6 @@ import {
   getCirclePlaceholder,
   animateGuideLines,
 } from '../ui'
-import { getBranchLabel } from './progress'
 
 let zoomTimeoutId = 0
 
@@ -22,63 +22,41 @@ export type NavigationCallbacks = {
   onUpdateStats: () => void
 }
 
-export function updateZoomTitle(ctx: AppContext): void {
-  const { zoomTitle } = ctx.elements
-  const { branches } = ctx
-  const viewMode = getViewMode()
-  const activeBranchIndex = getActiveBranchIndex()
-
-  if (viewMode === 'branch' && activeBranchIndex !== null) {
-    const label = getBranchLabel(branches[activeBranchIndex].main, activeBranchIndex)
-    zoomTitle.textContent = `${label} leaves`
-  }
-}
-
 export function updateVisibility(ctx: AppContext): void {
-  const { canvas, center, zoomTitle } = ctx.elements
+  const { canvas, center } = ctx.elements
   const { branches } = ctx
   const activeBranchIndex = getActiveBranchIndex()
+  const hoveredBranchIndex = getHoveredBranchIndex()
   const isBranch = isBranchView()
+  const isPreview = !isBranch && hoveredBranchIndex !== null
 
   canvas.classList.toggle('is-zoomed', isBranch)
+  canvas.classList.toggle('is-previewing', isPreview)
   center.classList.toggle('is-minimized', isBranch)
 
-  // Position minimized center opposite to the active branch
+  // Keep the minimized trunk centered; camera handles the pan
   if (isBranch && activeBranchIndex !== null) {
-    const branchAngle = (Math.PI / 4) * activeBranchIndex - Math.PI / 2
-    // Opposite angle - center should appear on the other side
-    const oppositeAngle = branchAngle + Math.PI
-    // Position relative to canvas center, offset by a percentage
-    const offsetPercent = 0.38
-    const offsetX = Math.cos(oppositeAngle) * offsetPercent * 100
-    const offsetY = Math.sin(oppositeAngle) * offsetPercent * 100
-    center.style.setProperty('--minimized-x', `calc(50% + ${offsetX}%)`)
-    center.style.setProperty('--minimized-y', `calc(50% + ${offsetY}%)`)
-    const driftPercent = 6
-    const driftX = Math.cos(branchAngle) * -driftPercent
-    const driftY = Math.sin(branchAngle) * -driftPercent
-    canvas.style.setProperty('--zoom-drift-x', `${driftX}%`)
-    canvas.style.setProperty('--zoom-drift-y', `${driftY}%`)
+    center.style.setProperty('--minimized-x', '50%')
+    center.style.setProperty('--minimized-y', '50%')
   } else {
     center.style.removeProperty('--minimized-x')
     center.style.removeProperty('--minimized-y')
-    canvas.style.removeProperty('--zoom-drift-x')
-    canvas.style.removeProperty('--zoom-drift-y')
   }
 
   branches.forEach((branch, index) => {
     const isActive = isBranch && index === activeBranchIndex
+    const isPreviewed = !isBranch && hoveredBranchIndex === index
     branch.wrapper.classList.toggle('is-hidden', isBranch && !isActive)
     branch.wrapper.classList.toggle('is-active', isActive)
+    branch.wrapper.classList.toggle('is-preview', isPreviewed)
 
     setCircleVisibility(branch.main, !isBranch || isActive)
     branch.subs.forEach((sub) => {
-      setCircleVisibility(sub, isBranch && isActive)
+      const shouldShow = isBranch ? isActive : isPreviewed
+      setCircleVisibility(sub, shouldShow)
     })
   })
 
-  zoomTitle.classList.toggle('is-hidden', !isBranch)
-  zoomTitle.setAttribute('aria-hidden', isBranch ? 'false' : 'true')
 }
 
 export function setViewMode(
@@ -91,7 +69,6 @@ export function setViewMode(
   const previousBranch = getActiveBranchIndex()
 
   setViewModeState(mode, branchIndex)
-  ctx.elements.canvas.dataset.zoomDirection = mode === 'branch' ? 'in' : 'out'
 
   const shouldAnimate = previousMode !== mode || previousBranch !== getActiveBranchIndex()
 
@@ -107,7 +84,6 @@ export function setViewMode(
 
   ctx.editor.close()
   updateVisibility(ctx)
-  updateZoomTitle(ctx)
   callbacks.onPositionNodes()
   if (shouldAnimate) {
     animateGuideLines(ctx)

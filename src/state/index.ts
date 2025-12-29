@@ -13,6 +13,8 @@ export {
   getViewMode,
   setViewModeState,
   getActiveBranchIndex,
+  getHoveredBranchIndex,
+  setHoveredBranchIndex,
   getFocusedCircle,
   setFocusedCircleState,
   getActiveCircle,

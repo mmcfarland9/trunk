@@ -1,14 +1,25 @@
 import type { AppContext } from '../types'
-import { getViewMode, getActiveBranchIndex, getActiveCircle } from '../state'
+import {
+  getViewMode,
+  getActiveBranchIndex,
+  getHoveredBranchIndex,
+  getActiveCircle,
+} from '../state'
+import { getLeafCollisionDiameter, LEAF_BASE_SIZE, LEAF_PREVIEW_SIZE } from './leaf-sizing'
 
 const GUIDE_GAP = 8
 const LEAF_GAP = 4
+const LEAF_COLLISION_PAD = 12
 const BLOOM_MIN_RATIO = 0.12
 const BLOOM_MAX_RATIO = 0.34
 const BLOOM_OVERVIEW_MIN_RATIO = 0.06
 const BLOOM_OVERVIEW_MAX_RATIO = 0.18
-const BLOOM_JITTER_RATIO = 0.08
-const BLOOM_ATTEMPTS = 40
+const FLOW_ANGLE_JITTER = 0.32
+const FLOW_BRANCH_TWIST = 0.18
+const FLOW_RADIAL_JITTER = 0.16
+const FLOW_TANGENTIAL_JITTER = 0.2
+const FLOW_RELAX_ITERS = 6
+const FLOW_ANCHOR_PULL = 0.08
 const WIND_BRANCH_AMPLITUDE = 6
 const WIND_LEAF_AMPLITUDE = 10
 const WIND_BLOOM_PULSE = 0.04
@@ -33,64 +44,60 @@ export function positionNodes(ctx: AppContext): void {
   const centerY = height / 2
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
+  const isBranchView = viewMode === 'branch' && activeBranchIndex !== null
+  const radiusX = Math.max(base * 0.42, width * 0.36)
+  const radiusY = height * 0.3
+  let activeBranchX = centerX
+  let activeBranchY = centerY
 
-  if (viewMode === 'branch' && activeBranchIndex !== null) {
-    const node = branches[activeBranchIndex]
-    if (node) {
-      const branchX = centerX
-      const branchY = centerY
+  branches.forEach((node, index) => {
+    const angle = (Math.PI / 4) * index - Math.PI / 2
+    const branchX = centerX + Math.cos(angle) * radiusX
+    const branchY = centerY + Math.sin(angle) * radiusY
 
-      setBasePosition(node.wrapper, branchX, branchY)
+    setBasePosition(node.wrapper, branchX, branchY)
 
-      const mainRadius = node.main.offsetWidth / 2
-      const subRadius = node.subs[0]?.offsetWidth ? node.subs[0].offsetWidth / 2 : 0
-      const minRadius = Math.max(mainRadius + subRadius + GUIDE_GAP, base * BLOOM_MIN_RATIO)
-      const maxRadius = Math.max(minRadius + subRadius * 2, base * BLOOM_MAX_RATIO)
-      const minSpacing = subRadius ? subRadius * 2.2 : base * 0.08
-
-      const offsets = buildBloomOffsets(
-        activeBranchIndex,
-        node.subs.length,
-        minRadius,
-        maxRadius,
-        minSpacing
-      )
-
-      node.subs.forEach((sub, index) => {
-        const offset = offsets[index]
-        const offsetX = offset?.x ?? 0
-        const offsetY = offset?.y ?? 0
-
-        setBasePosition(sub, offsetX, offsetY)
-      })
+    if (index === activeBranchIndex) {
+      activeBranchX = branchX
+      activeBranchY = branchY
     }
-  } else {
-    const radiusX = base * 0.42
-    const radiusY = base * 0.32
 
-    branches.forEach((node, index) => {
-      const angle = (Math.PI / 4) * index - Math.PI / 2
-      const branchX = centerX + Math.cos(angle) * radiusX
-      const branchY = centerY + Math.sin(angle) * radiusY
+    const mainRadius = node.main.offsetWidth / 2
+    const isActive = isBranchView && index === activeBranchIndex
+    const leafSizes = node.subs.map((sub) =>
+      isActive ? getLeafCollisionDiameter(sub) + LEAF_COLLISION_PAD * 2 : LEAF_PREVIEW_SIZE
+    )
+    const maxLeafRadius = leafSizes.length
+      ? Math.max(...leafSizes) / 2
+      : LEAF_BASE_SIZE / 2
+    const minRatio = isActive ? BLOOM_MIN_RATIO : BLOOM_OVERVIEW_MIN_RATIO
+    const maxRatio = isActive ? BLOOM_MAX_RATIO : BLOOM_OVERVIEW_MAX_RATIO
+    const minRadius = Math.max(mainRadius + maxLeafRadius + GUIDE_GAP, base * minRatio)
+    const maxRadius = Math.max(
+      minRadius + maxLeafRadius * (isActive ? 2.4 : 1.6),
+      base * maxRatio + maxLeafRadius * (isActive ? 0.6 : 0.2)
+    )
 
-      setBasePosition(node.wrapper, branchX, branchY)
+    const offsets = buildFlowOffsets(index, node.subs.length, minRadius, maxRadius, leafSizes, isActive)
 
-      const mainRadius = node.main.offsetWidth / 2
-      const subRadius = node.subs[0]?.offsetWidth ? node.subs[0].offsetWidth / 2 : 0
-      const minRadius = Math.max(mainRadius + subRadius + GUIDE_GAP, base * BLOOM_OVERVIEW_MIN_RATIO)
-      const maxRadius = Math.max(minRadius + subRadius * 1.6, base * BLOOM_OVERVIEW_MAX_RATIO)
-      const minSpacing = subRadius ? subRadius * 1.9 : base * 0.06
+    node.subs.forEach((sub, subIndex) => {
+      const offset = offsets[subIndex]
+      const offsetX = offset?.x ?? 0
+      const offsetY = offset?.y ?? 0
 
-      const offsets = buildBloomOffsets(index, node.subs.length, minRadius, maxRadius, minSpacing)
-
-      node.subs.forEach((sub, index) => {
-        const offset = offsets[index]
-        const offsetX = offset?.x ?? 0
-        const offsetY = offset?.y ?? 0
-
-        setBasePosition(sub, offsetX, offsetY)
-      })
+      setBasePosition(sub, offsetX, offsetY)
+      if (isActive) {
+        sub.dataset.leafRadius = `${leafSizes[subIndex] / 2}`
+      } else {
+        delete sub.dataset.leafRadius
+      }
     })
+  })
+
+  if (isBranchView) {
+    setCameraTransform(ctx, centerX - activeBranchX, centerY - activeBranchY)
+  } else {
+    setCameraTransform(ctx, 0, 0)
   }
 
   drawGuideLines(ctx)
@@ -153,19 +160,37 @@ function drawGuideLines(ctx: AppContext): void {
 
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
+  const hoveredBranchIndex = getHoveredBranchIndex()
   const lineFragment = document.createDocumentFragment()
 
   if (viewMode === 'branch' && activeBranchIndex !== null) {
     const branch = branches[activeBranchIndex]
     if (branch) {
+      const centerRect = center.getBoundingClientRect()
       const mainRect = branch.main.getBoundingClientRect()
+      const centerPoint = getCenterPoint(centerRect, rect)
       const mainCenter = getCenterPoint(mainRect, rect)
+      const centerRadius = centerRect.width / 2
       const mainRadius = mainRect.width / 2
+      const trunkVectorX = mainCenter.x - centerPoint.x
+      const trunkVectorY = mainCenter.y - centerPoint.y
+      const trunkDistance = Math.hypot(trunkVectorX, trunkVectorY)
+
+      if (trunkDistance) {
+        const trunkUnitX = trunkVectorX / trunkDistance
+        const trunkUnitY = trunkVectorY / trunkDistance
+        const trunkStartX = centerPoint.x + trunkUnitX * (centerRadius + GUIDE_GAP)
+        const trunkStartY = centerPoint.y + trunkUnitY * (centerRadius + GUIDE_GAP)
+        const trunkEndX = mainCenter.x - trunkUnitX * (mainRadius + GUIDE_GAP)
+        const trunkEndY = mainCenter.y - trunkUnitY * (mainRadius + GUIDE_GAP)
+
+        appendLine(lineFragment, trunkStartX, trunkStartY, trunkEndX, trunkEndY, 'trunk')
+      }
 
       branch.subs.forEach((sub) => {
         const subRect = sub.getBoundingClientRect()
         const subCenter = getCenterPoint(subRect, rect)
-        const subRadius = subRect.width / 2
+        const subRadius = Math.max(subRect.width, subRect.height) / 2
         const vectorX = subCenter.x - mainCenter.x
         const vectorY = subCenter.y - mainCenter.y
         const distance = Math.hypot(vectorX, vectorY)
@@ -178,7 +203,7 @@ function drawGuideLines(ctx: AppContext): void {
         const endX = subCenter.x - unitX * (subRadius + LEAF_GAP)
         const endY = subCenter.y - unitY * (subRadius + LEAF_GAP)
 
-        appendLine(lineFragment, startX, startY, endX, endY, true)
+        appendLine(lineFragment, startX, startY, endX, endY, 'leaf')
       })
     }
   } else {
@@ -202,8 +227,36 @@ function drawGuideLines(ctx: AppContext): void {
       const endX = mainCenter.x - unitX * (mainRadius + GUIDE_GAP)
       const endY = mainCenter.y - unitY * (mainRadius + GUIDE_GAP)
 
-      appendLine(lineFragment, startX, startY, endX, endY, false)
+      appendLine(lineFragment, startX, startY, endX, endY, 'branch')
     })
+
+    if (hoveredBranchIndex !== null) {
+      const branch = branches[hoveredBranchIndex]
+      if (branch) {
+        const mainRect = branch.main.getBoundingClientRect()
+        const mainCenter = getCenterPoint(mainRect, rect)
+        const mainRadius = mainRect.width / 2
+
+        branch.subs.forEach((sub) => {
+          const subRect = sub.getBoundingClientRect()
+          const subCenter = getCenterPoint(subRect, rect)
+          const subRadius = Math.max(subRect.width, subRect.height) / 2
+          const vectorX = subCenter.x - mainCenter.x
+          const vectorY = subCenter.y - mainCenter.y
+          const distance = Math.hypot(vectorX, vectorY)
+          if (!distance) return
+
+          const unitX = vectorX / distance
+          const unitY = vectorY / distance
+          const startX = mainCenter.x + unitX * (mainRadius + GUIDE_GAP)
+          const startY = mainCenter.y + unitY * (mainRadius + GUIDE_GAP)
+          const endX = subCenter.x - unitX * (subRadius + LEAF_GAP)
+          const endY = subCenter.y - unitY * (subRadius + LEAF_GAP)
+
+          appendLine(lineFragment, startX, startY, endX, endY, 'leaf')
+        })
+      }
+    }
   }
 
   guideLayer.append(lineFragment)
@@ -244,11 +297,13 @@ function applyWind(ctx: AppContext, timestamp: number): void {
       if (baseX === null || baseY === null) return
 
       const leafIndex = Number(sub.dataset.leafIndex || '0')
+      const leafRadius = getLeafRadius(sub)
+      const leafScale = clamp(1 - (leafRadius - LEAF_BASE_SIZE / 2) / (LEAF_BASE_SIZE * 1.6), 0.5, 1)
       const seed = 131 + index * 71 + leafIndex * 17
       const speed = lerp(WIND_SPEED_MIN, WIND_SPEED_MAX, seededValue(seed, 17.9))
       const phase = seededValue(seed, 29.3) * Math.PI * 2
-      const amplitude = leafAmplitude * (0.7 + seededValue(seed, 41.7) * 0.6)
-      const pulse = 1 + Math.sin(time * (speed * 0.5) + phase) * pulseAmount
+      const amplitude = leafAmplitude * leafScale * (0.7 + seededValue(seed, 41.7) * 0.6)
+      const pulse = 1 + Math.sin(time * (speed * 0.5) + phase) * pulseAmount * leafScale
       const flutter = Math.sin(time * (speed * 2.2) + phase) * amplitude * 0.18
 
       const offsetX = baseX * pulse + Math.sin(time * speed + phase) * amplitude + flutter
@@ -265,6 +320,19 @@ function applyWind(ctx: AppContext, timestamp: number): void {
   }
 }
 
+function getLeafRadius(element: HTMLElement): number {
+  const raw = element.dataset.leafRadius
+  if (raw) {
+    const parsed = Number.parseFloat(raw)
+    if (!Number.isNaN(parsed)) {
+      return parsed
+    }
+  }
+  const width = element.offsetWidth || LEAF_BASE_SIZE
+  const height = element.offsetHeight || LEAF_BASE_SIZE
+  return Math.hypot(width, height) / 2
+}
+
 function getCenterPoint(rect: DOMRect, canvasRect: DOMRect): { x: number; y: number } {
   return {
     x: rect.left - canvasRect.left + rect.width / 2,
@@ -278,7 +346,7 @@ function appendLine(
   startY: number,
   endX: number,
   endY: number,
-  isLeaf: boolean
+  variant: 'branch' | 'leaf' | 'trunk'
 ): void {
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
   line.setAttribute('x1', `${startX}`)
@@ -286,8 +354,10 @@ function appendLine(
   line.setAttribute('x2', `${endX}`)
   line.setAttribute('y2', `${endY}`)
   line.classList.add('guide-line')
-  if (isLeaf) {
+  if (variant === 'leaf') {
     line.classList.add('sub-line')
+  } else if (variant === 'trunk') {
+    line.classList.add('trunk-line')
   }
   fragment.append(line)
 }
@@ -297,6 +367,11 @@ function setBasePosition(element: HTMLElement, x: number, y: number): void {
   element.style.top = `${y}px`
   element.dataset.baseX = `${x}`
   element.dataset.baseY = `${y}`
+}
+
+function setCameraTransform(ctx: AppContext, offsetX: number, offsetY: number): void {
+  ctx.elements.canvas.style.setProperty('--camera-x', `${offsetX}px`)
+  ctx.elements.canvas.style.setProperty('--camera-y', `${offsetY}px`)
 }
 
 function getBaseValue(element: HTMLElement, axis: 'x' | 'y'): number | null {
@@ -316,44 +391,129 @@ function lerp(min: number, max: number, t: number): number {
   return min + (max - min) * t
 }
 
-function buildBloomOffsets(
+function buildFlowOffsets(
   branchIndex: number,
   count: number,
   minRadius: number,
   maxRadius: number,
-  minSpacing: number
+  leafSizes: number[],
+  allowReflow: boolean
 ): Array<{ x: number; y: number }> {
+  if (!count) return []
+
   const random = createSeededRandom(23017 + branchIndex * 911)
   const points: Array<{ x: number; y: number }> = []
-  let spacing = minSpacing
+  const anchors: Array<{ x: number; y: number }> = []
+  const radii = leafSizes.map((size) => size / 2)
+  const angleStep = (Math.PI * 2) / count
+  const branchTwist = (random() - 0.5) * angleStep * FLOW_BRANCH_TWIST
+  const baseLeafRadius = LEAF_BASE_SIZE / 2
+  const maxLeafRadius = Math.max(baseLeafRadius, ...radii)
+  const safeRadius = allowReflow ? getSafeRadius(radii, angleStep) : 0
+  const resolvedMinRadius = allowReflow ? Math.max(minRadius, safeRadius) : minRadius
+  const resolvedMaxRadius = allowReflow
+    ? Math.max(maxRadius, resolvedMinRadius + maxLeafRadius * 1.6)
+    : maxRadius
 
   for (let i = 0; i < count; i += 1) {
-    let candidate = { x: 0, y: 0 }
-    let placed = false
+    const baseAngle = angleStep * i - Math.PI / 2
+    const angleJitter = (random() - 0.5) * angleStep * FLOW_ANGLE_JITTER
+    const angle = baseAngle + branchTwist + angleJitter
 
-    for (let attempt = 0; attempt < BLOOM_ATTEMPTS; attempt += 1) {
-      const angle = random() * Math.PI * 2
-      const radiusT = 0.28 + random() * 0.72
-      const radius = minRadius + radiusT * (maxRadius - minRadius)
-      const jitter = (random() - 0.5) * maxRadius * BLOOM_JITTER_RATIO
-      const x = Math.cos(angle) * radius + jitter
-      const y = Math.sin(angle) * radius * 0.9 + (random() - 0.5) * maxRadius * (BLOOM_JITTER_RATIO * 0.8)
-      candidate = { x, y }
+    const radiusT = 0.45 + (random() - 0.5) * 0.4
+    const radiusBase = resolvedMinRadius + radiusT * (resolvedMaxRadius - resolvedMinRadius)
+    const radialJitter =
+      (random() - 0.5) * (resolvedMaxRadius - resolvedMinRadius) * FLOW_RADIAL_JITTER
+    const sizeBoost = (radii[i] - baseLeafRadius) * 1.1
+    const radius = clamp(
+      radiusBase + radialJitter + sizeBoost,
+      resolvedMinRadius,
+      resolvedMaxRadius
+    )
+    const tangential =
+      (random() - 0.5) * (resolvedMaxRadius - resolvedMinRadius) * FLOW_TANGENTIAL_JITTER
 
-      if (points.every((point) => distanceBetween(point, candidate) >= spacing)) {
-        placed = true
-        break
-      }
-    }
+    const tangentAngle = angle + Math.PI / 2
+    const x = Math.cos(angle) * radius + Math.cos(tangentAngle) * tangential
+    const y = Math.sin(angle) * radius * 0.92 + Math.sin(tangentAngle) * tangential * 0.7
 
-    if (!placed) {
-      spacing *= 0.9
-    }
+    points.push({ x, y })
+    anchors.push({ x, y })
+  }
 
-    points.push(candidate)
+  if (allowReflow) {
+    relaxFlow(points, anchors, radii, resolvedMinRadius, resolvedMaxRadius)
   }
 
   return points
+}
+
+function getSafeRadius(radii: number[], angleStep: number): number {
+  if (radii.length < 2) return 0
+  const denominator = 2 * Math.sin(angleStep / 2)
+  if (!denominator) return 0
+
+  let required = 0
+  for (let i = 0; i < radii.length; i += 1) {
+    const current = radii[i]
+    const next = radii[(i + 1) % radii.length]
+    const needed = (current + next + LEAF_GAP) / denominator
+    if (needed > required) {
+      required = needed
+    }
+  }
+
+  return required
+}
+
+function relaxFlow(
+  points: Array<{ x: number; y: number }>,
+  anchors: Array<{ x: number; y: number }>,
+  radii: number[],
+  minRadius: number,
+  maxRadius: number
+): void {
+  if (!points.length) return
+
+  for (let iteration = 0; iteration < FLOW_RELAX_ITERS; iteration += 1) {
+    for (let i = 0; i < points.length; i += 1) {
+      for (let j = i + 1; j < points.length; j += 1) {
+        const dx = points[j].x - points[i].x
+        const dy = points[j].y - points[i].y
+        const distance = Math.hypot(dx, dy) || 0.001
+        const minDistance = radii[i] + radii[j] + LEAF_GAP
+
+        if (distance < minDistance) {
+          const push = (minDistance - distance) / distance
+          const offsetX = dx * push * 0.5
+          const offsetY = dy * push * 0.5
+          points[i].x -= offsetX
+          points[i].y -= offsetY
+          points[j].x += offsetX
+          points[j].y += offsetY
+        }
+      }
+    }
+
+    points.forEach((point, index) => {
+      const distance = Math.hypot(point.x, point.y) || 1
+      const minDistance = minRadius + radii[index] * 0.2
+      const maxDistance = maxRadius + radii[index] * 0.6
+
+      if (distance < minDistance) {
+        const scale = minDistance / distance
+        point.x *= scale
+        point.y *= scale
+      } else if (distance > maxDistance) {
+        const scale = maxDistance / distance
+        point.x *= scale
+        point.y *= scale
+      }
+
+      point.x = lerp(point.x, anchors[index].x, FLOW_ANCHOR_PULL)
+      point.y = lerp(point.y, anchors[index].y, FLOW_ANCHOR_PULL)
+    })
+  }
 }
 
 function createSeededRandom(seed: number): () => number {
@@ -365,8 +525,6 @@ function createSeededRandom(seed: number): () => number {
   }
 }
 
-function distanceBetween(a: { x: number; y: number }, b: { x: number; y: number }): number {
-  const dx = a.x - b.x
-  const dy = a.y - b.y
-  return Math.hypot(dx, dy)
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
 }

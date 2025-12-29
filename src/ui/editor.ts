@@ -20,12 +20,12 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
   container.innerHTML = `
     <form class="editor-card" novalidate>
       <label class="editor-label">
-        Label (one word, 20 chars max)
+        <span class="editor-label-text">Label (one word, 20 chars max)</span>
         <input class="editor-input" name="label" type="text" maxlength="20" />
       </label>
       <label class="editor-label">
         Notes
-        <textarea class="editor-textarea" name="note" rows="4" placeholder="Add context"></textarea>
+        <textarea class="editor-textarea" name="note" rows="4" placeholder="Add description..."></textarea>
       </label>
       <div class="editor-actions">
         <button type="button" class="editor-clear">Clear</button>
@@ -36,8 +36,9 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
   `
 
   const form = container.querySelector<HTMLFormElement>('form')!
-  const labelInput = container.querySelector<HTMLInputElement>('.editor-input')!
+  const labelText = container.querySelector<HTMLSpanElement>('.editor-label-text')!
   const noteInput = container.querySelector<HTMLTextAreaElement>('.editor-textarea')!
+  const labelInput = container.querySelector<HTMLInputElement>('.editor-input')!
   const clearButton = container.querySelector<HTMLButtonElement>('.editor-clear')!
   const cancelButton = container.querySelector<HTMLButtonElement>('.editor-cancel')!
 
@@ -54,13 +55,17 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     const circleId = target.dataset.circleId
     if (!circleId) return
 
+    const isLeaf = target.classList.contains('sub-circle')
+    labelText.textContent = isLeaf ? 'Leaf Title' : 'Label (one word, 20 chars max)'
+    labelInput.placeholder = isLeaf ? 'Add title...' : placeholder
+    noteInput.placeholder = isLeaf ? 'Add description...' : 'Add context'
+
     const defaultLabel = target.dataset.defaultLabel || ''
     const existing = circleState[circleId]
     const savedLabel = existing?.label || ''
 
     labelInput.value = savedLabel && savedLabel !== defaultLabel ? savedLabel : ''
     noteInput.value = existing?.note || ''
-    labelInput.placeholder = placeholder
 
     container.classList.remove('hidden')
 
@@ -79,15 +84,25 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     const rect = target.getBoundingClientRect()
     const canvasRect = canvas.getBoundingClientRect()
     const padding = 12
-    const desiredX = rect.left - canvasRect.left + rect.width / 2
-    const desiredY = rect.top - canvasRect.top - 10
+    const desiredX = rect.left + rect.width / 2
+    const desiredY = rect.top - 10
 
-    const halfWidth = container.offsetWidth / 2 || 140
-    const clampedX = Math.min(Math.max(desiredX, padding + halfWidth), canvasRect.width - padding - halfWidth)
-    const clampedY = Math.min(Math.max(desiredY, padding), canvasRect.height - padding - (container.offsetHeight || 160))
+    const containerRect = container.getBoundingClientRect()
+    const containerWidth = containerRect.width || 280
+    const containerHeight = containerRect.height || 200
+    const viewportWidth = document.documentElement.clientWidth
+    const viewportHeight = document.documentElement.clientHeight
 
-    container.style.left = `${clampedX}px`
-    container.style.top = `${clampedY}px`
+    const minX = padding + containerWidth / 2
+    const maxX = viewportWidth - padding - containerWidth / 2
+    const minY = padding + containerHeight
+    const maxY = viewportHeight - padding
+
+    const clampedX = minX > maxX ? viewportWidth / 2 : Math.min(Math.max(desiredX, minX), maxX)
+    const clampedY = minY > maxY ? viewportHeight / 2 : Math.min(Math.max(desiredY, minY), maxY)
+
+    container.style.left = `${clampedX - canvasRect.left}px`
+    container.style.top = `${clampedY - canvasRect.top}px`
   }
 
   function handleSubmit(event: SubmitEvent): void {
@@ -99,7 +114,11 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     if (!circleId) return
 
     const rawLabel = labelInput.value.trim()
-    const label = rawLabel ? rawLabel.split(/\s+/)[0].slice(0, 20) : ''
+    const normalizedLabel = rawLabel.replace(/\s+/g, ' ').trim()
+    const isLeaf = activeCircle.classList.contains('sub-circle')
+    const label = normalizedLabel
+      ? (isLeaf ? normalizedLabel.slice(0, 20) : normalizedLabel.split(' ')[0].slice(0, 20))
+      : ''
     const note = noteInput.value.trim()
     const defaultLabel = activeCircle.dataset.defaultLabel || ''
     const appliedLabel = label || defaultLabel
