@@ -43,4 +43,4 @@ assets/logo.svg
 - Do not commit secrets; use `.env.local` and document required variables in `README.md`.
 - Large assets belong in `assets/`; optimize before shipping to `public/`.
 - Keep third-party dependencies minimal; pin versions when adding a toolchain.
-
+- When you use commands like "sleep 1 && screencapture," you don't need to shift focus. Just screenshot where you're at -- I'll be visually monitoring the dev server.

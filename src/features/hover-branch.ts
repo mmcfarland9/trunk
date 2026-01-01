@@ -1,25 +1,27 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedCircle } from '../state'
-import { enterBranchView, updateVisibility } from './navigation'
+import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex } from '../state'
+import { enterBranchView, returnToOverview, updateVisibility } from './navigation'
 import { updateScopedProgress } from './progress'
 import type { NavigationCallbacks } from './navigation'
-import { updateFocus } from '../ui'
+import { updateFocus } from '../ui/node-ui'
 
 const HOVER_MIN_RADIUS_RATIO = 0.55
 const HOVER_MAX_RADIUS_RATIO = 1.35
+const SCROLL_THRESHOLD = 150 // pixels of scroll delta needed to trigger zoom
 
 export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
   const { canvas } = ctx.elements
+  let scrollAccumulator = 0
 
   function clearHover(): void {
     if (getHoveredBranchIndex() !== null) {
       setHoveredBranchIndex(null)
       updateVisibility(ctx)
-      // Revert sidebar to focused circle
-      const focused = getFocusedCircle()
+      const focused = getFocusedNode()
       updateFocus(focused, ctx)
       updateScopedProgress(ctx, focused)
     }
+    scrollAccumulator = 0
   }
 
   function handleMove(event: MouseEvent): void {
@@ -44,7 +46,6 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       return
     }
 
-    // Normalize to ellipse space (if on ellipse, normalized distance = 1)
     const normalizedDist = Math.hypot(dx / ellipseRadii.x, dy / ellipseRadii.y)
 
     if (normalizedDist < HOVER_MIN_RADIUS_RATIO || normalizedDist > HOVER_MAX_RADIUS_RATIO) {
@@ -55,12 +56,12 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
     const hoveredIndex = getBranchIndexFromPosition(ctx, rect, dx, dy)
     if (hoveredIndex !== getHoveredBranchIndex()) {
       setHoveredBranchIndex(hoveredIndex)
+      scrollAccumulator = 0 // reset scroll when changing branches
       updateVisibility(ctx)
-      // Update sidebar to show hovered branch
-      const branch = ctx.branches[hoveredIndex]
-      if (branch) {
-        updateFocus(branch.main, ctx)
-        updateScopedProgress(ctx, branch.main)
+      const branchGroup = ctx.branchGroups[hoveredIndex]
+      if (branchGroup) {
+        updateFocus(branchGroup.branch, ctx)
+        updateScopedProgress(ctx, branchGroup.branch)
       }
     }
   }
@@ -68,8 +69,8 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
   function handleClick(event: MouseEvent): void {
     if (getViewMode() !== 'overview') return
     const target = event.target as HTMLElement | null
-    if (target?.closest('.circle-editor')) return
-    if (target?.closest('button.circle')) return
+    if (target?.closest('.node-editor')) return
+    if (target?.closest('button.node')) return
 
     const hoveredIndex = getHoveredBranchIndex()
     if (hoveredIndex === null) return
@@ -77,9 +78,52 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
     enterBranchView(hoveredIndex, ctx, callbacks)
   }
 
+  function handleWheel(event: WheelEvent): void {
+    const viewMode = getViewMode()
+
+    // Natural scrolling (macOS default): swipe down = negative deltaY
+    // Swipe toward you (down) = "dive in" to branch
+    // Swipe away (up) = "back out" to overview
+    if (viewMode === 'overview') {
+      const hoveredIndex = getHoveredBranchIndex()
+      if (hoveredIndex === null) return
+
+      // Swipe down / toward you = negative deltaY = zoom in
+      if (event.deltaY < 0) {
+        scrollAccumulator += Math.abs(event.deltaY)
+        if (scrollAccumulator >= SCROLL_THRESHOLD) {
+          event.preventDefault()
+          scrollAccumulator = 0
+          enterBranchView(hoveredIndex, ctx, callbacks)
+        }
+      } else {
+        scrollAccumulator = Math.max(0, scrollAccumulator - event.deltaY)
+      }
+      return
+    }
+
+    if (viewMode === 'branch') {
+      const activeBranchIndex = getActiveBranchIndex()
+      if (activeBranchIndex === null) return
+
+      // Swipe up / away from you = positive deltaY = zoom out
+      if (event.deltaY > 0) {
+        scrollAccumulator += event.deltaY
+        if (scrollAccumulator >= SCROLL_THRESHOLD) {
+          event.preventDefault()
+          scrollAccumulator = 0
+          returnToOverview(ctx, callbacks)
+        }
+      } else {
+        scrollAccumulator = Math.max(0, scrollAccumulator + event.deltaY)
+      }
+    }
+  }
+
   canvas.addEventListener('mousemove', handleMove)
   canvas.addEventListener('mouseleave', clearHover)
   canvas.addEventListener('click', handleClick)
+  canvas.addEventListener('wheel', handleWheel, { passive: false })
 }
 
 function getEllipseRadii(
@@ -88,13 +132,12 @@ function getEllipseRadii(
   centerX: number,
   centerY: number
 ): { x: number; y: number } | null {
-  // Branch 0 is at top (-π/2), Branch 2 is at right (0)
-  const branchTop = ctx.branches[0]
-  const branchRight = ctx.branches[2]
+  const branchTop = ctx.branchGroups[0]
+  const branchRight = ctx.branchGroups[2]
   if (!branchTop || !branchRight) return null
 
-  const topRect = branchTop.main.getBoundingClientRect()
-  const rightRect = branchRight.main.getBoundingClientRect()
+  const topRect = branchTop.branch.getBoundingClientRect()
+  const rightRect = branchRight.branch.getBoundingClientRect()
   const topY = topRect.top - canvasRect.top + topRect.height / 2
   const rightX = rightRect.left - canvasRect.left + rightRect.width / 2
 
@@ -112,20 +155,18 @@ function getBranchIndexFromPosition(
   dx: number,
   dy: number
 ): number {
-  const { branches } = ctx
+  const { branchGroups } = ctx
   const mouseAngle = Math.atan2(dy, dx)
   const centerX = canvasRect.width / 2
   const centerY = canvasRect.height / 2
 
-  // Get actual angles of each branch from their current positions
-  const branchAngles = branches.map((b) => {
-    const bRect = b.main.getBoundingClientRect()
+  const branchAngles = branchGroups.map((group) => {
+    const bRect = group.branch.getBoundingClientRect()
     const bx = bRect.left - canvasRect.left + bRect.width / 2
     const by = bRect.top - canvasRect.top + bRect.height / 2
     return Math.atan2(by - centerY, bx - centerX)
   })
 
-  // Find which branch the mouse is closest to (angularly)
   let closestIndex = 0
   let smallestDiff = Math.PI * 2
 

@@ -1,10 +1,10 @@
-export type BranchNode = {
-  wrapper: HTMLDivElement
-  main: HTMLButtonElement
-  subs: HTMLButtonElement[]
+export type BranchGroup = {
+  group: HTMLDivElement
+  branch: HTMLButtonElement
+  leaves: HTMLButtonElement[]
 }
 
-export type CircleData = {
+export type NodeData = {
   label: string
   note: string
 }
@@ -20,8 +20,6 @@ export type BranchProgressItem = {
   button: HTMLButtonElement
   label: HTMLSpanElement
   count: HTMLSpanElement
-  fill: HTMLSpanElement
-  mainCircle: HTMLButtonElement
   index: number
 }
 
@@ -31,7 +29,7 @@ export type AppElements = {
   shell: HTMLDivElement
   header: HTMLElement
   canvas: HTMLDivElement
-  center: HTMLButtonElement
+  trunk: HTMLButtonElement
   guideLayer: HTMLDivElement
   sidePanel: HTMLElement
   focusMeta: HTMLParagraphElement
@@ -49,9 +47,9 @@ export type AppElements = {
 
 export type AppContext = {
   elements: AppElements
-  branches: BranchNode[]
-  allCircles: HTMLButtonElement[]
-  circleLookup: Map<string, HTMLButtonElement>
+  branchGroups: BranchGroup[]
+  allNodes: HTMLButtonElement[]
+  nodeLookup: Map<string, HTMLButtonElement>
   branchProgressItems: BranchProgressItem[]
   editor: EditorApi
 }

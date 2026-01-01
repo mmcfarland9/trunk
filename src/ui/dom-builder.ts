@@ -1,28 +1,28 @@
-import type { AppElements, BranchNode } from '../types'
-import { BRANCH_COUNT, SUB_CIRCLE_COUNT } from '../constants'
-import { syncCircle } from './circle-ui'
+import type { AppElements, BranchGroup } from '../types'
+import { BRANCH_COUNT, LEAF_COUNT } from '../constants'
+import { syncNode } from './node-ui'
 import ampersandImage from '../../assets/ampersand_alpha.png'
 
 export type DomBuilderResult = {
   elements: AppElements
-  branches: BranchNode[]
-  allCircles: HTMLButtonElement[]
-  circleLookup: Map<string, HTMLButtonElement>
+  branchGroups: BranchGroup[]
+  allNodes: HTMLButtonElement[]
+  nodeLookup: Map<string, HTMLButtonElement>
 }
 
-export type CircleClickHandler = (
+export type NodeClickHandler = (
   element: HTMLButtonElement,
-  circleId: string,
+  nodeId: string,
   placeholder: string
 ) => void
 
 export function buildApp(
   appRoot: HTMLDivElement,
-  onCircleClick: CircleClickHandler
+  onNodeClick: NodeClickHandler
 ): DomBuilderResult {
-  const allCircles: HTMLButtonElement[] = []
-  const branches: BranchNode[] = []
-  const circleLookup = new Map<string, HTMLButtonElement>()
+  const allNodes: HTMLButtonElement[] = []
+  const branchGroups: BranchGroup[] = []
+  const nodeLookup = new Map<string, HTMLButtonElement>()
 
   // Shell
   const shell = document.createElement('div')
@@ -81,71 +81,69 @@ export function buildApp(
   guideLayer.className = 'guide-layer'
 
   // Trunk
-  const center = document.createElement('button')
-  center.type = 'button'
-  center.className = 'circle center-circle'
-  center.dataset.circleId = 'center'
-  center.dataset.defaultLabel = 'Purpose'
-  center.dataset.placeholder = 'Purpose'
-  center.setAttribute('aria-label', 'Trunk - your core purpose')
-  center.style.setProperty('--ampersand', `url(${ampersandImage})`)
+  const trunk = document.createElement('button')
+  trunk.type = 'button'
+  trunk.className = 'node trunk'
+  trunk.dataset.nodeId = 'trunk'
+  trunk.dataset.defaultLabel = 'Purpose'
+  trunk.dataset.placeholder = 'Purpose'
+  trunk.setAttribute('aria-label', 'Trunk - your core purpose')
+  trunk.style.setProperty('--ampersand', `url(${ampersandImage})`)
 
-  const centerLabel = document.createElement('span')
-  centerLabel.className = 'center-title circle-label'
-  centerLabel.textContent = 'Purpose'
-  center.append(centerLabel)
+  const trunkLabel = document.createElement('span')
+  trunkLabel.className = 'trunk-title node-label'
+  trunkLabel.textContent = 'Purpose'
+  trunk.append(trunkLabel)
 
-  canvas.append(center)
+  canvas.append(trunk)
 
-  // Initialize trunk
-  initializeCircle(center, 'Purpose', circleLookup, onCircleClick)
-  allCircles.push(center)
+  initializeNode(trunk, 'Purpose', nodeLookup, onNodeClick)
+  allNodes.push(trunk)
 
   // Create branches
   for (let i = 0; i < BRANCH_COUNT; i += 1) {
     const wrapper = document.createElement('div')
-    wrapper.className = 'branch'
+    wrapper.className = 'branch-group'
 
-    const mainId = `branch-${i}`
-    const main = document.createElement('button')
-    main.type = 'button'
-    main.className = 'circle main-circle'
-    main.dataset.circleId = mainId
-    main.dataset.defaultLabel = String(i + 1)
-    main.dataset.placeholder = `Branch ${i + 1}`
-    main.dataset.branchIndex = String(i)
-    main.dataset.branchStyle = '1'
-    main.setAttribute('aria-label', `Branch ${i + 1}`)
+    const branchId = `branch-${i}`
+    const branch = document.createElement('button')
+    branch.type = 'button'
+    branch.className = 'node branch'
+    branch.dataset.nodeId = branchId
+    branch.dataset.defaultLabel = String(i + 1)
+    branch.dataset.placeholder = `Branch ${i + 1}`
+    branch.dataset.branchIndex = String(i)
+    branch.setAttribute('aria-label', `Branch ${i + 1}`)
 
-    const mainLabel = document.createElement('span')
-    mainLabel.className = 'circle-label'
-    main.append(mainLabel)
+    const branchLabel = document.createElement('span')
+    branchLabel.className = 'node-label'
+    branch.append(branchLabel)
 
-    initializeCircle(main, `Branch ${i + 1}`, circleLookup, onCircleClick)
-    allCircles.push(main)
+    initializeNode(branch, `Branch ${i + 1}`, nodeLookup, onNodeClick)
+    allNodes.push(branch)
 
-    const subs: HTMLButtonElement[] = []
-    for (let j = 0; j < SUB_CIRCLE_COUNT; j += 1) {
-      const subId = `branch-${i}-sub-${j}`
-      const sub = document.createElement('button')
-      sub.type = 'button'
-      sub.className = 'circle sub-circle'
-      sub.dataset.circleId = subId
-      sub.dataset.defaultLabel = ''
-      sub.dataset.placeholder = `Leaf ${j + 1} for branch ${i + 1}`
-      sub.dataset.branchIndex = String(i)
-      sub.dataset.leafIndex = String(j)
-      sub.style.setProperty('--leaf-delay', `${getBloomDelay(j)}ms`)
-      sub.setAttribute('aria-label', `Leaf ${j + 1} for branch ${i + 1}`)
+    const leaves: HTMLButtonElement[] = []
+    for (let j = 0; j < LEAF_COUNT; j += 1) {
+      const leafId = `branch-${i}-sub-${j}`
+      const leaf = document.createElement('button')
+      leaf.type = 'button'
+      leaf.className = 'node leaf'
+      leaf.dataset.nodeId = leafId
+      leaf.dataset.defaultLabel = ''
+      leaf.dataset.placeholder = `Leaf ${j + 1} for branch ${i + 1}`
+      leaf.dataset.branchIndex = String(i)
+      leaf.dataset.leafIndex = String(j)
+      leaf.style.setProperty('--leaf-delay', `${getBloomDelay(j)}ms`)
+      leaf.setAttribute('aria-label', `Leaf ${j + 1} for branch ${i + 1}`)
 
-      initializeCircle(sub, `Leaf ${j + 1} for branch ${i + 1}`, circleLookup, onCircleClick)
-      subs.push(sub)
-      allCircles.push(sub)
-      wrapper.append(sub)
+      initializeNode(leaf, `Leaf ${j + 1} for branch ${i + 1}`, nodeLookup, onNodeClick)
+      leaves.push(leaf)
+      allNodes.push(leaf)
+      wrapper.append(leaf)
     }
 
-    wrapper.append(main)
-    branches.push({ wrapper, main, subs })
+    wrapper.append(branch)
+    branchGroups.push({ group: wrapper, branch, leaves })
     canvas.append(wrapper)
   }
 
@@ -193,7 +191,7 @@ export function buildApp(
     shell,
     header,
     canvas,
-    center,
+    trunk,
     guideLayer,
     sidePanel,
     focusMeta: sidePanel.querySelector<HTMLParagraphElement>('.focus-meta')!,
@@ -215,29 +213,29 @@ export function buildApp(
 
   return {
     elements,
-    branches,
-    allCircles,
-    circleLookup,
+    branchGroups,
+    allNodes,
+    nodeLookup,
   }
 }
 
-function initializeCircle(
+function initializeNode(
   element: HTMLButtonElement,
   placeholder: string,
-  circleLookup: Map<string, HTMLButtonElement>,
-  onCircleClick: CircleClickHandler
+  nodeLookup: Map<string, HTMLButtonElement>,
+  onNodeClick: NodeClickHandler
 ): void {
-  const circleId = element.dataset.circleId
-  if (circleId) {
-    circleLookup.set(circleId, element)
+  const nodeId = element.dataset.nodeId
+  if (nodeId) {
+    nodeLookup.set(nodeId, element)
   }
   element.dataset.placeholder = placeholder
-  syncCircle(element)
+  syncNode(element)
 
   element.addEventListener('click', (event) => {
     event.stopPropagation()
-    if (circleId) {
-      onCircleClick(element, circleId, placeholder)
+    if (nodeId) {
+      onNodeClick(element, nodeId, placeholder)
     }
   })
 }
@@ -245,7 +243,7 @@ function initializeCircle(
 function getBloomDelay(leafIndex: number): number {
   const baseDelay = 60
   const delayStep = 40
-  const distanceFromFront = Math.min(leafIndex, SUB_CIRCLE_COUNT - leafIndex)
+  const distanceFromFront = Math.min(leafIndex, LEAF_COUNT - leafIndex)
   return baseDelay + distanceFromFront * delayStep
 }
 

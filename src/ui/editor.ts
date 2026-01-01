@@ -1,12 +1,6 @@
 import type { EditorApi } from '../types'
-import {
-  circleState,
-  saveState,
-  deleteCircleData,
-  setActiveCircle,
-  getActiveCircle,
-} from '../state'
-import { setCircleLabel } from './circle-ui'
+import { nodeState, saveState, deleteNodeData, setActiveNode, getActiveNode } from '../state'
+import { setNodeLabel } from './node-ui'
 
 export type EditorCallbacks = {
   onSave: () => void
@@ -15,12 +9,12 @@ export type EditorCallbacks = {
 
 export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks): EditorApi {
   const container = document.createElement('div')
-  container.className = 'circle-editor hidden'
+  container.className = 'node-editor hidden'
 
   container.innerHTML = `
     <form class="editor-card" novalidate>
       <label class="editor-label">
-        <span class="editor-label-text">Label (one word, 20 chars max)</span>
+        <span class="editor-label-text">Label</span>
         <input class="editor-input" name="label" type="text" maxlength="20" />
       </label>
       <label class="editor-label">
@@ -44,24 +38,24 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
 
   function closeEditor(): void {
     container.classList.add('hidden')
-    const active = getActiveCircle()
+    const active = getActiveNode()
     if (active) {
       active.classList.remove('is-active')
     }
-    setActiveCircle(null)
+    setActiveNode(null)
   }
 
   function open(target: HTMLButtonElement, placeholder: string): void {
-    const circleId = target.dataset.circleId
-    if (!circleId) return
+    const nodeId = target.dataset.nodeId
+    if (!nodeId) return
 
-    const isLeaf = target.classList.contains('sub-circle')
-    labelText.textContent = isLeaf ? 'Leaf Title' : 'Label (one word, 20 chars max)'
+    const isLeaf = target.classList.contains('leaf')
+    labelText.textContent = isLeaf ? 'Leaf Title' : 'Label'
     labelInput.placeholder = isLeaf ? 'Add title...' : placeholder
     noteInput.placeholder = isLeaf ? 'Add description...' : 'Add context'
 
     const defaultLabel = target.dataset.defaultLabel || ''
-    const existing = circleState[circleId]
+    const existing = nodeState[nodeId]
     const savedLabel = existing?.label || ''
 
     labelInput.value = savedLabel && savedLabel !== defaultLabel ? savedLabel : ''
@@ -69,12 +63,12 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
 
     container.classList.remove('hidden')
 
-    const currentActive = getActiveCircle()
+    const currentActive = getActiveNode()
     if (currentActive) {
       currentActive.classList.remove('is-active')
     }
 
-    setActiveCircle(target)
+    setActiveNode(target)
     target.classList.add('is-active')
     reposition(target)
     labelInput.focus()
@@ -107,38 +101,35 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
 
   function handleSubmit(event: SubmitEvent): void {
     event.preventDefault()
-    const activeCircle = getActiveCircle()
-    if (!activeCircle) return
+    const activeNode = getActiveNode()
+    if (!activeNode) return
 
-    const circleId = activeCircle.dataset.circleId
-    if (!circleId) return
+    const nodeId = activeNode.dataset.nodeId
+    if (!nodeId) return
 
     const rawLabel = labelInput.value.trim()
     const normalizedLabel = rawLabel.replace(/\s+/g, ' ').trim()
-    const isLeaf = activeCircle.classList.contains('sub-circle')
-    const label = normalizedLabel
-      ? (isLeaf ? normalizedLabel.slice(0, 20) : normalizedLabel.split(' ')[0].slice(0, 20))
-      : ''
+    const label = normalizedLabel || ''
     const note = noteInput.value.trim()
-    const defaultLabel = activeCircle.dataset.defaultLabel || ''
+    const defaultLabel = activeNode.dataset.defaultLabel || ''
     const appliedLabel = label || defaultLabel
 
-    setCircleLabel(activeCircle, appliedLabel)
+    setNodeLabel(activeNode, appliedLabel)
 
     const hasContent = Boolean(label || note)
-    activeCircle.dataset.filled = hasContent ? 'true' : 'false'
+    activeNode.dataset.filled = hasContent ? 'true' : 'false'
 
     if (hasContent) {
-      circleState[circleId] = {
+      nodeState[nodeId] = {
         label: appliedLabel,
         note,
       }
     } else {
-      deleteCircleData(circleId)
+      deleteNodeData(nodeId)
     }
 
     saveState(callbacks.onSave)
-    callbacks.onUpdateFocus(activeCircle)
+    callbacks.onUpdateFocus(activeNode)
     closeEditor()
   }
 
@@ -149,26 +140,26 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
 
   function handleClear(event: Event): void {
     event.preventDefault()
-    const activeCircle = getActiveCircle()
-    if (!activeCircle) return
+    const activeNode = getActiveNode()
+    if (!activeNode) return
 
-    const circleId = activeCircle.dataset.circleId
-    if (circleId) {
-      deleteCircleData(circleId)
+    const nodeId = activeNode.dataset.nodeId
+    if (nodeId) {
+      deleteNodeData(nodeId)
     }
 
-    setCircleLabel(activeCircle, activeCircle.dataset.defaultLabel || '')
-    activeCircle.dataset.filled = 'false'
+    setNodeLabel(activeNode, activeNode.dataset.defaultLabel || '')
+    activeNode.dataset.filled = 'false'
 
     saveState(callbacks.onSave)
-    callbacks.onUpdateFocus(activeCircle)
+    callbacks.onUpdateFocus(activeNode)
     closeEditor()
   }
 
   function handleOutside(event: MouseEvent): void {
-    const activeCircle = getActiveCircle()
+    const activeNode = getActiveNode()
     if (!container.classList.contains('hidden') && !container.contains(event.target as Node)) {
-      if (activeCircle && (event.target as Node) !== activeCircle) {
+      if (activeNode && (event.target as Node) !== activeNode) {
         closeEditor()
       }
     }

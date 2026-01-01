@@ -1,20 +1,13 @@
 import type { AppContext, ViewMode } from '../types'
 import { ZOOM_TRANSITION_DURATION, EDITOR_OPEN_DELAY } from '../constants'
+import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, getFocusedNode, isBranchView } from '../state'
 import {
-  getViewMode,
-  setViewModeState,
-  getActiveBranchIndex,
-  getHoveredBranchIndex,
-  getFocusedCircle,
-  isBranchView,
-} from '../state'
-import {
-  setCircleVisibility,
-  setFocusedCircle,
+  setNodeVisibility,
+  setFocusedNode,
   updateFocus,
-  getCirclePlaceholder,
-  animateGuideLines,
-} from '../ui'
+  getNodePlaceholder,
+} from '../ui/node-ui'
+import { animateGuideLines } from '../ui/layout'
 
 let zoomTimeoutId = 0
 
@@ -24,8 +17,8 @@ export type NavigationCallbacks = {
 }
 
 export function updateVisibility(ctx: AppContext): void {
-  const { canvas, center } = ctx.elements
-  const { branches } = ctx
+  const { canvas, trunk } = ctx.elements
+  const { branchGroups } = ctx
   const activeBranchIndex = getActiveBranchIndex()
   const hoveredBranchIndex = getHoveredBranchIndex()
   const isBranch = isBranchView()
@@ -33,28 +26,27 @@ export function updateVisibility(ctx: AppContext): void {
 
   canvas.classList.toggle('is-zoomed', isBranch)
   canvas.classList.toggle('is-previewing', isPreview)
-  center.classList.toggle('is-minimized', isBranch)
+  trunk.classList.toggle('is-minimized', isBranch)
 
-  // Keep the minimized trunk centered; camera handles the pan
   if (isBranch && activeBranchIndex !== null) {
-    center.style.setProperty('--minimized-x', '50%')
-    center.style.setProperty('--minimized-y', '50%')
+    trunk.style.setProperty('--minimized-x', '50%')
+    trunk.style.setProperty('--minimized-y', '50%')
   } else {
-    center.style.removeProperty('--minimized-x')
-    center.style.removeProperty('--minimized-y')
+    trunk.style.removeProperty('--minimized-x')
+    trunk.style.removeProperty('--minimized-y')
   }
 
-  branches.forEach((branch, index) => {
+  branchGroups.forEach((branchGroup, index) => {
     const isActive = isBranch && index === activeBranchIndex
     const isPreviewed = !isBranch && hoveredBranchIndex === index
-    branch.wrapper.classList.toggle('is-hidden', isBranch && !isActive)
-    branch.wrapper.classList.toggle('is-active', isActive)
-    branch.wrapper.classList.toggle('is-preview', isPreviewed)
+    branchGroup.group.classList.toggle('is-hidden', isBranch && !isActive)
+    branchGroup.group.classList.toggle('is-active', isActive)
+    branchGroup.group.classList.toggle('is-preview', isPreviewed)
 
-    setCircleVisibility(branch.main, !isBranch || isActive)
-    branch.subs.forEach((sub) => {
+    setNodeVisibility(branchGroup.branch, !isBranch || isActive)
+    branchGroup.leaves.forEach((leaf) => {
       const shouldShow = isBranch ? isActive : isPreviewed
-      setCircleVisibility(sub, shouldShow)
+      setNodeVisibility(leaf, shouldShow)
     })
   })
 
@@ -95,16 +87,16 @@ export function returnToOverview(
   ctx: AppContext,
   callbacks: NavigationCallbacks
 ): void {
-  const focusedCircle = getFocusedCircle()
+  const focusedNode = getFocusedNode()
   const fallback =
-    focusedCircle?.dataset.branchIndex !== undefined
-      ? ctx.branches[Number(focusedCircle.dataset.branchIndex)]?.main ?? null
-      : focusedCircle
+    focusedNode?.dataset.branchIndex !== undefined
+      ? ctx.branchGroups[Number(focusedNode.dataset.branchIndex)]?.branch ?? null
+      : focusedNode
 
   setViewMode('overview', ctx, callbacks)
 
   if (fallback) {
-    setFocusedCircle(fallback, ctx, (target) => updateFocus(target, ctx))
+    setFocusedNode(fallback, ctx, (target) => updateFocus(target, ctx))
   } else {
     updateFocus(null, ctx)
   }
@@ -114,34 +106,34 @@ export function enterBranchView(
   index: number,
   ctx: AppContext,
   callbacks: NavigationCallbacks,
-  focusCircle?: HTMLButtonElement | null,
+  focusNode?: HTMLButtonElement | null,
   openEditor = false
 ): void {
   setViewMode('branch', ctx, callbacks, index)
 
-  const target = focusCircle ?? ctx.branches[index]?.main ?? null
+  const target = focusNode ?? ctx.branchGroups[index]?.branch ?? null
   if (!target) return
 
-  setFocusedCircle(target, ctx, (t) => updateFocus(t, ctx))
+  setFocusedNode(target, ctx, (t) => updateFocus(t, ctx))
 
   if (openEditor) {
     window.setTimeout(() => {
-      ctx.editor.open(target, getCirclePlaceholder(target))
+      ctx.editor.open(target, getNodePlaceholder(target))
     }, EDITOR_OPEN_DELAY)
   }
 }
 
-export function findNextOpenCircle(
-  allCircles: HTMLButtonElement[],
+export function findNextOpenNode(
+  allNodes: HTMLButtonElement[],
   startFrom?: HTMLButtonElement | null
 ): HTMLButtonElement | null {
-  if (!allCircles.length) return null
+  if (!allNodes.length) return null
 
-  const startIndex = startFrom ? allCircles.indexOf(startFrom) : -1
+  const startIndex = startFrom ? allNodes.indexOf(startFrom) : -1
 
-  for (let offset = 1; offset <= allCircles.length; offset += 1) {
-    const index = (startIndex + offset + allCircles.length) % allCircles.length
-    const candidate = allCircles[index]
+  for (let offset = 1; offset <= allNodes.length; offset += 1) {
+    const index = (startIndex + offset + allNodes.length) % allNodes.length
+    const candidate = allNodes[index]
     if (candidate.dataset.filled !== 'true') {
       return candidate
     }
@@ -150,32 +142,32 @@ export function findNextOpenCircle(
   return null
 }
 
-export function openCircleForEditing(
-  circle: HTMLButtonElement,
+export function openNodeForEditing(
+  node: HTMLButtonElement,
   ctx: AppContext,
   callbacks: NavigationCallbacks
 ): void {
-  const branchIndex = circle.dataset.branchIndex
-  const isCenter = circle.dataset.circleId === 'center'
+  const branchIndex = node.dataset.branchIndex
+  const isTrunk = node.dataset.nodeId === 'trunk'
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
 
   if (branchIndex !== undefined) {
     const index = Number(branchIndex)
     if (viewMode !== 'branch' || activeBranchIndex !== index) {
-      enterBranchView(index, ctx, callbacks, circle, true)
+      enterBranchView(index, ctx, callbacks, node, true)
       return
     }
-  } else if (isCenter && viewMode === 'branch') {
+  } else if (isTrunk && viewMode === 'branch') {
     setViewMode('overview', ctx, callbacks)
     window.setTimeout(() => {
-      setFocusedCircle(circle, ctx, (t) => updateFocus(t, ctx))
-      ctx.editor.open(circle, getCirclePlaceholder(circle))
+      setFocusedNode(node, ctx, (t) => updateFocus(t, ctx))
+      ctx.editor.open(node, getNodePlaceholder(node))
     }, EDITOR_OPEN_DELAY)
     return
   }
 
-  setFocusedCircle(circle, ctx, (t) => updateFocus(t, ctx))
-  circle.focus({ preventScroll: true })
-  ctx.editor.open(circle, getCirclePlaceholder(circle))
+  setFocusedNode(node, ctx, (t) => updateFocus(t, ctx))
+  node.focus({ preventScroll: true })
+  ctx.editor.open(node, getNodePlaceholder(node))
 }

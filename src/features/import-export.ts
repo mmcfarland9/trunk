@@ -1,6 +1,6 @@
-import type { AppContext, CircleData } from '../types'
-import { circleState, saveState, clearState, hasCircleData } from '../state'
-import { syncCircle, setCircleLabel, setFocusedCircle, updateFocus } from '../ui'
+import type { AppContext, NodeData } from '../types'
+import { nodeState, saveState, clearState, hasNodeData } from '../state'
+import { syncNode, setNodeLabel, setFocusedNode, updateFocus } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
 
 export type ImportExportCallbacks = {
@@ -12,7 +12,7 @@ export function handleExport(ctx: AppContext): void {
   const payload = {
     version: 3,
     exportedAt: new Date().toISOString(),
-    circles: circleState,
+    circles: nodeState,
   }
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -33,15 +33,13 @@ export function handleReset(ctx: AppContext, callbacks: ImportExportCallbacks): 
 
   clearState()
 
-  ctx.allCircles.forEach((circle) => {
-    setCircleLabel(circle, circle.dataset.defaultLabel || '')
-    circle.dataset.filled = 'false'
+  ctx.allNodes.forEach((node) => {
+    setNodeLabel(node, node.dataset.defaultLabel || '')
+    node.dataset.filled = 'false'
   })
 
-  syncCircle(ctx.elements.center)
-
   callbacks.onSetViewMode('overview')
-  setFocusedCircle(null, ctx, () => {})
+  setFocusedNode(null, ctx, () => {})
   updateFocus(null, ctx)
   callbacks.onUpdateStats()
   updateStatusMeta(ctx.elements)
@@ -58,7 +56,7 @@ export async function handleImport(
 
   importInput.value = ''
 
-  if (hasCircleData()) {
+  if (hasNodeData()) {
     const confirmed = window.confirm('Import notes? This will replace existing notes.')
     if (!confirmed) {
       return
@@ -73,34 +71,32 @@ export async function handleImport(
       throw new Error('Invalid format')
     }
 
-    const nextState: Record<string, CircleData> = {}
+    const nextState: Record<string, NodeData> = {}
     Object.entries(raw as Record<string, unknown>).forEach(([key, value]) => {
-      if (!ctx.circleLookup.has(key)) return
+      if (!ctx.nodeLookup.has(key)) return
       if (!value || typeof value !== 'object') return
 
-      const label = typeof (value as CircleData).label === 'string' ? (value as CircleData).label.trim() : ''
-      const noteValue = typeof (value as CircleData).note === 'string' ? (value as CircleData).note.trim() : ''
+      const label = typeof (value as NodeData).label === 'string' ? (value as NodeData).label.trim() : ''
+      const noteValue = typeof (value as NodeData).note === 'string' ? (value as NodeData).note.trim() : ''
       const detailRaw = (value as { detail?: unknown }).detail
       const legacyDetail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
       const note = noteValue || legacyDetail
 
       if (!label && !note) return
 
-      const defaultLabel = ctx.circleLookup.get(key)?.dataset.defaultLabel || ''
+      const defaultLabel = ctx.nodeLookup.get(key)?.dataset.defaultLabel || ''
       nextState[key] = {
         label: label || defaultLabel,
         note,
       }
     })
 
-    // Clear and repopulate circleState
-    Object.keys(circleState).forEach((key) => delete circleState[key])
+    Object.keys(nodeState).forEach((key) => delete nodeState[key])
     Object.entries(nextState).forEach(([key, value]) => {
-      circleState[key] = value
+      nodeState[key] = value
     })
 
-    ctx.allCircles.forEach((circle) => syncCircle(circle))
-    syncCircle(ctx.elements.center)
+    ctx.allNodes.forEach((node) => syncNode(node))
 
     ctx.editor.close()
     saveState(() => updateStatusMeta(ctx.elements))

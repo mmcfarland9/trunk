@@ -14,7 +14,7 @@ No test or lint commands are currently configured.
 
 ## Architecture
 
-Harada is a 64-circle planning map application (1 trunk + 8 branches × 8 leaves) built with vanilla TypeScript and Vite.
+Harada is a 64-leaf planning map application (1 trunk + 8 branches × 8 leaves) built with vanilla TypeScript and Vite.
 
 ### Module Structure
 
@@ -24,7 +24,7 @@ src/
 ├── types.ts          # Core type definitions
 ├── constants.ts      # Application constants (BRANCH_COUNT, STORAGE_KEY, etc.)
 ├── state/            # Global state management
-│   ├── circle-state.ts   # Circle data persistence (localStorage)
+│   ├── node-state.ts     # Node data persistence (localStorage)
 │   ├── view-state.ts     # View mode & UI state
 │   └── index.ts          # Re-exports
 ├── features/         # Feature modules
@@ -32,15 +32,12 @@ src/
 │   ├── progress.ts       # Progress tracking & stats
 │   ├── status.ts         # Status messages
 │   ├── import-export.ts  # JSON export/import
-│   ├── hover-branch.ts   # Branch hover preview
-│   └── index.ts          # Re-exports
+│   └── hover-branch.ts   # Branch hover preview
 ├── ui/               # UI components & rendering
 │   ├── dom-builder.ts    # DOM tree construction
-│   ├── circle-ui.ts      # Circle-specific UI logic
+│   ├── node-ui.ts        # Node-specific UI logic
 │   ├── editor.ts         # Modal editor
-│   ├── layout.ts         # Positioning, SVG guides, wind animation
-│   ├── leaf-sizing.ts    # Leaf text wrapping & sizing
-│   └── index.ts          # Re-exports
+│   └── layout.ts         # Positioning, SVG guides, wind animation
 └── styles/           # Modular CSS
     ├── index.css         # Main imports
     ├── variables.css     # CSS custom properties
@@ -48,7 +45,7 @@ src/
     ├── layout.css        # Grid/flexbox layout
     ├── buttons.css       # Button styles
     ├── canvas.css        # Canvas & zoom
-    ├── circles.css       # Circle components
+    ├── nodes.css         # Node components
     ├── editor.css        # Modal editor
     ├── panel.css         # Side panel
     ├── utilities.css     # Utility classes
@@ -57,29 +54,29 @@ src/
 
 ### Core Types (src/types.ts)
 
-- `CircleData` - label and note text for each circle
-- `BranchNode` - wrapper element, main circle, and 8 sub-circles
+- `NodeData` - label and note text for each node
+- `BranchGroup` - wrapper element, branch node, and 8 leaves
 - `ViewMode` - 'overview' | 'branch'
 - `AppContext` - central context object passed to features
 - `AppElements` - references to key DOM elements
 
 ### State Management (src/state/)
 
-- `circleState` object holds all circle data, keyed by circle ID
+- `nodeState` object holds all node data, keyed by node ID
 - Changes auto-persist to localStorage (`harada-notes-v1` key)
-- `view-state.ts` tracks current mode, focused/active circles
+- `view-state.ts` tracks current mode, focused/active nodes
 
 ### Key Features
 
 - **Two view modes**: `overview` (all 8 branches) and `branch` (focused single branch)
-- Inline editor modal for circle label/notes
+- Inline editor modal for node label/notes
 - Progress bars (overall and per-branch completion)
 - Export/import via JSON for backup and sharing
-- SVG guide lines connecting circles
+- SVG guide lines connecting nodes
 - Wind animation for organic movement
 - Responsive layout with breakpoints at 960px, 720px, 520px
 
-### Circle IDs
+### Node IDs
 
 - Trunk: `center`
 - Branches: `branch-0` through `branch-7`
@@ -90,8 +87,8 @@ src/
 - 2-space indentation
 - Strict TypeScript (`noUnusedLocals`, `noUnusedParameters` enabled)
 - ES2022 target with ESNext modules
-- File naming: kebab-case (`circle-state.ts`)
-- Exports: camelCase (`circleState`, `getViewMode`)
+- File naming: kebab-case (`node-state.ts`)
+- Exports: camelCase (`nodeState`, `getViewMode`)
 - Constants: UPPER_SNAKE_CASE (`BRANCH_COUNT`)
 - CSS classes: kebab-case with `.is-*` modifiers for states
 

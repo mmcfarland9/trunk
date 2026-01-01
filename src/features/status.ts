@@ -1,6 +1,6 @@
 import type { AppElements } from '../types'
 import { STATUS_DEFAULT_MESSAGE } from '../constants'
-import { lastSavedAt, hasCircleData } from '../state'
+import { lastSavedAt, hasNodeData } from '../state'
 
 let statusTimeoutId = 0
 
@@ -30,7 +30,7 @@ export function flashStatus(
 export function updateStatusMeta(elements: Pick<AppElements, 'statusMeta'>): void {
   if (lastSavedAt) {
     elements.statusMeta.textContent = `Last saved at ${formatTime(lastSavedAt)}.`
-  } else if (hasCircleData()) {
+  } else if (hasNodeData()) {
     elements.statusMeta.textContent = 'Saved notes loaded from this browser.'
   } else {
     elements.statusMeta.textContent = 'No saved notes yet.'

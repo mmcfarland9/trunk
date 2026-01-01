@@ -1,56 +1,152 @@
 import type { AppContext } from '../types'
-import { circleState, getFocusedCircle, setFocusedCircleState } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState } from '../state'
 
-export function setCircleLabel(element: HTMLButtonElement, label: string): void {
-  if (element.classList.contains('sub-circle')) {
+export function setNodeLabel(element: HTMLButtonElement, label: string): void {
+  if (element.classList.contains('leaf')) {
     element.textContent = formatLeafLabel(label, element)
     return
   }
 
-  const labelNode = element.querySelector<HTMLElement>('.circle-label')
+  const labelNode = element.querySelector<HTMLElement>('.node-label')
+
+  if (element.classList.contains('branch')) {
+    const formatted = formatBoxLabel(label)
+    if (labelNode) {
+      labelNode.textContent = formatted.middleRows
+    } else {
+      element.textContent = formatted.middleRows
+    }
+    element.dataset.topBorder = formatted.topBorder
+    element.dataset.bottomBorder = formatted.bottomBorder
+    return
+  }
+
   if (labelNode) {
     labelNode.textContent = label
-  } else {
-    element.textContent = label
+    return
+  }
+
+  element.textContent = label
+}
+
+type BoxFormat = {
+  topBorder: string
+  middleRows: string
+  bottomBorder: string
+}
+
+function formatBoxLabel(label: string): BoxFormat {
+  const lines = findSquarestWrap(label, 3)
+  const maxLineLength = Math.max(...lines.map(l => l.length), 1)
+
+  const paddedLines = lines.map(line => {
+    const padding = maxLineLength - line.length
+    const leftPad = Math.floor(padding / 2)
+    const rightPad = padding - leftPad
+    return `|${' '.repeat(leftPad + 2)}${line}${' '.repeat(rightPad + 2)}|`
+  })
+
+  const middleRowWidth = maxLineLength + 6
+  const dashCount = Math.max(middleRowWidth - 2, 1)
+  const dashes = '-'.repeat(dashCount)
+
+  return {
+    topBorder: `╭${dashes}╮`,
+    middleRows: paddedLines.join('\n'),
+    bottomBorder: `╰${dashes}╯`,
   }
 }
 
-export function getCirclePlaceholder(element: HTMLButtonElement): string {
-  return element.dataset.placeholder || element.dataset.defaultLabel || 'Circle'
+function findSquarestWrap(text: string, maxLines: number): string[] {
+  const words = text.trim().split(/\s+/)
+  if (words.length === 0) return ['']
+  if (words.length === 1) return [words[0]]
+
+  const candidates = generateLineCandidates(words, maxLines)
+
+  let best = candidates[0]
+  let bestScore = scoreSquareness(best)
+
+  for (const candidate of candidates) {
+    const score = scoreSquareness(candidate)
+    if (score < bestScore) {
+      bestScore = score
+      best = candidate
+    }
+  }
+
+  return best
 }
 
-export function setCircleVisibility(element: HTMLButtonElement, isVisible: boolean): void {
+function generateLineCandidates(words: string[], maxLines: number): string[][] {
+  const joined = words.join(' ')
+  const candidates: string[][] = [[joined]]
+  if (words.length < 2 || maxLines < 2) return candidates
+  for (let i = 1; i < words.length; i++) {
+    candidates.push([words.slice(0, i).join(' '), words.slice(i).join(' ')])
+  }
+  if (words.length < 3 || maxLines < 3) return candidates
+  for (let i = 1; i < words.length - 1; i++) {
+    for (let j = i + 1; j < words.length; j++) {
+      candidates.push([words.slice(0, i).join(' '), words.slice(i, j).join(' '), words.slice(j).join(' ')])
+    }
+  }
+  return candidates
+}
+
+function scoreSquareness(lines: string[]): number {
+  const lineLengths = lines.map(l => l.length)
+  const maxWidth = Math.max(...lineLengths)
+  const minWidth = Math.min(...lineLengths)
+  const height = lines.length
+
+  const boxWidth = maxWidth + 4
+  const boxHeight = height + 2
+
+  const ratio = boxWidth / boxHeight
+  const squareScore = Math.abs(ratio - 1)
+
+  const balanceScore = (maxWidth - minWidth) / Math.max(maxWidth, 1)
+
+  return squareScore + balanceScore * 1.5
+}
+
+export function getNodePlaceholder(element: HTMLButtonElement): string {
+  return element.dataset.placeholder || element.dataset.defaultLabel || 'Node'
+}
+
+export function setNodeVisibility(element: HTMLButtonElement, isVisible: boolean): void {
   element.classList.toggle('is-hidden', !isVisible)
   element.setAttribute('aria-hidden', isVisible ? 'false' : 'true')
   element.tabIndex = isVisible ? 0 : -1
 }
 
-export function syncCircle(element: HTMLButtonElement): void {
-  const circleId = element.dataset.circleId
-  if (!circleId) return
+export function syncNode(element: HTMLButtonElement): void {
+  const nodeId = element.dataset.nodeId
+  if (!nodeId) return
 
-  const stored = circleState[circleId]
+  const stored = nodeState[nodeId]
   const defaultLabel = element.dataset.defaultLabel || ''
   const storedLabel = stored?.label?.trim() || ''
   const label = storedLabel || defaultLabel
 
-  setCircleLabel(element, label)
+  setNodeLabel(element, label)
 
   const hasContent = Boolean(stored && (stored.note?.trim() || (storedLabel && storedLabel !== defaultLabel)))
   element.dataset.filled = hasContent ? 'true' : 'false'
 }
 
-export function setFocusedCircle(
+export function setFocusedNode(
   target: HTMLButtonElement | null,
   ctx: AppContext,
   updateFocusCallback: (target: HTMLButtonElement | null) => void
 ): void {
-  const currentFocused = getFocusedCircle()
+  const currentFocused = getFocusedNode()
   if (currentFocused && currentFocused !== target) {
     currentFocused.classList.remove('is-focused')
   }
 
-  setFocusedCircleState(target)
+  setFocusedNodeState(target)
 
   if (target) {
     target.classList.add('is-focused')
@@ -78,17 +174,17 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
 
   focusSection?.classList.remove('is-empty')
 
-  const circleId = target.dataset.circleId
+  const nodeId = target.dataset.nodeId
   const defaultLabel = target.dataset.defaultLabel || ''
-  const stored = circleId ? circleState[circleId] : undefined
+  const stored = nodeId ? nodeState[nodeId] : undefined
   const label = stored?.label?.trim() || ''
   const note = stored?.note?.trim() || ''
   const hasCustomLabel = Boolean(label && label !== defaultLabel)
-  const isLeaf = target.classList.contains('sub-circle')
-  const placeholder = getCirclePlaceholder(target)
+  const isLeaf = target.classList.contains('leaf')
+  const placeholder = getNodePlaceholder(target)
   const displayLabel = hasCustomLabel ? label : isLeaf ? 'Add title...' : placeholder
 
-  focusMeta.textContent = target.getAttribute('aria-label') || 'Selected circle'
+  focusMeta.textContent = target.getAttribute('aria-label') || 'Selected node'
   focusTitle.textContent = displayLabel
   focusTitle.classList.toggle('is-muted', !hasCustomLabel)
   focusNote.textContent = note || (isLeaf ? 'Add description...' : 'Add notes to capture the context and next steps.')
@@ -113,7 +209,7 @@ function formatLeafLabel(label: string, element: HTMLButtonElement): string {
   const words = trimmed.split(/\s+/)
   if (words.length === 1) return trimmed
 
-  const candidates = buildLeafCandidates(words)
+  const candidates = generateLineCandidates(words, 3)
   let best = candidates[0]
   let bestScore = Number.POSITIVE_INFINITY
 
@@ -129,28 +225,6 @@ function formatLeafLabel(label: string, element: HTMLButtonElement): string {
   return best.join('\n')
 }
 
-function buildLeafCandidates(words: string[]): string[][] {
-  const joined = words.join(' ')
-  const candidates: string[][] = [[joined]]
-
-  for (let i = 1; i < words.length; i += 1) {
-    candidates.push([words.slice(0, i).join(' '), words.slice(i).join(' ')])
-  }
-
-  if (words.length > 2) {
-    for (let i = 1; i < words.length - 1; i += 1) {
-      for (let j = i + 1; j < words.length; j += 1) {
-        candidates.push([
-          words.slice(0, i).join(' '),
-          words.slice(i, j).join(' '),
-          words.slice(j).join(' '),
-        ])
-      }
-    }
-  }
-
-  return candidates
-}
 
 function scoreLeafLines(lines: string[], metrics: LeafMetrics): number {
   const lineWidths = lines.map((line) => measureLineWidth(line, metrics))

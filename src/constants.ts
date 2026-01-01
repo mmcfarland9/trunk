@@ -1,7 +1,7 @@
-// Circle structure
+// Tree structure
 export const BRANCH_COUNT = 8
-export const SUB_CIRCLE_COUNT = 8
-export const TOTAL_CIRCLES = BRANCH_COUNT * (SUB_CIRCLE_COUNT + 1) + 1
+export const LEAF_COUNT = 8
+export const TOTAL_NODES = BRANCH_COUNT * (LEAF_COUNT + 1) + 1
 
 // Storage
 export const STORAGE_KEY = 'harada-notes-v1'
