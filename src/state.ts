@@ -73,6 +73,7 @@ export function hasNodeData(): boolean {
 let viewMode: ViewMode = 'overview'
 let activeBranchIndex: number | null = null
 let hoveredBranchIndex: number | null = null
+let sidebarHover = false
 let focusedNode: HTMLButtonElement | null = null
 let activeNode: HTMLButtonElement | null = null
 
@@ -101,6 +102,14 @@ export function getHoveredBranchIndex(): number | null {
 
 export function setHoveredBranchIndex(index: number | null): void {
   hoveredBranchIndex = index
+}
+
+export function getIsSidebarHover(): boolean {
+  return sidebarHover
+}
+
+export function setIsSidebarHover(value: boolean): void {
+  sidebarHover = value
 }
 
 export function getFocusedNode(): HTMLButtonElement | null {

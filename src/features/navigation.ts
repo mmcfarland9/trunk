@@ -39,15 +39,46 @@ export function updateVisibility(ctx: AppContext): void {
   branchGroups.forEach((branchGroup, index) => {
     const isActive = isBranch && index === activeBranchIndex
     const isPreviewed = !isBranch && hoveredBranchIndex === index
+    const wasPreview = branchGroup.group.classList.contains('is-preview')
+
     branchGroup.group.classList.toggle('is-hidden', isBranch && !isActive)
     branchGroup.group.classList.toggle('is-active', isActive)
     branchGroup.group.classList.toggle('is-preview', isPreviewed)
 
     setNodeVisibility(branchGroup.branch, !isBranch || isActive)
-    branchGroup.leaves.forEach((leaf) => {
-      const shouldShow = isBranch ? isActive : isPreviewed
-      setNodeVisibility(leaf, shouldShow)
-    })
+
+    // Delay hiding leaves when exiting preview for smooth fade-out
+    const shouldShow = isBranch ? isActive : isPreviewed
+    if (wasPreview && !isPreviewed && !shouldShow) {
+      // Let the fade-out transition play before hiding with randomized timing
+      const maxDelay = 400
+      const baseDuration = 800
+      const durationVariance = 600
+      let maxTotalTime = 0
+
+      branchGroup.leaves.forEach((leaf) => {
+        const delay = Math.random() * maxDelay
+        const duration = baseDuration + Math.random() * durationVariance
+        leaf.style.setProperty('--fade-delay', `${delay}ms`)
+        leaf.style.setProperty('--fade-duration', `${duration}ms`)
+        leaf.classList.add('is-fading')
+        maxTotalTime = Math.max(maxTotalTime, delay + duration)
+      })
+
+      setTimeout(() => {
+        branchGroup.leaves.forEach((leaf) => {
+          leaf.classList.remove('is-fading')
+          leaf.style.removeProperty('--fade-delay')
+          leaf.style.removeProperty('--fade-duration')
+          setNodeVisibility(leaf, false)
+        })
+      }, maxTotalTime + 50)
+    } else {
+      branchGroup.leaves.forEach((leaf) => {
+        leaf.classList.remove('is-fading')
+        setNodeVisibility(leaf, shouldShow)
+      })
+    }
   })
 
 }
@@ -94,6 +125,7 @@ export function returnToOverview(
       : focusedNode
 
   setViewMode('overview', ctx, callbacks)
+  callbacks.onUpdateStats() // Update sidebar to show branches
 
   if (fallback) {
     setFocusedNode(fallback, ctx, (target) => updateFocus(target, ctx))
@@ -110,6 +142,7 @@ export function enterBranchView(
   openEditor = false
 ): void {
   setViewMode('branch', ctx, callbacks, index)
+  callbacks.onUpdateStats() // Update sidebar to show leaves
 
   const target = focusNode ?? ctx.branchGroups[index]?.branch ?? null
   if (!target) return

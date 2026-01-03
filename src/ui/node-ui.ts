@@ -2,12 +2,20 @@ import type { AppContext } from '../types'
 import { nodeState, getFocusedNode, setFocusedNodeState } from '../state'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
+  const labelNode = element.querySelector<HTMLElement>('.node-label')
+
   if (element.classList.contains('leaf')) {
-    element.textContent = formatLeafLabel(label, element)
+    const formatted = formatLeafBoxLabel(label, element)
+    if (labelNode) {
+      labelNode.textContent = formatted.middleRows
+    } else {
+      element.textContent = formatted.middleRows
+    }
+    element.dataset.topBorder = formatted.topBorder
+    element.dataset.bottomBorder = formatted.bottomBorder
+    element.dataset.labelLines = String(formatted.lineCount)
     return
   }
-
-  const labelNode = element.querySelector<HTMLElement>('.node-label')
 
   if (element.classList.contains('branch')) {
     const formatted = formatBoxLabel(label)
@@ -18,6 +26,7 @@ export function setNodeLabel(element: HTMLButtonElement, label: string): void {
     }
     element.dataset.topBorder = formatted.topBorder
     element.dataset.bottomBorder = formatted.bottomBorder
+    element.dataset.labelLines = String(formatted.lineCount)
     return
   }
 
@@ -33,83 +42,94 @@ type BoxFormat = {
   topBorder: string
   middleRows: string
   bottomBorder: string
+  lineCount: number
+}
+
+type BorderStyle = {
+  topLeft: string
+  topRight: string
+  bottomLeft: string
+  bottomRight: string
+  horizontal: string
+  vertical: string
+}
+
+const LEAF_BORDER_STYLES: Record<string, BorderStyle> = {
+  '0': {
+    topLeft: '┌',
+    topRight: '┐',
+    bottomLeft: '└',
+    bottomRight: '┘',
+    horizontal: '─',
+    vertical: '',
+  },
 }
 
 function formatBoxLabel(label: string): BoxFormat {
-  const lines = findSquarestWrap(label, 3)
-  const maxLineLength = Math.max(...lines.map(l => l.length), 1)
+  const trimmed = label.trim()
+  const words = trimmed.split(/\s+/)
 
+  // Target wider 16:9-ish boxes - allow 2 lines max for most text
+  const totalChars = words.reduce((sum, w) => sum + w.length, 0) + words.length - 1
+  const targetWidth = Math.max(Math.max(...words.map(w => w.length), 1), Math.ceil(totalChars / 2))
+
+  // Wrap text to target width
+  const lines: string[] = []
+  let currentLine = ''
+  for (const word of words) {
+    if (!currentLine) {
+      currentLine = word
+    } else if (currentLine.length + 1 + word.length <= targetWidth) {
+      currentLine += ' ' + word
+    } else {
+      lines.push(currentLine)
+      currentLine = word
+    }
+  }
+  if (currentLine) lines.push(currentLine)
+
+  const maxLineLength = Math.max(...lines.map(l => l.length), 1)
   const paddedLines = lines.map(line => {
     const padding = maxLineLength - line.length
     const leftPad = Math.floor(padding / 2)
     const rightPad = padding - leftPad
-    return `|${' '.repeat(leftPad + 2)}${line}${' '.repeat(rightPad + 2)}|`
+    return `${' '.repeat(leftPad)}${line}${' '.repeat(rightPad)}`
   })
 
-  const middleRowWidth = maxLineLength + 6
-  const dashCount = Math.max(middleRowWidth - 2, 1)
-  const dashes = '-'.repeat(dashCount)
+  const dashCount = Math.max(maxLineLength, 1)
+  const dashes = '━'.repeat(dashCount)
 
   return {
     topBorder: `╭${dashes}╮`,
     middleRows: paddedLines.join('\n'),
     bottomBorder: `╰${dashes}╯`,
+    lineCount: lines.length,
   }
 }
 
-function findSquarestWrap(text: string, maxLines: number): string[] {
-  const words = text.trim().split(/\s+/)
-  if (words.length === 0) return ['']
-  if (words.length === 1) return [words[0]]
+function formatLeafBoxLabel(label: string, element: HTMLButtonElement): BoxFormat {
+  const styleKey = element.dataset.leafStyle ?? '0'
+  const style = LEAF_BORDER_STYLES[styleKey] ?? LEAF_BORDER_STYLES['0']
+  const formatted = formatLeafLabel(label, element)
+  const lines = formatted ? formatted.split('\n') : ['']
+  const maxLineLength = Math.max(...lines.map((line) => line.length), 1)
+  const paddedLines = lines.map((line) => {
+    const padding = maxLineLength - line.length
+    const leftPad = Math.floor(padding / 2)
+    const rightPad = padding - leftPad
+    return `${' '.repeat(leftPad)}${line}${' '.repeat(rightPad)}`
+  })
+  const dashCount = Math.max(maxLineLength, 1)
+  const dashes = style.horizontal.repeat(dashCount)
 
-  const candidates = generateLineCandidates(words, maxLines)
-
-  let best = candidates[0]
-  let bestScore = scoreSquareness(best)
-
-  for (const candidate of candidates) {
-    const score = scoreSquareness(candidate)
-    if (score < bestScore) {
-      bestScore = score
-      best = candidate
-    }
+  return {
+    topBorder: `${style.topLeft}${dashes}${style.topRight}`,
+    middleRows: paddedLines.join('\n'),
+    bottomBorder: `${style.bottomLeft}${dashes}${style.bottomRight}`,
+    lineCount: lines.length,
   }
-
-  return best
 }
 
-function generateLineCandidates(words: string[], maxLines: number): string[][] {
-  const joined = words.join(' ')
-  const candidates: string[][] = [[joined]]
-  if (words.length < 2 || maxLines < 2) return candidates
-  for (let i = 1; i < words.length; i++) {
-    candidates.push([words.slice(0, i).join(' '), words.slice(i).join(' ')])
-  }
-  if (words.length < 3 || maxLines < 3) return candidates
-  for (let i = 1; i < words.length - 1; i++) {
-    for (let j = i + 1; j < words.length; j++) {
-      candidates.push([words.slice(0, i).join(' '), words.slice(i, j).join(' '), words.slice(j).join(' ')])
-    }
-  }
-  return candidates
-}
-
-function scoreSquareness(lines: string[]): number {
-  const lineLengths = lines.map(l => l.length)
-  const maxWidth = Math.max(...lineLengths)
-  const minWidth = Math.min(...lineLengths)
-  const height = lines.length
-
-  const boxWidth = maxWidth + 4
-  const boxHeight = height + 2
-
-  const ratio = boxWidth / boxHeight
-  const squareScore = Math.abs(ratio - 1)
-
-  const balanceScore = (maxWidth - minWidth) / Math.max(maxWidth, 1)
-
-  return squareScore + balanceScore * 1.5
-}
 
 export function getNodePlaceholder(element: HTMLButtonElement): string {
   return element.dataset.placeholder || element.dataset.defaultLabel || 'Node'
@@ -202,6 +222,22 @@ const DEFAULT_LEAF_METRICS = {
 }
 const leafMeasureContext = document.createElement('canvas').getContext('2d')
 
+function generateLeafLineCandidates(words: string[]): string[][] {
+  const joined = words.join(' ')
+  const candidates: string[][] = [[joined]]
+  if (words.length < 2) return candidates
+  for (let i = 1; i < words.length; i++) {
+    candidates.push([words.slice(0, i).join(' '), words.slice(i).join(' ')])
+  }
+  if (words.length < 3) return candidates
+  for (let i = 1; i < words.length - 1; i++) {
+    for (let j = i + 1; j < words.length; j++) {
+      candidates.push([words.slice(0, i).join(' '), words.slice(i, j).join(' '), words.slice(j).join(' ')])
+    }
+  }
+  return candidates
+}
+
 function formatLeafLabel(label: string, element: HTMLButtonElement): string {
   const trimmed = label.trim()
   if (!trimmed) return ''
@@ -209,12 +245,12 @@ function formatLeafLabel(label: string, element: HTMLButtonElement): string {
   const words = trimmed.split(/\s+/)
   if (words.length === 1) return trimmed
 
-  const candidates = generateLineCandidates(words, 3)
+  const candidates = generateLeafLineCandidates(words)
   let best = candidates[0]
   let bestScore = Number.POSITIVE_INFINITY
 
   const metrics = getLeafMetrics(element)
-  candidates.forEach((lines) => {
+  candidates.forEach((lines: string[]) => {
     const score = scoreLeafLines(lines, metrics)
     if (score < bestScore) {
       bestScore = score

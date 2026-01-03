@@ -37,7 +37,7 @@ export type AppElements = {
   focusNote: HTMLParagraphElement
   progressCount: HTMLParagraphElement
   progressFill: HTMLSpanElement
-  nextButton: HTMLButtonElement
+  backToTrunkButton: HTMLButtonElement
   branchProgress: HTMLDivElement
   statusMessage: HTMLParagraphElement
   statusMeta: HTMLParagraphElement

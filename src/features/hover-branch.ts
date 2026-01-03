@@ -1,25 +1,43 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex } from '../state'
+import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
 import { enterBranchView, returnToOverview, updateVisibility } from './navigation'
-import { updateScopedProgress } from './progress'
+import { updateScopedProgress, updateBranchProgress } from './progress'
 import type { NavigationCallbacks } from './navigation'
 import { updateFocus } from '../ui/node-ui'
+
+// Note: updateFocus, updateScopedProgress are used by graphic hover (setupHoverBranch), not sidebar hover
 
 const HOVER_MIN_RADIUS_RATIO = 0.55
 const HOVER_MAX_RADIUS_RATIO = 1.35
 const SCROLL_THRESHOLD = 150 // pixels of scroll delta needed to trigger zoom
+
+export function previewBranchFromSidebar(ctx: AppContext, branchIndex: number): void {
+  if (getViewMode() !== 'overview') return
+  setIsSidebarHover(true)
+  setHoveredBranchIndex(branchIndex)
+  updateVisibility(ctx)
+}
+
+export function clearSidebarPreview(ctx: AppContext): void {
+  if (!getIsSidebarHover()) return
+  setIsSidebarHover(false)
+  setHoveredBranchIndex(null)
+  updateVisibility(ctx)
+}
 
 export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
   const { canvas } = ctx.elements
   let scrollAccumulator = 0
 
   function clearHover(): void {
+    setIsSidebarHover(false) // Reset sidebar hover state
     if (getHoveredBranchIndex() !== null) {
       setHoveredBranchIndex(null)
       updateVisibility(ctx)
       const focused = getFocusedNode()
       updateFocus(focused, ctx)
       updateScopedProgress(ctx, focused)
+      updateBranchProgress(ctx)
     }
     scrollAccumulator = 0
   }
@@ -62,6 +80,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       if (branchGroup) {
         updateFocus(branchGroup.branch, ctx)
         updateScopedProgress(ctx, branchGroup.branch)
+        updateBranchProgress(ctx)
       }
     }
   }

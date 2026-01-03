@@ -50,7 +50,7 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     if (!nodeId) return
 
     const isLeaf = target.classList.contains('leaf')
-    labelText.textContent = isLeaf ? 'Leaf Title' : 'Label'
+    labelText.textContent = isLeaf ? 'Leaf Title' : 'Label (20 chars, spaces wrap)'
     labelInput.placeholder = isLeaf ? 'Add title...' : placeholder
     noteInput.placeholder = isLeaf ? 'Add description...' : 'Add context'
 
@@ -113,17 +113,24 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     const note = noteInput.value.trim()
     const defaultLabel = activeNode.dataset.defaultLabel || ''
     const appliedLabel = label || defaultLabel
-
-    setNodeLabel(activeNode, appliedLabel)
-
     const hasContent = Boolean(label || note)
-    activeNode.dataset.filled = hasContent ? 'true' : 'false'
+    const isLeaf = activeNode.classList.contains('leaf')
+
+    // Smooth transition for leaves: fade out, update, fade in
+    if (isLeaf) {
+      activeNode.classList.add('is-updating')
+      setTimeout(() => {
+        setNodeLabel(activeNode, appliedLabel)
+        activeNode.dataset.filled = hasContent ? 'true' : 'false'
+        requestAnimationFrame(() => activeNode.classList.remove('is-updating'))
+      }, 100)
+    } else {
+      setNodeLabel(activeNode, appliedLabel)
+      activeNode.dataset.filled = hasContent ? 'true' : 'false'
+    }
 
     if (hasContent) {
-      nodeState[nodeId] = {
-        label: appliedLabel,
-        note,
-      }
+      nodeState[nodeId] = { label: appliedLabel, note }
     } else {
       deleteNodeData(nodeId)
     }
@@ -144,12 +151,22 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     if (!activeNode) return
 
     const nodeId = activeNode.dataset.nodeId
-    if (nodeId) {
-      deleteNodeData(nodeId)
-    }
+    if (nodeId) deleteNodeData(nodeId)
 
-    setNodeLabel(activeNode, activeNode.dataset.defaultLabel || '')
-    activeNode.dataset.filled = 'false'
+    const isLeaf = activeNode.classList.contains('leaf')
+    const defaultLabel = activeNode.dataset.defaultLabel || ''
+
+    if (isLeaf) {
+      activeNode.classList.add('is-updating')
+      setTimeout(() => {
+        setNodeLabel(activeNode, defaultLabel)
+        activeNode.dataset.filled = 'false'
+        requestAnimationFrame(() => activeNode.classList.remove('is-updating'))
+      }, 100)
+    } else {
+      setNodeLabel(activeNode, defaultLabel)
+      activeNode.dataset.filled = 'false'
+    }
 
     saveState(callbacks.onSave)
     callbacks.onUpdateFocus(activeNode)

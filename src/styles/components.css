@@ -48,7 +48,7 @@
   font-family: var(--font-ascii);
   font-size: var(--char);
   line-height: 1.2;
-  background: var(--paper);
+  background: transparent;
   color: var(--ink-faint);
   border: none;
   padding: 0;
@@ -67,53 +67,83 @@
 .node.branch::before, .node.branch::after { display: block; opacity: 0.5; }
 .node.branch::before { content: attr(data-top-border); }
 .node.branch::after { content: attr(data-bottom-border); }
-.node.branch .node-label { display: inline-block; padding: 0 1ch; font-family: var(--font-display); font-size: calc(var(--char) * 1.1); }
+.node.branch .node-label {
+  display: inline-block;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: calc(var(--char) * 1.05);
+  line-height: 1;
+  white-space: pre;
+}
+.node.branch[data-label-lines='2'] .node-label { font-size: calc(var(--char) * 1); }
+.node.branch[data-label-lines='3'] .node-label { font-size: calc(var(--char) * 0.95); }
 .node.branch:hover::before, .node.branch:hover::after { opacity: 0.8; }
 .node.branch[data-filled='true'], .branch-group.is-preview .node.branch { color: var(--wood); }
 .node.branch[data-filled='true']::before, .node.branch[data-filled='true']::after { opacity: 0.7; }
 
 /* Leaf */
-.leaf { min-width: 2ch; min-height: 1.2em; }
-.leaf[data-filled='false']::before { content: "( )"; }
-.leaf:hover[data-filled='false']::before { content: "(*)"; color: var(--ink); }
-.leaf[data-filled='true'] { color: var(--leaf); }
-.leaf[data-filled='true']::before { content: "["; }
-.leaf[data-filled='true']::after { content: "]"; }
-.leaf.is-hidden, .canvas.is-previewing .branch-group.is-preview .leaf { min-width: 0; min-height: 0; }
-.canvas.is-previewing .branch-group.is-preview .leaf::before { content: "."; }
-.canvas.is-previewing .branch-group.is-preview .leaf::after { content: none; }
-.canvas.is-previewing .branch-group.is-preview .leaf[data-filled='true']::before { content: "*"; color: var(--leaf); }
+.leaf { min-width: 2ch; min-height: 1.2em; opacity: 1; transition: opacity 1200ms ease-out, transform 200ms ease-out; }
+.leaf.is-updating { opacity: 0; transform: scale(0.95); }
+.leaf .node-label { display: block; }
+.leaf[data-filled='false'] .node-label { display: none; }
+/* Parentheses only show in branch view (zoomed in) */
+.canvas.is-zoomed .leaf[data-filled='false']::before { content: "( )"; }
+.canvas.is-zoomed .leaf:hover[data-filled='false']::before { content: "(*)"; color: var(--ink); }
+/* Hidden leaves (overview, not previewing) */
+.leaf.is-hidden { opacity: 0; pointer-events: none; }
+.leaf.is-hidden .node-label { visibility: hidden; }
+/* Fading out leaves (exiting preview) - keep preview appearance while fading */
+.leaf.is-fading { opacity: 0; pointer-events: none; transition: opacity var(--fade-duration, 1000ms) ease-out; transition-delay: var(--fade-delay, 0ms); min-width: 0; min-height: 0; }
+.leaf.is-fading .node-label { display: none; }
+.leaf.is-fading::before { content: "."; font-size: calc(var(--char) * 0.9); }
+.leaf.is-fading::after { content: none; }
+.leaf.is-fading[data-filled='true']::before { content: "*"; color: var(--leaf); font-size: calc(var(--char) * 1.2); }
+/* Preview mode - show only dots/asterisks */
+.branch-group.is-preview .leaf { min-width: 0; min-height: 0; opacity: 1; }
+.branch-group.is-preview .leaf .node-label { display: none; }
+.branch-group.is-preview .leaf::before { content: "."; font-size: calc(var(--char) * 0.9); opacity: 1; }
+.branch-group.is-preview .leaf::after { content: none; }
+.branch-group.is-preview .leaf[data-filled='true']::before { content: "*"; color: var(--leaf); font-size: calc(var(--char) * 1.2); }
+.canvas.is-previewing .branch-group.is-preview .leaf { transition: opacity 250ms ease-out; }
+/* Filled leaf in branch view - show full ASCII box */
+.canvas.is-zoomed .branch-group.is-active .leaf[data-filled='true'] { color: var(--leaf); font-size: calc(var(--char) * 0.7); line-height: 1; }
+.canvas.is-zoomed .branch-group.is-active .leaf[data-filled='true']::before { content: attr(data-top-border); display: block; }
+.canvas.is-zoomed .branch-group.is-active .leaf[data-filled='true']::after { content: attr(data-bottom-border); display: block; }
+.canvas.is-zoomed .branch-group.is-active .leaf[data-filled='true'][data-label-lines='2'] { font-size: calc(var(--char) * 0.65); }
+.canvas.is-zoomed .branch-group.is-active .leaf[data-filled='true'][data-label-lines='3'] { font-size: calc(var(--char) * 0.6); }
 .canvas.is-zooming .branch-group.is-active .leaf { transition-delay: var(--leaf-delay, 0ms); }
 
 /* Trunk */
 .node.trunk { left: 50%; top: 50%; z-index: 5; color: var(--wood); transition: color 320ms ease; line-height: 1; }
 .node.trunk .trunk-title { text-transform: uppercase; letter-spacing: 0.15em; font-family: var(--font-display); font-size: calc(var(--char) * 1.2); }
-.node.trunk.is-minimized { left: var(--minimized-x, 50%); top: var(--minimized-y, 50%); opacity: 0.7; font-size: calc(var(--char) * 2); }
-.node.trunk.is-minimized::before, .node.trunk.is-minimized::after { content: none; }
+.node.trunk.is-minimized { left: var(--minimized-x, 50%); top: var(--minimized-y, 50%); opacity: 0.7; }
 .node.trunk.is-minimized .trunk-title { font-size: 0; }
-.node.trunk.is-minimized .trunk-title::before { content: "*"; font-size: calc(var(--char) * 2); }
+.node.trunk.is-minimized .trunk-title::before { content: "*"; font-size: calc(var(--char) * 4); }
 .node.trunk.is-minimized:hover { opacity: 1; }
 
 /* === Side Panel === */
 .side-panel { display: flex; flex-direction: column; gap: 1rem; animation: fade-in 600ms ease 100ms both; font-family: var(--font-ascii); font-size: 12px; }
 .panel-section { padding: 0.75rem 0; }
 .panel-section.is-empty { display: none; }
-.focus-meta { margin: 0 0 0.5rem; }
-.focus-title, .focus-note { margin: 0; color: var(--ink); line-height: 1.5; }
-.focus-title { font-weight: 400; margin-bottom: 0.4rem; }
-.focus-note { color: var(--ink-light); }
-.progress-count { margin: 0 0 0.5rem; color: var(--ink); font-weight: 400; }
+.focus-meta { margin: 0 0 0.5rem; height: 1.2em; }
+.focus-title, .focus-note { margin: 0; color: var(--ink); line-height: 1.5; overflow: hidden; text-overflow: ellipsis; }
+.focus-title { font-weight: 400; margin-bottom: 0.4rem; height: 1.5em; }
+.focus-note { color: var(--ink-light); height: 4.5em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.focus-title.is-muted, .focus-note.is-muted { color: var(--ink-faint); }
+.progress-count { margin: 0 0 0.5rem; color: var(--ink); font-weight: 400; height: 2.4em; line-height: 1.2; }
 .progress-track { width: 100%; height: 12px; background: transparent; border: 1px solid var(--border); overflow: hidden; }
 .progress-fill { display: block; height: 100%; background: var(--leaf); opacity: 0.3; transition: width 300ms ease; }
 .progress-actions { margin-top: 1rem; }
 .branch-progress { margin-top: 0.75rem; display: none; flex-direction: column; gap: 0.25rem; }
 .branch-progress.has-content { display: flex; }
-.branch-item { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem; background: transparent; border: none; padding: 0.35rem 0; text-align: left; cursor: pointer; transition: all 200ms ease; }
+.branch-item { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem; background: transparent; border: none; padding: 0.35rem 0.5rem; margin: 0 -0.5rem; text-align: left; cursor: pointer; transition: all 150ms ease; }
+.branch-item:hover { background: rgba(0, 0, 0, 0.04); }
 .branch-item.is-current .branch-label { color: var(--leaf); }
-.branch-item:hover .branch-label { color: var(--ink); }
-.branch-label { font-weight: 400; color: var(--ink-light); transition: color 200ms ease; }
-.branch-item.is-labeled .branch-label { color: var(--wood); }
-.branch-count { font-size: 0.75rem; color: var(--ink-faint); align-self: center; }
+.branch-item:hover .branch-label { color: var(--wood); }
+.branch-label { font-weight: 400; color: var(--ink-light); transition: color 150ms ease; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 2px; pointer-events: none; }
+.branch-item:hover .branch-label { text-decoration-color: var(--wood); }
+.branch-item.is-labeled .branch-label { color: var(--ink); }
+.branch-count { font-size: 0.75rem; color: var(--ink-faint); align-self: center; pointer-events: none; }
 .status-message { margin: 0 0 0.2rem; font-size: 0.8rem; color: var(--ink-faint); }
 .status-message[data-tone='success'] { color: var(--success-tone); }
 .status-message[data-tone='warning'] { color: var(--warning-tone); }

@@ -1,21 +1,19 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, setActiveNode, getFocusedNode } from './state'
+import { getViewMode, setActiveNode } from './state'
 import { setFocusedNode, updateFocus } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
 import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
-import { setupHoverBranch } from './features/hover-branch'
+import { setupHoverBranch, previewBranchFromSidebar, clearSidebarPreview } from './features/hover-branch'
 import { handleExport, handleReset, handleImport } from './features/import-export'
 import {
   setViewMode,
   returnToOverview,
   enterBranchView,
-  findNextOpenNode,
-  openNodeForEditing,
 } from './features/navigation'
 import { updateStats, buildBranchProgress } from './features/progress'
-import { setStatus, updateStatusMeta, flashStatus } from './features/status'
+import { setStatus, updateStatusMeta } from './features/status'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
 
 const app = document.querySelector<HTMLDivElement>('#app')
@@ -26,7 +24,7 @@ if (!app) {
 const navCallbacks = {
   onPositionNodes: () => positionNodes(ctx),
   onUpdateStats: () => {
-    updateStats(ctx, (from) => findNextOpenNode(ctx.allNodes, from))
+    updateStats(ctx)
     positionNodes(ctx)
   },
 }
@@ -84,13 +82,8 @@ domResult.elements.debugCheckbox.addEventListener('change', (e) => {
   setDebugHoverZone((e.target as HTMLInputElement).checked)
 })
 
-domResult.elements.nextButton.addEventListener('click', () => {
-  const next = findNextOpenNode(ctx.allNodes, getFocusedNode())
-  if (!next) {
-    flashStatus(ctx.elements, 'All nodes are filled. Nice work.', 'success')
-    return
-  }
-  openNodeForEditing(next, ctx, navCallbacks)
+domResult.elements.backToTrunkButton.addEventListener('click', () => {
+  returnToOverview(ctx, navCallbacks)
 })
 
 buildBranchProgress(ctx, (index) => {
@@ -103,11 +96,14 @@ buildBranchProgress(ctx, (index) => {
     setFocusedNode(branchGroup.branch, ctx, (target) => updateFocus(target, ctx))
   }
   branchGroup.branch.focus({ preventScroll: true })
+}, {
+  onHoverStart: (index) => previewBranchFromSidebar(ctx, index),
+  onHoverEnd: () => clearSidebarPreview(ctx),
 })
 
 setViewMode('overview', ctx, navCallbacks)
 setStatus(ctx.elements, STATUS_DEFAULT_MESSAGE, 'info')
-updateStats(ctx, (from) => findNextOpenNode(ctx.allNodes, from))
+updateStats(ctx)
 updateFocus(null, ctx)
 updateStatusMeta(ctx.elements)
 

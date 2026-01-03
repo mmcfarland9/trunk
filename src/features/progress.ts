@@ -1,50 +1,62 @@
 import type { AppContext } from '../types'
-import { TOTAL_NODES, LEAF_COUNT } from '../constants'
-import { nodeState, getFocusedNode } from '../state'
+import { LEAF_COUNT } from '../constants'
+import { nodeState, getFocusedNode, getHoveredBranchIndex, getActiveBranchIndex, getViewMode, getIsSidebarHover } from '../state'
 
-export function updateStats(
-  ctx: AppContext,
-  findNextOpenNode: (from?: HTMLButtonElement | null) => HTMLButtonElement | null
-): void {
-  const { nextButton } = ctx.elements
+export type BranchHoverCallbacks = {
+  onHoverStart: (index: number) => void
+  onHoverEnd: () => void
+}
+
+export function updateStats(ctx: AppContext): void {
+  const { backToTrunkButton } = ctx.elements
 
   updateScopedProgress(ctx, getFocusedNode())
 
-  const next = findNextOpenNode(getFocusedNode())
-  if (next) {
-    nextButton.disabled = false
-    nextButton.textContent = 'Next open'
-  } else {
-    nextButton.disabled = true
-    nextButton.textContent = 'All nodes filled'
-  }
+  // Show "Back to trunk" only in branch view
+  const isBranchView = getViewMode() === 'branch'
+  backToTrunkButton.style.display = isBranchView ? '' : 'none'
 
   updateBranchProgress(ctx)
 }
 
 export function updateScopedProgress(ctx: AppContext, target: HTMLButtonElement | null): void {
   const { progressCount, progressFill } = ctx.elements
-  const { branchGroups, allNodes } = ctx
+  const { branchGroups } = ctx
+  const viewMode = getViewMode()
 
-  const branchIndex = target?.dataset.branchIndex
-  if (branchIndex !== undefined) {
-    const branchGroup = branchGroups[Number(branchIndex)]
-    if (branchGroup) {
-      const filledLeaves = branchGroup.leaves.filter((leaf) => leaf.dataset.filled === 'true').length
-      progressCount.textContent = `${filledLeaves} of ${LEAF_COUNT} leaves filled`
-      const progress = Math.round((filledLeaves / LEAF_COUNT) * 100)
-      progressFill.style.width = `${progress}%`
-      return
+  // In branch view, show only leaf progress for that branch
+  if (viewMode === 'branch') {
+    const branchIndex = target?.dataset.branchIndex
+    if (branchIndex !== undefined) {
+      const branchGroup = branchGroups[Number(branchIndex)]
+      if (branchGroup) {
+        const filledLeaves = branchGroup.leaves.filter((leaf) => leaf.dataset.filled === 'true').length
+        progressCount.textContent = `${filledLeaves} of ${LEAF_COUNT} leaves filled`
+        const progress = Math.round((filledLeaves / LEAF_COUNT) * 100)
+        progressFill.style.width = `${progress}%`
+        return
+      }
     }
   }
 
-  const filled = allNodes.filter((node) => node.dataset.filled === 'true').length
-  progressCount.textContent = `${filled} of ${TOTAL_NODES} nodes filled`
-  const progress = TOTAL_NODES ? Math.round((filled / TOTAL_NODES) * 100) : 0
+  // In overview, show separate branch and leaf counts
+  const filledBranches = branchGroups.filter((bg) => bg.branch.dataset.filled === 'true').length
+  const totalLeaves = branchGroups.reduce((sum, bg) => sum + bg.leaves.length, 0)
+  const filledLeaves = branchGroups.reduce(
+    (sum, bg) => sum + bg.leaves.filter((leaf) => leaf.dataset.filled === 'true').length,
+    0
+  )
+
+  progressCount.innerHTML = `${filledBranches} of ${branchGroups.length} branches filled<br>${filledLeaves} of ${totalLeaves} leaves filled`
+  const progress = totalLeaves ? Math.round((filledLeaves / totalLeaves) * 100) : 0
   progressFill.style.width = `${progress}%`
 }
 
-export function buildBranchProgress(ctx: AppContext, onBranchClick: (index: number) => void): void {
+export function buildBranchProgress(
+  ctx: AppContext,
+  onBranchClick: (index: number) => void,
+  hoverCallbacks?: BranchHoverCallbacks
+): void {
   const { branchProgress } = ctx.elements
   const { branchGroups, branchProgressItems } = ctx
 
@@ -56,6 +68,10 @@ export function buildBranchProgress(ctx: AppContext, onBranchClick: (index: numb
     button.type = 'button'
     button.className = 'branch-item'
     button.addEventListener('click', () => onBranchClick(index))
+    if (hoverCallbacks) {
+      button.addEventListener('mouseenter', () => hoverCallbacks.onHoverStart(index))
+      button.addEventListener('mouseleave', () => hoverCallbacks.onHoverEnd())
+    }
 
     const label = document.createElement('span')
     label.className = 'branch-label'
@@ -73,6 +89,24 @@ export function updateBranchProgress(ctx: AppContext): void {
   const { branchProgress } = ctx.elements
   const { branchGroups, branchProgressItems } = ctx
 
+  const viewMode = getViewMode()
+  const hoveredIndex = getHoveredBranchIndex()
+  const activeIndex = getActiveBranchIndex()
+
+  // Show leaves when we're in branch view or hovering a branch via graphic (not sidebar)
+  // Sidebar hover should NOT change the sidebar itself
+  const focusedBranchIndex = viewMode === 'branch' ? activeIndex : (getIsSidebarHover() ? null : hoveredIndex)
+
+  if (focusedBranchIndex !== null) {
+    // Show leaves for this branch
+    const branchGroup = branchGroups[focusedBranchIndex]
+    if (branchGroup) {
+      updateLeafProgress(ctx, branchGroup)
+      return
+    }
+  }
+
+  // Default: show all branches
   let anyFilled = false
 
   branchProgressItems.forEach((item) => {
@@ -85,11 +119,41 @@ export function updateBranchProgress(ctx: AppContext): void {
 
     const hasLabel = branchGroup.branch.dataset.filled === 'true'
     item.button.classList.toggle('is-labeled', hasLabel)
+    item.button.classList.remove('is-leaf')
 
     if (hasLabel || filledLeaves > 0) anyFilled = true
   })
 
   branchProgress.classList.toggle('has-content', anyFilled)
+}
+
+function updateLeafProgress(ctx: AppContext, branchGroup: { branch: HTMLButtonElement, leaves: HTMLButtonElement[] }): void {
+  const { branchProgress } = ctx.elements
+  const { branchProgressItems } = ctx
+
+  branchProgressItems.forEach((item, i) => {
+    const leaf = branchGroup.leaves[i]
+    if (leaf) {
+      const isFilled = leaf.dataset.filled === 'true'
+      item.label.textContent = getLeafLabel(leaf, i)
+      item.count.textContent = isFilled ? '●' : '○'
+      item.button.classList.toggle('is-labeled', isFilled)
+      item.button.classList.add('is-leaf')
+    }
+  })
+
+  // Always show leaves when in leaf view
+  branchProgress.classList.add('has-content')
+}
+
+function getLeafLabel(leafNode: HTMLButtonElement, index: number): string {
+  const stored = nodeState[leafNode.dataset.nodeId || '']
+  const storedLabel = stored?.label?.trim() || ''
+  if (storedLabel) {
+    // Truncate long labels
+    return storedLabel.length > 12 ? storedLabel.slice(0, 11) + '…' : storedLabel
+  }
+  return `Leaf ${index + 1}`
 }
 
 export function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {

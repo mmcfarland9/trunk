@@ -133,8 +133,13 @@ export function buildApp(
       leaf.dataset.placeholder = `Leaf ${j + 1} for branch ${i + 1}`
       leaf.dataset.branchIndex = String(i)
       leaf.dataset.leafIndex = String(j)
+      leaf.dataset.leafStyle = '0'
       leaf.style.setProperty('--leaf-delay', `${getBloomDelay(j)}ms`)
       leaf.setAttribute('aria-label', `Leaf ${j + 1} for branch ${i + 1}`)
+
+      const leafLabel = document.createElement('span')
+      leafLabel.className = 'node-label'
+      leaf.append(leafLabel)
 
       initializeNode(leaf, `Leaf ${j + 1} for branch ${i + 1}`, nodeLookup, onNodeClick)
       leaves.push(leaf)
@@ -173,7 +178,7 @@ export function buildApp(
         <span class="progress-fill" style="width: 0%"></span>
       </div>
       <div class="progress-actions">
-        <button type="button" class="panel-button next-open">Next open</button>
+        <button type="button" class="panel-button back-to-trunk">← Back to trunk</button>
       </div>
       <div class="branch-progress"></div>
     </section>
@@ -199,7 +204,7 @@ export function buildApp(
     focusNote: sidePanel.querySelector<HTMLParagraphElement>('.focus-note')!,
     progressCount: sidePanel.querySelector<HTMLParagraphElement>('.progress-count')!,
     progressFill: sidePanel.querySelector<HTMLSpanElement>('.progress-fill')!,
-    nextButton: sidePanel.querySelector<HTMLButtonElement>('.next-open')!,
+    backToTrunkButton: sidePanel.querySelector<HTMLButtonElement>('.back-to-trunk')!,
     branchProgress: sidePanel.querySelector<HTMLDivElement>('.branch-progress')!,
     statusMessage: sidePanel.querySelector<HTMLParagraphElement>('.status-message')!,
     statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,

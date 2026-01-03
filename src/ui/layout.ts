@@ -3,7 +3,7 @@ import { GUIDE_ANIMATION_DURATION } from '../constants'
 import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex, getActiveNode } from '../state'
 
 // Constants
-const GUIDE_GAP = 8, LEAF_GAP = 4, LEAF_COLLISION_PAD = 12, LEAF_BASE_SIZE = 36, LEAF_PREVIEW_SIZE = 14
+const GUIDE_GAP = 8, LEAF_GAP = 4, LEAF_COLLISION_PAD = 8, LEAF_BASE_SIZE = 36, LEAF_PREVIEW_SIZE = 14, LEAF_MAX_SIZE = 80
 const BLOOM_MIN = 0.12, BLOOM_MAX = 0.34, BLOOM_OV_MIN = 0.06, BLOOM_OV_MAX = 0.18, LEAF_RING_RATIO = 0.55
 const WIND_BRANCH_AMP = 6, WIND_LEAF_AMP = 10, WIND_PULSE = 0.04, WIND_MIN = 0.35, WIND_MAX = 0.7
 const PREVIEW_FADE = 500, HOVER_MIN_RATIO = 0.55, HOVER_MAX_RATIO = 1.35
@@ -31,13 +31,16 @@ export function positionNodes(ctx: AppContext): void {
     setBasePosition(group.group, branchX, branchY)
     if (index === activeBranchIndex) { activeBranchX = branchX; activeBranchY = branchY }
 
-    const mainRadius = group.branch.offsetWidth / 2
+    const mainRadius = Math.max(group.branch.offsetWidth, group.branch.offsetHeight) / 2
     const isActive = isBranchView && index === activeBranchIndex
     const leafSizes = group.leaves.map(leaf => isActive ? getLeafCollisionDiameter(leaf) + LEAF_COLLISION_PAD * 2 : LEAF_PREVIEW_SIZE)
     const maxLeafRadius = leafSizes.length ? Math.max(...leafSizes) / 2 : LEAF_BASE_SIZE / 2
     const [minRatio, maxRatio] = isActive ? [BLOOM_MIN, BLOOM_MAX] : [BLOOM_OV_MIN, BLOOM_OV_MAX]
     const minRadius = Math.max(mainRadius + maxLeafRadius + GUIDE_GAP, base * minRatio)
-    const maxRadius = Math.max(minRadius + maxLeafRadius * (isActive ? 2.4 : 1.6), base * maxRatio + maxLeafRadius * (isActive ? 0.6 : 0.2))
+    const maxRadius = Math.min(
+      Math.max(minRadius + maxLeafRadius * (isActive ? 1.8 : 1.4), base * maxRatio),
+      base * (isActive ? 0.42 : 0.22) // Hard cap to keep leaves in bounds
+    )
     const offsets = buildRadialOffsets(group.leaves.length, minRadius, maxRadius, leafSizes, angle)
 
     group.leaves.forEach((leaf, i) => {
@@ -119,7 +122,7 @@ function drawGuideLines(ctx: AppContext): void {
     const bg = branchGroups[activeBranchIndex]
     if (bg) {
       const mainRect = bg.branch.getBoundingClientRect()
-      const mainCenter = getCenterPoint(mainRect, rect), mainRadius = mainRect.width / 2
+      const mainCenter = getCenterPoint(mainRect, rect), mainRadius = Math.max(mainRect.width, mainRect.height) / 2
       drawLineBetween(frag, trunkCenter, trunkRadius, mainCenter, mainRadius, 'trunk')
       bg.leaves.forEach(leaf => {
         const lr = leaf.getBoundingClientRect()
@@ -129,7 +132,14 @@ function drawGuideLines(ctx: AppContext): void {
   } else {
     branchGroups.forEach(bg => {
       const mr = bg.branch.getBoundingClientRect()
-      drawLineBetween(frag, trunkCenter, trunkRadius, getCenterPoint(mr, rect), mr.width/2, 'branch')
+      drawLineBetween(
+        frag,
+        trunkCenter,
+        trunkRadius,
+        getCenterPoint(mr, rect),
+        Math.max(mr.width, mr.height) / 2,
+        'branch'
+      )
     })
     if (hoveredBranchIndex !== null) {
       if (lastHoveredBranch !== hoveredBranchIndex) { previewStartTime = performance.now(); lastHoveredBranch = hoveredBranchIndex }
@@ -137,7 +147,7 @@ function drawGuideLines(ctx: AppContext): void {
       const bg = branchGroups[hoveredBranchIndex]
       if (bg) {
         const mr = bg.branch.getBoundingClientRect()
-        const mc = getCenterPoint(mr, rect), mrad = mr.width/2
+        const mc = getCenterPoint(mr, rect), mrad = Math.max(mr.width, mr.height) / 2
         bg.leaves.forEach(leaf => {
           const lr = leaf.getBoundingClientRect()
           drawLineBetween(frag, mc, mrad, getCenterPoint(lr, rect), Math.max(lr.width, lr.height)/2, 'leaf', LEAF_GAP, opacity)
@@ -232,7 +242,9 @@ function getBase(el: HTMLElement, axis: 'x'|'y'): number | null {
 }
 
 function getLeafCollisionDiameter(el: HTMLElement): number {
-  return Math.hypot(el.offsetWidth || LEAF_BASE_SIZE, el.offsetHeight || LEAF_BASE_SIZE)
+  const w = Math.min(el.offsetWidth || LEAF_BASE_SIZE, LEAF_MAX_SIZE)
+  const h = Math.min(el.offsetHeight || LEAF_BASE_SIZE, LEAF_MAX_SIZE)
+  return Math.hypot(w, h)
 }
 
 function getLeafRadius(el: HTMLElement): number {
