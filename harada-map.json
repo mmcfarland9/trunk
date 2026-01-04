@@ -1,0 +1,490 @@
+{
+  "version": 3,
+  "exportedAt": "2026-01-04T20:01:57.098Z",
+  "circles": {
+    "branch-0": {
+      "label": "CORE",
+      "note": "fitness & vitality"
+    },
+    "branch-0-sub-0": {
+      "label": "movement",
+      "note": "cardio, ambient",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-1": {
+      "label": "strength",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-2": {
+      "label": "sport",
+      "note": "athletics, coordination",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-3": {
+      "label": "technique",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-4": {
+      "label": "maintenance",
+      "note": "mobility, rehab",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-5": {
+      "label": "nutrition",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-6": {
+      "label": "sleep",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-0-sub-7": {
+      "label": "appearance",
+      "note": "grooming, presentation",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1": {
+      "label": "BRAIN",
+      "note": "knowledge & curiosity"
+    },
+    "branch-1-sub-0": {
+      "label": "reading",
+      "note": "study",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-1": {
+      "label": "writing",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-2": {
+      "label": "reasoning",
+      "note": "problemsolving, puzzling",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-3": {
+      "label": "focus",
+      "note": "attention",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-4": {
+      "label": "memory",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-5": {
+      "label": "analysis",
+      "note": "judgment",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-6": {
+      "label": "dialogue",
+      "note": "exchange",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-1-sub-7": {
+      "label": "exploration",
+      "note": "curiosity",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2": {
+      "label": "VOICE",
+      "note": "expression & creativity"
+    },
+    "branch-2-sub-0": {
+      "label": "practice",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-1": {
+      "label": "composition",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-2": {
+      "label": "interpretation",
+      "note": "reimagination, synthesis",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-3": {
+      "label": "performance",
+      "note": "improvisation",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-4": {
+      "label": "consumption",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-5": {
+      "label": "curation",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-6": {
+      "label": "completion",
+      "note": "editing",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-2-sub-7": {
+      "label": "publication",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3": {
+      "label": "HANDS",
+      "note": "making & craft"
+    },
+    "branch-3-sub-0": {
+      "label": "design",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-1": {
+      "label": "fabrication",
+      "note": "invention",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-2": {
+      "label": "assembly",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-3": {
+      "label": "repair",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-4": {
+      "label": "refinement",
+      "note": "finishing, modification",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-5": {
+      "label": "tooling",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-6": {
+      "label": "tending",
+      "note": "cultivating",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-3-sub-7": {
+      "label": "cooking",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4": {
+      "label": "HEART",
+      "note": "love & family"
+    },
+    "branch-4-sub-0": {
+      "label": "homemaking",
+      "note": "errands, chores, comfort",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-1": {
+      "label": "care",
+      "note": "thoughtfulness",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-2": {
+      "label": "presence",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-3": {
+      "label": "intimacy",
+      "note": "vulnerability",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-4": {
+      "label": "communication",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-5": {
+      "label": "ritual",
+      "note": "celebration",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-6": {
+      "label": "adventure",
+      "note": "spontaneity",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-4-sub-7": {
+      "label": "joy",
+      "note": "play",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5": {
+      "label": "BREATH",
+      "note": "regulation & renewal"
+    },
+    "branch-5-sub-0": {
+      "label": "observation",
+      "note": "noticing",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-1": {
+      "label": "nature",
+      "note": "appreciation, grace",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-2": {
+      "label": "flow",
+      "note": "breathwork",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-3": {
+      "label": "repose",
+      "note": "rest",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-4": {
+      "label": "idleness",
+      "note": "stillness, silence, solitude",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-5": {
+      "label": "exposure",
+      "note": "elements, challenge",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-6": {
+      "label": "abstinence",
+      "note": "restraint, constraint",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-5-sub-7": {
+      "label": "reflection",
+      "note": "contemplation, acceptance, gratitude",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6": {
+      "label": "BACK",
+      "note": "belonging & community"
+    },
+    "branch-6-sub-0": {
+      "label": "connection",
+      "note": "reach",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-1": {
+      "label": "support",
+      "note": "reliability",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-2": {
+      "label": "gathering",
+      "note": "hosting",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-3": {
+      "label": "membership",
+      "note": "belonging",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-4": {
+      "label": "stewardship",
+      "note": "preservation",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-5": {
+      "label": "advocacy",
+      "note": "morality, citizenship",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-6": {
+      "label": "service",
+      "note": "contribution, education",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-6-sub-7": {
+      "label": "culture",
+      "note": "heritage, traditions",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7": {
+      "label": "FEET",
+      "note": "stability & direction"
+    },
+    "branch-7-sub-0": {
+      "label": "work",
+      "note": "livelihood",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-1": {
+      "label": "development",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-2": {
+      "label": "positioning",
+      "note": "networking",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-3": {
+      "label": "ventures",
+      "note": "",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-4": {
+      "label": "finance",
+      "note": "budgeting, resources",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-5": {
+      "label": "operations",
+      "note": "logistics, coordination",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-6": {
+      "label": "planning",
+      "note": "provision, security",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "branch-7-sub-7": {
+      "label": "administration",
+      "note": "governance",
+      "goalType": "binary",
+      "goalValue": 0,
+      "goalTitle": ""
+    },
+    "trunk": {
+      "label": "mikey",
+      "note": "a systems framework for mind, body & spirit"
+    }
+  }
+}

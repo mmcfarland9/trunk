@@ -55,6 +55,11 @@ export function buildApp(
   resetButton.className = 'action-button secondary'
   resetButton.textContent = 'Reset map'
 
+  const resetHistoryButton = document.createElement('button')
+  resetHistoryButton.type = 'button'
+  resetHistoryButton.className = 'action-button secondary'
+  resetHistoryButton.textContent = 'Reset all history'
+
   const importInput = document.createElement('input')
   importInput.type = 'file'
   importInput.accept = 'application/json'
@@ -62,7 +67,7 @@ export function buildApp(
 
   importButton.addEventListener('click', () => importInput.click())
 
-  actions.append(importButton, exportButton, resetButton)
+  actions.append(importButton, exportButton, resetButton, resetHistoryButton)
   header.append(actions, logo, importInput)
 
   // Body
@@ -161,7 +166,24 @@ export function buildApp(
   const debugText = document.createTextNode(' Show debug guide lines')
   debugLabel.append(debugCheckbox, debugText)
 
-  mapPanel.append(canvas, guideLayer, debugLabel)
+  // Debug panel (top-left)
+  const debugPanel = document.createElement('div')
+  debugPanel.className = 'debug-panel'
+
+  const simulatePeriodEndBtn = document.createElement('button')
+  simulatePeriodEndBtn.type = 'button'
+  simulatePeriodEndBtn.className = 'debug-btn'
+  simulatePeriodEndBtn.textContent = 'Simulate period ending'
+
+  const lockBtn = document.createElement('button')
+  lockBtn.type = 'button'
+  lockBtn.className = 'debug-btn debug-lock-btn'
+  lockBtn.textContent = 'LOCK'
+  lockBtn.dataset.locked = 'false'
+
+  debugPanel.append(simulatePeriodEndBtn, lockBtn)
+
+  mapPanel.append(canvas, guideLayer, debugLabel, debugPanel)
 
   // Side Panel
   const sidePanel = document.createElement('aside')
@@ -171,8 +193,19 @@ export function buildApp(
       <p class="focus-meta"></p>
       <p class="focus-title"></p>
       <p class="focus-note"></p>
+      <p class="focus-goal"></p>
     </section>
-    <section class="panel-section">
+    <div class="period-section">
+      <div class="period-selector">
+        <button type="button" class="period-btn is-active" data-period="1w">1w</button>
+        <button type="button" class="period-btn" data-period="2w">2w</button>
+        <button type="button" class="period-btn" data-period="1m">1m</button>
+        <button type="button" class="period-btn" data-period="2m">2m</button>
+      </div>
+      <p class="period-date"></p>
+      <button type="button" class="period-start-btn">Start next period</button>
+    </div>
+    <section class="panel-section progress-section">
       <p class="progress-count"></p>
       <div class="progress-track">
         <span class="progress-fill" style="width: 0%"></span>
@@ -202,6 +235,11 @@ export function buildApp(
     focusMeta: sidePanel.querySelector<HTMLParagraphElement>('.focus-meta')!,
     focusTitle: sidePanel.querySelector<HTMLParagraphElement>('.focus-title')!,
     focusNote: sidePanel.querySelector<HTMLParagraphElement>('.focus-note')!,
+    focusGoal: sidePanel.querySelector<HTMLParagraphElement>('.focus-goal')!,
+    periodSection: sidePanel.querySelector<HTMLDivElement>('.period-section')!,
+    periodDate: sidePanel.querySelector<HTMLParagraphElement>('.period-date')!,
+    periodSelector: sidePanel.querySelector<HTMLDivElement>('.period-selector')!,
+    periodStartBtn: sidePanel.querySelector<HTMLButtonElement>('.period-start-btn')!,
     progressCount: sidePanel.querySelector<HTMLParagraphElement>('.progress-count')!,
     progressFill: sidePanel.querySelector<HTMLSpanElement>('.progress-fill')!,
     backToTrunkButton: sidePanel.querySelector<HTMLButtonElement>('.back-to-trunk')!,
@@ -210,11 +248,14 @@ export function buildApp(
     statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,
     importInput,
     debugCheckbox,
+    simulatePeriodEndBtn,
+    lockBtn,
   }
 
   // Wire up button handlers (will be connected to features in main.ts)
   exportButton.dataset.action = 'export'
   resetButton.dataset.action = 'reset'
+  resetHistoryButton.dataset.action = 'reset-history'
 
   return {
     elements,
@@ -255,9 +296,11 @@ function getBloomDelay(leafIndex: number): number {
 export function getActionButtons(shell: HTMLDivElement): {
   exportButton: HTMLButtonElement
   resetButton: HTMLButtonElement
+  resetHistoryButton: HTMLButtonElement
 } {
   return {
     exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
     resetButton: shell.querySelector<HTMLButtonElement>('[data-action="reset"]')!,
+    resetHistoryButton: shell.querySelector<HTMLButtonElement>('[data-action="reset-history"]')!,
   }
 }

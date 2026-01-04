@@ -4,9 +4,14 @@ export type BranchGroup = {
   leaves: HTMLButtonElement[]
 }
 
+export type GoalType = 'binary' | 'continuous'
+
 export type NodeData = {
   label: string
   note: string
+  goalType?: GoalType
+  goalValue?: number // 0-100 for continuous, 0 or 100 for binary
+  goalTitle?: string
 }
 
 export type EditorApi = {
@@ -14,6 +19,9 @@ export type EditorApi = {
   open: (target: HTMLButtonElement, placeholder: string) => void
   reposition: (target: HTMLButtonElement) => void
   close: () => void
+  setProgressLocked: (locked: boolean) => void
+  setPanelLocked: (locked: boolean) => void
+  getIsPanelLocked: () => boolean
 }
 
 export type BranchProgressItem = {
@@ -35,6 +43,11 @@ export type AppElements = {
   focusMeta: HTMLParagraphElement
   focusTitle: HTMLParagraphElement
   focusNote: HTMLParagraphElement
+  focusGoal: HTMLParagraphElement
+  periodSection: HTMLDivElement
+  periodDate: HTMLParagraphElement
+  periodSelector: HTMLDivElement
+  periodStartBtn: HTMLButtonElement
   progressCount: HTMLParagraphElement
   progressFill: HTMLSpanElement
   backToTrunkButton: HTMLButtonElement
@@ -43,6 +56,8 @@ export type AppElements = {
   statusMeta: HTMLParagraphElement
   importInput: HTMLInputElement
   debugCheckbox: HTMLInputElement
+  simulatePeriodEndBtn: HTMLButtonElement
+  lockBtn: HTMLButtonElement
 }
 
 export type AppContext = {

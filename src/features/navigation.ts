@@ -1,6 +1,6 @@
 import type { AppContext, ViewMode } from '../types'
 import { ZOOM_TRANSITION_DURATION, EDITOR_OPEN_DELAY } from '../constants'
-import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, getFocusedNode, isBranchView } from '../state'
+import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, isBranchView } from '../state'
 import {
   setNodeVisibility,
   setFocusedNode,
@@ -10,6 +10,7 @@ import {
 import { animateGuideLines } from '../ui/layout'
 
 let zoomTimeoutId = 0
+const fadeTimeouts = new Map<number, number>() // branchIndex -> timeoutId
 
 export type NavigationCallbacks = {
   onPositionNodes: () => void
@@ -17,7 +18,7 @@ export type NavigationCallbacks = {
 }
 
 export function updateVisibility(ctx: AppContext): void {
-  const { canvas, trunk } = ctx.elements
+  const { canvas, trunk, periodSection } = ctx.elements
   const { branchGroups } = ctx
   const activeBranchIndex = getActiveBranchIndex()
   const hoveredBranchIndex = getHoveredBranchIndex()
@@ -27,10 +28,16 @@ export function updateVisibility(ctx: AppContext): void {
   canvas.classList.toggle('is-zoomed', isBranch)
   canvas.classList.toggle('is-previewing', isPreview)
   trunk.classList.toggle('is-minimized', isBranch)
+  periodSection.style.display = isBranch ? 'none' : ''
 
   if (isBranch && activeBranchIndex !== null) {
-    trunk.style.setProperty('--minimized-x', '50%')
-    trunk.style.setProperty('--minimized-y', '50%')
+    // Position trunk asterisk farther away from the active branch
+    const angle = (Math.PI / 4) * activeBranchIndex - Math.PI / 2
+    const offset = 18 // percentage offset from center
+    const offsetX = 50 - Math.cos(angle) * offset
+    const offsetY = 50 - Math.sin(angle) * offset
+    trunk.style.setProperty('--minimized-x', `${offsetX}%`)
+    trunk.style.setProperty('--minimized-y', `${offsetY}%`)
   } else {
     trunk.style.removeProperty('--minimized-x')
     trunk.style.removeProperty('--minimized-y')
@@ -47,9 +54,17 @@ export function updateVisibility(ctx: AppContext): void {
 
     setNodeVisibility(branchGroup.branch, !isBranch || isActive)
 
-    // Delay hiding leaves when exiting preview for smooth fade-out
+    // Delay hiding leaves when exiting preview for smooth fade-out (only in overview mode)
     const shouldShow = isBranch ? isActive : isPreviewed
-    if (wasPreview && !isPreviewed && !shouldShow) {
+
+    // Cancel any pending fade-out timeout for this branch
+    const existingTimeout = fadeTimeouts.get(index)
+    if (existingTimeout) {
+      window.clearTimeout(existingTimeout)
+      fadeTimeouts.delete(index)
+    }
+
+    if (!isBranch && wasPreview && !isPreviewed && !shouldShow) {
       // Let the fade-out transition play before hiding with randomized timing
       const maxDelay = 400
       const baseDuration = 800
@@ -65,7 +80,8 @@ export function updateVisibility(ctx: AppContext): void {
         maxTotalTime = Math.max(maxTotalTime, delay + duration)
       })
 
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
+        fadeTimeouts.delete(index)
         branchGroup.leaves.forEach((leaf) => {
           leaf.classList.remove('is-fading')
           leaf.style.removeProperty('--fade-delay')
@@ -73,9 +89,12 @@ export function updateVisibility(ctx: AppContext): void {
           setNodeVisibility(leaf, false)
         })
       }, maxTotalTime + 50)
+      fadeTimeouts.set(index, timeoutId)
     } else {
       branchGroup.leaves.forEach((leaf) => {
         leaf.classList.remove('is-fading')
+        leaf.style.removeProperty('--fade-delay')
+        leaf.style.removeProperty('--fade-duration')
         setNodeVisibility(leaf, shouldShow)
       })
     }
@@ -118,20 +137,11 @@ export function returnToOverview(
   ctx: AppContext,
   callbacks: NavigationCallbacks
 ): void {
-  const focusedNode = getFocusedNode()
-  const fallback =
-    focusedNode?.dataset.branchIndex !== undefined
-      ? ctx.branchGroups[Number(focusedNode.dataset.branchIndex)]?.branch ?? null
-      : focusedNode
-
   setViewMode('overview', ctx, callbacks)
   callbacks.onUpdateStats() // Update sidebar to show branches
 
-  if (fallback) {
-    setFocusedNode(fallback, ctx, (target) => updateFocus(target, ctx))
-  } else {
-    updateFocus(null, ctx)
-  }
+  // Clear focus so trunk info shows in sidebar
+  setFocusedNode(null, ctx, (target) => updateFocus(target, ctx))
 }
 
 export function enterBranchView(
@@ -156,51 +166,3 @@ export function enterBranchView(
   }
 }
 
-export function findNextOpenNode(
-  allNodes: HTMLButtonElement[],
-  startFrom?: HTMLButtonElement | null
-): HTMLButtonElement | null {
-  if (!allNodes.length) return null
-
-  const startIndex = startFrom ? allNodes.indexOf(startFrom) : -1
-
-  for (let offset = 1; offset <= allNodes.length; offset += 1) {
-    const index = (startIndex + offset + allNodes.length) % allNodes.length
-    const candidate = allNodes[index]
-    if (candidate.dataset.filled !== 'true') {
-      return candidate
-    }
-  }
-
-  return null
-}
-
-export function openNodeForEditing(
-  node: HTMLButtonElement,
-  ctx: AppContext,
-  callbacks: NavigationCallbacks
-): void {
-  const branchIndex = node.dataset.branchIndex
-  const isTrunk = node.dataset.nodeId === 'trunk'
-  const viewMode = getViewMode()
-  const activeBranchIndex = getActiveBranchIndex()
-
-  if (branchIndex !== undefined) {
-    const index = Number(branchIndex)
-    if (viewMode !== 'branch' || activeBranchIndex !== index) {
-      enterBranchView(index, ctx, callbacks, node, true)
-      return
-    }
-  } else if (isTrunk && viewMode === 'branch') {
-    setViewMode('overview', ctx, callbacks)
-    window.setTimeout(() => {
-      setFocusedNode(node, ctx, (t) => updateFocus(t, ctx))
-      ctx.editor.open(node, getNodePlaceholder(node))
-    }, EDITOR_OPEN_DELAY)
-    return
-  }
-
-  setFocusedNode(node, ctx, (t) => updateFocus(t, ctx))
-  node.focus({ preventScroll: true })
-  ctx.editor.open(node, getNodePlaceholder(node))
-}

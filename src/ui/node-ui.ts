@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode } from '../state'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
@@ -181,14 +181,21 @@ export function setFocusedNode(
 }
 
 export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): void {
-  const { focusMeta, focusTitle, focusNote } = ctx.elements
+  const { focusMeta, focusTitle, focusNote, focusGoal, trunk } = ctx.elements
   const focusSection = ctx.elements.sidePanel.querySelector('.focus-section')
+
+  // In overview mode with no target, show trunk info
+  if (!target && getViewMode() === 'overview') {
+    target = trunk
+  }
 
   if (!target) {
     focusSection?.classList.add('is-empty')
     focusMeta.textContent = ''
     focusTitle.textContent = ''
     focusNote.textContent = ''
+    focusGoal.textContent = ''
+    focusGoal.style.display = 'none'
     return
   }
 
@@ -199,16 +206,43 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   const stored = nodeId ? nodeState[nodeId] : undefined
   const label = stored?.label?.trim() || ''
   const note = stored?.note?.trim() || ''
+  const goalValue = stored?.goalValue ?? 0
+  const goalTitle = stored?.goalTitle?.trim() || ''
   const hasCustomLabel = Boolean(label && label !== defaultLabel)
   const isLeaf = target.classList.contains('leaf')
+  const isTrunk = target.classList.contains('trunk')
   const placeholder = getNodePlaceholder(target)
   const displayLabel = hasCustomLabel ? label : isLeaf ? 'Add title...' : placeholder
 
-  focusMeta.textContent = target.getAttribute('aria-label') || 'Selected node'
+  focusMeta.textContent = isTrunk ? 'Trunk' : (target.getAttribute('aria-label') || 'Selected node')
   focusTitle.textContent = displayLabel
   focusTitle.classList.toggle('is-muted', !hasCustomLabel)
-  focusNote.textContent = note || (isLeaf ? 'Add description...' : 'Add notes to capture the context and next steps.')
-  focusNote.classList.toggle('is-muted', !note)
+
+  // Hide note section for leaves, show for trunk/branch
+  if (isLeaf) {
+    focusNote.style.display = 'none'
+  } else {
+    focusNote.style.display = ''
+    focusNote.textContent = note || 'Add details...'
+    focusNote.classList.toggle('is-muted', !note)
+  }
+
+  // Goal display only for leaves
+  if (isLeaf) {
+    focusGoal.style.display = ''
+    const hasGoal = goalValue > 0 || goalTitle
+    if (hasGoal && goalTitle) {
+      focusGoal.innerHTML = `Goal set:<br>${goalTitle}`
+    } else if (hasGoal) {
+      focusGoal.textContent = 'Goal set'
+    } else {
+      focusGoal.textContent = 'Goal not set'
+    }
+    focusGoal.classList.toggle('is-muted', !hasGoal)
+  } else {
+    focusGoal.style.display = 'none'
+    focusGoal.textContent = ''
+  }
 }
 
 const LEAF_TARGET_RATIO = 16 / 9

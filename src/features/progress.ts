@@ -1,6 +1,6 @@
 import type { AppContext } from '../types'
 import { LEAF_COUNT } from '../constants'
-import { nodeState, getFocusedNode, getHoveredBranchIndex, getActiveBranchIndex, getViewMode, getIsSidebarHover } from '../state'
+import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getViewMode, getIsSidebarHover } from '../state'
 
 export type BranchHoverCallbacks = {
   onHoverStart: (index: number) => void
@@ -10,7 +10,7 @@ export type BranchHoverCallbacks = {
 export function updateStats(ctx: AppContext): void {
   const { backToTrunkButton } = ctx.elements
 
-  updateScopedProgress(ctx, getFocusedNode())
+  updateScopedProgress(ctx)
 
   // Show "Back to trunk" only in branch view
   const isBranchView = getViewMode() === 'branch'
@@ -19,36 +19,50 @@ export function updateStats(ctx: AppContext): void {
   updateBranchProgress(ctx)
 }
 
-export function updateScopedProgress(ctx: AppContext, target: HTMLButtonElement | null): void {
+export function updateScopedProgress(ctx: AppContext): void {
   const { progressCount, progressFill } = ctx.elements
   const { branchGroups } = ctx
   const viewMode = getViewMode()
+  const hoveredIndex = getHoveredBranchIndex()
 
-  // In branch view, show only leaf progress for that branch
-  if (viewMode === 'branch') {
-    const branchIndex = target?.dataset.branchIndex
-    if (branchIndex !== undefined) {
-      const branchGroup = branchGroups[Number(branchIndex)]
-      if (branchGroup) {
-        const filledLeaves = branchGroup.leaves.filter((leaf) => leaf.dataset.filled === 'true').length
-        progressCount.textContent = `${filledLeaves} of ${LEAF_COUNT} leaves filled`
-        const progress = Math.round((filledLeaves / LEAF_COUNT) * 100)
-        progressFill.style.width = `${progress}%`
-        return
-      }
+  // In branch view OR when hovering a branch, show scoped progress for that branch
+  const activeBranchIndex = viewMode === 'branch'
+    ? getActiveBranchIndex()
+    : hoveredIndex
+
+  if (activeBranchIndex !== null) {
+    const branchGroup = branchGroups[activeBranchIndex]
+    if (branchGroup) {
+      const filledLeaves = branchGroup.leaves.filter((leaf) => leaf.dataset.filled === 'true').length
+      const goalsSet = branchGroup.leaves.filter((leaf) => {
+        const data = nodeState[leaf.dataset.nodeId || '']
+        return data?.goalTitle && data?.goalType
+      }).length
+
+      progressCount.innerHTML = `<br>${filledLeaves} of ${LEAF_COUNT} leaves filled<br>${goalsSet} of ${LEAF_COUNT} goals set`
+      const progress = Math.round((goalsSet / LEAF_COUNT) * 100)
+      progressFill.style.width = `${progress}%`
+      return
     }
   }
 
-  // In overview, show separate branch and leaf counts
+  // In overview: show all three counts
   const filledBranches = branchGroups.filter((bg) => bg.branch.dataset.filled === 'true').length
   const totalLeaves = branchGroups.reduce((sum, bg) => sum + bg.leaves.length, 0)
   const filledLeaves = branchGroups.reduce(
     (sum, bg) => sum + bg.leaves.filter((leaf) => leaf.dataset.filled === 'true').length,
     0
   )
+  const goalsSet = branchGroups.reduce(
+    (sum, bg) => sum + bg.leaves.filter((leaf) => {
+      const data = nodeState[leaf.dataset.nodeId || '']
+      return data?.goalTitle && data?.goalType
+    }).length,
+    0
+  )
 
-  progressCount.innerHTML = `${filledBranches} of ${branchGroups.length} branches filled<br>${filledLeaves} of ${totalLeaves} leaves filled`
-  const progress = totalLeaves ? Math.round((filledLeaves / totalLeaves) * 100) : 0
+  progressCount.innerHTML = `${filledBranches} of ${branchGroups.length} branches filled<br>${filledLeaves} of ${totalLeaves} leaves filled<br>${goalsSet} of ${totalLeaves} goals set`
+  const progress = totalLeaves ? Math.round((goalsSet / totalLeaves) * 100) : 0
   progressFill.style.width = `${progress}%`
 }
 
@@ -106,9 +120,7 @@ export function updateBranchProgress(ctx: AppContext): void {
     }
   }
 
-  // Default: show all branches
-  let anyFilled = false
-
+  // Default: show all branches (always visible for visual conformity)
   branchProgressItems.forEach((item) => {
     const branchGroup = branchGroups[item.index]
     const filledLeaves = branchGroup.leaves.filter((leaf) => leaf.dataset.filled === 'true').length
@@ -120,11 +132,9 @@ export function updateBranchProgress(ctx: AppContext): void {
     const hasLabel = branchGroup.branch.dataset.filled === 'true'
     item.button.classList.toggle('is-labeled', hasLabel)
     item.button.classList.remove('is-leaf')
-
-    if (hasLabel || filledLeaves > 0) anyFilled = true
   })
 
-  branchProgress.classList.toggle('has-content', anyFilled)
+  branchProgress.classList.add('has-content')
 }
 
 function updateLeafProgress(ctx: AppContext, branchGroup: { branch: HTMLButtonElement, leaves: HTMLButtonElement[] }): void {

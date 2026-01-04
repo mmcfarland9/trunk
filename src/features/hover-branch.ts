@@ -16,6 +16,8 @@ export function previewBranchFromSidebar(ctx: AppContext, branchIndex: number): 
   setIsSidebarHover(true)
   setHoveredBranchIndex(branchIndex)
   updateVisibility(ctx)
+  // Update progress to show this branch's leaf count
+  updateScopedProgress(ctx)
 }
 
 export function clearSidebarPreview(ctx: AppContext): void {
@@ -23,6 +25,8 @@ export function clearSidebarPreview(ctx: AppContext): void {
   setIsSidebarHover(false)
   setHoveredBranchIndex(null)
   updateVisibility(ctx)
+  // Reset progress to show trunk totals
+  updateScopedProgress(ctx)
 }
 
 export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
@@ -36,7 +40,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       updateVisibility(ctx)
       const focused = getFocusedNode()
       updateFocus(focused, ctx)
-      updateScopedProgress(ctx, focused)
+      updateScopedProgress(ctx)
       updateBranchProgress(ctx)
     }
     scrollAccumulator = 0
@@ -79,7 +83,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       const branchGroup = ctx.branchGroups[hoveredIndex]
       if (branchGroup) {
         updateFocus(branchGroup.branch, ctx)
-        updateScopedProgress(ctx, branchGroup.branch)
+        updateScopedProgress(ctx)
         updateBranchProgress(ctx)
       }
     }

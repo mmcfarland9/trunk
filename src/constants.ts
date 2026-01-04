@@ -1,7 +1,6 @@
 // Tree structure
 export const BRANCH_COUNT = 8
 export const LEAF_COUNT = 8
-export const TOTAL_NODES = BRANCH_COUNT * (LEAF_COUNT + 1) + 1
 
 // Storage
 export const STORAGE_KEY = 'harada-notes-v1'

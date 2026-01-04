@@ -5,13 +5,18 @@ import { STORAGE_KEY } from './constants'
 
 function normalizeNodeData(value: unknown): NodeData | null {
   if (!value || typeof value !== 'object') return null
-  const payload = value as { label?: unknown; note?: unknown; detail?: unknown }
+  const payload = value as { label?: unknown; note?: unknown; detail?: unknown; goal?: unknown; goalType?: unknown; goalValue?: unknown; goalTitle?: unknown }
   const label = typeof payload.label === 'string' ? payload.label : ''
   const noteValue = typeof payload.note === 'string' ? payload.note : ''
   const legacyDetail = typeof payload.detail === 'string' ? payload.detail : ''
   const note = noteValue || legacyDetail
-  if (!label && !note) return null
-  return { label, note }
+  // Migrate legacy goal field
+  const legacyGoal = payload.goal === 'true'
+  const goalType = (payload.goalType === 'binary' || payload.goalType === 'continuous') ? payload.goalType : 'binary'
+  const goalValue = typeof payload.goalValue === 'number' ? payload.goalValue : (legacyGoal ? 100 : 0)
+  const goalTitle = typeof payload.goalTitle === 'string' ? payload.goalTitle : ''
+  if (!label && !note && goalValue === 0 && !goalTitle) return null
+  return { label, note, goalType, goalValue, goalTitle }
 }
 
 function loadState(): Record<string, NodeData> {
