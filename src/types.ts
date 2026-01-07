@@ -1,16 +1,43 @@
 export type BranchGroup = {
   group: HTMLDivElement
   branch: HTMLButtonElement
-  leaves: HTMLButtonElement[]
+  twigs: HTMLButtonElement[]
 }
 
+// Sprout types (replacing goal system)
+export type SproutSeason = '1w' | '2w' | '1m' | '3m' | '6m' | '1y'
+export type SproutType = 'seed' | 'sapling'
+export type SproutState = 'draft' | 'active' | 'completed' | 'failed'
+
+export type Sprout = {
+  id: string
+  type: SproutType
+  title: string
+  season: SproutSeason
+  state: SproutState
+  createdAt: string
+  activatedAt?: string
+  endDate?: string
+  result?: number // 0-100 for seed, 0-5 for sapling
+  reflection?: string
+  completedAt?: string
+  // Growth conditions
+  water?: string    // How to check in regularly
+  environment?: string // What growth looks like
+  soil?: string     // What ensures growth
+}
+
+// Legacy goal type (for migration)
 export type GoalType = 'binary' | 'continuous'
 
 export type NodeData = {
   label: string
   note: string
+  // New sprout data
+  sprouts?: Sprout[]
+  // Legacy fields (for migration, will be converted to sprouts)
   goalType?: GoalType
-  goalValue?: number // 0-100 for continuous, 0 or 100 for binary
+  goalValue?: number
   goalTitle?: string
 }
 
@@ -19,9 +46,13 @@ export type EditorApi = {
   open: (target: HTMLButtonElement, placeholder: string) => void
   reposition: (target: HTMLButtonElement) => void
   close: () => void
-  setProgressLocked: (locked: boolean) => void
-  setPanelLocked: (locked: boolean) => void
-  getIsPanelLocked: () => boolean
+}
+
+export type TwigViewApi = {
+  container: HTMLDivElement
+  open: (twigNode: HTMLButtonElement) => void
+  close: () => void
+  isOpen: () => boolean
 }
 
 export type BranchProgressItem = {
@@ -31,7 +62,7 @@ export type BranchProgressItem = {
   index: number
 }
 
-export type ViewMode = 'overview' | 'branch'
+export type ViewMode = 'overview' | 'branch' | 'twig'
 
 export type AppElements = {
   shell: HTMLDivElement
@@ -44,10 +75,6 @@ export type AppElements = {
   focusTitle: HTMLParagraphElement
   focusNote: HTMLParagraphElement
   focusGoal: HTMLParagraphElement
-  periodSection: HTMLDivElement
-  periodDate: HTMLParagraphElement
-  periodSelector: HTMLDivElement
-  periodStartBtn: HTMLButtonElement
   progressCount: HTMLParagraphElement
   progressFill: HTMLSpanElement
   backToTrunkButton: HTMLButtonElement
@@ -56,8 +83,6 @@ export type AppElements = {
   statusMeta: HTMLParagraphElement
   importInput: HTMLInputElement
   debugCheckbox: HTMLInputElement
-  simulatePeriodEndBtn: HTMLButtonElement
-  lockBtn: HTMLButtonElement
 }
 
 export type AppContext = {
@@ -67,4 +92,5 @@ export type AppContext = {
   nodeLookup: Map<string, HTMLButtonElement>
   branchProgressItems: BranchProgressItem[]
   editor: EditorApi
+  twigView?: TwigViewApi
 }

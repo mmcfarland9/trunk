@@ -14,7 +14,7 @@ No test or lint commands are currently configured.
 
 ## Architecture
 
-Harada is a 64-leaf planning map application (1 trunk + 8 branches × 8 leaves) built with vanilla TypeScript and Vite.
+Trunk is a 64-twig planning map application (1 trunk + 8 branches × 8 twigs) built with vanilla TypeScript and Vite.
 
 ### Module Structure
 
@@ -55,15 +55,15 @@ src/
 ### Core Types (src/types.ts)
 
 - `NodeData` - label and note text for each node
-- `BranchGroup` - wrapper element, branch node, and 8 leaves
-- `ViewMode` - 'overview' | 'branch'
+- `BranchGroup` - wrapper element, branch node, and 8 twigs
+- `ViewMode` - 'overview' | 'branch' | 'twig'
 - `AppContext` - central context object passed to features
 - `AppElements` - references to key DOM elements
 
 ### State Management (src/state/)
 
 - `nodeState` object holds all node data, keyed by node ID
-- Changes auto-persist to localStorage (`harada-notes-v1` key)
+- Changes auto-persist to localStorage (`trunk-notes-v1` key)
 - `view-state.ts` tracks current mode, focused/active nodes
 
 ### Key Features
@@ -78,9 +78,9 @@ src/
 
 ### Node IDs
 
-- Trunk: `center`
+- Trunk: `trunk`
 - Branches: `branch-0` through `branch-7`
-- Leaves: `branch-{branchIdx}-sub-{leafIdx}`
+- Twigs: `branch-{branchIdx}-twig-{twigIdx}`
 
 ## Code Style
 

@@ -1,9 +1,10 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, setActiveNode, getActiveBranchIndex } from './state'
-import { setFocusedNode, updateFocus } from './ui/node-ui'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState } from './state'
+import { updateFocus } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
+import { buildTwigView } from './ui/twig-view'
 import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
 import { setupHoverBranch, previewBranchFromSidebar, clearSidebarPreview } from './features/hover-branch'
 import { handleExport, handleReset, handleImport } from './features/import-export'
@@ -11,8 +12,10 @@ import {
   setViewMode,
   returnToOverview,
   enterBranchView,
+  enterTwigView,
+  returnToBranchView,
 } from './features/navigation'
-import { updateStats, buildBranchProgress } from './features/progress'
+import { updateStats, buildBranchProgress, updateBranchProgress, updateSproutProgress } from './features/progress'
 import { setStatus, updateStatusMeta } from './features/status'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
 
@@ -37,9 +40,15 @@ const importExportCallbacks = {
 function handleNodeClick(
   element: HTMLButtonElement,
   nodeId: string,
-  placeholder: string
+  _placeholder: string
 ): void {
   if (nodeId === 'trunk' && getViewMode() === 'branch') {
+    returnToOverview(ctx, navCallbacks)
+    return
+  }
+
+  // Trunk click from twig view goes back to overview
+  if (nodeId === 'trunk' && getViewMode() === 'twig') {
     returnToOverview(ctx, navCallbacks)
     return
   }
@@ -50,9 +59,17 @@ function handleNodeClick(
     return
   }
 
-  setFocusedNode(element, ctx, (target) => updateFocus(target, ctx))
-  setActiveNode(element)
-  ctx.editor.open(element, placeholder)
+  // Twig click enters twig view
+  const isTwig = element.classList.contains('twig')
+  if (isTwig && getViewMode() === 'branch') {
+    const twigBranchIndex = element.dataset.branchIndex
+    if (twigBranchIndex !== undefined) {
+      enterTwigView(element, Number(twigBranchIndex), ctx, navCallbacks)
+    }
+    return
+  }
+
+  // All nodes (trunk/branches/twigs) are edited via JSON only
 }
 
 const domResult = buildApp(app, handleNodeClick)
@@ -63,6 +80,36 @@ const editor = buildEditor(domResult.elements.canvas, {
 })
 domResult.elements.shell.append(editor.container)
 
+const mapPanel = domResult.elements.canvas.parentElement as HTMLElement
+const twigView = buildTwigView(mapPanel, {
+  onClose: () => returnToBranchView(ctx, navCallbacks),
+  onSave: navCallbacks.onUpdateStats,
+  onNavigate: (direction) => {
+    const activeBranchIndex = getActiveBranchIndex()
+    const activeTwigId = getActiveTwigId()
+    if (activeBranchIndex === null || !activeTwigId) return null
+
+    const branchGroup = ctx.branchGroups[activeBranchIndex]
+    if (!branchGroup) return null
+
+    const currentIndex = branchGroup.twigs.findIndex(t => t.dataset.nodeId === activeTwigId)
+    if (currentIndex === -1) return null
+
+    const newIndex = direction === 'prev'
+      ? (currentIndex - 1 + branchGroup.twigs.length) % branchGroup.twigs.length
+      : (currentIndex + 1) % branchGroup.twigs.length
+
+    const newTwig = branchGroup.twigs[newIndex]
+    if (newTwig) {
+      const newTwigId = newTwig.dataset.nodeId
+      if (newTwigId) {
+        setViewModeState('twig', activeBranchIndex, newTwigId)
+      }
+    }
+    return newTwig ?? null
+  },
+})
+
 const ctx: AppContext = {
   elements: domResult.elements,
   branchGroups: domResult.branchGroups,
@@ -70,6 +117,7 @@ const ctx: AppContext = {
   nodeLookup: domResult.nodeLookup,
   branchProgressItems: [],
   editor,
+  twigView,
 }
 
 const { exportButton, resetButton } = getActionButtons(domResult.elements.shell)
@@ -94,13 +142,13 @@ buildBranchProgress(ctx, (index) => {
     enterBranchView(index, ctx, navCallbacks)
     branchGroup.branch.focus({ preventScroll: true })
   } else {
-    // Branch view: click on leaf opens its editor
+    // Branch view: click on twig opens twig view
     const activeBranchIndex = getActiveBranchIndex()
     if (activeBranchIndex === null) return
     const branchGroup = ctx.branchGroups[activeBranchIndex]
-    const leaf = branchGroup?.leaves[index]
-    if (leaf) {
-      handleNodeClick(leaf, leaf.dataset.nodeId || '', leaf.dataset.placeholder || '')
+    const twig = branchGroup?.twigs[index]
+    if (twig) {
+      enterTwigView(twig, activeBranchIndex, ctx, navCallbacks)
     }
   }
 }, {
@@ -108,89 +156,30 @@ buildBranchProgress(ctx, (index) => {
   onHoverEnd: () => clearSidebarPreview(ctx),
 })
 
-// Period date calculation
-function getTargetDate(period: string): Date {
-  const now = new Date()
-  const target = new Date(now)
-
-  switch (period) {
-    case '1w': target.setDate(now.getDate() + 7); break
-    case '2w': target.setDate(now.getDate() + 14); break
-    case '1m': target.setMonth(now.getMonth() + 1); break
-    case '2m': target.setMonth(now.getMonth() + 2); break
-  }
-
-  // Round down to 9am CST (UTC-6)
-  target.setUTCHours(15, 0, 0, 0) // 9am CST = 15:00 UTC
-  return target
-}
-
-function formatDate(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'America/Chicago'
-  }
-  return date.toLocaleString('en-US', options)
-}
-
-function updatePeriodDate(period: string): void {
-  const target = getTargetDate(period)
-  domResult.elements.periodDate.textContent = formatDate(target)
-}
-
-// Period selector click handling
-domResult.elements.periodSelector.querySelectorAll('.period-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    domResult.elements.periodSelector.querySelectorAll('.period-btn').forEach(b => {
-      b.classList.toggle('is-active', b === btn)
+// Setup twig hover handlers for sprout preview in sidebar
+function setupTwigHover(): void {
+  ctx.branchGroups.forEach((group) => {
+    group.twigs.forEach((twig) => {
+      twig.addEventListener('mouseenter', () => {
+        if (getViewMode() !== 'branch') return
+        updateFocus(twig, ctx)
+        updateSproutProgress(ctx, twig)
+      })
+      twig.addEventListener('mouseleave', () => {
+        if (getViewMode() !== 'branch') return
+        // Reset to branch focus and twig list when leaving twig
+        const activeBranchIndex = getActiveBranchIndex()
+        if (activeBranchIndex !== null) {
+          const branchGroup = ctx.branchGroups[activeBranchIndex]
+          updateFocus(branchGroup?.branch ?? null, ctx)
+          updateBranchProgress(ctx)
+        }
+      })
     })
-    updatePeriodDate((btn as HTMLButtonElement).dataset.period || '1d')
   })
-})
-
-// Initialize with default period
-updatePeriodDate('1w')
-
-// Period state management
-const PERIOD_STARTED_KEY = 'harada-period-started'
-let periodStarted = localStorage.getItem(PERIOD_STARTED_KEY) === 'true'
-
-function updatePeriodLockState(): void {
-  ctx.editor.setProgressLocked(!periodStarted)
-  domResult.elements.periodStartBtn.textContent = periodStarted ? 'End period' : 'Start next period'
 }
 
-domResult.elements.periodStartBtn.addEventListener('click', () => {
-  periodStarted = !periodStarted
-  localStorage.setItem(PERIOD_STARTED_KEY, String(periodStarted))
-  updatePeriodLockState()
-})
-
-// Simulate period ending (debug button)
-domResult.elements.simulatePeriodEndBtn.addEventListener('click', () => {
-  ctx.editor.setProgressLocked(false)
-})
-
-// Lock button (lock panel editing)
-domResult.elements.lockBtn.addEventListener('click', () => {
-  const isLocked = domResult.elements.lockBtn.dataset.locked === 'true'
-  const newLocked = !isLocked
-  domResult.elements.lockBtn.dataset.locked = String(newLocked)
-  domResult.elements.lockBtn.textContent = newLocked ? 'UNLOCK' : 'LOCK'
-  ctx.editor.setPanelLocked(newLocked)
-  domResult.elements.canvas.classList.toggle('is-panel-locked', newLocked)
-  // Set tooltip on trunk/branch when locked
-  const tooltip = newLocked ? 'Panel is locked' : ''
-  domResult.elements.trunk.title = tooltip
-  ctx.branchGroups.forEach(g => g.branch.title = tooltip)
-})
-
-updatePeriodLockState()
-
+setupTwigHover()
 setViewMode('overview', ctx, navCallbacks)
 setStatus(ctx.elements, STATUS_DEFAULT_MESSAGE, 'info')
 updateStats(ctx)
@@ -209,3 +198,51 @@ window.addEventListener('resize', () => positionNodes(ctx))
 
 startWind(ctx)
 setupHoverBranch(ctx, navCallbacks)
+
+// Global keyboard navigation
+document.addEventListener('keydown', (e) => {
+  // Don't handle if twig view is open (it has its own handler)
+  if (ctx.twigView.isOpen()) return
+
+  if (e.key === 'Escape' && getViewMode() === 'branch') {
+    returnToOverview(ctx, navCallbacks)
+    return
+  }
+
+  const num = parseInt(e.key, 10)
+  if (num < 1 || num > 8) return
+
+  if (getViewMode() === 'overview') {
+    // Check if hovering a branch - if so, go to twig in that branch
+    const hoveredGroup = ctx.elements.canvas.querySelector('.branch-group:hover')
+    if (hoveredGroup) {
+      const branchIndex = ctx.branchGroups.findIndex(g => g.group === hoveredGroup)
+      if (branchIndex !== -1) {
+        const twig = ctx.branchGroups[branchIndex]?.twigs[num - 1]
+        if (twig) {
+          enterTwigView(twig, branchIndex, ctx, navCallbacks)
+        }
+      }
+    } else {
+      // Not hovering - go to branch
+      const branchIndex = num - 1
+      const branchGroup = ctx.branchGroups[branchIndex]
+      if (branchGroup) {
+        enterBranchView(branchIndex, ctx, navCallbacks)
+        branchGroup.branch.focus({ preventScroll: true })
+      }
+    }
+    return
+  }
+
+  // In branch view: go to twig
+  if (getViewMode() === 'branch') {
+    const activeBranchIndex = getActiveBranchIndex()
+    if (activeBranchIndex === null) return
+    const branchGroup = ctx.branchGroups[activeBranchIndex]
+    const twig = branchGroup?.twigs[num - 1]
+    if (twig) {
+      enterTwigView(twig, activeBranchIndex, ctx, navCallbacks)
+    }
+  }
+})

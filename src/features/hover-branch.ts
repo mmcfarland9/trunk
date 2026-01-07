@@ -1,6 +1,6 @@
 import type { AppContext } from '../types'
 import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
-import { enterBranchView, returnToOverview, updateVisibility } from './navigation'
+import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
 import { updateScopedProgress, updateBranchProgress } from './progress'
 import type { NavigationCallbacks } from './navigation'
 import { updateFocus } from '../ui/node-ui'
@@ -16,7 +16,7 @@ export function previewBranchFromSidebar(ctx: AppContext, branchIndex: number): 
   setIsSidebarHover(true)
   setHoveredBranchIndex(branchIndex)
   updateVisibility(ctx)
-  // Update progress to show this branch's leaf count
+  // Update progress to show this branch's twig count
   updateScopedProgress(ctx)
 }
 
@@ -129,6 +129,21 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       const activeBranchIndex = getActiveBranchIndex()
       if (activeBranchIndex === null) return
 
+      // Check if hovering over a twig for scroll-in
+      const target = event.target as HTMLElement | null
+      const twigNode = target?.closest('.twig') as HTMLButtonElement | null
+
+      // Swipe down / toward you = negative deltaY = zoom into twig
+      if (event.deltaY < 0 && twigNode) {
+        scrollAccumulator += Math.abs(event.deltaY)
+        if (scrollAccumulator >= SCROLL_THRESHOLD) {
+          event.preventDefault()
+          scrollAccumulator = 0
+          enterTwigView(twigNode, activeBranchIndex, ctx, callbacks)
+        }
+        return
+      }
+
       // Swipe up / away from you = positive deltaY = zoom out
       if (event.deltaY > 0) {
         scrollAccumulator += event.deltaY
@@ -136,6 +151,21 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
           event.preventDefault()
           scrollAccumulator = 0
           returnToOverview(ctx, callbacks)
+        }
+      } else {
+        scrollAccumulator = Math.max(0, scrollAccumulator + event.deltaY)
+      }
+      return
+    }
+
+    if (viewMode === 'twig') {
+      // Swipe up / away from you = positive deltaY = zoom out to branch
+      if (event.deltaY > 0) {
+        scrollAccumulator += event.deltaY
+        if (scrollAccumulator >= SCROLL_THRESHOLD) {
+          event.preventDefault()
+          scrollAccumulator = 0
+          returnToBranchView(ctx, callbacks)
         }
       } else {
         scrollAccumulator = Math.max(0, scrollAccumulator + event.deltaY)

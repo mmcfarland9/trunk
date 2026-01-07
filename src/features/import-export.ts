@@ -19,7 +19,7 @@ export function handleExport(ctx: AppContext): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = 'harada-map.json'
+  link.download = 'trunk-map.json'
   document.body.append(link)
   link.click()
   link.remove()

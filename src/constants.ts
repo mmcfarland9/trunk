@@ -1,9 +1,9 @@
 // Tree structure
 export const BRANCH_COUNT = 8
-export const LEAF_COUNT = 8
+export const TWIG_COUNT = 8
 
 // Storage
-export const STORAGE_KEY = 'harada-notes-v1'
+export const STORAGE_KEY = 'trunk-notes-v1'
 
 // Status messages
 export const STATUS_DEFAULT_MESSAGE = 'Saves locally.'

@@ -1,11 +1,11 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getActiveSprouts } from '../state'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
 
-  if (element.classList.contains('leaf')) {
-    const formatted = formatLeafBoxLabel(label, element)
+  if (element.classList.contains('twig')) {
+    const formatted = formatTwigBoxLabel(label, element)
     if (labelNode) {
       labelNode.textContent = formatted.middleRows
     } else {
@@ -54,7 +54,7 @@ type BorderStyle = {
   vertical: string
 }
 
-const LEAF_BORDER_STYLES: Record<string, BorderStyle> = {
+const TWIG_BORDER_STYLES: Record<string, BorderStyle> = {
   '0': {
     topLeft: '┌',
     topRight: '┐',
@@ -107,10 +107,10 @@ function formatBoxLabel(label: string): BoxFormat {
   }
 }
 
-function formatLeafBoxLabel(label: string, element: HTMLButtonElement): BoxFormat {
-  const styleKey = element.dataset.leafStyle ?? '0'
-  const style = LEAF_BORDER_STYLES[styleKey] ?? LEAF_BORDER_STYLES['0']
-  const formatted = formatLeafLabel(label, element)
+function formatTwigBoxLabel(label: string, element: HTMLButtonElement): BoxFormat {
+  const styleKey = element.dataset.twigStyle ?? '0'
+  const style = TWIG_BORDER_STYLES[styleKey] ?? TWIG_BORDER_STYLES['0']
+  const formatted = formatTwigLabel(label, element)
   const lines = formatted ? formatted.split('\n') : ['']
   const maxLineLength = Math.max(...lines.map((line) => line.length), 1)
   const paddedLines = lines.map((line) => {
@@ -206,57 +206,73 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   const stored = nodeId ? nodeState[nodeId] : undefined
   const label = stored?.label?.trim() || ''
   const note = stored?.note?.trim() || ''
-  const goalValue = stored?.goalValue ?? 0
-  const goalTitle = stored?.goalTitle?.trim() || ''
   const hasCustomLabel = Boolean(label && label !== defaultLabel)
-  const isLeaf = target.classList.contains('leaf')
+  const isTwig = target.classList.contains('twig')
   const isTrunk = target.classList.contains('trunk')
   const placeholder = getNodePlaceholder(target)
-  const displayLabel = hasCustomLabel ? label : isLeaf ? 'Add title...' : placeholder
+  const displayLabel = hasCustomLabel ? label : isTwig ? 'Add title...' : placeholder
 
-  focusMeta.textContent = isTrunk ? 'Trunk' : (target.getAttribute('aria-label') || 'Selected node')
+  // Show hierarchy type label in meta
+  if (isTrunk) {
+    focusMeta.textContent = 'TRUNK'
+  } else if (isTwig) {
+    focusMeta.textContent = 'TWIG'
+  } else {
+    focusMeta.textContent = 'BRANCH'
+  }
   focusTitle.textContent = displayLabel
   focusTitle.classList.toggle('is-muted', !hasCustomLabel)
 
-  // Hide note section for leaves, show for trunk/branch
-  if (isLeaf) {
+  // Hide note section for twigs, show for trunk/branch
+  if (isTwig) {
     focusNote.style.display = 'none'
   } else {
     focusNote.style.display = ''
-    focusNote.textContent = note || 'Add details...'
+    if (note) {
+      // Convert line breaks to <br> for display (escape HTML first)
+      const escaped = note.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      focusNote.innerHTML = escaped.replace(/\n/g, '<br>')
+    } else {
+      focusNote.textContent = 'Add details...'
+    }
     focusNote.classList.toggle('is-muted', !note)
   }
 
-  // Goal display only for leaves
-  if (isLeaf) {
+  // Sprout display only for twigs
+  if (isTwig) {
     focusGoal.style.display = ''
-    const hasGoal = goalValue > 0 || goalTitle
-    if (hasGoal && goalTitle) {
-      focusGoal.innerHTML = `Goal set:<br>${goalTitle}`
-    } else if (hasGoal) {
-      focusGoal.textContent = 'Goal set'
+    const sprouts = stored?.sprouts || []
+    const activeSprouts = getActiveSprouts(sprouts)
+
+    if (activeSprouts.length > 0) {
+      const sproutList = activeSprouts.map(s => {
+        const name = s.title || 'Untitled'
+        return `${name} (${s.type})`
+      }).join('<br>')
+      focusGoal.innerHTML = `Active (${activeSprouts.length}):<br>${sproutList}`
+      focusGoal.classList.remove('is-muted')
     } else {
-      focusGoal.textContent = 'Goal not set'
+      focusGoal.textContent = 'No active sprouts'
+      focusGoal.classList.add('is-muted')
     }
-    focusGoal.classList.toggle('is-muted', !hasGoal)
   } else {
     focusGoal.style.display = 'none'
     focusGoal.textContent = ''
   }
 }
 
-const LEAF_TARGET_RATIO = 16 / 9
-const LEAF_LINE_PENALTY = 0.06
-const DEFAULT_LEAF_METRICS = {
+const TWIG_TARGET_RATIO = 16 / 9
+const TWIG_LINE_PENALTY = 0.06
+const DEFAULT_TWIG_METRICS = {
   fontSize: 9.6,
   lineHeight: 8.16,
   paddingX: 44,
   paddingY: 32,
   font: '500 9.6px sans-serif',
 }
-const leafMeasureContext = document.createElement('canvas').getContext('2d')
+const twigMeasureContext = document.createElement('canvas').getContext('2d')
 
-function generateLeafLineCandidates(words: string[]): string[][] {
+function generateTwigLineCandidates(words: string[]): string[][] {
   const joined = words.join(' ')
   const candidates: string[][] = [[joined]]
   if (words.length < 2) return candidates
@@ -272,20 +288,20 @@ function generateLeafLineCandidates(words: string[]): string[][] {
   return candidates
 }
 
-function formatLeafLabel(label: string, element: HTMLButtonElement): string {
+function formatTwigLabel(label: string, element: HTMLButtonElement): string {
   const trimmed = label.trim()
   if (!trimmed) return ''
 
   const words = trimmed.split(/\s+/)
   if (words.length === 1) return trimmed
 
-  const candidates = generateLeafLineCandidates(words)
+  const candidates = generateTwigLineCandidates(words)
   let best = candidates[0]
   let bestScore = Number.POSITIVE_INFINITY
 
-  const metrics = getLeafMetrics(element)
+  const metrics = getTwigMetrics(element)
   candidates.forEach((lines: string[]) => {
-    const score = scoreLeafLines(lines, metrics)
+    const score = scoreTwigLines(lines, metrics)
     if (score < bestScore) {
       bestScore = score
       best = lines
@@ -296,7 +312,7 @@ function formatLeafLabel(label: string, element: HTMLButtonElement): string {
 }
 
 
-function scoreLeafLines(lines: string[], metrics: LeafMetrics): number {
+function scoreTwigLines(lines: string[], metrics: TwigMetrics): number {
   const lineWidths = lines.map((line) => measureLineWidth(line, metrics))
   const maxWidth = Math.max(...lineWidths)
   const minWidth = Math.min(...lineWidths)
@@ -304,12 +320,12 @@ function scoreLeafLines(lines: string[], metrics: LeafMetrics): number {
   const totalHeight = lines.length * metrics.lineHeight + metrics.paddingY
   const ratio = totalWidth / Math.max(totalHeight, 1)
   const balance = (maxWidth - minWidth) / Math.max(maxWidth, 1)
-  const linePenalty = (lines.length - 1) * LEAF_LINE_PENALTY
+  const linePenalty = (lines.length - 1) * TWIG_LINE_PENALTY
 
-  return Math.abs(ratio - LEAF_TARGET_RATIO) + balance * 0.12 + linePenalty
+  return Math.abs(ratio - TWIG_TARGET_RATIO) + balance * 0.12 + linePenalty
 }
 
-type LeafMetrics = {
+type TwigMetrics = {
   fontSize: number
   lineHeight: number
   paddingX: number
@@ -317,13 +333,13 @@ type LeafMetrics = {
   font: string
 }
 
-function getLeafMetrics(element: HTMLButtonElement): LeafMetrics {
+function getTwigMetrics(element: HTMLButtonElement): TwigMetrics {
   if (!element.isConnected) {
-    return DEFAULT_LEAF_METRICS
+    return DEFAULT_TWIG_METRICS
   }
 
   const style = window.getComputedStyle(element)
-  const fontSize = Number.parseFloat(style.fontSize) || DEFAULT_LEAF_METRICS.fontSize
+  const fontSize = Number.parseFloat(style.fontSize) || DEFAULT_TWIG_METRICS.fontSize
   const lineHeightRaw = style.lineHeight || ''
   const lineHeightValue = Number.parseFloat(lineHeightRaw)
   let lineHeight = fontSize * 1.2
@@ -348,14 +364,14 @@ function getLeafMetrics(element: HTMLButtonElement): LeafMetrics {
   }
 }
 
-function measureLineWidth(line: string, metrics: LeafMetrics): number {
-  if (!leafMeasureContext) {
+function measureLineWidth(line: string, metrics: TwigMetrics): number {
+  if (!twigMeasureContext) {
     return line.length * metrics.fontSize * 0.55
   }
 
-  if (leafMeasureContext.font !== metrics.font) {
-    leafMeasureContext.font = metrics.font
+  if (twigMeasureContext.font !== metrics.font) {
+    twigMeasureContext.font = metrics.font
   }
 
-  return leafMeasureContext.measureText(line).width
+  return twigMeasureContext.measureText(line).width
 }

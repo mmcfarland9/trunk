@@ -6,9 +6,9 @@
   --font-ascii: "DotGothic16", "SF Mono", "Monaco", monospace;
   --char: 16px;
   --ink: #2b1a12; --ink-light: #4a3325; --ink-faint: #6f5644;
-  --wood: #6b4423; --leaf: #3a6b4a; --paper: #f8f6f1;
+  --wood: #6b4423; --twig: #3a6b4a; --paper: #f8f6f1;
   --border: rgba(60, 40, 20, 0.1); --border-strong: rgba(60, 40, 20, 0.18);
-  --success-tone: var(--leaf); --warning-tone: #8b6b2f; --error-tone: #8a4a3a;
+  --success-tone: var(--twig); --warning-tone: #8b6b2f; --error-tone: #8a4a3a;
 }
 
 /* === Reset === */

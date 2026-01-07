@@ -1,6 +1,6 @@
 import type { AppContext, ViewMode } from '../types'
 import { ZOOM_TRANSITION_DURATION, EDITOR_OPEN_DELAY } from '../constants'
-import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, isBranchView } from '../state'
+import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, isBranchView, isTwigView } from '../state'
 import {
   setNodeVisibility,
   setFocusedNode,
@@ -18,17 +18,18 @@ export type NavigationCallbacks = {
 }
 
 export function updateVisibility(ctx: AppContext): void {
-  const { canvas, trunk, periodSection } = ctx.elements
+  const { canvas, trunk } = ctx.elements
   const { branchGroups } = ctx
   const activeBranchIndex = getActiveBranchIndex()
   const hoveredBranchIndex = getHoveredBranchIndex()
   const isBranch = isBranchView()
-  const isPreview = !isBranch && hoveredBranchIndex !== null
+  const isTwig = isTwigView()
+  const isPreview = !isBranch && !isTwig && hoveredBranchIndex !== null
 
   canvas.classList.toggle('is-zoomed', isBranch)
+  canvas.classList.toggle('is-twig-zoomed', isTwig)
   canvas.classList.toggle('is-previewing', isPreview)
-  trunk.classList.toggle('is-minimized', isBranch)
-  periodSection.style.display = isBranch ? 'none' : ''
+  trunk.classList.toggle('is-minimized', isBranch || isTwig)
 
   if (isBranch && activeBranchIndex !== null) {
     // Position trunk asterisk farther away from the active branch
@@ -71,31 +72,31 @@ export function updateVisibility(ctx: AppContext): void {
       const durationVariance = 600
       let maxTotalTime = 0
 
-      branchGroup.leaves.forEach((leaf) => {
+      branchGroup.twigs.forEach((twig) => {
         const delay = Math.random() * maxDelay
         const duration = baseDuration + Math.random() * durationVariance
-        leaf.style.setProperty('--fade-delay', `${delay}ms`)
-        leaf.style.setProperty('--fade-duration', `${duration}ms`)
-        leaf.classList.add('is-fading')
+        twig.style.setProperty('--fade-delay', `${delay}ms`)
+        twig.style.setProperty('--fade-duration', `${duration}ms`)
+        twig.classList.add('is-fading')
         maxTotalTime = Math.max(maxTotalTime, delay + duration)
       })
 
       const timeoutId = window.setTimeout(() => {
         fadeTimeouts.delete(index)
-        branchGroup.leaves.forEach((leaf) => {
-          leaf.classList.remove('is-fading')
-          leaf.style.removeProperty('--fade-delay')
-          leaf.style.removeProperty('--fade-duration')
-          setNodeVisibility(leaf, false)
+        branchGroup.twigs.forEach((twig) => {
+          twig.classList.remove('is-fading')
+          twig.style.removeProperty('--fade-delay')
+          twig.style.removeProperty('--fade-duration')
+          setNodeVisibility(twig, false)
         })
       }, maxTotalTime + 50)
       fadeTimeouts.set(index, timeoutId)
     } else {
-      branchGroup.leaves.forEach((leaf) => {
-        leaf.classList.remove('is-fading')
-        leaf.style.removeProperty('--fade-delay')
-        leaf.style.removeProperty('--fade-duration')
-        setNodeVisibility(leaf, shouldShow)
+      branchGroup.twigs.forEach((twig) => {
+        twig.classList.remove('is-fading')
+        twig.style.removeProperty('--fade-delay')
+        twig.style.removeProperty('--fade-duration')
+        setNodeVisibility(twig, shouldShow)
       })
     }
   })
@@ -152,7 +153,7 @@ export function enterBranchView(
   openEditor = false
 ): void {
   setViewMode('branch', ctx, callbacks, index)
-  callbacks.onUpdateStats() // Update sidebar to show leaves
+  callbacks.onUpdateStats() // Update sidebar to show twigs
 
   const target = focusNode ?? ctx.branchGroups[index]?.branch ?? null
   if (!target) return
@@ -163,6 +164,61 @@ export function enterBranchView(
     window.setTimeout(() => {
       ctx.editor.open(target, getNodePlaceholder(target))
     }, EDITOR_OPEN_DELAY)
+  }
+}
+
+export function enterTwigView(
+  twigNode: HTMLButtonElement,
+  branchIndex: number,
+  ctx: AppContext,
+  callbacks: NavigationCallbacks
+): void {
+  const twigId = twigNode.dataset.nodeId
+  if (!twigId) return
+
+  const previousMode = getViewMode()
+  setViewModeState('twig', branchIndex, twigId)
+
+  const shouldAnimate = previousMode !== 'twig'
+  if (shouldAnimate) {
+    ctx.elements.canvas.classList.add('is-zooming')
+    if (zoomTimeoutId) {
+      window.clearTimeout(zoomTimeoutId)
+    }
+    zoomTimeoutId = window.setTimeout(() => {
+      ctx.elements.canvas.classList.remove('is-zooming')
+    }, ZOOM_TRANSITION_DURATION)
+  }
+
+  ctx.editor.close()
+  updateVisibility(ctx)
+  callbacks.onPositionNodes()
+  callbacks.onUpdateStats()
+
+  // Open the twig view
+  ctx.twigView?.open(twigNode)
+
+  setFocusedNode(twigNode, ctx, (t) => updateFocus(t, ctx))
+}
+
+export function returnToBranchView(
+  ctx: AppContext,
+  callbacks: NavigationCallbacks
+): void {
+  const branchIndex = getActiveBranchIndex()
+  if (branchIndex === null) {
+    returnToOverview(ctx, callbacks)
+    return
+  }
+
+  ctx.twigView?.close()
+  setViewMode('branch', ctx, callbacks, branchIndex)
+  callbacks.onUpdateStats()
+
+  // Focus on the branch
+  const branch = ctx.branchGroups[branchIndex]?.branch
+  if (branch) {
+    setFocusedNode(branch, ctx, (t) => updateFocus(t, ctx))
   }
 }
 

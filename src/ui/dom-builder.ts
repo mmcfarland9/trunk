@@ -1,5 +1,5 @@
 import type { AppElements, BranchGroup } from '../types'
-import { BRANCH_COUNT, LEAF_COUNT } from '../constants'
+import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import { syncNode } from './node-ui'
 import ampersandImage from '../../assets/ampersand_alpha.png'
 
@@ -38,7 +38,12 @@ export function buildApp(
   const logo = document.createElement('img')
   logo.className = 'header-logo'
   logo.src = ampersandImage
-  logo.alt = 'Harada mark'
+  logo.alt = 'Trunk mark'
+
+  const settingsButton = document.createElement('button')
+  settingsButton.type = 'button'
+  settingsButton.className = 'action-button'
+  settingsButton.textContent = 'Settings'
 
   const importButton = document.createElement('button')
   importButton.type = 'button'
@@ -67,7 +72,7 @@ export function buildApp(
 
   importButton.addEventListener('click', () => importInput.click())
 
-  actions.append(importButton, exportButton, resetButton, resetHistoryButton)
+  actions.append(settingsButton, importButton, exportButton, resetButton, resetHistoryButton)
   header.append(actions, logo, importInput)
 
   // Body
@@ -90,19 +95,19 @@ export function buildApp(
   trunk.type = 'button'
   trunk.className = 'node trunk'
   trunk.dataset.nodeId = 'trunk'
-  trunk.dataset.defaultLabel = 'Purpose'
-  trunk.dataset.placeholder = 'Purpose'
+  trunk.dataset.defaultLabel = 'Trunk'
+  trunk.dataset.placeholder = 'Trunk'
   trunk.setAttribute('aria-label', 'Trunk - your core purpose')
   trunk.style.setProperty('--ampersand', `url(${ampersandImage})`)
 
   const trunkLabel = document.createElement('span')
   trunkLabel.className = 'trunk-title node-label'
-  trunkLabel.textContent = 'Purpose'
+  trunkLabel.textContent = 'Trunk'
   trunk.append(trunkLabel)
 
   canvas.append(trunk)
 
-  initializeNode(trunk, 'Purpose', nodeLookup, onNodeClick)
+  initializeNode(trunk, 'Trunk', nodeLookup, onNodeClick)
   allNodes.push(trunk)
 
   // Create branches
@@ -124,36 +129,46 @@ export function buildApp(
     branchLabel.className = 'node-label'
     branch.append(branchLabel)
 
+    const keyHint = document.createElement('span')
+    keyHint.className = 'key-hint'
+    keyHint.textContent = String(i + 1)
+    branch.append(keyHint)
+
     initializeNode(branch, `Branch ${i + 1}`, nodeLookup, onNodeClick)
     allNodes.push(branch)
 
-    const leaves: HTMLButtonElement[] = []
-    for (let j = 0; j < LEAF_COUNT; j += 1) {
-      const leafId = `branch-${i}-sub-${j}`
-      const leaf = document.createElement('button')
-      leaf.type = 'button'
-      leaf.className = 'node leaf'
-      leaf.dataset.nodeId = leafId
-      leaf.dataset.defaultLabel = ''
-      leaf.dataset.placeholder = `Leaf ${j + 1} for branch ${i + 1}`
-      leaf.dataset.branchIndex = String(i)
-      leaf.dataset.leafIndex = String(j)
-      leaf.dataset.leafStyle = '0'
-      leaf.style.setProperty('--leaf-delay', `${getBloomDelay(j)}ms`)
-      leaf.setAttribute('aria-label', `Leaf ${j + 1} for branch ${i + 1}`)
+    const twigs: HTMLButtonElement[] = []
+    for (let j = 0; j < TWIG_COUNT; j += 1) {
+      const twigId = `branch-${i}-twig-${j}`
+      const twig = document.createElement('button')
+      twig.type = 'button'
+      twig.className = 'node twig'
+      twig.dataset.nodeId = twigId
+      twig.dataset.defaultLabel = ''
+      twig.dataset.placeholder = `Twig ${j + 1} for branch ${i + 1}`
+      twig.dataset.branchIndex = String(i)
+      twig.dataset.twigIndex = String(j)
+      twig.dataset.twigStyle = '0'
+      twig.style.setProperty('--twig-delay', `${getBloomDelay(j)}ms`)
+      twig.setAttribute('aria-label', `Twig ${j + 1} for branch ${i + 1}`)
 
-      const leafLabel = document.createElement('span')
-      leafLabel.className = 'node-label'
-      leaf.append(leafLabel)
+      const twigLabel = document.createElement('span')
+      twigLabel.className = 'node-label'
+      twig.append(twigLabel)
 
-      initializeNode(leaf, `Leaf ${j + 1} for branch ${i + 1}`, nodeLookup, onNodeClick)
-      leaves.push(leaf)
-      allNodes.push(leaf)
-      wrapper.append(leaf)
+      const twigKeyHint = document.createElement('span')
+      twigKeyHint.className = 'key-hint'
+      twigKeyHint.textContent = String(j + 1)
+      twig.append(twigKeyHint)
+
+      initializeNode(twig, `Twig ${j + 1} for branch ${i + 1}`, nodeLookup, onNodeClick)
+      twigs.push(twig)
+      allNodes.push(twig)
+      wrapper.append(twig)
     }
 
     wrapper.append(branch)
-    branchGroups.push({ group: wrapper, branch, leaves })
+    branchGroups.push({ group: wrapper, branch, twigs })
     canvas.append(wrapper)
   }
 
@@ -166,24 +181,7 @@ export function buildApp(
   const debugText = document.createTextNode(' Show debug guide lines')
   debugLabel.append(debugCheckbox, debugText)
 
-  // Debug panel (top-left)
-  const debugPanel = document.createElement('div')
-  debugPanel.className = 'debug-panel'
-
-  const simulatePeriodEndBtn = document.createElement('button')
-  simulatePeriodEndBtn.type = 'button'
-  simulatePeriodEndBtn.className = 'debug-btn'
-  simulatePeriodEndBtn.textContent = 'Simulate period ending'
-
-  const lockBtn = document.createElement('button')
-  lockBtn.type = 'button'
-  lockBtn.className = 'debug-btn debug-lock-btn'
-  lockBtn.textContent = 'LOCK'
-  lockBtn.dataset.locked = 'false'
-
-  debugPanel.append(simulatePeriodEndBtn, lockBtn)
-
-  mapPanel.append(canvas, guideLayer, debugLabel, debugPanel)
+  mapPanel.append(canvas, guideLayer, debugLabel)
 
   // Side Panel
   const sidePanel = document.createElement('aside')
@@ -195,16 +193,6 @@ export function buildApp(
       <p class="focus-note"></p>
       <p class="focus-goal"></p>
     </section>
-    <div class="period-section">
-      <div class="period-selector">
-        <button type="button" class="period-btn is-active" data-period="1w">1w</button>
-        <button type="button" class="period-btn" data-period="2w">2w</button>
-        <button type="button" class="period-btn" data-period="1m">1m</button>
-        <button type="button" class="period-btn" data-period="2m">2m</button>
-      </div>
-      <p class="period-date"></p>
-      <button type="button" class="period-start-btn">Start next period</button>
-    </div>
     <section class="panel-section progress-section">
       <p class="progress-count"></p>
       <div class="progress-track">
@@ -236,10 +224,6 @@ export function buildApp(
     focusTitle: sidePanel.querySelector<HTMLParagraphElement>('.focus-title')!,
     focusNote: sidePanel.querySelector<HTMLParagraphElement>('.focus-note')!,
     focusGoal: sidePanel.querySelector<HTMLParagraphElement>('.focus-goal')!,
-    periodSection: sidePanel.querySelector<HTMLDivElement>('.period-section')!,
-    periodDate: sidePanel.querySelector<HTMLParagraphElement>('.period-date')!,
-    periodSelector: sidePanel.querySelector<HTMLDivElement>('.period-selector')!,
-    periodStartBtn: sidePanel.querySelector<HTMLButtonElement>('.period-start-btn')!,
     progressCount: sidePanel.querySelector<HTMLParagraphElement>('.progress-count')!,
     progressFill: sidePanel.querySelector<HTMLSpanElement>('.progress-fill')!,
     backToTrunkButton: sidePanel.querySelector<HTMLButtonElement>('.back-to-trunk')!,
@@ -248,11 +232,10 @@ export function buildApp(
     statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,
     importInput,
     debugCheckbox,
-    simulatePeriodEndBtn,
-    lockBtn,
   }
 
   // Wire up button handlers (will be connected to features in main.ts)
+  settingsButton.dataset.action = 'settings'
   exportButton.dataset.action = 'export'
   resetButton.dataset.action = 'reset'
   resetHistoryButton.dataset.action = 'reset-history'
@@ -286,19 +269,21 @@ function initializeNode(
   })
 }
 
-function getBloomDelay(leafIndex: number): number {
+function getBloomDelay(twigIndex: number): number {
   const baseDelay = 60
   const delayStep = 40
-  const distanceFromFront = Math.min(leafIndex, LEAF_COUNT - leafIndex)
+  const distanceFromFront = Math.min(twigIndex, TWIG_COUNT - twigIndex)
   return baseDelay + distanceFromFront * delayStep
 }
 
 export function getActionButtons(shell: HTMLDivElement): {
+  settingsButton: HTMLButtonElement
   exportButton: HTMLButtonElement
   resetButton: HTMLButtonElement
   resetHistoryButton: HTMLButtonElement
 } {
   return {
+    settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
     exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
     resetButton: shell.querySelector<HTMLButtonElement>('[data-action="reset"]')!,
     resetHistoryButton: shell.querySelector<HTMLButtonElement>('[data-action="reset-history"]')!,

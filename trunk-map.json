@@ -1,0 +1,313 @@
+{
+  "version": 3,
+  "exportedAt": "2026-01-05T00:00:00.000Z",
+  "circles": {
+    "trunk": {
+      "label": "mikey",
+      "note": "a systems framework\nfor mind, body & spirit"
+    },
+    "branch-0": {
+      "label": "CORE",
+      "note": "fitness & vitality"
+    },
+    "branch-0-twig-0": {
+      "label": "movement",
+      "note": "cardio, ambient",
+      "sprouts": [
+        {
+          "id": "sprout-1767567691469-08bfiy6",
+          "type": "seed",
+          "title": "asdasd",
+          "season": "1w",
+          "state": "active",
+          "createdAt": "2026-01-04T23:01:31.469Z",
+          "activatedAt": "2026-01-04T23:01:31.469Z",
+          "endDate": "2026-01-11T15:00:00.000Z",
+          "water": "asdasd",
+          "environment": "asdasd",
+          "soil": "asdasd"
+        }
+      ]
+    },
+    "branch-0-twig-1": {
+      "label": "strength",
+      "note": ""
+    },
+    "branch-0-twig-2": {
+      "label": "sport",
+      "note": "athletics, coordination"
+    },
+    "branch-0-twig-3": {
+      "label": "technique",
+      "note": ""
+    },
+    "branch-0-twig-4": {
+      "label": "maintenance",
+      "note": "mobility, rehab"
+    },
+    "branch-0-twig-5": {
+      "label": "nutrition",
+      "note": ""
+    },
+    "branch-0-twig-6": {
+      "label": "sleep",
+      "note": ""
+    },
+    "branch-0-twig-7": {
+      "label": "appearance",
+      "note": "grooming, presentation"
+    },
+    "branch-1": {
+      "label": "BRAIN",
+      "note": "knowledge & curiosity"
+    },
+    "branch-1-twig-0": {
+      "label": "reading",
+      "note": "study"
+    },
+    "branch-1-twig-1": {
+      "label": "writing",
+      "note": ""
+    },
+    "branch-1-twig-2": {
+      "label": "reasoning",
+      "note": "problemsolving, puzzling"
+    },
+    "branch-1-twig-3": {
+      "label": "focus",
+      "note": "attention"
+    },
+    "branch-1-twig-4": {
+      "label": "memory",
+      "note": ""
+    },
+    "branch-1-twig-5": {
+      "label": "analysis",
+      "note": "judgment"
+    },
+    "branch-1-twig-6": {
+      "label": "dialogue",
+      "note": "exchange"
+    },
+    "branch-1-twig-7": {
+      "label": "exploration",
+      "note": "curiosity"
+    },
+    "branch-2": {
+      "label": "VOICE",
+      "note": "expression & creativity"
+    },
+    "branch-2-twig-0": {
+      "label": "practice",
+      "note": ""
+    },
+    "branch-2-twig-1": {
+      "label": "composition",
+      "note": ""
+    },
+    "branch-2-twig-2": {
+      "label": "interpretation",
+      "note": "reimagination, synthesis"
+    },
+    "branch-2-twig-3": {
+      "label": "performance",
+      "note": "improvisation"
+    },
+    "branch-2-twig-4": {
+      "label": "consumption",
+      "note": ""
+    },
+    "branch-2-twig-5": {
+      "label": "curation",
+      "note": ""
+    },
+    "branch-2-twig-6": {
+      "label": "completion",
+      "note": "editing"
+    },
+    "branch-2-twig-7": {
+      "label": "publication",
+      "note": ""
+    },
+    "branch-3": {
+      "label": "HANDS",
+      "note": "making & craft"
+    },
+    "branch-3-twig-0": {
+      "label": "design",
+      "note": ""
+    },
+    "branch-3-twig-1": {
+      "label": "fabrication",
+      "note": "invention"
+    },
+    "branch-3-twig-2": {
+      "label": "assembly",
+      "note": ""
+    },
+    "branch-3-twig-3": {
+      "label": "repair",
+      "note": ""
+    },
+    "branch-3-twig-4": {
+      "label": "refinement",
+      "note": "finishing, modification"
+    },
+    "branch-3-twig-5": {
+      "label": "tooling",
+      "note": ""
+    },
+    "branch-3-twig-6": {
+      "label": "tending",
+      "note": "cultivating"
+    },
+    "branch-3-twig-7": {
+      "label": "cooking",
+      "note": ""
+    },
+    "branch-4": {
+      "label": "HEART",
+      "note": "love & family"
+    },
+    "branch-4-twig-0": {
+      "label": "homemaking",
+      "note": "errands, chores, comfort"
+    },
+    "branch-4-twig-1": {
+      "label": "care",
+      "note": "thoughtfulness"
+    },
+    "branch-4-twig-2": {
+      "label": "presence",
+      "note": ""
+    },
+    "branch-4-twig-3": {
+      "label": "intimacy",
+      "note": "vulnerability"
+    },
+    "branch-4-twig-4": {
+      "label": "communication",
+      "note": ""
+    },
+    "branch-4-twig-5": {
+      "label": "ritual",
+      "note": "celebration"
+    },
+    "branch-4-twig-6": {
+      "label": "adventure",
+      "note": "spontaneity"
+    },
+    "branch-4-twig-7": {
+      "label": "joy",
+      "note": "play"
+    },
+    "branch-5": {
+      "label": "BREATH",
+      "note": "regulation & renewal"
+    },
+    "branch-5-twig-0": {
+      "label": "observation",
+      "note": "noticing"
+    },
+    "branch-5-twig-1": {
+      "label": "nature",
+      "note": "appreciation, grace"
+    },
+    "branch-5-twig-2": {
+      "label": "flow",
+      "note": "breathwork"
+    },
+    "branch-5-twig-3": {
+      "label": "repose",
+      "note": "rest"
+    },
+    "branch-5-twig-4": {
+      "label": "idleness",
+      "note": "stillness, silence, solitude"
+    },
+    "branch-5-twig-5": {
+      "label": "exposure",
+      "note": "elements, challenge"
+    },
+    "branch-5-twig-6": {
+      "label": "abstinence",
+      "note": "restraint, constraint"
+    },
+    "branch-5-twig-7": {
+      "label": "reflection",
+      "note": "contemplation, acceptance, gratitude"
+    },
+    "branch-6": {
+      "label": "BACK",
+      "note": "belonging & community"
+    },
+    "branch-6-twig-0": {
+      "label": "connection",
+      "note": "reach"
+    },
+    "branch-6-twig-1": {
+      "label": "support",
+      "note": "reliability"
+    },
+    "branch-6-twig-2": {
+      "label": "gathering",
+      "note": "hosting"
+    },
+    "branch-6-twig-3": {
+      "label": "membership",
+      "note": "belonging"
+    },
+    "branch-6-twig-4": {
+      "label": "stewardship",
+      "note": "preservation"
+    },
+    "branch-6-twig-5": {
+      "label": "advocacy",
+      "note": "morality, citizenship"
+    },
+    "branch-6-twig-6": {
+      "label": "service",
+      "note": "contribution, education"
+    },
+    "branch-6-twig-7": {
+      "label": "culture",
+      "note": "heritage, traditions"
+    },
+    "branch-7": {
+      "label": "FEET",
+      "note": "stability & direction"
+    },
+    "branch-7-twig-0": {
+      "label": "work",
+      "note": "livelihood"
+    },
+    "branch-7-twig-1": {
+      "label": "development",
+      "note": ""
+    },
+    "branch-7-twig-2": {
+      "label": "positioning",
+      "note": "networking"
+    },
+    "branch-7-twig-3": {
+      "label": "ventures",
+      "note": ""
+    },
+    "branch-7-twig-4": {
+      "label": "finance",
+      "note": "budgeting, resources"
+    },
+    "branch-7-twig-5": {
+      "label": "operations",
+      "note": "logistics, coordination"
+    },
+    "branch-7-twig-6": {
+      "label": "planning",
+      "note": "provision, security"
+    },
+    "branch-7-twig-7": {
+      "label": "administration",
+      "note": "governance"
+    }
+  }
+}

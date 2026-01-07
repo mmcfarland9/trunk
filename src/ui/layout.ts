@@ -3,9 +3,9 @@ import { GUIDE_ANIMATION_DURATION } from '../constants'
 import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex, getActiveNode } from '../state'
 
 // Constants
-const GUIDE_GAP = 8, LEAF_GAP = 4, LEAF_COLLISION_PAD = 8, LEAF_BASE_SIZE = 36, LEAF_PREVIEW_SIZE = 14, LEAF_MAX_SIZE = 80
-const BLOOM_MIN = 0.12, BLOOM_MAX = 0.34, BLOOM_OV_MIN = 0.06, BLOOM_OV_MAX = 0.18, LEAF_RING_RATIO = 0.55
-const WIND_BRANCH_AMP = 6, WIND_LEAF_AMP = 10, WIND_PULSE = 0.04, WIND_MIN = 0.35, WIND_MAX = 0.7
+const GUIDE_GAP = 8, TWIG_GAP = 4, TWIG_COLLISION_PAD = 8, TWIG_BASE_SIZE = 36, TWIG_PREVIEW_SIZE = 14, TWIG_MAX_SIZE = 80
+const BLOOM_MIN = 0.12, BLOOM_MAX = 0.34, BLOOM_OV_MIN = 0.06, BLOOM_OV_MAX = 0.18, TWIG_RING_RATIO = 0.55
+const WIND_BRANCH_AMP = 6, WIND_TWIG_AMP = 10, WIND_PULSE = 0.04, WIND_MIN = 0.35, WIND_MAX = 0.7
 const PREVIEW_FADE = 500, HOVER_MIN_RATIO = 0.55, HOVER_MAX_RATIO = 1.35
 
 let guideAnimationId = 0, windAnimationId = 0, windStartTime = 0, previewStartTime = 0
@@ -33,20 +33,20 @@ export function positionNodes(ctx: AppContext): void {
 
     const mainRadius = Math.max(group.branch.offsetWidth, group.branch.offsetHeight) / 2
     const isActive = isBranchView && index === activeBranchIndex
-    const leafSizes = group.leaves.map(leaf => isActive ? getLeafCollisionDiameter(leaf) + LEAF_COLLISION_PAD * 2 : LEAF_PREVIEW_SIZE)
-    const maxLeafRadius = leafSizes.length ? Math.max(...leafSizes) / 2 : LEAF_BASE_SIZE / 2
+    const twigSizes = group.twigs.map(twig => isActive ? getTwigCollisionDiameter(twig) + TWIG_COLLISION_PAD * 2 : TWIG_PREVIEW_SIZE)
+    const maxTwigRadius = twigSizes.length ? Math.max(...twigSizes) / 2 : TWIG_BASE_SIZE / 2
     const [minRatio, maxRatio] = isActive ? [BLOOM_MIN, BLOOM_MAX] : [BLOOM_OV_MIN, BLOOM_OV_MAX]
-    const minRadius = Math.max(mainRadius + maxLeafRadius + GUIDE_GAP, base * minRatio)
+    const minRadius = Math.max(mainRadius + maxTwigRadius + GUIDE_GAP, base * minRatio)
     const maxRadius = Math.min(
-      Math.max(minRadius + maxLeafRadius * (isActive ? 1.8 : 1.4), base * maxRatio),
-      base * (isActive ? 0.42 : 0.22) // Hard cap to keep leaves in bounds
+      Math.max(minRadius + maxTwigRadius * (isActive ? 1.8 : 1.4), base * maxRatio),
+      base * (isActive ? 0.42 : 0.22) // Hard cap to keep twigs in bounds
     )
-    const offsets = buildRadialOffsets(group.leaves.length, minRadius, maxRadius, leafSizes, angle)
+    const offsets = buildRadialOffsets(group.twigs.length, minRadius, maxRadius, twigSizes, angle)
 
-    group.leaves.forEach((leaf, i) => {
-      setBasePosition(leaf, offsets[i]?.x ?? 0, offsets[i]?.y ?? 0)
-      if (isActive) leaf.dataset.leafRadius = `${leafSizes[i] / 2}`
-      else delete leaf.dataset.leafRadius
+    group.twigs.forEach((twig, i) => {
+      setBasePosition(twig, offsets[i]?.x ?? 0, offsets[i]?.y ?? 0)
+      if (isActive) twig.dataset.twigRadius = `${twigSizes[i] / 2}`
+      else delete twig.dataset.twigRadius
     })
   })
 
@@ -124,9 +124,9 @@ function drawGuideLines(ctx: AppContext): void {
       const mainRect = bg.branch.getBoundingClientRect()
       const mainCenter = getCenterPoint(mainRect, rect), mainRadius = Math.max(mainRect.width, mainRect.height) / 2
       drawLineBetween(frag, trunkCenter, trunkRadius, mainCenter, mainRadius, 'trunk')
-      bg.leaves.forEach(leaf => {
-        const lr = leaf.getBoundingClientRect()
-        drawLineBetween(frag, mainCenter, mainRadius, getCenterPoint(lr, rect), Math.max(lr.width, lr.height)/2, 'leaf', LEAF_GAP)
+      bg.twigs.forEach(twig => {
+        const tr = twig.getBoundingClientRect()
+        drawLineBetween(frag, mainCenter, mainRadius, getCenterPoint(tr, rect), Math.max(tr.width, tr.height)/2, 'twig', TWIG_GAP)
       })
     }
   } else {
@@ -148,9 +148,9 @@ function drawGuideLines(ctx: AppContext): void {
       if (bg) {
         const mr = bg.branch.getBoundingClientRect()
         const mc = getCenterPoint(mr, rect), mrad = Math.max(mr.width, mr.height) / 2
-        bg.leaves.forEach(leaf => {
-          const lr = leaf.getBoundingClientRect()
-          drawLineBetween(frag, mc, mrad, getCenterPoint(lr, rect), Math.max(lr.width, lr.height)/2, 'leaf', LEAF_GAP, opacity)
+        bg.twigs.forEach(twig => {
+          const tr = twig.getBoundingClientRect()
+          drawLineBetween(frag, mc, mrad, getCenterPoint(tr, rect), Math.max(tr.width, tr.height)/2, 'twig', TWIG_GAP, opacity)
         })
       }
     } else { lastHoveredBranch = null }
@@ -164,7 +164,7 @@ function applyWind(ctx: AppContext, timestamp: number): void {
   const isBranchView = viewMode === 'branch' && activeBranchIndex !== null
   const time = (timestamp - windStartTime) / 1000
   const bAmp = WIND_BRANCH_AMP * (isBranchView ? 0.7 : 1)
-  const lAmp = WIND_LEAF_AMP * (isBranchView ? 0.85 : 1)
+  const tAmp = WIND_TWIG_AMP * (isBranchView ? 0.85 : 1)
   const pulse = WIND_PULSE * (isBranchView ? 0.85 : 1)
 
   branchGroups.forEach((bg, idx) => {
@@ -177,20 +177,20 @@ function applyWind(ctx: AppContext, timestamp: number): void {
       bg.group.style.left = `${bx + Math.sin(time * speed + phase) * bAmp}px`
       bg.group.style.top = `${by + Math.cos(time * speed * 0.8 + phase) * bAmp * 0.6}px`
     }
-    bg.leaves.forEach(leaf => {
-      const x = getBase(leaf, 'x'), y = getBase(leaf, 'y')
+    bg.twigs.forEach(twig => {
+      const x = getBase(twig, 'x'), y = getBase(twig, 'y')
       if (x === null || y === null) return
-      const li = Number(leaf.dataset.leafIndex || '0')
-      const lr = getLeafRadius(leaf)
-      const scale = clamp(1 - (lr - LEAF_BASE_SIZE/2) / (LEAF_BASE_SIZE * 1.6), 0.5, 1)
-      const s = 131 + idx * 71 + li * 17
+      const ti = Number(twig.dataset.twigIndex || '0')
+      const tr = getTwigRadius(twig)
+      const scale = clamp(1 - (tr - TWIG_BASE_SIZE/2) / (TWIG_BASE_SIZE * 1.6), 0.5, 1)
+      const s = 131 + idx * 71 + ti * 17
       const sp = lerp(WIND_MIN, WIND_MAX, seeded(s, 17.9))
       const ph = seeded(s, 29.3) * Math.PI * 2
-      const amp = lAmp * scale * (0.7 + seeded(s, 41.7) * 0.6)
+      const amp = tAmp * scale * (0.7 + seeded(s, 41.7) * 0.6)
       const p = 1 + Math.sin(time * sp * 0.5 + ph) * pulse * scale
       const fl = Math.sin(time * sp * 2.2 + ph) * amp * 0.18
-      leaf.style.left = `${x * p + Math.sin(time * sp + ph) * amp + fl}px`
-      leaf.style.top = `${y * p + Math.cos(time * sp * 0.9 + ph) * amp * 0.6 - fl}px`
+      twig.style.left = `${x * p + Math.sin(time * sp + ph) * amp + fl}px`
+      twig.style.top = `${y * p + Math.cos(time * sp * 0.9 + ph) * amp * 0.6 - fl}px`
     })
   })
   const activeNode = getActiveNode()
@@ -198,16 +198,16 @@ function applyWind(ctx: AppContext, timestamp: number): void {
 }
 
 // Helpers
-function drawLineBetween(frag: DocumentFragment, p1: {x:number,y:number}, r1: number, p2: {x:number,y:number}, r2: number, variant: 'branch'|'leaf'|'trunk', gap2 = GUIDE_GAP, opacity?: number): void {
+function drawLineBetween(frag: DocumentFragment, p1: {x:number,y:number}, r1: number, p2: {x:number,y:number}, r2: number, variant: 'branch'|'twig'|'trunk', gap2 = GUIDE_GAP, opacity?: number): void {
   const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy)
   if (!dist) return
   const ux = dx/dist, uy = dy/dist
   appendLine(frag, p1.x + ux*(r1+GUIDE_GAP), p1.y + uy*(r1+GUIDE_GAP), p2.x - ux*(r2+gap2), p2.y - uy*(r2+gap2), variant, opacity)
 }
 
-function appendLine(frag: DocumentFragment, x1: number, y1: number, x2: number, y2: number, variant: 'branch'|'leaf'|'trunk', opacity?: number): void {
+function appendLine(frag: DocumentFragment, x1: number, y1: number, x2: number, y2: number, variant: 'branch'|'twig'|'trunk', opacity?: number): void {
   const dx = x2-x1, dy = y2-y1, dist = Math.hypot(dx, dy)
-  const spacing = variant === 'leaf' ? 8 : 12, n = Math.max(1, Math.floor(dist / spacing))
+  const spacing = variant === 'twig' ? 8 : 12, n = Math.max(1, Math.floor(dist / spacing))
   for (let i = 0; i < n; i++) {
     const t = n > 1 ? i/(n-1) : 0.5
     const span = document.createElement('span')
@@ -241,16 +241,16 @@ function getBase(el: HTMLElement, axis: 'x'|'y'): number | null {
   return isNaN(p) ? null : p
 }
 
-function getLeafCollisionDiameter(el: HTMLElement): number {
-  const w = Math.min(el.offsetWidth || LEAF_BASE_SIZE, LEAF_MAX_SIZE)
-  const h = Math.min(el.offsetHeight || LEAF_BASE_SIZE, LEAF_MAX_SIZE)
+function getTwigCollisionDiameter(el: HTMLElement): number {
+  const w = Math.min(el.offsetWidth || TWIG_BASE_SIZE, TWIG_MAX_SIZE)
+  const h = Math.min(el.offsetHeight || TWIG_BASE_SIZE, TWIG_MAX_SIZE)
   return Math.hypot(w, h)
 }
 
-function getLeafRadius(el: HTMLElement): number {
-  const r = el.dataset.leafRadius
+function getTwigRadius(el: HTMLElement): number {
+  const r = el.dataset.twigRadius
   if (r) { const p = parseFloat(r); if (!isNaN(p)) return p }
-  return Math.hypot(el.offsetWidth || LEAF_BASE_SIZE, el.offsetHeight || LEAF_BASE_SIZE) / 2
+  return Math.hypot(el.offsetWidth || TWIG_BASE_SIZE, el.offsetHeight || TWIG_BASE_SIZE) / 2
 }
 
 function seeded(seed: number, salt: number): number { const v = Math.sin(seed * salt) * 43758.5453; return v - Math.floor(v) }
@@ -261,7 +261,7 @@ function buildRadialOffsets(count: number, minR: number, maxR: number, sizes: nu
   if (!count) return []
   const radii = sizes.map(s => s/2), step = (Math.PI * 2) / count
   const safe = getSafeRadius(radii, step)
-  const ring = Math.max(minR + (maxR - minR) * LEAF_RING_RATIO, safe, minR)
+  const ring = Math.max(minR + (maxR - minR) * TWIG_RING_RATIO, safe, minR)
   return Array.from({length: count}, (_, i) => ({ x: Math.cos(step * i + angle) * ring, y: Math.sin(step * i + angle) * ring }))
 }
 
@@ -269,7 +269,7 @@ function getSafeRadius(radii: number[], step: number): number {
   if (radii.length < 2) return 0
   const denom = 2 * Math.sin(step / 2)
   if (!denom) return 0
-  return Math.max(...radii.map((r, i) => (r + radii[(i+1) % radii.length] + LEAF_GAP) / denom))
+  return Math.max(...radii.map((r, i) => (r + radii[(i+1) % radii.length] + TWIG_GAP) / denom))
 }
 
 // Debug SVG helpers
