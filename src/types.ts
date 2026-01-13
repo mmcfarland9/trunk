@@ -6,25 +6,54 @@ export type BranchGroup = {
 
 // Sprout types (replacing goal system)
 export type SproutSeason = '1w' | '2w' | '1m' | '3m' | '6m' | '1y'
-export type SproutType = 'seed' | 'sapling'
 export type SproutState = 'draft' | 'active' | 'completed' | 'failed'
+export type SproutEnvironment = 'fertile' | 'firm' | 'barren'
+
+// Water entry - journal entries when watering a sprout
+export type WaterEntry = {
+  timestamp: string
+  content: string
+  prompt?: string
+}
+
+// Leaf - a saga/trajectory of related sprouts (identity derived from its sprouts)
+export type LeafStatus = 'active' | 'dormant' | 'archived'
+
+export type Leaf = {
+  id: string
+  status: LeafStatus
+  createdAt: string
+}
 
 export type Sprout = {
   id: string
-  type: SproutType
   title: string
   season: SproutSeason
+  environment: SproutEnvironment
   state: SproutState
+  soilCost: number
   createdAt: string
   activatedAt?: string
   endDate?: string
-  result?: number // 0-100 for seed, 0-5 for sapling
+  result?: number // 1-5 scale
   reflection?: string
   completedAt?: string
-  // Growth conditions
-  water?: string    // How to check in regularly
-  environment?: string // What growth looks like
-  soil?: string     // What ensures growth
+  // Leaf association
+  leafId?: string
+  waterEntries?: WaterEntry[]
+  graftedFromId?: string
+}
+
+// Soil system - represents focus/energy capacity
+export type SoilState = {
+  available: number
+  capacity: number
+}
+
+// Water system - represents daily/recurring attention
+export type WaterState = {
+  available: number
+  capacity: number
 }
 
 // Legacy goal type (for migration)
@@ -33,8 +62,9 @@ export type GoalType = 'binary' | 'continuous'
 export type NodeData = {
   label: string
   note: string
-  // New sprout data
+  // Sprout and leaf data
   sprouts?: Sprout[]
+  leaves?: Leaf[]
   // Legacy fields (for migration, will be converted to sprouts)
   goalType?: GoalType
   goalValue?: number
@@ -55,14 +85,14 @@ export type TwigViewApi = {
   isOpen: () => boolean
 }
 
-export type BranchProgressItem = {
-  button: HTMLButtonElement
-  label: HTMLSpanElement
-  count: HTMLSpanElement
-  index: number
+export type LeafViewApi = {
+  container: HTMLDivElement
+  open: (leafId: string, twigId: string, branchIndex: number) => void
+  close: () => void
+  isOpen: () => boolean
 }
 
-export type ViewMode = 'overview' | 'branch' | 'twig'
+export type ViewMode = 'overview' | 'branch' | 'twig' | 'leaf'
 
 export type AppElements = {
   shell: HTMLDivElement
@@ -78,11 +108,33 @@ export type AppElements = {
   progressCount: HTMLParagraphElement
   progressFill: HTMLSpanElement
   backToTrunkButton: HTMLButtonElement
-  branchProgress: HTMLDivElement
+  activeSproutsToggle: HTMLButtonElement
+  activeSproutsList: HTMLDivElement
+  cultivatedSproutsToggle: HTMLButtonElement
+  cultivatedSproutsList: HTMLDivElement
   statusMessage: HTMLParagraphElement
   statusMeta: HTMLParagraphElement
   importInput: HTMLInputElement
   debugCheckbox: HTMLInputElement
+  debugClockBtn: HTMLButtonElement
+  debugSoilResetBtn: HTMLButtonElement
+  debugClockOffset: HTMLSpanElement
+  sproutsDialog: HTMLDivElement
+  sproutsDialogContent: HTMLDivElement
+  sproutsDialogClose: HTMLButtonElement
+  gardenGuideDialog: HTMLDivElement
+  gardenGuideClose: HTMLButtonElement
+  waterDialog: HTMLDivElement
+  waterDialogTitle: HTMLParagraphElement
+  waterDialogMeta: HTMLParagraphElement
+  waterDialogJournal: HTMLTextAreaElement
+  waterDialogClose: HTMLButtonElement
+  waterDialogCancel: HTMLButtonElement
+  waterDialogSave: HTMLButtonElement
+  soilMeterFill: HTMLDivElement
+  soilMeterValue: HTMLSpanElement
+  waterMeterFill: HTMLDivElement
+  waterMeterValue: HTMLSpanElement
 }
 
 export type AppContext = {
@@ -90,7 +142,7 @@ export type AppContext = {
   branchGroups: BranchGroup[]
   allNodes: HTMLButtonElement[]
   nodeLookup: Map<string, HTMLButtonElement>
-  branchProgressItems: BranchProgressItem[]
   editor: EditorApi
   twigView?: TwigViewApi
+  leafView?: LeafViewApi
 }

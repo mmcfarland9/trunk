@@ -1,0 +1,87 @@
+# Watering Prompts
+# One prompt per line. Lines starting with # are ignored.
+# These appear randomly when watering a sprout, asking about progress.
+
+# Progress & Status
+What progress have you made on this today?
+How close are you to completing this?
+What's the current state of this goal?
+Where do you stand with this right now?
+What have you accomplished so far?
+
+# Recent Actions
+What did you do for this today?
+What's one thing you did to move this forward?
+What action did you take most recently?
+How did you work on this since last time?
+What steps have you taken lately?
+
+# Obstacles & Challenges
+What's been the hardest part so far?
+What obstacles are you facing?
+Is anything blocking your progress?
+What challenge came up recently?
+What's been more difficult than expected?
+
+# Learnings & Insights
+What have you learned while working on this?
+Any surprises along the way?
+What would you do differently so far?
+What insight have you gained?
+Has your approach changed at all?
+
+# Momentum & Energy
+How motivated do you feel about this?
+Is this still exciting to work on?
+What's keeping you going?
+How does this feel right now?
+Are you still energized by this goal?
+
+# Next Steps
+What's your next move?
+What will you focus on next?
+What's the immediate next step?
+What needs to happen next?
+How will you continue tomorrow?
+
+# Reflection
+Why does this goal matter to you?
+How does this connect to your bigger picture?
+What will completing this mean for you?
+Who benefits when you succeed at this?
+What's at stake here?
+
+# Specifics
+Can you describe what "done" looks like?
+What does success look like for this?
+How will you know when you've made it?
+What's the finish line?
+What are you actually trying to achieve?
+
+# Time & Pacing
+Are you on track with your timeline?
+Do you need more or less time than expected?
+How does the pacing feel?
+Is the deadline realistic?
+Should you adjust your expectations?
+
+# Support & Resources
+Do you need help with anything?
+What resources would make this easier?
+Who could support you with this?
+Is there something you're missing?
+What would accelerate your progress?
+
+# Honesty Check
+Are you being honest with yourself about this?
+Is this still the right goal?
+Should anything change about this goal?
+Are you avoiding any part of this?
+What are you not admitting to yourself?
+
+# Celebration
+What's worth celebrating so far?
+What small win happened recently?
+What are you proud of?
+What went well?
+Give yourself credit for something.

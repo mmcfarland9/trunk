@@ -158,7 +158,7 @@ export function syncNode(element: HTMLButtonElement): void {
 
 export function setFocusedNode(
   target: HTMLButtonElement | null,
-  ctx: AppContext,
+  _ctx: AppContext,
   updateFocusCallback: (target: HTMLButtonElement | null) => void
 ): void {
   const currentFocused = getFocusedNode()
@@ -171,11 +171,6 @@ export function setFocusedNode(
   if (target) {
     target.classList.add('is-focused')
   }
-
-  const focusedBranch = target?.dataset.branchIndex
-  ctx.branchProgressItems.forEach((item) => {
-    item.button.classList.toggle('is-current', focusedBranch === String(item.index))
-  })
 
   updateFocusCallback(target)
 }
@@ -242,7 +237,7 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
     if (activeSprouts.length > 0) {
       const sproutList = activeSprouts.map(s => {
         const name = s.title || 'Untitled'
-        return `${name} (${s.type})`
+        return `${name} (${s.season})`
       }).join('<br>')
       focusGoal.innerHTML = `Active (${activeSprouts.length}):<br>${sproutList}`
       focusGoal.classList.remove('is-muted')

@@ -1,7 +1,7 @@
 import type { AppContext } from '../types'
 import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
 import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
-import { updateScopedProgress, updateBranchProgress } from './progress'
+import { updateScopedProgress } from './progress'
 import type { NavigationCallbacks } from './navigation'
 import { updateFocus } from '../ui/node-ui'
 
@@ -41,7 +41,6 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       const focused = getFocusedNode()
       updateFocus(focused, ctx)
       updateScopedProgress(ctx)
-      updateBranchProgress(ctx)
     }
     scrollAccumulator = 0
   }
@@ -84,7 +83,6 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       if (branchGroup) {
         updateFocus(branchGroup.branch, ctx)
         updateScopedProgress(ctx)
-        updateBranchProgress(ctx)
       }
     }
   }

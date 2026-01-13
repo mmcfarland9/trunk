@@ -1,11 +1,6 @@
-import type { AppContext } from '../types'
+import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getViewMode, getIsSidebarHover, getActiveSprouts } from '../state'
-
-export type BranchHoverCallbacks = {
-  onHoverStart: (index: number) => void
-  onHoverEnd: () => void
-}
+import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   const { backToTrunkButton } = ctx.elements
@@ -16,7 +11,7 @@ export function updateStats(ctx: AppContext): void {
   const isBranchView = getViewMode() === 'branch'
   backToTrunkButton.style.display = isBranchView ? '' : 'none'
 
-  updateBranchProgress(ctx)
+  updateSidebarSprouts(ctx)
 }
 
 function countActiveSproutsForTwigs(twigs: HTMLButtonElement[]): number {
@@ -68,134 +63,381 @@ export function updateScopedProgress(ctx: AppContext): void {
   progressFill.style.width = `${progress}%`
 }
 
-export function buildBranchProgress(
-  ctx: AppContext,
-  onBranchClick: (index: number) => void,
-  hoverCallbacks?: BranchHoverCallbacks
-): void {
-  const { branchProgress } = ctx.elements
-  const { branchGroups, branchProgressItems } = ctx
+// --- Sidebar Sprout Sections ---
 
-  branchProgress.replaceChildren()
-  branchProgressItems.length = 0
+type SproutWithLocation = Sprout & { twigId: string, twigLabel: string, branchIndex: number }
 
-  branchGroups.forEach((_, index) => {
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.className = 'branch-item'
-    button.addEventListener('click', () => onBranchClick(index))
-    if (hoverCallbacks) {
-      button.addEventListener('mouseenter', () => hoverCallbacks.onHoverStart(index))
-      button.addEventListener('mouseleave', () => hoverCallbacks.onHoverEnd())
-    }
-
-    const label = document.createElement('span')
-    label.className = 'branch-label'
-
-    const count = document.createElement('span')
-    count.className = 'branch-count'
-    button.append(label, count)
-    branchProgress.append(button)
-
-    branchProgressItems.push({ button, label, count, index })
-  })
+export type SidebarBranchCallbacks = {
+  onHoverStart: (index: number) => void
+  onHoverEnd: () => void
+  onClick: (index: number) => void
 }
 
-export function updateBranchProgress(ctx: AppContext): void {
-  const { branchProgress } = ctx.elements
-  const { branchGroups, branchProgressItems } = ctx
+export type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
+export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
 
-  const viewMode = getViewMode()
-  const hoveredIndex = getHoveredBranchIndex()
-  const activeIndex = getActiveBranchIndex()
+// Store callbacks so they persist across updateSidebarSprouts calls
+let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
+let storedBranchCallbacks: SidebarBranchCallbacks | undefined
+let storedTwigClick: SidebarTwigCallback | undefined
+let storedLeafClick: SidebarLeafCallback | undefined
 
-  // Show twigs when we're in branch view or hovering a branch via graphic (not sidebar)
-  // Sidebar hover should NOT change the sidebar itself
-  const focusedBranchIndex = viewMode === 'branch' ? activeIndex : (getIsSidebarHover() ? null : hoveredIndex)
+function parseBranchIndex(twigId: string): number {
+  // Parse "branch-X-twig-Y" to get X
+  const match = twigId.match(/^branch-(\d+)-twig-\d+$/)
+  return match ? parseInt(match[1], 10) : -1
+}
 
-  if (focusedBranchIndex !== null) {
-    // Show twigs for this branch
-    const branchGroup = branchGroups[focusedBranchIndex]
-    if (branchGroup) {
-      updateTwigProgress(ctx, branchGroup)
-      return
-    }
+function formatEndDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = getDebugDate()
+
+  // If on or past due date, show READY
+  if (date <= now) {
+    return 'READY'
   }
 
-  // Default: show all branches (always visible for visual conformity)
-  branchProgressItems.forEach((item) => {
-    const branchGroup = branchGroups[item.index]
-    const filledTwigs = branchGroup.twigs.filter((twig) => twig.dataset.filled === 'true').length
-    const totalTwigs = branchGroup.twigs.length
-
-    item.label.textContent = getBranchLabel(branchGroup.branch, item.index)
-    item.count.textContent = `${filledTwigs}/${totalTwigs}`
-
-    const hasLabel = branchGroup.branch.dataset.filled === 'true'
-    item.button.classList.toggle('is-labeled', hasLabel)
-    item.button.classList.remove('is-twig')
-  })
-
-  branchProgress.classList.add('has-content')
+  // Format as MM/DD/YY
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = String(date.getFullYear()).slice(-2)
+  return `${month}/${day}/${year}`
 }
 
-function updateTwigProgress(ctx: AppContext, branchGroup: { branch: HTMLButtonElement, twigs: HTMLButtonElement[] }): void {
-  const { branchProgress } = ctx.elements
-  const { branchProgressItems } = ctx
+function getAllSproutsFromState(): { active: SproutWithLocation[], cultivated: SproutWithLocation[] } {
+  const active: SproutWithLocation[] = []
+  const cultivated: SproutWithLocation[] = []
 
-  branchProgressItems.forEach((item, i) => {
-    const twig = branchGroup.twigs[i]
-    if (twig) {
-      const isFilled = twig.dataset.filled === 'true'
-      const data = nodeState[twig.dataset.nodeId || '']
-      const sprouts = data?.sprouts || []
-      const activeSproutCount = getActiveSprouts(sprouts).length
+  Object.entries(nodeState).forEach(([nodeId, data]) => {
+    if (!data.sprouts) return
+    const twigLabel = data.label || nodeId
+    const branchIndex = parseBranchIndex(nodeId)
 
-      item.label.textContent = getTwigLabel(twig, i)
-      // Show sprout count or filled indicator
-      item.count.textContent = activeSproutCount > 0 ? `${activeSproutCount}` : (isFilled ? '●' : '○')
-      item.button.classList.toggle('is-labeled', isFilled || activeSproutCount > 0)
-      item.button.classList.add('is-twig')
-      item.button.style.display = ''
-    }
+    getActiveSprouts(data.sprouts).forEach(s => {
+      active.push({ ...s, twigId: nodeId, twigLabel, branchIndex })
+    })
+    getHistorySprouts(data.sprouts).forEach(s => {
+      cultivated.push({ ...s, twigId: nodeId, twigLabel, branchIndex })
+    })
   })
 
-  // Always show twigs when in twig view
-  branchProgress.classList.add('has-content')
+  return { active, cultivated }
 }
 
-export function updateSproutProgress(ctx: AppContext, twig: HTMLButtonElement): void {
-  const { branchProgress } = ctx.elements
-  const { branchProgressItems } = ctx
-
-  const data = nodeState[twig.dataset.nodeId || '']
-  const sprouts = data?.sprouts || []
-  const activeSprouts = getActiveSprouts(sprouts)
-
-  branchProgressItems.forEach((item, i) => {
-    const sprout = activeSprouts[i]
-    if (sprout) {
-      item.label.textContent = sprout.title || 'Untitled'
-      item.count.textContent = `(${sprout.type})`
-      item.button.classList.add('is-labeled', 'is-sprout')
-      item.button.classList.remove('is-twig')
-      item.button.style.display = ''
-    } else {
-      // Hide unused slots
-      item.button.style.display = 'none'
-    }
+function groupByBranch(sprouts: SproutWithLocation[]): Map<number, SproutWithLocation[]> {
+  const grouped = new Map<number, SproutWithLocation[]>()
+  sprouts.forEach(sprout => {
+    if (sprout.branchIndex < 0) return // Skip invalid
+    const list = grouped.get(sprout.branchIndex) || []
+    list.push(sprout)
+    grouped.set(sprout.branchIndex, list)
   })
-
-  branchProgress.classList.toggle('has-content', activeSprouts.length > 0)
+  return grouped
 }
 
-function getTwigLabel(twigNode: HTMLButtonElement, index: number): string {
-  const stored = nodeState[twigNode.dataset.nodeId || '']
-  const storedLabel = stored?.label?.trim() || ''
+function groupByTwig(sprouts: SproutWithLocation[]): Map<string, SproutWithLocation[]> {
+  const grouped = new Map<string, SproutWithLocation[]>()
+  sprouts.forEach(sprout => {
+    const list = grouped.get(sprout.twigId) || []
+    list.push(sprout)
+    grouped.set(sprout.twigId, list)
+  })
+  return grouped
+}
+
+function getTwigLabel(twigId: string): string {
+  const data = nodeState[twigId]
+  const storedLabel = data?.label?.trim() || ''
   if (storedLabel) {
     return storedLabel
   }
-  return `Twig ${index + 1}`
+  // Parse twig number from ID like "branch-0-twig-3"
+  const match = twigId.match(/twig-(\d+)$/)
+  return match ? `Twig ${parseInt(match[1], 10) + 1}` : twigId
+}
+
+export function initSidebarSprouts(
+  ctx: AppContext,
+  onWaterClick?: (sprout: SproutWithLocation) => void,
+  branchCallbacks?: SidebarBranchCallbacks,
+  onTwigClick?: SidebarTwigCallback,
+  onLeafClick?: SidebarLeafCallback
+): void {
+  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
+
+  // Store callbacks for future updates
+  storedWaterClick = onWaterClick
+  storedBranchCallbacks = branchCallbacks
+  storedTwigClick = onTwigClick
+  storedLeafClick = onLeafClick
+
+  // Set default states: Active expanded, Cultivated collapsed
+  activeSproutsToggle.classList.add('is-expanded')
+  activeSproutsList.classList.remove('is-collapsed')
+  cultivatedSproutsToggle.classList.remove('is-expanded')
+  cultivatedSproutsList.classList.add('is-collapsed')
+
+  // Set up collapsible toggles
+  activeSproutsToggle.addEventListener('click', () => {
+    const isExpanded = activeSproutsToggle.classList.toggle('is-expanded')
+    activeSproutsList.classList.toggle('is-collapsed', !isExpanded)
+  })
+
+  cultivatedSproutsToggle.addEventListener('click', () => {
+    const isExpanded = cultivatedSproutsToggle.classList.toggle('is-expanded')
+    cultivatedSproutsList.classList.toggle('is-collapsed', !isExpanded)
+  })
+
+  // Initial render
+  updateSidebarSprouts(ctx)
+}
+
+export function updateSidebarSprouts(ctx: AppContext): void {
+  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
+  const { branchGroups } = ctx
+  const { active, cultivated } = getAllSproutsFromState()
+
+  // Use stored callbacks
+  const onWaterClick = storedWaterClick
+  const branchCallbacks = storedBranchCallbacks
+  const onTwigClick = storedTwigClick
+  const onLeafClick = storedLeafClick
+
+  const viewMode = getViewMode()
+  const activeBranchIndex = getActiveBranchIndex()
+  const activeTwigId = getActiveTwigId()
+
+  // Filter based on current view
+  let filteredActive = active
+  let filteredCultivated = cultivated
+
+  if (viewMode === 'twig' && activeTwigId) {
+    // Twig view: only show sprouts from this twig
+    filteredActive = active.filter(s => s.twigId === activeTwigId)
+    filteredCultivated = cultivated.filter(s => s.twigId === activeTwigId)
+  } else if (viewMode === 'branch' && activeBranchIndex !== null) {
+    // Branch view: only show sprouts from this branch
+    filteredActive = active.filter(s => s.branchIndex === activeBranchIndex)
+    filteredCultivated = cultivated.filter(s => s.branchIndex === activeBranchIndex)
+  }
+
+  // Update counts
+  const activeCount = activeSproutsToggle.querySelector('.sprouts-toggle-count')
+  const cultivatedCount = cultivatedSproutsToggle.querySelector('.sprouts-toggle-count')
+  if (activeCount) activeCount.textContent = `(${filteredActive.length})`
+  if (cultivatedCount) cultivatedCount.textContent = `(${filteredCultivated.length})`
+
+  activeSproutsList.replaceChildren()
+  cultivatedSproutsList.replaceChildren()
+
+  if (viewMode === 'twig') {
+    // Twig view: flat list, no grouping
+    filteredActive.forEach(sprout => {
+      const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
+      activeSproutsList.append(item)
+    })
+    filteredCultivated.forEach(sprout => {
+      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+      cultivatedSproutsList.append(item)
+    })
+  } else if (viewMode === 'branch') {
+    // Branch view: group by twig
+    const activeByTwig = groupByTwig(filteredActive)
+    const cultivatedByTwig = groupByTwig(filteredCultivated)
+
+    activeByTwig.forEach((sprouts, twigId) => {
+      const twigLabel = getTwigLabel(twigId)
+      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
+      sprouts.forEach(sprout => {
+        const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
+        folder.append(item)
+      })
+      activeSproutsList.append(folder)
+    })
+
+    cultivatedByTwig.forEach((sprouts, twigId) => {
+      const twigLabel = getTwigLabel(twigId)
+      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
+      sprouts.forEach(sprout => {
+        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+        folder.append(item)
+      })
+      cultivatedSproutsList.append(folder)
+    })
+  } else {
+    // Overview: group by branch
+    const activeByBranch = groupByBranch(filteredActive)
+    const cultivatedByBranch = groupByBranch(filteredCultivated)
+
+    activeByBranch.forEach((sprouts, branchIndex) => {
+      const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
+      const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
+      sprouts.forEach(sprout => {
+        const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
+        folder.append(item)
+      })
+      activeSproutsList.append(folder)
+    })
+
+    cultivatedByBranch.forEach((sprouts, branchIndex) => {
+      const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
+      const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
+      sprouts.forEach(sprout => {
+        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+        folder.append(item)
+      })
+      cultivatedSproutsList.append(folder)
+    })
+  }
+}
+
+function createBranchFolder(
+  branchIndex: number,
+  branchLabel: string,
+  count: number,
+  callbacks?: SidebarBranchCallbacks
+): HTMLDivElement {
+  const folder = document.createElement('div')
+  folder.className = 'branch-folder'
+  folder.dataset.branchIndex = String(branchIndex)
+
+  const header = document.createElement('button')
+  header.type = 'button'
+  header.className = 'branch-folder-header'
+
+  const label = document.createElement('span')
+  label.className = 'branch-folder-label'
+  label.textContent = branchLabel
+
+  const countEl = document.createElement('span')
+  countEl.className = 'branch-folder-count'
+  countEl.textContent = `(${count})`
+
+  header.append(label, countEl)
+  folder.append(header)
+
+  // Click navigates to branch view
+  if (callbacks) {
+    header.addEventListener('click', () => callbacks.onClick(branchIndex))
+    header.addEventListener('mouseenter', () => callbacks.onHoverStart(branchIndex))
+    header.addEventListener('mouseleave', () => callbacks.onHoverEnd())
+  }
+
+  return folder
+}
+
+function createTwigFolder(
+  twigId: string,
+  twigLabel: string,
+  count: number,
+  onTwigClick?: SidebarTwigCallback,
+  branchIndex?: number
+): HTMLDivElement {
+  const folder = document.createElement('div')
+  folder.className = 'twig-folder'
+  folder.dataset.twigId = twigId
+
+  const header = document.createElement('button')
+  header.type = 'button'
+  header.className = 'twig-folder-header'
+
+  const label = document.createElement('span')
+  label.className = 'twig-folder-label'
+  label.textContent = twigLabel
+
+  const countEl = document.createElement('span')
+  countEl.className = 'twig-folder-count'
+  countEl.textContent = `(${count})`
+
+  header.append(label, countEl)
+  folder.append(header)
+
+  // Click navigates to twig view
+  if (onTwigClick && branchIndex !== undefined) {
+    header.addEventListener('click', () => onTwigClick(twigId, branchIndex))
+  }
+
+  return folder
+}
+
+function createSproutItem(
+  sprout: SproutWithLocation,
+  isActive: boolean,
+  onWaterClick?: (sprout: SproutWithLocation) => void,
+  onTwigClick?: SidebarTwigCallback,
+  onLeafClick?: SidebarLeafCallback
+): HTMLDivElement {
+  const item = document.createElement('div')
+  item.className = 'sprout-item'
+  if (!isActive) {
+    item.classList.add(sprout.state === 'completed' ? 'is-completed' : 'is-failed')
+  }
+
+  const info = document.createElement('div')
+  info.className = 'sprout-item-info'
+
+  // Make title clickable if sprout has a leaf
+  if (sprout.leafId && onLeafClick) {
+    const titleBtn = document.createElement('button')
+    titleBtn.type = 'button'
+    titleBtn.className = 'sprout-item-title sprout-item-title-link'
+    titleBtn.textContent = sprout.title || 'Untitled'
+    titleBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      onLeafClick(sprout.leafId!, sprout.twigId, sprout.branchIndex)
+    })
+    info.append(titleBtn)
+  } else {
+    const title = document.createElement('span')
+    title.className = 'sprout-item-title'
+    title.textContent = sprout.title || 'Untitled'
+    info.append(title)
+  }
+
+  const meta = document.createElement('span')
+  meta.className = 'sprout-item-meta'
+  const endDateStr = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
+
+  // Make twig label clickable
+  const twigLink = document.createElement('button')
+  twigLink.type = 'button'
+  twigLink.className = 'sprout-twig-link'
+  twigLink.textContent = sprout.twigLabel
+  if (onTwigClick) {
+    twigLink.addEventListener('click', (e) => {
+      e.stopPropagation()
+      onTwigClick(sprout.twigId, sprout.branchIndex)
+    })
+  }
+
+  meta.append('· ', twigLink, ` · ${endDateStr}`)
+
+  info.append(meta)
+  item.append(info)
+
+  // Water/Reap/Prune action for active sprouts (appears on hover)
+  if (isActive && onWaterClick) {
+    const waterBtn = document.createElement('button')
+    waterBtn.type = 'button'
+    waterBtn.className = 'sprout-water-btn'
+
+    // Check if sprout is ready (on or past due date)
+    const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
+    if (isReady) {
+      waterBtn.textContent = 'Harvest'
+      waterBtn.classList.add('is-ready')
+    } else {
+      waterBtn.textContent = 'Water'
+    }
+
+    waterBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      onWaterClick(sprout)
+    })
+    item.append(waterBtn)
+  }
+
+  return item
 }
 
 export function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {

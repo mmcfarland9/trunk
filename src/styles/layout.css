@@ -2,8 +2,178 @@
 .app-shell { width: min(1400px, 100%); display: flex; flex-direction: column; gap: 0.25rem; height: 100%; animation: fade-in 600ms ease; }
 .app-header { display: flex; justify-content: flex-start; align-items: flex-start; gap: 1rem; }
 .header-logo { width: 108px; height: 108px; object-fit: contain; margin-left: auto; }
+
+/* === Global Soil Meter === */
+.soil-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(139, 90, 43, 0.06);
+  border: 1px solid rgba(139, 90, 43, 0.3);
+  font-family: var(--font-ascii);
+  margin-left: auto;
+  margin-right: 1rem;
+}
+
+.soil-meter-label {
+  font-size: calc(var(--char) * 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--wood);
+  white-space: nowrap;
+}
+
+.soil-meter-track {
+  width: 80px;
+  height: 8px;
+  background: rgba(139, 90, 43, 0.1);
+  border: 1px solid rgba(139, 90, 43, 0.2);
+  overflow: hidden;
+}
+
+.soil-meter-fill {
+  height: 100%;
+  background: var(--wood);
+  opacity: 0.7;
+  transition: width 400ms ease;
+}
+
+.soil-meter-value {
+  font-size: calc(var(--char) * 0.55);
+  color: var(--wood);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* === Global Water Meter === */
+.water-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(70, 130, 180, 0.06);
+  border: 1px solid rgba(70, 130, 180, 0.3);
+  font-family: var(--font-ascii);
+  margin-right: 1rem;
+}
+
+.water-meter-label {
+  font-size: calc(var(--char) * 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: steelblue;
+  white-space: nowrap;
+}
+
+.water-meter-track {
+  width: 80px;
+  height: 8px;
+  background: rgba(70, 130, 180, 0.1);
+  border: 1px solid rgba(70, 130, 180, 0.2);
+  overflow: hidden;
+}
+
+.water-meter-fill {
+  height: 100%;
+  background: steelblue;
+  opacity: 0.7;
+  transition: width 400ms ease;
+}
+
+.water-meter-value {
+  font-size: calc(var(--char) * 0.55);
+  color: steelblue;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* === Future Ideas Folder === */
+.future-ideas-folder {
+  position: fixed;
+  top: 1rem;
+  right: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  z-index: 50;
+  min-width: 120px;
+}
+
+.future-ideas-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(180, 60, 60, 0.06);
+  border: 1px dashed #b43c3c;
+  font-family: var(--font-ascii);
+  font-size: calc(var(--char) * 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b43c3c;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.future-ideas-toggle:hover {
+  background: rgba(180, 60, 60, 0.12);
+}
+
+.future-ideas-arrow {
+  font-size: 0.6rem;
+  transition: transform 200ms ease;
+}
+
+.future-ideas-folder.is-collapsed .future-ideas-arrow {
+  transform: rotate(-90deg);
+}
+
+.future-ideas-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(180, 60, 60, 0.04);
+  border: 1px dashed #b43c3c;
+  border-top: none;
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height 200ms ease, padding 200ms ease, opacity 150ms ease;
+}
+
+.future-ideas-folder.is-collapsed .future-ideas-content {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.future-idea-item {
+  color: #b43c3c !important;
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  font-size: 0.7rem !important;
+  padding: 0.25rem 0.4rem !important;
+  text-decoration: line-through;
+  text-decoration-color: rgba(180, 60, 60, 0.4);
+  text-align: left;
+}
+
+.future-idea-item:hover {
+  opacity: 0.8;
+  color: #b43c3c !important;
+}
+
+.future-idea-item:disabled {
+  pointer-events: auto;
+}
 .app-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; align-items: center; }
-.app-body { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 2rem; align-items: start; flex: 1; min-height: 0; }
+.app-body { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.5rem; align-items: start; flex: 1; min-height: 0; }
 .map-panel { display: flex; flex-direction: column; gap: 1rem; align-items: center; margin-top: 8px; position: relative; flex: 1; min-height: 0; }
 .debug-toggle { position: fixed; bottom: 1rem; right: 1rem; display: none; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--ink-faint); cursor: pointer; user-select: none; z-index: 100; }
 .debug-toggle input { cursor: pointer; }
