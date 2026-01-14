@@ -135,6 +135,7 @@ const twigView = buildTwigView(mapPanel, {
     }
     return newTwig ?? null
   },
+  onWaterClick: (sprout) => openWaterDialog(sprout),
 })
 
 const leafView = buildLeafView(mapPanel, {

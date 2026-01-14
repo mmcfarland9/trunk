@@ -25,6 +25,7 @@ export type TwigViewCallbacks = {
   onSoilChange?: () => void
   onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
+  onWaterClick?: (sprout: { id: string, title: string, twigId: string, twigLabel: string, season: string }) => void
 }
 
 const SEASONS: SproutSeason[] = ['1w', '2w', '1m', '3m', '6m', '1y']
@@ -333,7 +334,10 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
                 <div class="growth-progress-fill" style="width: ${progress}%"></div>
               </div>
             </div>
-            <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
+            <div class="sprout-growing-footer">
+              <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
+              <button type="button" class="sprout-water-btn">Water</button>
+            </div>
           </div>
         `}
       </div>
@@ -513,6 +517,33 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         if (leafId && nodeId && branchIndex !== undefined && callbacks.onOpenLeaf) {
           close()
           callbacks.onOpenLeaf(leafId, nodeId, parseInt(branchIndex, 10))
+        }
+      })
+    })
+
+    // Water buttons - open water dialog
+    container.querySelectorAll<HTMLButtonElement>('.sprout-water-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const card = btn.closest('.sprout-card') as HTMLElement
+        const id = card?.dataset.id
+        if (!id) return
+
+        const sprouts = getSprouts()
+        const sprout = sprouts.find(s => s.id === id)
+        if (!sprout) return
+
+        const nodeId = getCurrentNodeId()
+        const twigLabel = currentTwigNode?.dataset.defaultLabel || 'Twig'
+
+        if (callbacks.onWaterClick && nodeId) {
+          callbacks.onWaterClick({
+            id: sprout.id,
+            title: sprout.title,
+            twigId: nodeId,
+            twigLabel,
+            season: getSeasonLabel(sprout.season),
+          })
         }
       })
     })

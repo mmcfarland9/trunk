@@ -904,6 +904,23 @@
   text-align: center;
 }
 
+.sprout-growing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sprout-growing-footer .sprout-days-remaining {
+  text-align: left;
+}
+
+/* Water button in twig cards - always visible */
+.sprout-card .sprout-water-btn {
+  opacity: 1;
+  padding: 0.25rem 0.5rem;
+}
+
 /* History card states */
 .sprout-history-card.is-completed {
   border-left: 2px solid var(--twig);
@@ -2368,7 +2385,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: transparent;
+  background: rgba(144, 180, 148, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 
   /* Slide-in from right */
   transform: translateX(100%);
