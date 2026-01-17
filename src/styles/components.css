@@ -1166,10 +1166,7 @@
   border-color: var(--wood);
 }
 
-/* Complete/Harvest button - extends .sprout-action-btn */
-.sprout-complete-btn {
-  align-self: flex-start;
-}
+/* Complete/Harvest button - selector for JS, styling via action-btn system */
 
 /* Growing state */
 .sprout-active-card.is-growing {

@@ -338,7 +338,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
               <span class="result-value">${getResultEmoji(1)}</span>
             </div>
             <textarea class="sprout-reflection-input" placeholder="Recap (optional)..." rows="2"></textarea>
-            <button type="button" class="sprout-action-btn is-primary sprout-complete-btn">Harvest</button>
+            <div class="action-btn-group action-btn-group-right">
+              <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-complete-btn">Harvest</button>
+            </div>
           </div>
         ` : `
           <div class="sprout-growing-section">
