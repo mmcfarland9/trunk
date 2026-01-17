@@ -16,6 +16,13 @@ export type WaterEntry = {
   prompt?: string
 }
 
+// Sun entry - journal entries when shining on a cultivated sprout (reflection/planning)
+export type SunEntry = {
+  timestamp: string
+  content: string
+  prompt?: string
+}
+
 // Leaf - a saga/trajectory of related sprouts (identity derived from its sprouts)
 export type LeafStatus = 'active' | 'dormant' | 'archived'
 
@@ -41,6 +48,7 @@ export type Sprout = {
   // Leaf association
   leafId?: string
   waterEntries?: WaterEntry[]
+  sunEntries?: SunEntry[]
   graftedFromId?: string
 }
 
@@ -52,6 +60,12 @@ export type SoilState = {
 
 // Water system - represents daily/recurring attention
 export type WaterState = {
+  available: number
+  capacity: number
+}
+
+// Sun system - represents reflective/planning capacity
+export type SunState = {
   available: number
   capacity: number
 }
@@ -87,7 +101,7 @@ export type TwigViewApi = {
 
 export type LeafViewApi = {
   container: HTMLDivElement
-  open: (leafId: string, twigId: string, branchIndex: number) => void
+  open: (leafId: string, twigId: string, branchIndex: number, startWithGraftForm?: boolean) => void
   close: () => void
   isOpen: () => boolean
 }
@@ -136,6 +150,15 @@ export type AppElements = {
   soilMeterValue: HTMLSpanElement
   waterMeterFill: HTMLDivElement
   waterMeterValue: HTMLSpanElement
+  sunMeterFill: HTMLDivElement
+  sunMeterValue: HTMLSpanElement
+  shineDialog: HTMLDivElement
+  shineDialogTitle: HTMLParagraphElement
+  shineDialogMeta: HTMLParagraphElement
+  shineDialogJournal: HTMLTextAreaElement
+  shineDialogClose: HTMLButtonElement
+  shineDialogCancel: HTMLButtonElement
+  shineDialogSave: HTMLButtonElement
 }
 
 export type AppContext = {

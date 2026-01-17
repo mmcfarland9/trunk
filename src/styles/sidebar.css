@@ -1,0 +1,308 @@
+/* === Side Panel === */
+.side-panel { display: flex; flex-direction: column; gap: var(--space-1); animation: fade-in 600ms ease 100ms both; font-family: var(--font-ascii); font-size: var(--text-sm); height: 100%; }
+.panel-section { padding: var(--space-2) 0; flex-shrink: 0; }
+.panel-section.sprouts-section { padding: 0; flex-shrink: 1; }
+.panel-section.is-empty { display: none; }
+.focus-meta { margin: 0 0 var(--space-1); height: 1.2em; }
+.focus-title, .focus-note { margin: 0; color: var(--ink); line-height: 1.4; }
+.focus-title { font-weight: 400; margin-bottom: var(--space-1); }
+.focus-note { color: var(--ink-light); margin-bottom: 1em; min-height: 3em; }
+.focus-goal { margin: var(--space-2) 0 0; color: var(--ink-light); line-height: 1.4; }
+.focus-title.is-muted, .focus-note.is-muted, .focus-goal.is-muted { color: var(--ink-faint); }
+/* Progress elements hidden for now - kept for future use */
+.progress-count { display: none; margin: 0 0 var(--space-3); color: var(--ink); font-weight: 400; min-height: 3.6em; line-height: 1.2; }
+.progress-track { display: none; width: 100%; height: 12px; background: transparent; border: 1px solid var(--border); overflow: hidden; }
+.progress-fill { display: block; height: 100%; background: var(--twig); opacity: 0.3; transition: width 300ms ease; }
+.progress-actions { margin-top: 1rem; }
+.status-message { margin: 0 0 0.2rem; font-size: 0.8rem; color: var(--ink-faint); }
+.status-message[data-tone='success'] { color: var(--success-tone); }
+.status-message[data-tone='warning'] { color: var(--warning-tone); }
+.status-message[data-tone='error'] { color: var(--error-tone); }
+.status-meta { margin: 0; font-size: var(--text-sm); color: var(--ink-faint); opacity: 0.7; }
+.status-meta.is-saved { animation: save-pulse 600ms ease-out; }
+@keyframes save-pulse { 0% { color: var(--leaf); opacity: 1; } 100% { color: var(--ink-faint); opacity: 0.7; } }
+
+/* === Sidebar Sprout Sections === */
+.sprouts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sprouts-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.3rem 0;
+  background: transparent;
+  border: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.sprouts-toggle:hover {
+  color: var(--ink-faint);
+}
+
+.sprouts-toggle-arrow {
+  font-size: 0.6rem;
+  transition: transform 200ms ease;
+}
+
+.sprouts-toggle:not(.is-expanded) .sprouts-toggle-arrow {
+  transform: rotate(-90deg);
+}
+
+.sprouts-toggle-label {
+  flex: 1;
+  text-align: left;
+}
+
+.sprouts-toggle-count {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+.sprouts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow: hidden;
+  transition: max-height 200ms ease, opacity 150ms ease;
+}
+
+.sprouts-list.is-collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Branch folder dividers */
+.branch-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.branch-folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.2rem 0.4rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.branch-folder-header:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.branch-folder.is-collapsed .branch-folder-header {
+  background: transparent;
+}
+
+.branch-folder.is-collapsed .sprout-item {
+  display: none;
+}
+
+.branch-folder-label {
+  flex: 1;
+  text-align: left;
+}
+
+.branch-folder-count {
+  color: var(--ink-faint);
+  font-weight: 400;
+  font-size: 0.65rem;
+}
+
+/* Twig folder dividers (in branch view) */
+.twig-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.twig-folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.2rem 0.4rem;
+  background: rgba(100, 170, 100, 0.04);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--twig);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.twig-folder-header:hover {
+  background: rgba(100, 170, 100, 0.1);
+}
+
+.twig-folder-label {
+  flex: 1;
+  text-align: left;
+}
+
+.twig-folder-count {
+  color: var(--ink-faint);
+  font-weight: 400;
+  font-size: 0.6rem;
+}
+
+.sprout-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  padding-left: 0.5rem;
+  background: transparent;
+  border-left: 2px solid var(--twig);
+  transition: background 150ms ease;
+}
+
+.sprout-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.sprout-item.is-completed {
+  border-left-color: #4a7;
+}
+
+.sprout-item.is-failed {
+  border-left-color: #a54;
+  opacity: 0.5;
+}
+
+.sprout-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.7rem;
+}
+
+.sprout-item-title {
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.sprout-item-title-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 100ms ease, text-decoration-color 100ms ease;
+}
+
+.sprout-item-title-link:hover {
+  text-decoration-color: var(--ink);
+}
+
+.sprout-item-meta {
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.sprout-twig-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink-faint);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 100ms ease, text-decoration-color 100ms ease;
+}
+
+.sprout-twig-link:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+/* Sidebar water button - hover reveal behavior */
+.sprout-water-btn {
+  margin-left: auto;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  border: 1px solid var(--water);
+  color: var(--water);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease, background 100ms ease;
+}
+
+.sprout-item:hover .sprout-water-btn {
+  opacity: 1;
+}
+
+.sprout-water-btn:hover {
+  background: rgba(70, 130, 180, 0.15);
+}
+
+.sprout-water-btn.is-ready {
+  border-color: var(--twig);
+  color: var(--twig);
+}
+
+.sprout-water-btn.is-ready:hover {
+  background: rgba(58, 107, 74, 0.15);
+}
+
+/* Sidebar shine button - hover reveal behavior */
+.sprout-shine-btn {
+  margin-left: auto;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  border: 1px solid var(--sun);
+  color: var(--sun);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms ease, background 100ms ease;
+}
+
+.sprout-item:hover .sprout-shine-btn {
+  opacity: 1;
+}
+
+.sprout-shine-btn:hover {
+  background: rgba(212, 160, 0, 0.15);
+}

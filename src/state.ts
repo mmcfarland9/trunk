@@ -1,48 +1,65 @@
-import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, Leaf, WaterEntry } from './types'
+import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, Leaf } from './types'
 import { STORAGE_KEY } from './constants'
 
 // --- Soil System ---
-// Soil represents limited focus/energy. 1 soil = 1 simple weekly goal.
+// Soil represents limited focus/energy. Start small, grow through success.
+// Philosophy: Earn your way to bigger goals through consistent small wins.
 
 const SOIL_STORAGE_KEY = 'trunk-soil-v1'
-const DEFAULT_SOIL_CAPACITY = 5
+const DEFAULT_SOIL_CAPACITY = 4  // Start humble - room for a few 1-week goals
 
-// Base costs by season (curved for longer goals)
+// Recovery rate per watering (daily engagement is rewarded)
+const SOIL_RECOVERY_PER_WATER = 0.25  // 3 waters/day = 0.75 soil/day = ~5/week
+
+// Base costs by season (longer goals require building up capacity)
 const SEASON_BASE_COST: Record<SproutSeason, number> = {
-  '1w': 1,
+  '1w': 1,   // Cheap - the building blocks
   '2w': 2,
   '1m': 3,
-  '3m': 5,
-  '6m': 8,
-  '1y': 12,
+  '3m': 5,   // Requires ~5 capacity (need to grow first)
+  '6m': 8,   // Serious commitment
+  '1y': 12,  // Major life goal
 }
 
-// Environment multipliers
+// Environment multipliers (harder = costs more)
 const ENVIRONMENT_MULTIPLIER: Record<SproutEnvironment, number> = {
-  fertile: 1,
-  firm: 1.5,
-  barren: 2,
+  fertile: 1,    // Normal cost
+  firm: 1.5,     // 50% more expensive
+  barren: 2,     // Double cost (but double reward)
 }
 
-// Capacity rewards for successful completion
+// Capacity rewards for successful completion (environment component)
 const ENVIRONMENT_REWARD: Record<SproutEnvironment, number> = {
-  fertile: 0,
-  firm: 1,
-  barren: 2,
+  fertile: 0,    // Safe mode - no growth
+  firm: 0.5,     // Small capacity boost
+  barren: 1,     // Significant capacity boost
+}
+
+// Capacity rewards for successful completion (season component)
+// Longer commitments = bigger rewards when you follow through
+const SEASON_REWARD: Record<SproutSeason, number> = {
+  '1w': 0,       // Quick wins don't grow capacity
+  '2w': 0.25,    // Slight boost
+  '1m': 0.5,     // Meaningful commitment
+  '3m': 1,       // Real dedication
+  '6m': 1.5,     // Major achievement
+  '1y': 2,       // Life-changing
 }
 
 export function calculateSoilCost(season: SproutSeason, environment: SproutEnvironment): number {
-  // Barren is always flat cost of 3
-  if (environment === 'barren') {
-    return 3
-  }
   const base = SEASON_BASE_COST[season]
   const multiplier = ENVIRONMENT_MULTIPLIER[environment]
   return Math.ceil(base * multiplier)
 }
 
-export function getCapacityReward(environment: SproutEnvironment): number {
-  return ENVIRONMENT_REWARD[environment]
+// Total capacity reward = environment difficulty + season length
+export function getCapacityReward(environment: SproutEnvironment, season: SproutSeason): number {
+  return ENVIRONMENT_REWARD[environment] + SEASON_REWARD[season]
+}
+
+// How much soil is recovered per watering
+export function getSoilRecoveryRate(): number {
+  return SOIL_RECOVERY_PER_WATER
 }
 
 function loadSoilState(): SoilState {
@@ -103,10 +120,22 @@ export function recoverPartialSoil(amount: number, fraction: number): void {
   saveSoilState()
 }
 
-export function resetSoil(): void {
+// Reset all resources (soil, water, sun)
+export function resetResources(): void {
+  // Reset soil
   soilState.available = DEFAULT_SOIL_CAPACITY
   soilState.capacity = DEFAULT_SOIL_CAPACITY
   saveSoilState()
+
+  // Reset water
+  waterState.available = DEFAULT_WATER_CAPACITY
+  waterState.capacity = DEFAULT_WATER_CAPACITY
+  saveWaterState()
+
+  // Reset sun
+  sunState.available = DEFAULT_SUN_CAPACITY
+  sunState.capacity = DEFAULT_SUN_CAPACITY
+  saveSunState()
 }
 
 // --- Water System ---
@@ -185,6 +214,78 @@ export function spendWater(cost: number = 1): boolean {
   return true
 }
 
+// --- Sun System ---
+// Sun represents reflective/planning capacity for cultivated leaves.
+// Resets to full capacity each day.
+
+const SUN_STORAGE_KEY = 'trunk-sun-v1'
+const DEFAULT_SUN_CAPACITY = 3
+
+type SunStoredState = SunState & { lastResetDate?: string }
+
+function loadSunState(): SunStoredState {
+  try {
+    const raw = localStorage.getItem(SUN_STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (typeof parsed.available === 'number' && typeof parsed.capacity === 'number') {
+        return {
+          available: parsed.available,
+          capacity: parsed.capacity,
+          lastResetDate: parsed.lastResetDate,
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Could not read sun state', error)
+  }
+  return { available: DEFAULT_SUN_CAPACITY, capacity: DEFAULT_SUN_CAPACITY, lastResetDate: getDateString(new Date()) }
+}
+
+function saveSunState(): void {
+  try {
+    localStorage.setItem(SUN_STORAGE_KEY, JSON.stringify(sunState))
+  } catch (error) {
+    console.warn('Could not save sun state', error)
+  }
+}
+
+const sunState: SunStoredState = loadSunState()
+
+// Check and reset sun daily (uses debug clock for testing)
+export function checkSunDailyReset(): boolean {
+  const today = getDateString(getDebugDate())
+  if (sunState.lastResetDate !== today) {
+    sunState.available = sunState.capacity
+    sunState.lastResetDate = today
+    saveSunState()
+    return true
+  }
+  return false
+}
+
+export function getSunAvailable(): number {
+  checkSunDailyReset()
+  return sunState.available
+}
+
+export function getSunCapacity(): number {
+  return sunState.capacity
+}
+
+export function canAffordSun(cost: number = 1): boolean {
+  checkSunDailyReset()
+  return sunState.available >= cost
+}
+
+export function spendSun(cost: number = 1): boolean {
+  checkSunDailyReset()
+  if (!canAffordSun(cost)) return false
+  sunState.available -= cost
+  saveSunState()
+  return true
+}
+
 // --- Debug Clock ---
 // Internal clock that starts synced with real time but can be manipulated
 let clockOffset = 0 // milliseconds offset from real time
@@ -201,14 +302,6 @@ export function advanceClockByDays(days: number): void {
   clockOffset += days * 24 * 60 * 60 * 1000
 }
 
-export function resetClock(): void {
-  clockOffset = 0
-}
-
-export function getClockOffset(): number {
-  return clockOffset
-}
-
 // --- Sprout Helpers ---
 
 export function generateSproutId(): string {
@@ -223,16 +316,8 @@ export function getActiveSprouts(sprouts: Sprout[]): Sprout[] {
   return getSproutsByState(sprouts, 'active')
 }
 
-export function getDraftSprouts(sprouts: Sprout[]): Sprout[] {
-  return getSproutsByState(sprouts, 'draft')
-}
-
 export function getHistorySprouts(sprouts: Sprout[]): Sprout[] {
   return sprouts.filter(s => s.state === 'completed' || s.state === 'failed')
-}
-
-export function canAddActiveSprout(sprouts: Sprout[]): boolean {
-  return getActiveSprouts(sprouts).length < 3
 }
 
 // --- Leaf Helpers ---
@@ -251,10 +336,6 @@ export function getLeafById(twigId: string, leafId: string): Leaf | undefined {
 
 export function getSproutsByLeaf(sprouts: Sprout[], leafId: string): Sprout[] {
   return sprouts.filter(s => s.leafId === leafId)
-}
-
-export function getUnassignedSprouts(sprouts: Sprout[]): Sprout[] {
-  return sprouts.filter(s => !s.leafId)
 }
 
 export function updateLeafStatus(twigId: string, leafId: string): void {
@@ -293,26 +374,6 @@ export function createLeaf(twigId: string): Leaf {
   return leaf
 }
 
-export function deleteLeaf(twigId: string, leafId: string): void {
-  const data = nodeState[twigId]
-  if (!data?.leaves) return
-
-  // Remove leaf
-  data.leaves = data.leaves.filter(l => l.id !== leafId)
-  if (data.leaves.length === 0) data.leaves = undefined
-
-  // Unassign sprouts from this leaf
-  if (data.sprouts) {
-    data.sprouts.forEach(s => {
-      if (s.leafId === leafId) {
-        s.leafId = undefined
-      }
-    })
-  }
-
-  saveState()
-}
-
 // --- Water Entry Helpers ---
 
 export function addWaterEntry(
@@ -337,60 +398,81 @@ export function addWaterEntry(
     prompt,
   })
 
+  console.log('[WATER] Entry added:', {
+    twigId,
+    sproutId,
+    sproutTitle: sprout.title,
+    waterEntriesCount: sprout.waterEntries.length,
+  })
+
   saveState()
   return true
 }
 
-export function getLeafWaterEntries(
+// Add a sun entry (shine) to a cultivated sprout
+export function addSunEntry(
   twigId: string,
-  leafId: string
-): Array<WaterEntry & { sproutId: string; sproutTitle: string }> {
+  sproutId: string,
+  content: string,
+  prompt?: string
+): boolean {
   const data = nodeState[twigId]
-  if (!data?.sprouts) return []
+  if (!data?.sprouts) return false
 
-  const entries: Array<WaterEntry & { sproutId: string; sproutTitle: string }> = []
+  const sprout = data.sprouts.find(s => s.id === sproutId)
+  if (!sprout) return false
 
-  getSproutsByLeaf(data.sprouts, leafId).forEach(sprout => {
-    (sprout.waterEntries || []).forEach(entry => {
-      entries.push({
-        ...entry,
-        sproutId: sprout.id,
-        sproutTitle: sprout.title,
-      })
-    })
+  if (!sprout.sunEntries) {
+    sprout.sunEntries = []
+  }
+
+  sprout.sunEntries.push({
+    timestamp: new Date().toISOString(),
+    content,
+    prompt,
   })
 
-  // Sort by timestamp descending
-  return entries.sort((a, b) =>
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  )
+  console.log('[SHINE] Entry added:', {
+    twigId,
+    sproutId,
+    sproutTitle: sprout.title,
+    sunEntriesCount: sprout.sunEntries.length,
+  })
+
+  saveState()
+  return true
 }
 
 // --- Grafting ---
 
-export function graftSprout(
+// Graft from a leaf - creates a new sprout on an existing leaf
+// This is a "renewal" of the leaf with a fresh season/environment
+export function graftFromLeaf(
   twigId: string,
-  parentSproutId: string,
-  newSproutData: Omit<Sprout, 'id' | 'createdAt' | 'leafId' | 'graftedFromId'>
+  leafId: string,
+  newSproutData: Omit<Sprout, 'id' | 'createdAt' | 'leafId'>
 ): Sprout | null {
   const data = nodeState[twigId]
-  if (!data?.sprouts) return null
+  if (!data) return null
 
-  const parentSprout = data.sprouts.find(s => s.id === parentSproutId)
-  if (!parentSprout || !parentSprout.leafId) return null
+  // Ensure sprouts array exists
+  if (!data.sprouts) data.sprouts = []
+
+  // Verify the leaf exists
+  const leaf = data.leaves?.find(l => l.id === leafId)
+  if (!leaf) return null
 
   const newSprout: Sprout = {
     ...newSproutData,
     id: generateSproutId(),
     createdAt: new Date().toISOString(),
-    leafId: parentSprout.leafId,
-    graftedFromId: parentSproutId,
+    leafId,
   }
 
   data.sprouts.push(newSprout)
 
   // Update leaf status to active
-  updateLeafStatus(twigId, parentSprout.leafId)
+  updateLeafStatus(twigId, leafId)
 
   saveState()
   return newSprout
@@ -514,7 +596,6 @@ export function hasNodeData(): boolean {
 let viewMode: ViewMode = 'overview'
 let activeBranchIndex: number | null = null
 let activeTwigId: string | null = null
-let activeLeafId: string | null = null
 let hoveredBranchIndex: number | null = null
 let sidebarHover = false
 let focusedNode: HTMLButtonElement | null = null
@@ -524,35 +605,27 @@ export function getViewMode(): ViewMode {
   return viewMode
 }
 
-export function setViewModeState(mode: ViewMode, branchIndex?: number, twigId?: string, leafId?: string): void {
+export function setViewModeState(mode: ViewMode, branchIndex?: number, twigId?: string): void {
   viewMode = mode
   if (mode === 'leaf') {
     // Leaf view requires branch index, twig ID, and leaf ID
     activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : activeBranchIndex ?? 0
     activeTwigId = twigId ?? activeTwigId
-    activeLeafId = leafId ?? null
     hoveredBranchIndex = null
   } else if (mode === 'twig') {
     // Twig view requires both branch index and twig ID
     activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : activeBranchIndex ?? 0
     activeTwigId = twigId ?? null
-    activeLeafId = null
     hoveredBranchIndex = null
   } else if (mode === 'branch') {
     activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : activeBranchIndex ?? 0
     activeTwigId = null
-    activeLeafId = null
     hoveredBranchIndex = null
   } else {
     activeBranchIndex = null
     activeTwigId = null
-    activeLeafId = null
     hoveredBranchIndex = null
   }
-}
-
-export function getActiveLeafId(): string | null {
-  return activeLeafId
 }
 
 export function getActiveTwigId(): string | null {
@@ -601,8 +674,4 @@ export function isBranchView(): boolean {
 
 export function isTwigView(): boolean {
   return viewMode === 'twig' && activeTwigId !== null
-}
-
-export function isLeafView(): boolean {
-  return viewMode === 'leaf' && activeLeafId !== null
 }

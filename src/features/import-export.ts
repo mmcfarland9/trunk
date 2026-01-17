@@ -3,9 +3,46 @@ import { nodeState, saveState, clearState, hasNodeData } from '../state'
 import { syncNode, setNodeLabel, setFocusedNode, updateFocus } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
 
+const EXPORT_REMINDER_KEY = 'trunk-last-export'
+const REMINDER_DAYS = 7
+
 export type ImportExportCallbacks = {
   onUpdateStats: () => void
   onSetViewMode: (mode: 'overview') => void
+}
+
+function recordExportDate(): void {
+  try {
+    localStorage.setItem(EXPORT_REMINDER_KEY, new Date().toISOString())
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function getLastExportDate(): Date | null {
+  try {
+    const raw = localStorage.getItem(EXPORT_REMINDER_KEY)
+    if (raw) return new Date(raw)
+  } catch {
+    // Ignore storage errors
+  }
+  return null
+}
+
+export function checkExportReminder(ctx: AppContext): void {
+  if (!hasNodeData()) return // No data to back up
+
+  const lastExport = getLastExportDate()
+  if (!lastExport) {
+    // Never exported - gentle reminder after they have data
+    flashStatus(ctx.elements, 'Tip: Export your data regularly for backup.', 'info')
+    return
+  }
+
+  const daysSinceExport = Math.floor((Date.now() - lastExport.getTime()) / (1000 * 60 * 60 * 24))
+  if (daysSinceExport >= REMINDER_DAYS) {
+    flashStatus(ctx.elements, `It's been ${daysSinceExport} days since your last export.`, 'info')
+  }
 }
 
 export function handleExport(ctx: AppContext): void {
@@ -24,6 +61,8 @@ export function handleExport(ctx: AppContext): void {
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+
+  recordExportDate()
   flashStatus(ctx.elements, 'Exported JSON file.', 'success')
 }
 
@@ -99,7 +138,7 @@ export async function handleImport(
     ctx.allNodes.forEach((node) => syncNode(node))
 
     ctx.editor.close()
-    saveState(() => updateStatusMeta(ctx.elements))
+    saveState(() => updateStatusMeta(ctx.elements, true))
     callbacks.onUpdateStats()
     flashStatus(ctx.elements, 'Import complete. Notes applied.', 'success')
   } catch (error) {

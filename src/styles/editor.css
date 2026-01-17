@@ -1,0 +1,13 @@
+/* === Editor === */
+.node-editor { position: fixed; transform: translate(-50%, -100%); min-width: 240px; max-width: 300px; background: var(--paper); box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12); padding: 1.25rem; z-index: 1000; opacity: 1; transition: opacity 150ms ease; overflow: visible; }
+.node-editor.hidden { opacity: 0; pointer-events: none; }
+.editor-close-btn { position: absolute; top: var(--space-1); right: var(--space-1); width: 1.25rem; height: 1.25rem; padding: 0; background: transparent; border: none; font-family: var(--font-ascii); font-size: var(--text-base); line-height: 1; color: var(--ink-faint); cursor: pointer; opacity: 0.5; transition: opacity 150ms ease, color 150ms ease; }
+.editor-close-btn:hover { opacity: 1; color: var(--ink); }
+.editor-card { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; }
+.editor-label { display: flex; flex-direction: column; gap: 0.35rem; }
+.editor-input, .editor-textarea { width: 100%; border: none; border-bottom: 1px solid var(--border-strong); background: transparent; color: var(--ink); padding: var(--space-2) 0; font-family: var(--font-body); font-size: var(--text-base); resize: vertical; min-height: 36px; }
+.editor-input:focus, .editor-textarea:focus { outline: none; border-color: var(--wood); }
+.editor-actions { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-1); }
+.editor-clear, .editor-cancel, .editor-save { padding: var(--space-1) 0; font-size: var(--text-sm); }
+.editor-save { color: var(--ink); }
+.editor-save:hover, .editor-save:focus-visible { color: var(--twig); outline: none; }

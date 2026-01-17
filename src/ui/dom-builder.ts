@@ -56,11 +56,6 @@ export function buildApp(
   exportButton.className = 'action-button'
   exportButton.textContent = 'Export'
 
-  const showSproutsButton = document.createElement('button')
-  showSproutsButton.type = 'button'
-  showSproutsButton.className = 'action-button'
-  showSproutsButton.textContent = 'Show all Sprouts'
-
   const encyclopediaButtons = {
     garden: createEncyclopediaButton('🌱 Garden', 'garden'),
     lab: createEncyclopediaButton('🧬 Lab', 'lab'),
@@ -88,8 +83,7 @@ export function buildApp(
   actions.append(
     settingsButton,
     importButton,
-    exportButton,
-    showSproutsButton
+    exportButton
   )
 
   // Global Soil meter
@@ -162,23 +156,27 @@ export function buildApp(
   sunTrack.append(sunFill)
   sunMeter.append(sunLabel, sunTrack, sunValue)
 
+  // Today indicator (shows ready/water counts)
+  const todayIndicator = document.createElement('span')
+  todayIndicator.className = 'today-indicator hidden'
+
   // Meter group for visual cohesion
   const meterGroup = document.createElement('div')
   meterGroup.className = 'meter-group'
-  meterGroup.append(soilMeter, waterMeter, sunMeter)
+  meterGroup.append(soilMeter, waterMeter, sunMeter, todayIndicator)
 
   header.append(actions, meterGroup, logo, importInput)
 
   // Future Ideas Folder - contains archived encyclopedia features
   const futureIdeasFolder = document.createElement('div')
-  futureIdeasFolder.className = 'future-ideas-folder is-collapsed'
+  futureIdeasFolder.className = 'future-ideas-folder is-collapsed hidden'
 
   const futureIdeasToggle = document.createElement('button')
   futureIdeasToggle.type = 'button'
   futureIdeasToggle.className = 'future-ideas-toggle'
 
   const futureIdeasLabel = document.createElement('span')
-  futureIdeasLabel.textContent = 'Future Ideas'
+  futureIdeasLabel.textContent = 'future'
 
   const futureIdeasArrow = document.createElement('span')
   futureIdeasArrow.className = 'future-ideas-arrow'
@@ -310,13 +308,26 @@ export function buildApp(
   const debugPanel = document.createElement('div')
   debugPanel.className = 'debug-panel'
 
-  // Debug checkbox
+  // Debug mode master toggle
+  const debugModeLabel = document.createElement('label')
+  debugModeLabel.className = 'debug-mode-toggle'
+  const debugModeCheckbox = document.createElement('input')
+  debugModeCheckbox.type = 'checkbox'
+  debugModeCheckbox.checked = false
+  const debugModeText = document.createTextNode(' Debug Mode')
+  debugModeLabel.append(debugModeCheckbox, debugModeText)
+
+  // Debug controls container (hidden by default)
+  const debugControls = document.createElement('div')
+  debugControls.className = 'debug-controls hidden'
+
+  // Debug checkbox for guide lines
   const debugLabel = document.createElement('label')
   debugLabel.className = 'debug-toggle'
   const debugCheckbox = document.createElement('input')
   debugCheckbox.type = 'checkbox'
   debugCheckbox.checked = false
-  const debugText = document.createTextNode(' Show debug guide lines')
+  const debugText = document.createTextNode(' Show guide lines')
   debugLabel.append(debugCheckbox, debugText)
 
   // Debug clock
@@ -341,7 +352,15 @@ export function buildApp(
   debugClearSproutsBtn.textContent = 'Clear Sprouts'
   debugClockRow.append(debugClockOffset, debugClockBtn, debugSoilResetBtn, debugClearSproutsBtn)
 
-  debugPanel.append(debugLabel, debugClockRow)
+  debugControls.append(debugLabel, debugClockRow)
+  debugPanel.append(debugModeLabel, debugControls)
+
+  // Wire up debug mode toggle
+  debugModeCheckbox.addEventListener('change', () => {
+    const isDebug = debugModeCheckbox.checked
+    debugControls.classList.toggle('hidden', !isDebug)
+    futureIdeasFolder.classList.toggle('hidden', !isDebug)
+  })
   mapPanel.append(canvas, guideLayer, debugPanel)
 
   // Side Panel
@@ -1831,8 +1850,6 @@ export function buildApp(
   // Wire up button handlers (will be connected to features in main.ts)
   settingsButton.dataset.action = 'settings'
   exportButton.dataset.action = 'export'
-  showSproutsButton.dataset.action = 'show-sprouts'
-
   return {
     elements,
     branchGroups,
@@ -1872,13 +1889,11 @@ function getBloomDelay(twigIndex: number): number {
 export function getActionButtons(shell: HTMLDivElement): {
   settingsButton: HTMLButtonElement
   exportButton: HTMLButtonElement
-  showSproutsButton: HTMLButtonElement
   encyclopediaButtons: HTMLButtonElement[]
 } {
   return {
     settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
     exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
-    showSproutsButton: shell.querySelector<HTMLButtonElement>('[data-action="show-sprouts"]')!,
     encyclopediaButtons: Array.from(shell.querySelectorAll<HTMLButtonElement>('.encyclopedia-btn')),
   }
 }

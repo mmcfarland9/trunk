@@ -78,6 +78,7 @@ export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: 
 
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
+let storedShineClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedBranchCallbacks: SidebarBranchCallbacks | undefined
 let storedTwigClick: SidebarTwigCallback | undefined
 let storedLeafClick: SidebarLeafCallback | undefined
@@ -159,6 +160,7 @@ function getTwigLabel(twigId: string): string {
 export function initSidebarSprouts(
   ctx: AppContext,
   onWaterClick?: (sprout: SproutWithLocation) => void,
+  onShineClick?: (sprout: SproutWithLocation) => void,
   branchCallbacks?: SidebarBranchCallbacks,
   onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback
@@ -167,6 +169,7 @@ export function initSidebarSprouts(
 
   // Store callbacks for future updates
   storedWaterClick = onWaterClick
+  storedShineClick = onShineClick
   storedBranchCallbacks = branchCallbacks
   storedTwigClick = onTwigClick
   storedLeafClick = onLeafClick
@@ -199,6 +202,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
   // Use stored callbacks
   const onWaterClick = storedWaterClick
+  const onShineClick = storedShineClick
   const branchCallbacks = storedBranchCallbacks
   const onTwigClick = storedTwigClick
   const onLeafClick = storedLeafClick
@@ -233,11 +237,11 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   if (viewMode === 'twig') {
     // Twig view: flat list, no grouping
     filteredActive.forEach(sprout => {
-      const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
+      const item = createSproutItem(sprout, true, onWaterClick, undefined, onTwigClick, onLeafClick)
       activeSproutsList.append(item)
     })
     filteredCultivated.forEach(sprout => {
-      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+      const item = createSproutItem(sprout, false, undefined, onShineClick, onTwigClick, onLeafClick)
       cultivatedSproutsList.append(item)
     })
   } else if (viewMode === 'branch') {
@@ -249,7 +253,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
+        const item = createSproutItem(sprout, true, onWaterClick, undefined, onTwigClick, onLeafClick)
         folder.append(item)
       })
       activeSproutsList.append(folder)
@@ -259,7 +263,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+        const item = createSproutItem(sprout, false, undefined, onShineClick, onTwigClick, onLeafClick)
         folder.append(item)
       })
       cultivatedSproutsList.append(folder)
@@ -273,7 +277,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
       const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
+        const item = createSproutItem(sprout, true, onWaterClick, undefined, onTwigClick, onLeafClick)
         folder.append(item)
       })
       activeSproutsList.append(folder)
@@ -283,7 +287,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
       const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+        const item = createSproutItem(sprout, false, undefined, onShineClick, onTwigClick, onLeafClick)
         folder.append(item)
       })
       cultivatedSproutsList.append(folder)
@@ -364,6 +368,7 @@ function createSproutItem(
   sprout: SproutWithLocation,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
+  onShineClick?: (sprout: SproutWithLocation) => void,
   onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback
 ): HTMLDivElement {
@@ -415,7 +420,7 @@ function createSproutItem(
   info.append(meta)
   item.append(info)
 
-  // Water/Reap/Prune action for growing sprouts (appears on hover)
+  // Water/Harvest action for growing sprouts (appears on hover)
   if (isActive && onWaterClick) {
     const waterBtn = document.createElement('button')
     waterBtn.type = 'button'
@@ -435,6 +440,19 @@ function createSproutItem(
       onWaterClick(sprout)
     })
     item.append(waterBtn)
+  }
+
+  // Shine action for cultivated (completed) sprouts
+  if (!isActive && sprout.state === 'completed' && onShineClick) {
+    const shineBtn = document.createElement('button')
+    shineBtn.type = 'button'
+    shineBtn.className = 'sprout-shine-btn'
+    shineBtn.textContent = 'Shine'
+    shineBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      onShineClick(sprout)
+    })
+    item.append(shineBtn)
   }
 
   return item

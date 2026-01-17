@@ -1,9 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import wateringPromptsRaw from './assets/watering-prompts.txt?raw'
-import sunPromptsRaw from './assets/sun-prompts.txt?raw'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, getActiveSprouts, getHistorySprouts, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, spendWater, canAffordWater, recoverSoil, resetResources, addWaterEntry, getSunAvailable, getSunCapacity, spendSun, canAffordSun, addSunEntry } from './state'
-import type { Sprout } from './types'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources } from './state'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
@@ -11,7 +8,7 @@ import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
 import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
 import { setupHoverBranch, previewBranchFromSidebar, clearSidebarPreview } from './features/hover-branch'
-import { handleExport, handleImport } from './features/import-export'
+import { handleExport, handleImport, checkExportReminder } from './features/import-export'
 import {
   setViewMode,
   returnToOverview,
@@ -21,7 +18,11 @@ import {
 } from './features/navigation'
 import { updateStats, initSidebarSprouts } from './features/progress'
 import { setStatus, updateStatusMeta } from './features/status'
+import { initWaterDialog } from './features/water-dialog'
+import { initShineDialog } from './features/shine-dialog'
+import { initSproutsDialog } from './features/sprouts-dialog'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
+import { updateTodayIndicator } from './features/today'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) {
@@ -33,6 +34,8 @@ const navCallbacks = {
   onUpdateStats: () => {
     updateStats(ctx)
     positionNodes(ctx)
+    updateStatusMeta(ctx.elements, true)
+    updateTodayIndicator(ctx)
   },
 }
 
@@ -102,13 +105,40 @@ function updateWaterMeter(): void {
   domResult.elements.waterMeterValue.textContent = `${available}/${capacity}`
 }
 
+// Initialize context first (partial, will be completed after dialog init)
+const ctx: AppContext = {
+  elements: domResult.elements,
+  branchGroups: domResult.branchGroups,
+  allNodes: domResult.allNodes,
+  nodeLookup: domResult.nodeLookup,
+  editor,
+  twigView: undefined,
+  leafView: undefined,
+}
+
+// Initialize dialogs
+const waterDialogApi = initWaterDialog(ctx, {
+  onWaterMeterChange: updateWaterMeter,
+  onSoilMeterChange: updateSoilMeter,
+  onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
+})
+
+const shineDialogApi = initShineDialog(ctx, {
+  onSunMeterChange: () => shineDialogApi.updateSunMeter(),
+  onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
+})
+
+initSproutsDialog(ctx, {
+  onUpdateStats: navCallbacks.onUpdateStats,
+})
+
 const mapPanel = domResult.elements.canvas.parentElement as HTMLElement
 const twigView = buildTwigView(mapPanel, {
   onClose: () => returnToBranchView(ctx, navCallbacks),
   onSave: navCallbacks.onUpdateStats,
   onSoilChange: updateSoilMeter,
   onOpenLeaf: (leafId, twigId, branchIndex) => {
-    setViewModeState('leaf', branchIndex, twigId, leafId)
+    setViewModeState('leaf', branchIndex, twigId)
     ctx.leafView?.open(leafId, twigId, branchIndex)
   },
   onNavigate: (direction) => {
@@ -136,10 +166,10 @@ const twigView = buildTwigView(mapPanel, {
     }
     return newTwig ?? null
   },
-  onWaterClick: (sprout) => openWaterDialog(sprout),
-  onShineClick: (sprout) => openShineDialog(sprout),
+  onWaterClick: (sprout) => waterDialogApi.openWaterDialog(sprout),
+  onShineClick: (sprout) => shineDialogApi.openShineDialog(sprout),
   onGraftClick: (leafId, twigId, branchIndex) => {
-    setViewModeState('leaf', branchIndex, twigId, leafId)
+    setViewModeState('leaf', branchIndex, twigId)
     ctx.leafView?.open(leafId, twigId, branchIndex, true)
   },
 })
@@ -163,159 +193,19 @@ const leafView = buildLeafView(mapPanel, {
   onSoilChange: updateSoilMeter,
 })
 
-const ctx: AppContext = {
-  elements: domResult.elements,
-  branchGroups: domResult.branchGroups,
-  allNodes: domResult.allNodes,
-  nodeLookup: domResult.nodeLookup,
-  editor,
-  twigView,
-  leafView,
-}
+// Complete the context with twig and leaf views
+ctx.twigView = twigView
+ctx.leafView = leafView
 
-const { exportButton, showSproutsButton, encyclopediaButtons } = getActionButtons(domResult.elements.shell)
+const { exportButton } = getActionButtons(domResult.elements.shell)
 exportButton.addEventListener('click', () => handleExport(ctx))
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
 
-// Sprouts dialog
-function getAllSprouts(): { active: Array<Sprout & { twigId: string }>, history: Array<Sprout & { twigId: string }> } {
-  const active: Array<Sprout & { twigId: string }> = []
-  const history: Array<Sprout & { twigId: string }> = []
-
-  Object.entries(nodeState).forEach(([nodeId, data]) => {
-    if (!data.sprouts) return
-    const activeSprouts = getActiveSprouts(data.sprouts)
-    const historySprouts = getHistorySprouts(data.sprouts)
-    activeSprouts.forEach(s => active.push({ ...s, twigId: nodeId }))
-    historySprouts.forEach(s => history.push({ ...s, twigId: nodeId }))
-  })
-
-  // Sort by date
-  active.sort((a, b) => new Date(b.activatedAt || b.createdAt).getTime() - new Date(a.activatedAt || a.createdAt).getTime())
-  history.sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())
-
-  return { active, history }
-}
-
-function getTwigPath(twigId: string): string {
-  // Parse twig ID like "branch-0-twig-3"
-  const match = twigId.match(/branch-(\d+)-twig-(\d+)/)
-  if (!match) return twigId
-
-  const branchIdx = Number(match[1])
-  const twigIdx = Number(match[2])
-
-  // Get branch label
-  const branchId = `branch-${branchIdx}`
-  const branchData = nodeState[branchId]
-  const branchLabel = branchData?.label?.trim() || `Branch${branchIdx + 1}`
-
-  // Get twig label
-  const twigData = nodeState[twigId]
-  const twigLabel = twigData?.label?.trim() || `Twig${twigIdx + 1}`
-
-  return `${branchLabel} > ${twigLabel}`
-}
-
-// Result emoji scale for sprouts dialog
-function getResultEmoji(result: number): string {
-  const emojis: Record<number, string> = {
-    1: '🥀', // withered
-    2: '🌱', // sprout
-    3: '🌿', // sapling
-    4: '🌳', // tree
-    5: '🌲', // strong oak/evergreen
-  }
-  return emojis[result] || '🌱'
-}
-
-function renderSproutsDialog(): void {
-  const { active, history } = getAllSprouts()
-  const content = domResult.elements.sproutsDialogContent
-
-  const renderItem = (s: Sprout & { twigId: string }, showResult = false) => `
-    <div class="sprouts-dialog-item" data-sprout-id="${s.id}" data-twig-id="${s.twigId}">
-      <span class="sprouts-dialog-item-icon">${showResult ? getResultEmoji(s.result || 1) : '🌱'}</span>
-      <div class="sprouts-dialog-item-info">
-        <span class="sprouts-dialog-item-path">${getTwigPath(s.twigId)}</span>
-        <span class="sprouts-dialog-item-title">${s.title}</span>
-        <span class="sprouts-dialog-item-meta">
-          ${s.season}${showResult ? ` · ${s.result || 1}/5` : ''}
-        </span>
-      </div>
-      <button type="button" class="sprouts-dialog-uproot" title="Uproot">×</button>
-    </div>
-  `
-
-  content.innerHTML = `
-    <div class="sprouts-dialog-section">
-      <h3 class="sprouts-dialog-section-title">Growing (${active.length})</h3>
-      <div class="sprouts-dialog-list">
-        ${active.length ? active.map(s => renderItem(s)).join('') : '<p class="sprouts-dialog-empty">No growing sprouts</p>'}
-      </div>
-    </div>
-    <div class="sprouts-dialog-section">
-      <h3 class="sprouts-dialog-section-title">Cultivated (${history.length})</h3>
-      <div class="sprouts-dialog-list">
-        ${history.length ? history.map(s => renderItem(s, true)).join('') : '<p class="sprouts-dialog-empty">No cultivated sprouts</p>'}
-      </div>
-    </div>
-  `
-
-  // Wire up uproot buttons
-  content.querySelectorAll<HTMLButtonElement>('.sprouts-dialog-uproot').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const item = btn.closest('.sprouts-dialog-item') as HTMLElement
-      const sproutId = item?.dataset.sproutId
-      const twigId = item?.dataset.twigId
-      if (!sproutId || !twigId) return
-
-      const data = nodeState[twigId]
-      if (!data?.sprouts) return
-
-      data.sprouts = data.sprouts.filter(s => s.id !== sproutId)
-      if (data.sprouts.length === 0) data.sprouts = undefined
-      saveState()
-      renderSproutsDialog()
-      navCallbacks.onUpdateStats()
-    })
-  })
-}
-
-showSproutsButton.addEventListener('click', () => {
-  renderSproutsDialog()
-  domResult.elements.sproutsDialog.classList.remove('hidden')
-})
-
-domResult.elements.sproutsDialogClose.addEventListener('click', () => {
-  domResult.elements.sproutsDialog.classList.add('hidden')
-})
-
-// Close on backdrop click
-domResult.elements.sproutsDialog.addEventListener('click', (e) => {
-  if (e.target === domResult.elements.sproutsDialog) {
-    domResult.elements.sproutsDialog.classList.add('hidden')
-  }
-})
-
-// Close on Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !domResult.elements.sproutsDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    domResult.elements.sproutsDialog.classList.add('hidden')
-  }
-  if (e.key === 'Escape' && !domResult.elements.gardenGuideDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    domResult.elements.gardenGuideDialog.classList.add('hidden')
-  }
-}, true)
-
-// Encyclopedia buttons - each opens dialog to specific tab
+// Encyclopedia dialog
 const guideTabs = domResult.elements.gardenGuideDialog.querySelectorAll<HTMLButtonElement>('.guide-tab')
 const guidePanels = domResult.elements.gardenGuideDialog.querySelectorAll<HTMLDivElement>('.guide-panel')
+const { encyclopediaButtons } = getActionButtons(domResult.elements.shell)
 
 function openEncyclopediaTab(tabName: string): void {
   // Update tabs
@@ -365,6 +255,15 @@ guideTabs.forEach(tab => {
   })
 })
 
+// Close garden guide on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !domResult.elements.gardenGuideDialog.classList.contains('hidden')) {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    domResult.elements.gardenGuideDialog.classList.add('hidden')
+  }
+}, true)
+
 domResult.elements.debugCheckbox.addEventListener('change', (e) => {
   setDebugHoverZone((e.target as HTMLInputElement).checked)
 })
@@ -381,6 +280,7 @@ domResult.elements.debugClockBtn.addEventListener('click', () => {
   advanceClockByDays(1)
   updateDebugClockDisplay()
   updateWaterMeter() // Water resets daily
+  shineDialogApi.updateSunMeter() // Sun resets daily
   // Re-render any open twig view to update sprout states
   if (ctx.twigView?.isOpen()) {
     const activeBranchIndex = getActiveBranchIndex()
@@ -400,7 +300,7 @@ domResult.elements.debugSoilResetBtn.addEventListener('click', () => {
   resetResources()
   updateSoilMeter()
   updateWaterMeter()
-  updateSunMeter()
+  shineDialogApi.updateSunMeter()
   setStatus(ctx.elements, 'Resources reset to default', 'info')
 })
 
@@ -421,254 +321,11 @@ domResult.elements.backToTrunkButton.addEventListener('click', () => {
   returnToOverview(ctx, navCallbacks)
 })
 
-// Water dialog state
-let currentWateringSprout: { id: string, twigId: string } | null = null
-
-// Parse watering prompts (skip comments and empty lines)
-const wateringPrompts = wateringPromptsRaw
-  .split('\n')
-  .map(line => line.trim())
-  .filter(line => line && !line.startsWith('#'))
-
-// Track recently shown prompts to avoid quick repeats
-const recentPrompts: string[] = []
-const RECENT_PROMPT_LIMIT = Math.min(10, Math.floor(wateringPrompts.length / 3))
-
-function getRandomPrompt(): string {
-  // Filter out recently shown prompts
-  const available = wateringPrompts.filter(p => !recentPrompts.includes(p))
-  const pool = available.length > 0 ? available : wateringPrompts
-
-  // Pick random prompt
-  const prompt = pool[Math.floor(Math.random() * pool.length)]
-
-  // Track it as recent
-  recentPrompts.push(prompt)
-  if (recentPrompts.length > RECENT_PROMPT_LIMIT) {
-    recentPrompts.shift()
-  }
-
-  return prompt
-}
-
-function updatePourButtonState() {
-  const { waterDialogJournal, waterDialogSave } = ctx.elements
-  const hasContent = waterDialogJournal.value.trim().length > 0
-  waterDialogSave.disabled = !hasContent
-}
-
-function wasWateredToday(twigId: string, sproutId: string): boolean {
-  const data = nodeState[twigId]
-  if (!data?.sprouts) return false
-  const sprout = data.sprouts.find(s => s.id === sproutId)
-  if (!sprout?.waterEntries?.length) return false
-
-  const today = getDebugDate().toISOString().split('T')[0]
-  return sprout.waterEntries.some(entry => entry.timestamp.split('T')[0] === today)
-}
-
-function openWaterDialog(sprout: { id: string, title: string, twigId: string, twigLabel: string, season: string }) {
-  // Check if already watered today
-  if (wasWateredToday(sprout.twigId, sprout.id)) {
-    setStatus(ctx.elements, 'Already watered today! Come back tomorrow.', 'warning')
-    return
-  }
-
-  const { waterDialog, waterDialogTitle, waterDialogMeta, waterDialogJournal } = ctx.elements
-  currentWateringSprout = { id: sprout.id, twigId: sprout.twigId }
-  waterDialogTitle.textContent = sprout.title || 'Untitled Sprout'
-  waterDialogMeta.textContent = `${sprout.twigLabel} · ${sprout.season}`
-  waterDialogJournal.value = ''
-  waterDialogJournal.placeholder = getRandomPrompt()
-  updatePourButtonState()
-  waterDialog.classList.remove('hidden')
-  waterDialogJournal.focus()
-}
-
-function closeWaterDialog() {
-  const { waterDialog, waterDialogJournal } = ctx.elements
-  waterDialog.classList.add('hidden')
-  waterDialogJournal.value = ''
-  currentWateringSprout = null
-}
-
-function saveWaterEntry() {
-  const { waterDialogJournal } = ctx.elements
-  const entry = waterDialogJournal.value.trim()
-
-  if (!entry) {
-    // Must write something to water
-    return
-  }
-
-  if (!canAffordWater()) {
-    setStatus(ctx.elements, 'No water left today!', 'warning')
-    closeWaterDialog()
-    return
-  }
-
-  if (currentWateringSprout) {
-    // Spend water, gain soil
-    spendWater()
-    recoverSoil(0.1)
-    updateWaterMeter()
-    updateSoilMeter()
-
-    // Save water entry to sprout data
-    const prompt = waterDialogJournal.placeholder
-    addWaterEntry(currentWateringSprout.twigId, currentWateringSprout.id, entry, prompt)
-    setStatus(ctx.elements, 'Sprout watered! (+0.1 soil)', 'info')
-  }
-
-  closeWaterDialog()
-}
-
-// Wire up water dialog handlers
-ctx.elements.waterDialogClose.addEventListener('click', closeWaterDialog)
-ctx.elements.waterDialogCancel.addEventListener('click', closeWaterDialog)
-ctx.elements.waterDialogSave.addEventListener('click', saveWaterEntry)
-ctx.elements.waterDialogJournal.addEventListener('input', updatePourButtonState)
-ctx.elements.waterDialog.addEventListener('click', (e) => {
-  if (e.target === ctx.elements.waterDialog) closeWaterDialog()
-})
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !ctx.elements.waterDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    closeWaterDialog()
-  }
-})
-
-// === Shine (Sun) Dialog ===
-
-// Parse sun prompts (skip comments and empty lines)
-const sunPrompts = sunPromptsRaw
-  .split('\n')
-  .map(line => line.trim())
-  .filter(line => line && !line.startsWith('#'))
-
-// Track recently shown sun prompts to avoid quick repeats
-const recentSunPrompts: string[] = []
-const RECENT_SUN_PROMPT_LIMIT = Math.min(10, Math.floor(sunPrompts.length / 3))
-
-function getRandomSunPrompt(): string {
-  const available = sunPrompts.filter(p => !recentSunPrompts.includes(p))
-  const pool = available.length > 0 ? available : sunPrompts
-
-  const prompt = pool[Math.floor(Math.random() * pool.length)]
-
-  recentSunPrompts.push(prompt)
-  if (recentSunPrompts.length > RECENT_SUN_PROMPT_LIMIT) {
-    recentSunPrompts.shift()
-  }
-
-  return prompt
-}
-
-let currentShiningSprout: { id: string; twigId: string } | null = null
-
-function updateSunMeter() {
-  const available = getSunAvailable()
-  const capacity = getSunCapacity()
-  const pct = capacity > 0 ? (available / capacity) * 100 : 0
-  ctx.elements.sunMeterFill.style.width = `${pct}%`
-  ctx.elements.sunMeterValue.textContent = `${available}/${capacity}`
-}
-
-function updateRadiateButtonState() {
-  const { shineDialogJournal, shineDialogSave } = ctx.elements
-  const hasContent = shineDialogJournal.value.trim().length > 0
-  shineDialogSave.disabled = !hasContent
-}
-
-function wasShoneToday(twigId: string, sproutId: string): boolean {
-  const data = nodeState[twigId]
-  if (!data?.sprouts) return false
-  const sprout = data.sprouts.find(s => s.id === sproutId)
-  if (!sprout?.sunEntries?.length) return false
-
-  const today = getDebugDate().toISOString().split('T')[0]
-  return sprout.sunEntries.some(entry => entry.timestamp.split('T')[0] === today)
-}
-
-function openShineDialog(sprout: { id: string, title: string, twigId: string, twigLabel: string }) {
-  // Check if already shone today
-  if (wasShoneToday(sprout.twigId, sprout.id)) {
-    setStatus(ctx.elements, 'Already shone today! Come back tomorrow.', 'warning')
-    return
-  }
-
-  if (!canAffordSun()) {
-    setStatus(ctx.elements, 'No sun left today!', 'warning')
-    return
-  }
-
-  const { shineDialog, shineDialogTitle, shineDialogMeta, shineDialogJournal } = ctx.elements
-  currentShiningSprout = { id: sprout.id, twigId: sprout.twigId }
-  shineDialogTitle.textContent = sprout.title || 'Untitled Sprout'
-  shineDialogMeta.textContent = sprout.twigLabel
-  shineDialogJournal.value = ''
-  shineDialogJournal.placeholder = getRandomSunPrompt()
-  updateRadiateButtonState()
-  shineDialog.classList.remove('hidden')
-  shineDialogJournal.focus()
-}
-
-function closeShineDialog() {
-  const { shineDialog, shineDialogJournal } = ctx.elements
-  shineDialog.classList.add('hidden')
-  shineDialogJournal.value = ''
-  currentShiningSprout = null
-}
-
-function saveSunEntry() {
-  const { shineDialogJournal } = ctx.elements
-  const entry = shineDialogJournal.value.trim()
-
-  if (!entry) {
-    return
-  }
-
-  if (!canAffordSun()) {
-    setStatus(ctx.elements, 'No sun left today!', 'warning')
-    closeShineDialog()
-    return
-  }
-
-  if (currentShiningSprout) {
-    spendSun()
-    updateSunMeter()
-
-    // Save sun entry to sprout data
-    const prompt = shineDialogJournal.placeholder
-    addSunEntry(currentShiningSprout.twigId, currentShiningSprout.id, entry, prompt)
-    setStatus(ctx.elements, 'Light radiated on this journey!', 'info')
-  }
-
-  closeShineDialog()
-}
-
-// Wire up shine dialog handlers
-ctx.elements.shineDialogClose.addEventListener('click', closeShineDialog)
-ctx.elements.shineDialogCancel.addEventListener('click', closeShineDialog)
-ctx.elements.shineDialogSave.addEventListener('click', saveSunEntry)
-ctx.elements.shineDialogJournal.addEventListener('input', updateRadiateButtonState)
-ctx.elements.shineDialog.addEventListener('click', (e) => {
-  if (e.target === ctx.elements.shineDialog) closeShineDialog()
-})
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !ctx.elements.shineDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    closeShineDialog()
-  }
-})
-
-// Initialize sun meter
-updateSunMeter()
-
 // Initialize sidebar sprout sections with branch hover/click callbacks
 initSidebarSprouts(
   ctx,
-  (sprout) => openWaterDialog(sprout),
+  (sprout) => waterDialogApi.openWaterDialog(sprout),
+  (sprout) => shineDialogApi.openShineDialog(sprout),
   {
     onHoverStart: (index) => previewBranchFromSidebar(ctx, index),
     onHoverEnd: () => clearSidebarPreview(ctx),
@@ -692,7 +349,7 @@ initSidebarSprouts(
       clearSidebarPreview(ctx)
       // Enter twig view first, then open leaf view
       enterTwigView(twig, branchIndex, ctx, navCallbacks)
-      setViewModeState('leaf', branchIndex, twigId, leafId)
+      setViewModeState('leaf', branchIndex, twigId)
       ctx.leafView?.open(leafId, twigId, branchIndex)
     }
   }
@@ -705,6 +362,8 @@ updateFocus(null, ctx)
 updateStatusMeta(ctx.elements)
 updateSoilMeter()
 updateWaterMeter()
+shineDialogApi.updateSunMeter()
+updateTodayIndicator(ctx)
 
 let resizeId = 0
 const resizeObserver = new ResizeObserver(() => {
@@ -718,6 +377,9 @@ window.addEventListener('resize', () => positionNodes(ctx))
 
 startWind(ctx)
 setupHoverBranch(ctx, navCallbacks)
+
+// Check for export reminder after a short delay (don't compete with initial status)
+setTimeout(() => checkExportReminder(ctx), 2000)
 
 // Global keyboard navigation
 document.addEventListener('keydown', (e) => {

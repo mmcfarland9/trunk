@@ -1,0 +1,119 @@
+/* === Nodes === */
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  font-family: var(--font-ascii);
+  font-size: var(--char);
+  line-height: 1.2;
+  background: transparent;
+  color: var(--ink-faint);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 180ms ease;
+  text-align: center;
+  white-space: pre;
+}
+
+.node:hover, .node:focus-visible { color: var(--ink); outline: none; }
+.node.is-focused, .node.is-active { color: var(--ink); }
+.canvas.is-zooming .node { transition-duration: 480ms; }
+
+/* Branch */
+.node.branch { position: relative; line-height: 1; }
+.node.branch::before, .node.branch::after { display: block; opacity: 0.5; }
+.node.branch::before { content: attr(data-top-border); }
+.node.branch::after { content: attr(data-bottom-border); }
+.node.branch .node-label {
+  display: inline-block;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: calc(var(--char) * 1.05);
+  line-height: 1;
+  white-space: pre;
+}
+.node.branch[data-label-lines='2'] .node-label { font-size: calc(var(--char) * 1); }
+.node.branch[data-label-lines='3'] .node-label { font-size: calc(var(--char) * 0.95); }
+.node.branch:hover::before, .node.branch:hover::after,
+.branch-group.is-preview .node.branch::before, .branch-group.is-preview .node.branch::after { opacity: 0.8; }
+.node.branch[data-filled='true'] { color: var(--wood); }
+.branch-group.is-preview .node.branch { color: var(--ink); }
+.node.branch[data-filled='true']::before, .node.branch[data-filled='true']::after { opacity: 0.7; }
+
+/* Key hints */
+.key-hint {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  margin-top: 0;
+  padding-top: 0.2rem;
+  font-family: var(--font-ascii);
+  font-size: calc(var(--char) * 0.5);
+  color: var(--ink-faint);
+  opacity: 0.35;
+  border: 1px solid var(--border);
+  padding: 0.08rem 0.25rem;
+  line-height: 1;
+  pointer-events: none;
+}
+.node.branch:hover .key-hint,
+.node.twig:hover .key-hint { opacity: 0.7; }
+
+/* Key hint visibility logic */
+/* Default: twig hints hidden */
+.twig .key-hint { display: none; }
+
+/* In branch view: show twig hints, hide branch hints */
+.canvas.is-zoomed .twig .key-hint { display: block; }
+.canvas.is-zoomed .node.branch .key-hint { display: none; }
+
+/* When hovering a branch in overview: show that branch's twig hints, hide all branch hints */
+.branch-group:hover .twig .key-hint { display: block; }
+.canvas:has(.branch-group:hover) .node.branch .key-hint { display: none; }
+
+/* Twig */
+.twig { min-width: 2ch; min-height: 1.2em; opacity: 1; transition: opacity 1200ms ease-out, transform 200ms ease-out; }
+.twig .node-label { display: block; }
+.twig[data-filled='false'] .node-label { display: none; }
+/* Parentheses only show in branch view (zoomed in) */
+.canvas.is-zoomed .twig[data-filled='false']::before { content: "( )"; }
+.canvas.is-zoomed .twig:hover[data-filled='false']::before { content: "(*)"; color: var(--ink); }
+/* Hidden twigs (overview, not previewing) */
+.twig.is-hidden { opacity: 0; pointer-events: none; }
+.twig.is-hidden .node-label { visibility: hidden; }
+/* Fading out twigs (exiting preview) - keep preview appearance while fading */
+.twig.is-fading { opacity: 0; pointer-events: none; transition: opacity var(--fade-duration, 1000ms) ease-out; transition-delay: var(--fade-delay, 0ms); min-width: 0; min-height: 0; }
+.twig.is-fading .node-label { display: none; }
+.twig.is-fading::before { content: "."; font-size: calc(var(--char) * 0.9); }
+.twig.is-fading::after { content: none; }
+.twig.is-fading[data-filled='true']::before { content: "*"; color: var(--twig); font-size: calc(var(--char) * 1.2); }
+/* Preview mode - show only dots/asterisks */
+.branch-group.is-preview .twig { min-width: 0; min-height: 0; opacity: 1; }
+.branch-group.is-preview .twig .node-label { display: none; }
+.branch-group.is-preview .twig::before { content: "."; font-size: calc(var(--char) * 0.9); opacity: 1; }
+.branch-group.is-preview .twig::after { content: none; }
+.branch-group.is-preview .twig[data-filled='true']::before { content: "*"; color: var(--twig); font-size: calc(var(--char) * 1.2); }
+.canvas.is-previewing .branch-group.is-preview .twig { transition: opacity 250ms ease-out; }
+/* Filled twig in branch view - show full ASCII box */
+.canvas.is-zoomed .branch-group.is-active .twig[data-filled='true'] { color: var(--twig); font-size: calc(var(--char) * 0.7); line-height: 1; }
+.canvas.is-zoomed .branch-group.is-active .twig[data-filled='true']::before { content: attr(data-top-border); display: block; }
+.canvas.is-zoomed .branch-group.is-active .twig[data-filled='true']::after { content: attr(data-bottom-border); display: block; }
+.canvas.is-zoomed .branch-group.is-active .twig[data-filled='true'][data-label-lines='2'] { font-size: calc(var(--char) * 0.65); }
+.canvas.is-zoomed .branch-group.is-active .twig[data-filled='true'][data-label-lines='3'] { font-size: calc(var(--char) * 0.6); }
+/* In branch view, twigs appear instantly (no fade) */
+.canvas.is-zoomed .branch-group.is-active .twig { transition: transform 200ms ease-out; }
+.canvas.is-zooming .branch-group.is-active .twig { transition: opacity 480ms ease-out, transform 200ms ease-out; transition-delay: var(--twig-delay, 0ms); }
+
+/* Trunk */
+.node.trunk { left: 50%; top: 50%; z-index: 5; color: var(--wood); transition: color 320ms ease; line-height: 1; }
+.node.trunk .trunk-title { text-transform: uppercase; letter-spacing: 0.15em; font-family: var(--font-display); font-size: calc(var(--char) * 1.2); }
+.node.trunk.is-minimized { left: var(--minimized-x, 50%); top: var(--minimized-y, 50%); opacity: 0.7; }
+.node.trunk.is-minimized .trunk-title { font-size: 0; }
+.node.trunk.is-minimized .trunk-title::before { content: "*"; font-size: calc(var(--char) * 4); }
+.node.trunk.is-minimized:hover { opacity: 1; }

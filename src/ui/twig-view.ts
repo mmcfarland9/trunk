@@ -578,14 +578,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
         // Recover soil based on outcome
         if (isSuccess) {
-          // Capacity bonus scales with result: 3=0.1, 4=0.5, 5=1.0
-          // Plus environment bonus
-          const resultBonus = result === 5 ? 1.0 : result === 4 ? 0.5 : 0.1
-          const envBonus = getCapacityReward(sprout.environment)
-          recoverSoil(sprout.soilCost, resultBonus + envBonus)
+          // Capacity bonus scales with result: 3=0.25, 4=0.5, 5=1.0 (multiplier)
+          // Times (environment + season) base reward
+          const resultMultiplier = result === 5 ? 1.0 : result === 4 ? 0.5 : 0.25
+          const baseReward = getCapacityReward(sprout.environment, sprout.season)
+          recoverSoil(sprout.soilCost, baseReward * resultMultiplier)
         } else {
-          // Failed sprouts get full soil back
-          recoverSoil(sprout.soilCost)
+          // Failed sprouts recover partial soil (learning from failure)
+          recoverSoil(sprout.soilCost * 0.5)
         }
 
         setSprouts(sprouts)

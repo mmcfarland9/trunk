@@ -27,9 +27,16 @@ export function flashStatus(
   }, 4200)
 }
 
-export function updateStatusMeta(elements: Pick<AppElements, 'statusMeta'>): void {
+export function updateStatusMeta(elements: Pick<AppElements, 'statusMeta'>, animate = false): void {
   if (lastSavedAt) {
     elements.statusMeta.textContent = `Last saved at ${formatTime(lastSavedAt)}.`
+    if (animate) {
+      // Trigger save pulse animation
+      elements.statusMeta.classList.remove('is-saved')
+      // Force reflow to restart animation
+      void elements.statusMeta.offsetWidth
+      elements.statusMeta.classList.add('is-saved')
+    }
   } else if (hasNodeData()) {
     elements.statusMeta.textContent = 'Saved notes loaded from this browser.'
   } else {

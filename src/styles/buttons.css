@@ -1,0 +1,186 @@
+/* === Button System === */
+
+/* Base button reset */
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Color variants */
+.btn-twig {
+  border-color: var(--twig);
+  color: var(--twig);
+}
+
+.btn-twig:hover:not(:disabled) {
+  background: rgba(58, 107, 74, 0.08);
+}
+
+.btn-water {
+  border-color: var(--water);
+  color: var(--water);
+}
+
+.btn-water:hover:not(:disabled) {
+  background: rgba(70, 130, 180, 0.08);
+}
+
+.btn-sun {
+  border-color: var(--sun);
+  color: var(--sun);
+}
+
+.btn-sun:hover:not(:disabled) {
+  background: rgba(212, 160, 0, 0.08);
+}
+
+.btn-error {
+  border-color: var(--error-tone);
+  color: var(--error-tone);
+}
+
+.btn-error:hover:not(:disabled) {
+  background: rgba(138, 74, 58, 0.08);
+}
+
+/* === Action Button System (unified) ===
+ * Split layout: passive actions left, progress actions right
+ * All action buttons use same sizing for uniformity
+ */
+
+.action-btn {
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Passive (left side) - outline style */
+.action-btn-passive {
+  background: transparent;
+}
+
+.action-btn-passive:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Progress (right side) - subtle fill style */
+.action-btn-progress {
+  background: rgba(var(--btn-rgb), 0.15);
+}
+
+.action-btn-progress:hover:not(:disabled) {
+  background: rgba(var(--btn-rgb), 0.25);
+}
+
+/* Color variants */
+.action-btn-neutral {
+  border-color: var(--border);
+  color: var(--ink-faint);
+  --btn-rgb: 0, 0, 0;
+}
+
+.action-btn-water {
+  border-color: var(--water);
+  color: var(--water);
+  --btn-rgb: 70, 130, 180;
+}
+
+.action-btn-sun {
+  border-color: var(--sun);
+  color: var(--sun);
+  --btn-rgb: 212, 160, 0;
+}
+
+.action-btn-twig {
+  border-color: var(--twig);
+  color: var(--twig);
+  --btn-rgb: 58, 107, 74;
+}
+
+.action-btn-error {
+  border-color: var(--error-tone);
+  color: var(--error-tone);
+  --btn-rgb: 138, 74, 58;
+}
+
+/* Container for split button layout */
+.action-btn-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.action-btn-group-right {
+  justify-content: flex-end;
+}
+
+/* === Legacy Buttons === */
+
+/* Legacy aliases - use new button system */
+.action-button, .panel-button, .editor-clear, .editor-cancel, .editor-save {
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--font-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.action-button:hover, .action-button:focus-visible,
+.panel-button:hover:not(:disabled), .panel-button:focus-visible,
+.editor-clear:hover, .editor-clear:focus-visible,
+.editor-cancel:hover, .editor-cancel:focus-visible { color: var(--ink); outline: none; }
+
+.panel-button { width: 100%; padding: var(--space-2) 0; font-size: var(--text-sm); text-align: left; }
+.panel-button:disabled { cursor: default; opacity: 0.4; }
