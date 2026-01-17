@@ -6,6 +6,7 @@ import {
   getActiveSprouts,
   getHistorySprouts,
   getDebugNow,
+  getDebugDate,
   calculateSoilCost,
   getCapacityReward,
   getSoilAvailable,
@@ -15,7 +16,6 @@ import {
   recoverPartialSoil,
   getTwigLeaves,
   getSproutsByLeaf,
-  getUnassignedSprouts,
   createLeaf,
 } from '../state'
 
@@ -26,6 +26,8 @@ export type TwigViewCallbacks = {
   onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
   onWaterClick?: (sprout: { id: string, title: string, twigId: string, twigLabel: string, season: string }) => void
+  onShineClick?: (sprout: { id: string, title: string, twigId: string, twigLabel: string }) => void
+  onGraftClick?: (leafId: string, twigId: string, branchIndex: number) => void
 }
 
 const SEASONS: SproutSeason[] = ['1w', '2w', '1m', '3m', '6m', '1y']
@@ -106,6 +108,18 @@ function getDaysRemaining(sprout: Sprout): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
+function wasWateredToday(sprout: Sprout): boolean {
+  if (!sprout.waterEntries?.length) return false
+  const today = getDebugDate().toISOString().split('T')[0]
+  return sprout.waterEntries.some(entry => entry.timestamp.split('T')[0] === today)
+}
+
+function wasShoneToday(sprout: Sprout): boolean {
+  if (!sprout.sunEntries?.length) return false
+  const today = getDebugDate().toISOString().split('T')[0]
+  return sprout.sunEntries.some(entry => entry.timestamp.split('T')[0] === today)
+}
+
 export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallbacks): TwigViewApi {
   const container = document.createElement('div')
   container.className = 'twig-view hidden'
@@ -137,7 +151,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             <span class="env-hint" data-for="barren">[bold · +2 max capacity]</span>
           </div>
           <div class="sprout-soil-cost"></div>
-          <button type="button" class="sprout-set-btn" disabled></button>
+          <button type="button" class="sprout-action-btn sprout-set-btn" disabled></button>
         </div>
         <div class="twig-nav-row">
           <button type="button" class="twig-back-btn">< back to branch</button>
@@ -160,8 +174,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       <div class="confirm-dialog-box">
         <p class="confirm-dialog-message"></p>
         <div class="confirm-dialog-actions">
-          <button type="button" class="confirm-dialog-cancel">Cancel</button>
-          <button type="button" class="confirm-dialog-confirm">Uproot</button>
+          <button type="button" class="action-btn action-btn-passive action-btn-neutral confirm-dialog-cancel">Cancel</button>
+          <button type="button" class="action-btn action-btn-progress action-btn-error confirm-dialog-confirm">Uproot</button>
         </div>
       </div>
     </div>
@@ -197,8 +211,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   let currentTwigNode: HTMLButtonElement | null = null
   let confirmResolve: ((value: boolean) => void) | null = null
 
-  function showConfirm(message: string): Promise<boolean> {
+  function showConfirm(message: string, confirmLabel: string = 'Uproot'): Promise<boolean> {
     confirmMessage.textContent = message
+    confirmConfirmBtn.textContent = confirmLabel
     confirmDialog.classList.remove('hidden')
     confirmConfirmBtn.focus()
     return new Promise((resolve) => {
@@ -274,6 +289,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
   function renderHistoryCard(s: Sprout): string {
     const hasLeaf = !!s.leafId
+    const canGraft = s.state === 'completed' && hasLeaf
+    const canShine = s.state === 'completed'
+    const shone = wasShoneToday(s)
 
     return `
       <div class="sprout-card sprout-history-card ${s.state === 'failed' ? 'is-failed' : 'is-completed'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${s.id}" ${hasLeaf ? `data-leaf-id="${s.leafId}"` : ''}>
@@ -287,26 +305,24 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           <span class="sprout-card-date">${s.completedAt ? formatDate(new Date(s.completedAt)) : ''}</span>
         </div>
         ${s.reflection ? `<p class="sprout-card-reflection">${s.reflection}</p>` : ''}
+        ${(canShine || canGraft) ? `
+          <div class="sprout-card-footer">
+            ${canShine ? `<button type="button" class="sprout-action-btn sprout-shine-btn" data-sprout-id="${s.id}" ${shone ? 'disabled' : ''}>${shone ? 'n/a' : 'Shine'}</button>` : ''}
+            ${canGraft ? `<button type="button" class="sprout-action-btn sprout-graft-btn" data-leaf-id="${s.leafId}">Graft</button>` : ''}
+          </div>
+        ` : ''}
       </div>
     `
   }
 
-  function renderSprouts(): void {
-    const sprouts = getSprouts()
-    const active = getActiveSprouts(sprouts)
-    const history = getHistorySprouts(sprouts)
+  function renderActiveCard(s: Sprout): string {
+    const ready = isReady(s)
+    const progress = getGrowthProgress(s)
+    const daysLeft = getDaysRemaining(s)
+    const hasLeaf = !!s.leafId
+    const watered = wasWateredToday(s)
 
-    activeCount.textContent = `(${active.length})`
-    cultivatedCount.textContent = `(${history.length})`
-
-    // Render active
-    activeList.innerHTML = active.map(s => {
-      const ready = isReady(s)
-      const progress = getGrowthProgress(s)
-      const daysLeft = getDaysRemaining(s)
-      const hasLeaf = !!s.leafId
-
-      return `
+    return `
       <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${s.id}" ${hasLeaf ? `data-leaf-id="${s.leafId}"` : ''}>
         <div class="sprout-card-header">
           <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
@@ -322,7 +338,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
               <span class="result-value">${getResultEmoji(1)}</span>
             </div>
             <textarea class="sprout-reflection-input" placeholder="Recap (optional)..." rows="2"></textarea>
-            <button type="button" class="sprout-complete-btn">Harvest</button>
+            <button type="button" class="sprout-action-btn is-primary sprout-complete-btn">Harvest</button>
           </div>
         ` : `
           <div class="sprout-growing-section">
@@ -336,53 +352,110 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             </div>
             <div class="sprout-growing-footer">
               <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
-              <button type="button" class="sprout-water-btn">Water</button>
+              <button type="button" class="sprout-action-btn sprout-water-btn" ${watered ? 'disabled' : ''}>${watered ? 'n/a' : 'Water'}</button>
             </div>
           </div>
         `}
       </div>
-    `}).join('') || '<p class="empty-message">No growing sprouts</p>'
+    `
+  }
 
-    // Render history - grouped by leaf
+  function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boolean): string {
+    // Layer count for subtle depth effect (capped at 3)
+    const layerCount = Math.min(sprouts.length, 3)
+
+    // Only show the TOP sprout - most recent active if growing, most recent completed if cultivated
+    let topSprout: Sprout
+    if (isGrowing) {
+      // Show the active sprout
+      const activeSprouts = sprouts.filter(s => s.state === 'active')
+      topSprout = activeSprouts.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0]
+    } else {
+      // Show most recent completed sprout
+      topSprout = sprouts.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0]
+    }
+
+    if (!topSprout) return ''
+
+    // Render just the one card with leaf data attributes
+    const cardHtml = isGrowing
+      ? renderActiveCard(topSprout)
+      : renderHistoryCard(topSprout)
+
+    // Wrap in leaf container for click handling and layer effect
+    return `
+      <div class="leaf-card" data-leaf-id="${leafId}" data-layers="${layerCount}">
+        ${cardHtml}
+      </div>
+    `
+  }
+
+  function renderSprouts(): void {
+    const sprouts = getSprouts()
+    const active = getActiveSprouts(sprouts)
+    const history = getHistorySprouts(sprouts)
+
+    // Get all leaves
     const nodeId = getCurrentNodeId()
     const leaves = nodeId ? getTwigLeaves(nodeId) : []
-    const unassigned = getUnassignedSprouts(history)
+    const leafIdSet = new Set(leaves.map(l => l.id))
 
-    let historyHtml = ''
+    // Determine which leaves have active sprouts (these go in Growing)
+    const activeLeafIds = new Set(active.filter(s => s.leafId).map(s => s.leafId!))
 
-    // Render each leaf's history
+    // Standalone active sprouts (no leaf or orphaned leaf)
+    const standaloneActive = active.filter(s => !s.leafId || !leafIdSet.has(s.leafId))
+
+    // Cultivated leaves = leaves without any active sprouts
+    const cultivatedLeaves = leaves.filter(l => !activeLeafIds.has(l.id))
+    // Only count leaves that actually have history sprouts
+    const cultivatedLeavesWithHistory = cultivatedLeaves.filter(leaf =>
+      getSproutsByLeaf(history, leaf.id).length > 0
+    )
+    const unassignedHistory = history.filter(s => !s.leafId || !leafIdSet.has(s.leafId))
+
+    // Update counts (count leaves, not individual sprouts)
+    const growingCount = standaloneActive.length + activeLeafIds.size
+    const cultivatedCountVal = cultivatedLeavesWithHistory.length + unassignedHistory.length
+    activeCount.textContent = `(${growingCount})`
+    cultivatedCount.textContent = `(${cultivatedCountVal})`
+
+    // Render Growing column - one card per leaf with active sprout
+    let activeHtml = ''
+
     leaves.forEach(leaf => {
-      const leafHistory = getSproutsByLeaf(history, leaf.id)
-      if (leafHistory.length === 0) return
-
-      // Sort by date to get the most recent sprout (top layer) for the title
-      const sortedHistory = [...leafHistory].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      const topSprout = sortedHistory[0]
-
-      historyHtml += `
-        <div class="leaf-group" data-leaf-id="${leaf.id}">
-          <button type="button" class="leaf-group-header">
-            <span class="leaf-group-title">${topSprout.title}</span>
-            <span class="leaf-group-count">${leafHistory.length}</span>
-            <span class="leaf-group-arrow">></span>
-          </button>
-          <div class="leaf-group-sprouts">
-            ${leafHistory.map(s => renderHistoryCard(s)).join('')}
-          </div>
-        </div>
-      `
+      if (!activeLeafIds.has(leaf.id)) return
+      const leafSprouts = sprouts.filter(s => s.leafId === leaf.id)
+      if (leafSprouts.length === 0) return
+      activeHtml += renderLeafCard(leaf.id, leafSprouts, true)
     })
 
-    // Render unassigned sprouts
-    if (unassigned.length > 0) {
-      historyHtml += unassigned.map(s => renderHistoryCard(s)).join('')
+    // Standalone active sprouts (no leaf yet)
+    activeHtml += standaloneActive.map(s => renderActiveCard(s)).join('')
+
+    activeList.innerHTML = activeHtml || '<p class="empty-message">No growing sprouts</p>'
+
+    // Render Cultivated column - one card per leaf without active sprouts
+    let historyHtml = ''
+
+    cultivatedLeavesWithHistory.forEach(leaf => {
+      const leafSprouts = sprouts.filter(s => s.leafId === leaf.id)
+      if (leafSprouts.length === 0) return
+      historyHtml += renderLeafCard(leaf.id, leafSprouts, false)
+    })
+
+    // Unassigned history sprouts (orphaned)
+    if (unassignedHistory.length > 0) {
+      historyHtml += unassignedHistory.map(s => renderHistoryCard(s)).join('')
     }
 
     historyList.innerHTML = historyHtml || '<p class="empty-message">No history</p>'
 
-    // Wire up event listeners for cards
+    // Wire up event listeners
     wireCardEvents()
   }
 
@@ -395,15 +468,34 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         const id = card?.dataset.id
         if (!id) return
 
-        // Find sprout to calculate soil return
+        // Find sprout to build appropriate message
         const sprouts = getSprouts()
         const sprout = sprouts.find(s => s.id === id)
-        const soilReturn = sprout?.state === 'active' ? Math.floor(sprout.soilCost * 0.25) : 0
-        const soilMsg = soilReturn > 0 ? ` (+${soilReturn} soil returned)` : ''
-        const confirmed = await showConfirm(`Are you sure you want to uproot this sprout?${soilMsg}`)
+        if (!sprout) return
+
+        let confirmMsg: string
+        if (sprout.state === 'active') {
+          // Growing sprout - check if there's existing leaf history
+          const hasLeafHistory = sprout.leafId && sprouts.some(
+            s => s.id !== sprout.id && s.leafId === sprout.leafId
+          )
+          const soilReturn = Math.floor(sprout.soilCost * 0.25)
+          const soilMsg = soilReturn > 0 ? ` (+${soilReturn} soil returned)` : ''
+          if (hasLeafHistory) {
+            confirmMsg = `Are you sure you want to uproot this sprout? This will only affect the most recent part of this leaf's history.${soilMsg}`
+          } else {
+            confirmMsg = `Are you sure you want to uproot this sprout?${soilMsg}`
+          }
+        } else {
+          // Cultivated sprout - pruning removes entire leaf history
+          confirmMsg = 'Are you sure you want to prune this leaf? This will remove the entire history of this leaf.'
+        }
+
+        const confirmLabel = sprout.state === 'active' ? 'Uproot' : 'Prune'
+        const confirmed = await showConfirm(confirmMsg, confirmLabel)
         if (!confirmed) return
 
-        if (sprout && sprout.state === 'active') {
+        if (sprout.state === 'active') {
           // Uproot returns 25% of soil cost
           recoverPartialSoil(sprout.soilCost, 0.25)
           callbacks.onSoilChange?.()
@@ -471,6 +563,15 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           sprout.leafId = newLeaf.id
         }
 
+        console.log('[HARVEST] Sprout after completion:', {
+          id: sprout.id,
+          title: sprout.title,
+          state: sprout.state,
+          result: sprout.result,
+          leafId: sprout.leafId,
+          nodeId,
+        })
+
         // Recover soil based on outcome
         if (isSuccess) {
           // Capacity bonus scales with result: 3=0.1, 4=0.5, 5=1.0
@@ -489,11 +590,15 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       })
     })
 
-    // Leaf group headers - click to open leaf view
-    container.querySelectorAll<HTMLButtonElement>('.leaf-group-header').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const leafGroup = btn.closest('.leaf-group') as HTMLElement
-        const leafId = leafGroup?.dataset.leafId
+    // Leaf cards - click anywhere on the card to open leaf view
+    container.querySelectorAll<HTMLDivElement>('.leaf-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't trigger if clicking on interactive elements
+        const target = e.target as HTMLElement
+        if (target.closest('button') || target.closest('input') || target.closest('textarea')) {
+          return
+        }
+        const leafId = card.dataset.leafId
         const nodeId = getCurrentNodeId()
         const branchIndex = currentTwigNode?.dataset.branchIndex
         if (leafId && nodeId && branchIndex !== undefined && callbacks.onOpenLeaf) {
@@ -543,6 +648,47 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             twigId: nodeId,
             twigLabel,
             season: getSeasonLabel(sprout.season),
+          })
+        }
+      })
+    })
+
+    // Graft buttons - open leaf view with graft form ready
+    container.querySelectorAll<HTMLButtonElement>('.sprout-graft-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const leafId = btn.dataset.leafId
+        if (!leafId) return
+
+        const nodeId = getCurrentNodeId()
+        const branchIndex = currentTwigNode?.dataset.branchIndex
+        if (callbacks.onGraftClick && nodeId && branchIndex !== undefined) {
+          close()
+          callbacks.onGraftClick(leafId, nodeId, parseInt(branchIndex, 10))
+        }
+      })
+    })
+
+    // Shine buttons - open shine dialog for cultivated sprouts
+    container.querySelectorAll<HTMLButtonElement>('.sprout-shine-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const sproutId = btn.dataset.sproutId
+        if (!sproutId) return
+
+        const sprouts = getSprouts()
+        const sprout = sprouts.find(s => s.id === sproutId)
+        if (!sprout) return
+
+        const nodeId = getCurrentNodeId()
+        const twigLabel = currentTwigNode?.dataset.defaultLabel || 'Twig'
+
+        if (callbacks.onShineClick && nodeId) {
+          callbacks.onShineClick({
+            id: sprout.id,
+            title: sprout.title,
+            twigId: nodeId,
+            twigLabel,
           })
         }
       })

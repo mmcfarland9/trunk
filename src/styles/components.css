@@ -1363,35 +1363,9 @@
 
 .confirm-dialog-actions {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--space-4);
-  justify-content: center;
-}
-
-.confirm-dialog-cancel,
-.confirm-dialog-confirm {
-  font-family: var(--font-ascii);
-  font-size: var(--text-sm);
-  padding: var(--space-1) var(--space-4);
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink-light);
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.confirm-dialog-cancel:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.confirm-dialog-confirm {
-  border-color: var(--error-tone);
-  color: var(--error-tone);
-}
-
-.confirm-dialog-confirm:hover {
-  background: var(--error-tone);
-  color: var(--paper);
 }
 
 /* Sprouts dialog */
