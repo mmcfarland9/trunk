@@ -1,4 +1,4 @@
-import type { AppContext, NodeData } from '../types'
+import type { AppContext, NodeData, Sprout, Leaf } from '../types'
 import { nodeState, saveState, clearState, hasNodeData } from '../state'
 import { syncNode, setNodeLabel, setFocusedNode, updateFocus } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
@@ -67,7 +67,7 @@ export function handleExport(ctx: AppContext): void {
 }
 
 export function handleReset(ctx: AppContext, callbacks: ImportExportCallbacks): void {
-  const confirmed = window.confirm('Reset all notes? This clears every label and note in the map.')
+  const confirmed = window.confirm('Reset everything? This clears all labels, notes, sprouts, and leaves permanently.')
   if (!confirmed) return
 
   clearState()
@@ -115,18 +115,33 @@ export async function handleImport(
       if (!ctx.nodeLookup.has(key)) return
       if (!value || typeof value !== 'object') return
 
-      const label = typeof (value as NodeData).label === 'string' ? (value as NodeData).label.trim() : ''
-      const noteValue = typeof (value as NodeData).note === 'string' ? (value as NodeData).note.trim() : ''
-      const detailRaw = (value as { detail?: unknown }).detail
+      const v = value as Record<string, unknown>
+      const label = typeof v.label === 'string' ? v.label.trim() : ''
+      const noteValue = typeof v.note === 'string' ? v.note.trim() : ''
+      const detailRaw = v.detail
       const legacyDetail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
       const note = noteValue || legacyDetail
 
-      if (!label && !note) return
+      // Extract sprouts if present and valid
+      const sprouts = Array.isArray(v.sprouts)
+        ? (v.sprouts as Sprout[]).filter(s => s && typeof s === 'object' && typeof s.id === 'string')
+        : undefined
+
+      // Extract leaves if present and valid
+      const leaves = Array.isArray(v.leaves)
+        ? (v.leaves as Leaf[]).filter(l => l && typeof l === 'object' && typeof l.id === 'string')
+        : undefined
+
+      // Skip nodes with no meaningful data
+      const hasData = label || note || (sprouts && sprouts.length > 0) || (leaves && leaves.length > 0)
+      if (!hasData) return
 
       const defaultLabel = ctx.nodeLookup.get(key)?.dataset.defaultLabel || ''
       nextState[key] = {
         label: label || defaultLabel,
         note,
+        ...(sprouts && sprouts.length > 0 ? { sprouts } : {}),
+        ...(leaves && leaves.length > 0 ? { leaves } : {}),
       }
     })
 

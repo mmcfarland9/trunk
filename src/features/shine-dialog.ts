@@ -31,14 +31,26 @@ function getRandomSunPrompt(): string {
   return prompt
 }
 
-function wasShoneToday(twigId: string, sproutId: string): boolean {
+function getWeekString(date: Date): string {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+  const yearStart = new Date(d.getFullYear(), 0, 1)
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `${d.getFullYear()}-W${weekNo}`
+}
+
+function wasShoneThisWeek(twigId: string, sproutId: string): boolean {
   const data = nodeState[twigId]
   if (!data?.sprouts) return false
   const sprout = data.sprouts.find(s => s.id === sproutId)
   if (!sprout?.sunEntries?.length) return false
 
-  const today = getDebugDate().toISOString().split('T')[0]
-  return sprout.sunEntries.some(entry => entry.timestamp.split('T')[0] === today)
+  const thisWeek = getWeekString(getDebugDate())
+  return sprout.sunEntries.some(entry => {
+    const entryWeek = getWeekString(new Date(entry.timestamp))
+    return entryWeek === thisWeek
+  })
 }
 
 export type ShineDialogApi = {
@@ -68,14 +80,14 @@ export function initShineDialog(
   }
 
   function openShineDialog(sprout: { id: string; title: string; twigId: string; twigLabel: string }) {
-    // Check if already shone today
-    if (wasShoneToday(sprout.twigId, sprout.id)) {
-      callbacks.onSetStatus('Already shone today! Come back tomorrow.', 'warning')
+    // Check if already shone this week (sun is for weekly planning/reflection)
+    if (wasShoneThisWeek(sprout.twigId, sprout.id)) {
+      callbacks.onSetStatus('Already planned this week! Come back next week.', 'warning')
       return
     }
 
     if (!canAffordSun()) {
-      callbacks.onSetStatus('No sun left today!', 'warning')
+      callbacks.onSetStatus('No sun left this week!', 'warning')
       return
     }
 
@@ -106,7 +118,7 @@ export function initShineDialog(
     }
 
     if (!canAffordSun()) {
-      callbacks.onSetStatus('No sun left today!', 'warning')
+      callbacks.onSetStatus('No sun left this week!', 'warning')
       closeShineDialog()
       return
     }

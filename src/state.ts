@@ -1,11 +1,94 @@
 import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, Leaf } from './types'
 import { STORAGE_KEY } from './constants'
 
+// --- Schema Versioning & Migration ---
+// The _version field tracks schema version for safe migrations over time.
+// When you need to change the data structure:
+// 1. Increment CURRENT_SCHEMA_VERSION
+// 2. Add a migration function to MIGRATIONS
+// 3. The migration runs automatically on load
+
+const CURRENT_SCHEMA_VERSION = 1
+
+type StoredState = {
+  _version: number
+  nodes: Record<string, NodeData>
+}
+
+type MigrationFn = (data: Record<string, unknown>) => Record<string, unknown>
+
+// Migration functions: each transforms from version N to N+1
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const MIGRATIONS: Record<number, MigrationFn> = {
+  // Example: Version 1 → 2 migration
+  // 2: (data) => {
+  //   // Transform v1 structure to v2
+  //   return { ...data, newField: 'default' }
+  // },
+}
+
+function runMigrations(raw: Record<string, unknown>): StoredState {
+  let version = typeof raw._version === 'number' ? raw._version : 0
+  let data = raw
+
+  // Legacy data (no _version field) gets version 0
+  // We normalize it to version 1 structure
+  if (version === 0) {
+    // Old format: { trunk: {...}, branch-0: {...}, ... }
+    // New format: { _version: 1, nodes: { trunk: {...}, ... } }
+    const nodes: Record<string, unknown> = {}
+    Object.entries(data).forEach(([key, value]) => {
+      if (key !== '_version' && value && typeof value === 'object') {
+        nodes[key] = value
+      }
+    })
+    data = { _version: 1, nodes }
+    version = 1
+  }
+
+  // Run any pending migrations
+  while (version < CURRENT_SCHEMA_VERSION) {
+    const migration = MIGRATIONS[version + 1]
+    if (migration) {
+      data = migration(data)
+    }
+    version++
+  }
+
+  return {
+    _version: CURRENT_SCHEMA_VERSION,
+    nodes: (data.nodes || {}) as Record<string, NodeData>,
+  }
+}
+
+// Journal entry cap - prevents localStorage overflow over decades
+const MAX_WATER_ENTRIES_PER_SPROUT = 365  // 1 year of daily entries
+const MAX_SUN_ENTRIES_PER_SPROUT = 52     // 1 year of weekly entries
+
+function capJournalEntries(sprout: Sprout): void {
+  if (sprout.waterEntries && sprout.waterEntries.length > MAX_WATER_ENTRIES_PER_SPROUT) {
+    // Keep most recent entries, remove oldest
+    sprout.waterEntries = sprout.waterEntries.slice(-MAX_WATER_ENTRIES_PER_SPROUT)
+  }
+  if (sprout.sunEntries && sprout.sunEntries.length > MAX_SUN_ENTRIES_PER_SPROUT) {
+    sprout.sunEntries = sprout.sunEntries.slice(-MAX_SUN_ENTRIES_PER_SPROUT)
+  }
+}
+
+// --- Resource System (Unified) ---
+// All resources (soil, water, sun) stored together for simpler backup/migration.
+
+const RESOURCES_STORAGE_KEY = 'trunk-resources-v1'
+
+// Legacy keys (for migration from old separate storage)
+const LEGACY_SOIL_KEY = 'trunk-soil-v1'
+const LEGACY_WATER_KEY = 'trunk-water-v1'
+const LEGACY_SUN_KEY = 'trunk-sun-v1'
+
 // --- Soil System ---
 // Soil represents limited focus/energy. Start small, grow through success.
 // Philosophy: Earn your way to bigger goals through consistent small wins.
 
-const SOIL_STORAGE_KEY = 'trunk-soil-v1'
 const DEFAULT_SOIL_CAPACITY = 4  // Start humble - room for a few 1-week goals
 
 // Recovery rate per watering (daily engagement is rewarded)
@@ -62,30 +145,96 @@ export function getSoilRecoveryRate(): number {
   return SOIL_RECOVERY_PER_WATER
 }
 
-function loadSoilState(): SoilState {
+// --- Unified Resource State ---
+
+const DEFAULT_WATER_CAPACITY = 3
+const DEFAULT_SUN_CAPACITY = 1  // Weekly, so just 1
+
+type ResourceStoredState = {
+  soil: SoilState
+  water: WaterState & { lastResetDate?: string }
+  sun: SunState & { lastResetDate?: string }
+}
+
+function getDateString(date: Date): string {
+  return date.toISOString().split('T')[0] // YYYY-MM-DD
+}
+
+function getWeekString(date: Date): string {
+  // Get ISO week number for weekly reset
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+  const yearStart = new Date(d.getFullYear(), 0, 1)
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `${d.getFullYear()}-W${weekNo}`
+}
+
+function loadResourceState(): ResourceStoredState {
+  const defaults: ResourceStoredState = {
+    soil: { available: DEFAULT_SOIL_CAPACITY, capacity: DEFAULT_SOIL_CAPACITY },
+    water: { available: DEFAULT_WATER_CAPACITY, capacity: DEFAULT_WATER_CAPACITY, lastResetDate: getDateString(new Date()) },
+    sun: { available: DEFAULT_SUN_CAPACITY, capacity: DEFAULT_SUN_CAPACITY, lastResetDate: getWeekString(new Date()) },
+  }
+
   try {
-    const raw = localStorage.getItem(SOIL_STORAGE_KEY)
+    // Try unified key first
+    const raw = localStorage.getItem(RESOURCES_STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (typeof parsed.available === 'number' && typeof parsed.capacity === 'number') {
-        return parsed
+      return {
+        soil: parsed.soil || defaults.soil,
+        water: parsed.water || defaults.water,
+        sun: parsed.sun || defaults.sun,
       }
     }
+
+    // Migrate from legacy separate keys
+    const legacySoil = localStorage.getItem(LEGACY_SOIL_KEY)
+    const legacyWater = localStorage.getItem(LEGACY_WATER_KEY)
+    const legacySun = localStorage.getItem(LEGACY_SUN_KEY)
+
+    if (legacySoil || legacyWater || legacySun) {
+      const migrated: ResourceStoredState = {
+        soil: legacySoil ? JSON.parse(legacySoil) : defaults.soil,
+        water: legacyWater ? JSON.parse(legacyWater) : defaults.water,
+        sun: legacySun ? JSON.parse(legacySun) : defaults.sun,
+      }
+
+      // Save to unified key
+      localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(migrated))
+
+      // Clean up legacy keys
+      localStorage.removeItem(LEGACY_SOIL_KEY)
+      localStorage.removeItem(LEGACY_WATER_KEY)
+      localStorage.removeItem(LEGACY_SUN_KEY)
+
+      console.log('[MIGRATION] Resources migrated to unified storage')
+      return migrated
+    }
   } catch (error) {
-    console.warn('Could not read soil state', error)
+    console.warn('Could not read resource state', error)
   }
-  return { available: DEFAULT_SOIL_CAPACITY, capacity: DEFAULT_SOIL_CAPACITY }
+
+  return defaults
 }
 
-function saveSoilState(): void {
+function saveResourceState(): void {
   try {
-    localStorage.setItem(SOIL_STORAGE_KEY, JSON.stringify(soilState))
+    localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resourceState))
   } catch (error) {
-    console.warn('Could not save soil state', error)
+    console.warn('Could not save resource state', error)
   }
 }
 
-export const soilState: SoilState = loadSoilState()
+const resourceState: ResourceStoredState = loadResourceState()
+
+// Convenience aliases for backward compatibility
+const soilState = resourceState.soil
+const waterState = resourceState.water
+const sunState = resourceState.sun
+
+// --- Soil API ---
 
 export function getSoilAvailable(): number {
   return soilState.available
@@ -102,7 +251,7 @@ export function canAffordSoil(cost: number): boolean {
 export function spendSoil(cost: number): boolean {
   if (!canAffordSoil(cost)) return false
   soilState.available -= cost
-  saveSoilState()
+  saveResourceState()
   return true
 }
 
@@ -111,85 +260,26 @@ export function recoverSoil(amount: number, capacityBonus: number = 0): void {
   if (capacityBonus > 0) {
     soilState.capacity += capacityBonus
   }
-  saveSoilState()
+  saveResourceState()
 }
 
 export function recoverPartialSoil(amount: number, fraction: number): void {
   const recovered = Math.floor(amount * fraction)
   soilState.available = Math.min(soilState.available + recovered, soilState.capacity)
-  saveSoilState()
+  saveResourceState()
 }
 
-// Reset all resources (soil, water, sun)
-export function resetResources(): void {
-  // Reset soil
-  soilState.available = DEFAULT_SOIL_CAPACITY
-  soilState.capacity = DEFAULT_SOIL_CAPACITY
-  saveSoilState()
+// --- Water API ---
 
-  // Reset water
-  waterState.available = DEFAULT_WATER_CAPACITY
-  waterState.capacity = DEFAULT_WATER_CAPACITY
-  saveWaterState()
-
-  // Reset sun
-  sunState.available = DEFAULT_SUN_CAPACITY
-  sunState.capacity = DEFAULT_SUN_CAPACITY
-  saveSunState()
-}
-
-// --- Water System ---
-// Water represents daily/recurring attention capacity.
-// Resets to full capacity each day.
-
-const WATER_STORAGE_KEY = 'trunk-water-v1'
-const DEFAULT_WATER_CAPACITY = 3
-
-type WaterStoredState = WaterState & { lastResetDate?: string }
-
-function getDateString(date: Date): string {
-  return date.toISOString().split('T')[0] // YYYY-MM-DD
-}
-
-function loadWaterState(): WaterStoredState {
-  try {
-    const raw = localStorage.getItem(WATER_STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (typeof parsed.available === 'number' && typeof parsed.capacity === 'number') {
-        return {
-          available: parsed.available,
-          capacity: parsed.capacity,
-          lastResetDate: parsed.lastResetDate,
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('Could not read water state', error)
-  }
-  return { available: DEFAULT_WATER_CAPACITY, capacity: DEFAULT_WATER_CAPACITY, lastResetDate: getDateString(new Date()) }
-}
-
-function saveWaterState(): void {
-  try {
-    localStorage.setItem(WATER_STORAGE_KEY, JSON.stringify(waterState))
-  } catch (error) {
-    console.warn('Could not save water state', error)
-  }
-}
-
-const waterState: WaterStoredState = loadWaterState()
-
-// Check and reset water daily (uses debug clock for testing)
 export function checkWaterDailyReset(): boolean {
   const today = getDateString(getDebugDate())
   if (waterState.lastResetDate !== today) {
     waterState.available = waterState.capacity
     waterState.lastResetDate = today
-    saveWaterState()
-    return true // Did reset
+    saveResourceState()
+    return true
   }
-  return false // No reset needed
+  return false
 }
 
 export function getWaterAvailable(): number {
@@ -210,62 +300,25 @@ export function spendWater(cost: number = 1): boolean {
   checkWaterDailyReset()
   if (!canAffordWater(cost)) return false
   waterState.available -= cost
-  saveWaterState()
+  saveResourceState()
   return true
 }
 
-// --- Sun System ---
-// Sun represents reflective/planning capacity for cultivated leaves.
-// Resets to full capacity each day.
+// --- Sun API (Weekly reset for planning/reflection) ---
 
-const SUN_STORAGE_KEY = 'trunk-sun-v1'
-const DEFAULT_SUN_CAPACITY = 3
-
-type SunStoredState = SunState & { lastResetDate?: string }
-
-function loadSunState(): SunStoredState {
-  try {
-    const raw = localStorage.getItem(SUN_STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (typeof parsed.available === 'number' && typeof parsed.capacity === 'number') {
-        return {
-          available: parsed.available,
-          capacity: parsed.capacity,
-          lastResetDate: parsed.lastResetDate,
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('Could not read sun state', error)
-  }
-  return { available: DEFAULT_SUN_CAPACITY, capacity: DEFAULT_SUN_CAPACITY, lastResetDate: getDateString(new Date()) }
-}
-
-function saveSunState(): void {
-  try {
-    localStorage.setItem(SUN_STORAGE_KEY, JSON.stringify(sunState))
-  } catch (error) {
-    console.warn('Could not save sun state', error)
-  }
-}
-
-const sunState: SunStoredState = loadSunState()
-
-// Check and reset sun daily (uses debug clock for testing)
-export function checkSunDailyReset(): boolean {
-  const today = getDateString(getDebugDate())
-  if (sunState.lastResetDate !== today) {
+export function checkSunWeeklyReset(): boolean {
+  const thisWeek = getWeekString(getDebugDate())
+  if (sunState.lastResetDate !== thisWeek) {
     sunState.available = sunState.capacity
-    sunState.lastResetDate = today
-    saveSunState()
+    sunState.lastResetDate = thisWeek
+    saveResourceState()
     return true
   }
   return false
 }
 
 export function getSunAvailable(): number {
-  checkSunDailyReset()
+  checkSunWeeklyReset()
   return sunState.available
 }
 
@@ -274,16 +327,30 @@ export function getSunCapacity(): number {
 }
 
 export function canAffordSun(cost: number = 1): boolean {
-  checkSunDailyReset()
+  checkSunWeeklyReset()
   return sunState.available >= cost
 }
 
 export function spendSun(cost: number = 1): boolean {
-  checkSunDailyReset()
+  checkSunWeeklyReset()
   if (!canAffordSun(cost)) return false
   sunState.available -= cost
-  saveSunState()
+  saveResourceState()
   return true
+}
+
+// --- Reset All Resources ---
+
+export function resetResources(): void {
+  soilState.available = DEFAULT_SOIL_CAPACITY
+  soilState.capacity = DEFAULT_SOIL_CAPACITY
+  waterState.available = DEFAULT_WATER_CAPACITY
+  waterState.capacity = DEFAULT_WATER_CAPACITY
+  waterState.lastResetDate = getDateString(new Date())
+  sunState.available = DEFAULT_SUN_CAPACITY
+  sunState.capacity = DEFAULT_SUN_CAPACITY
+  sunState.lastResetDate = getWeekString(new Date())
+  saveResourceState()
 }
 
 // --- Debug Clock ---
@@ -543,8 +610,12 @@ function loadState(): Record<string, NodeData> {
     if (!raw) return {}
     const parsed = JSON.parse(raw)
     if (parsed && typeof parsed === 'object') {
+      // Run migrations to bring data to current schema
+      const migrated = runMigrations(parsed as Record<string, unknown>)
+
+      // Normalize each node's data
       const nextState: Record<string, NodeData> = {}
-      Object.entries(parsed as Record<string, unknown>).forEach(([key, value]) => {
+      Object.entries(migrated.nodes).forEach(([key, value]) => {
         const normalized = normalizeNodeData(value)
         if (normalized) {
           // Migrate legacy 'center' key to 'trunk'
@@ -552,6 +623,16 @@ function loadState(): Record<string, NodeData> {
           nextState[nodeKey] = normalized
         }
       })
+
+      // Save migrated data back if version changed
+      if (!parsed._version || parsed._version < CURRENT_SCHEMA_VERSION) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          _version: CURRENT_SCHEMA_VERSION,
+          nodes: nextState,
+        }))
+        console.log(`[MIGRATION] Data migrated from v${parsed._version || 0} to v${CURRENT_SCHEMA_VERSION}`)
+      }
+
       return nextState
     }
   } catch (error) {
@@ -565,7 +646,16 @@ export let lastSavedAt: Date | null = null
 
 export function saveState(onSaved?: () => void): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nodeState))
+    // Cap journal entries before saving to prevent unbounded growth
+    Object.values(nodeState).forEach(data => {
+      data.sprouts?.forEach(capJournalEntries)
+    })
+
+    // Save with version for future migrations
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      _version: CURRENT_SCHEMA_VERSION,
+      nodes: nodeState,
+    }))
     lastSavedAt = new Date()
     onSaved?.()
   } catch (error) {

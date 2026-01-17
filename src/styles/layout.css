@@ -70,6 +70,7 @@
   align-items: stretch;
   z-index: 50;
 }
+.future-ideas-folder.hidden { display: none; }
 
 .future-ideas-toggle {
   display: flex;
