@@ -924,41 +924,6 @@
   color: #b43c3c;
 }
 
-/* Unified Action Buttons (Plant, Water, Harvest, Graft) */
-.sprout-action-btn {
-  padding: var(--space-1) var(--space-2);
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  color: var(--ink);
-  cursor: pointer;
-  transition: all 120ms ease;
-}
-
-.sprout-action-btn:hover:not(:disabled) {
-  border-color: var(--twig);
-  color: var(--twig);
-  background: rgba(58, 107, 74, 0.08);
-}
-
-.sprout-action-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.sprout-action-btn.is-primary {
-  border-color: var(--twig);
-  color: var(--twig);
-  background: rgba(58, 107, 74, 0.08);
-}
-
-.sprout-action-btn.is-primary:hover:not(:disabled) {
-  background: rgba(58, 107, 74, 0.18);
-}
-
 /* Card footer for consistent button placement */
 .sprout-card-footer {
   display: flex;
@@ -1056,30 +1021,6 @@
   font-size: var(--text-xs);
   color: var(--ink-light);
   font-style: italic;
-}
-
-/* Graft button uses .sprout-action-btn */
-
-.sprout-activate-btn {
-  margin-top: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  color: var(--ink);
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.sprout-activate-btn:hover:not(:disabled) {
-  border-color: var(--twig);
-  color: var(--twig);
-}
-
-.sprout-activate-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 /* Active sprout completion section */
@@ -1246,7 +1187,7 @@
   text-align: left;
 }
 
-/* Water button in twig cards - extends .sprout-action-btn */
+/* Water button in twig cards - always visible */
 .sprout-card .sprout-water-btn {
   opacity: 1;
 }
