@@ -968,7 +968,8 @@
 /* Card footer for consistent button placement */
 .sprout-card-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: var(--space-2);
 }
 

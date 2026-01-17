@@ -306,9 +306,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         </div>
         ${s.reflection ? `<p class="sprout-card-reflection">${s.reflection}</p>` : ''}
         ${(canShine || canGraft) ? `
-          <div class="sprout-card-footer">
-            ${canShine ? `<button type="button" class="sprout-action-btn sprout-shine-btn" data-sprout-id="${s.id}" ${shone ? 'disabled' : ''}>${shone ? 'n/a' : 'Shine'}</button>` : ''}
-            ${canGraft ? `<button type="button" class="sprout-action-btn sprout-graft-btn" data-leaf-id="${s.leafId}">Graft</button>` : ''}
+          <div class="sprout-card-footer action-btn-group">
+            ${canShine ? `<button type="button" class="action-btn action-btn-passive action-btn-sun sprout-shine-btn" data-sprout-id="${s.id}" ${shone ? 'disabled' : ''}>${shone ? 'n/a' : 'Shine'}</button>` : ''}
+            ${canGraft ? `<button type="button" class="action-btn action-btn-progress action-btn-twig sprout-graft-btn" data-leaf-id="${s.leafId}">Graft</button>` : ''}
           </div>
         ` : ''}
       </div>
