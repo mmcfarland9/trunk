@@ -1,7 +1,8 @@
 import './styles/index.css'
 import type { AppContext } from './types'
 import wateringPromptsRaw from './assets/watering-prompts.txt?raw'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, getActiveSprouts, getHistorySprouts, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, spendWater, canAffordWater, recoverSoil, resetSoil, addWaterEntry } from './state'
+import sunPromptsRaw from './assets/sun-prompts.txt?raw'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, getActiveSprouts, getHistorySprouts, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, spendWater, canAffordWater, recoverSoil, resetResources, addWaterEntry, getSunAvailable, getSunCapacity, spendSun, canAffordSun, addSunEntry } from './state'
 import type { Sprout } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -136,6 +137,11 @@ const twigView = buildTwigView(mapPanel, {
     return newTwig ?? null
   },
   onWaterClick: (sprout) => openWaterDialog(sprout),
+  onShineClick: (sprout) => openShineDialog(sprout),
+  onGraftClick: (leafId, twigId, branchIndex) => {
+    setViewModeState('leaf', branchIndex, twigId, leafId)
+    ctx.leafView?.open(leafId, twigId, branchIndex, true)
+  },
 })
 
 const leafView = buildLeafView(mapPanel, {
@@ -391,9 +397,11 @@ domResult.elements.debugClockBtn.addEventListener('click', () => {
 })
 
 domResult.elements.debugSoilResetBtn.addEventListener('click', () => {
-  resetSoil()
+  resetResources()
   updateSoilMeter()
-  setStatus(ctx.elements, 'Soil reset to default capacity', 'info')
+  updateWaterMeter()
+  updateSunMeter()
+  setStatus(ctx.elements, 'Resources reset to default', 'info')
 })
 
 domResult.elements.debugClearSproutsBtn.addEventListener('click', () => {
@@ -449,7 +457,23 @@ function updatePourButtonState() {
   waterDialogSave.disabled = !hasContent
 }
 
+function wasWateredToday(twigId: string, sproutId: string): boolean {
+  const data = nodeState[twigId]
+  if (!data?.sprouts) return false
+  const sprout = data.sprouts.find(s => s.id === sproutId)
+  if (!sprout?.waterEntries?.length) return false
+
+  const today = getDebugDate().toISOString().split('T')[0]
+  return sprout.waterEntries.some(entry => entry.timestamp.split('T')[0] === today)
+}
+
 function openWaterDialog(sprout: { id: string, title: string, twigId: string, twigLabel: string, season: string }) {
+  // Check if already watered today
+  if (wasWateredToday(sprout.twigId, sprout.id)) {
+    setStatus(ctx.elements, 'Already watered today! Come back tomorrow.', 'warning')
+    return
+  }
+
   const { waterDialog, waterDialogTitle, waterDialogMeta, waterDialogJournal } = ctx.elements
   currentWateringSprout = { id: sprout.id, twigId: sprout.twigId }
   waterDialogTitle.textContent = sprout.title || 'Untitled Sprout'
@@ -507,6 +531,139 @@ ctx.elements.waterDialogJournal.addEventListener('input', updatePourButtonState)
 ctx.elements.waterDialog.addEventListener('click', (e) => {
   if (e.target === ctx.elements.waterDialog) closeWaterDialog()
 })
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !ctx.elements.waterDialog.classList.contains('hidden')) {
+    e.preventDefault()
+    closeWaterDialog()
+  }
+})
+
+// === Shine (Sun) Dialog ===
+
+// Parse sun prompts (skip comments and empty lines)
+const sunPrompts = sunPromptsRaw
+  .split('\n')
+  .map(line => line.trim())
+  .filter(line => line && !line.startsWith('#'))
+
+// Track recently shown sun prompts to avoid quick repeats
+const recentSunPrompts: string[] = []
+const RECENT_SUN_PROMPT_LIMIT = Math.min(10, Math.floor(sunPrompts.length / 3))
+
+function getRandomSunPrompt(): string {
+  const available = sunPrompts.filter(p => !recentSunPrompts.includes(p))
+  const pool = available.length > 0 ? available : sunPrompts
+
+  const prompt = pool[Math.floor(Math.random() * pool.length)]
+
+  recentSunPrompts.push(prompt)
+  if (recentSunPrompts.length > RECENT_SUN_PROMPT_LIMIT) {
+    recentSunPrompts.shift()
+  }
+
+  return prompt
+}
+
+let currentShiningSprout: { id: string; twigId: string } | null = null
+
+function updateSunMeter() {
+  const available = getSunAvailable()
+  const capacity = getSunCapacity()
+  const pct = capacity > 0 ? (available / capacity) * 100 : 0
+  ctx.elements.sunMeterFill.style.width = `${pct}%`
+  ctx.elements.sunMeterValue.textContent = `${available}/${capacity}`
+}
+
+function updateRadiateButtonState() {
+  const { shineDialogJournal, shineDialogSave } = ctx.elements
+  const hasContent = shineDialogJournal.value.trim().length > 0
+  shineDialogSave.disabled = !hasContent
+}
+
+function wasShoneToday(twigId: string, sproutId: string): boolean {
+  const data = nodeState[twigId]
+  if (!data?.sprouts) return false
+  const sprout = data.sprouts.find(s => s.id === sproutId)
+  if (!sprout?.sunEntries?.length) return false
+
+  const today = getDebugDate().toISOString().split('T')[0]
+  return sprout.sunEntries.some(entry => entry.timestamp.split('T')[0] === today)
+}
+
+function openShineDialog(sprout: { id: string, title: string, twigId: string, twigLabel: string }) {
+  // Check if already shone today
+  if (wasShoneToday(sprout.twigId, sprout.id)) {
+    setStatus(ctx.elements, 'Already shone today! Come back tomorrow.', 'warning')
+    return
+  }
+
+  if (!canAffordSun()) {
+    setStatus(ctx.elements, 'No sun left today!', 'warning')
+    return
+  }
+
+  const { shineDialog, shineDialogTitle, shineDialogMeta, shineDialogJournal } = ctx.elements
+  currentShiningSprout = { id: sprout.id, twigId: sprout.twigId }
+  shineDialogTitle.textContent = sprout.title || 'Untitled Sprout'
+  shineDialogMeta.textContent = sprout.twigLabel
+  shineDialogJournal.value = ''
+  shineDialogJournal.placeholder = getRandomSunPrompt()
+  updateRadiateButtonState()
+  shineDialog.classList.remove('hidden')
+  shineDialogJournal.focus()
+}
+
+function closeShineDialog() {
+  const { shineDialog, shineDialogJournal } = ctx.elements
+  shineDialog.classList.add('hidden')
+  shineDialogJournal.value = ''
+  currentShiningSprout = null
+}
+
+function saveSunEntry() {
+  const { shineDialogJournal } = ctx.elements
+  const entry = shineDialogJournal.value.trim()
+
+  if (!entry) {
+    return
+  }
+
+  if (!canAffordSun()) {
+    setStatus(ctx.elements, 'No sun left today!', 'warning')
+    closeShineDialog()
+    return
+  }
+
+  if (currentShiningSprout) {
+    spendSun()
+    updateSunMeter()
+
+    // Save sun entry to sprout data
+    const prompt = shineDialogJournal.placeholder
+    addSunEntry(currentShiningSprout.twigId, currentShiningSprout.id, entry, prompt)
+    setStatus(ctx.elements, 'Light radiated on this journey!', 'info')
+  }
+
+  closeShineDialog()
+}
+
+// Wire up shine dialog handlers
+ctx.elements.shineDialogClose.addEventListener('click', closeShineDialog)
+ctx.elements.shineDialogCancel.addEventListener('click', closeShineDialog)
+ctx.elements.shineDialogSave.addEventListener('click', saveSunEntry)
+ctx.elements.shineDialogJournal.addEventListener('input', updateRadiateButtonState)
+ctx.elements.shineDialog.addEventListener('click', (e) => {
+  if (e.target === ctx.elements.shineDialog) closeShineDialog()
+})
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !ctx.elements.shineDialog.classList.contains('hidden')) {
+    e.preventDefault()
+    closeShineDialog()
+  }
+})
+
+// Initialize sun meter
+updateSunMeter()
 
 // Initialize sidebar sprout sections with branch hover/click callbacks
 initSidebarSprouts(

@@ -1,88 +1,80 @@
 # Sun Prompts
 # One prompt per line. Lines starting with # are ignored.
-# These appear when shining light on a completed sprout - focus on macro planning,
-# organization, looking backward and forward, strategic thinking.
+# Focus: reflection on the completed goal - past journey, what's next.
 
-# Looking Back - What Happened
-What was the arc of this journey?
-How did this unfold compared to what you expected?
-What were the major turning points?
-Map out the phases this went through.
-What story does this goal tell?
+# The Journey
+How did this actually unfold?
+What was the arc of this goal?
+What phases did this go through?
+How did this change along the way?
+What story does this tell?
 
-# Looking Back - Lessons Learned
-What did this teach you about yourself?
-What patterns from your past showed up again?
-What would you tell someone starting this same goal?
-What skills did you develop through this?
+# What You Learned
+What did this teach you?
+What skills did you build?
+What do you know now that you didn't before?
+What surprised you?
 What assumptions were wrong?
 
-# Looking Back - Honest Assessment
-Did you give this the attention it deserved?
-What would you do differently with hindsight?
-Where did you compromise too much?
-What did you learn about your limits?
-Were you the person you wanted to be during this?
+# Honest Reflection
+Did you give this what it deserved?
+What would you do differently?
+Where did you cut corners?
+What did this reveal about your limits?
+Are you proud of how you handled this?
 
-# The Bigger Picture
-How does this fit into your life's direction?
-What chapter of your story is this?
-How did this change your trajectory?
-What does completing this make possible?
-Where does this sit among your priorities?
+# The Outcome
+Did this turn out how you expected?
+What did completing this actually give you?
+Was this worth the effort?
+How do you feel now that it's done?
+What's different because of this?
 
-# Future Planning - What's Next
-What naturally follows from this?
-What new goals emerged from this experience?
-How should this influence your next decisions?
-What unfinished threads want attention?
-What door did this open that you want to walk through?
+# What's Next
+What does finishing this make possible?
+What naturally follows from here?
+Did this spark any new ideas?
+What unfinished piece wants attention?
+Where does this lead?
 
-# Future Planning - Systems & Habits
-What systems could support goals like this?
-What habit would make similar goals easier?
-How could you organize your life to do more of this?
-What structure was missing that you need?
-What recurring practice would help?
+# Patterns
+Have you done something like this before?
+What patterns showed up?
+How was this similar to past efforts?
+What did this confirm about how you work?
+What habit helped or hurt?
 
-# Future Planning - Resource Allocation
-How should you invest your time differently going forward?
-What should you do more of? Less of?
-Who should you spend more time with?
-What tools or resources do you need?
-Where should your energy go next?
+# Who Helped
+Who supported you through this?
+Who deserves thanks?
+Who would you tell about this?
+What role did others play?
+Did anyone make this harder?
 
-# Integration & Identity
-How did this change how you see yourself?
-What kind of person completes goals like this?
-What does this say about who you're becoming?
-How does this connect to your values?
-What part of you grew through this?
+# Memorable Moments
+What moment stands out most?
+What was the hardest point?
+What was the best moment?
+When did this feel most real?
+What will you remember?
 
-# Gratitude & Closure
-What are you most grateful for from this journey?
-Who deserves acknowledgment for helping?
-What moments do you want to remember?
-How do you want to honor this completion?
+# Closure
+How do you want to close this chapter?
 What do you want to carry forward?
+Is there anything left unsaid?
+What can you let go of now?
+How do you want to mark this completion?
 
-# Continuity & Grafting
-Why might this deserve a second chapter?
-What evolved understanding would you bring to a retry?
-How has your vision for this matured?
-What would "version 2" of this goal look like?
-Is there a deeper layer to explore here?
+# Continuing
+Should this have a second chapter?
+What would a new version look like?
+Is there deeper work here?
+What would you bring to a revisit?
+Why might this deserve more time?
 
-# Release & Letting Go
-What are you ready to release?
-What no longer serves you from this experience?
-What beliefs can you let go of now?
-How can you close this chapter with peace?
-What space does completing this create?
-
-# Strategic Reflection
-What type of goals suit you best?
-What conditions help you succeed?
-What season of life are you in?
-How should this inform your goal-setting approach?
-What did this reveal about your capacity?
+# Integration
+How did this change you?
+What part of you grew?
+How does this connect to what matters?
+What does completing this say about you?
+Who are you now that this is done?
