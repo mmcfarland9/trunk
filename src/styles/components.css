@@ -924,12 +924,6 @@
   color: #b43c3c;
 }
 
-/* Plant button - extends .sprout-action-btn */
-.sprout-set-btn {
-  align-self: flex-start;
-  margin-top: var(--space-1);
-}
-
 /* Unified Action Buttons (Plant, Water, Harvest, Graft) */
 .sprout-action-btn {
   padding: var(--space-1) var(--space-2);

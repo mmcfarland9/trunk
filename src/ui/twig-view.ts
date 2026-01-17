@@ -151,7 +151,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             <span class="env-hint" data-for="barren">[bold · +2 max capacity]</span>
           </div>
           <div class="sprout-soil-cost"></div>
-          <button type="button" class="sprout-action-btn sprout-set-btn" disabled></button>
+          <div class="action-btn-group action-btn-group-right">
+            <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
+          </div>
         </div>
         <div class="twig-nav-row">
           <button type="button" class="twig-back-btn">< back to branch</button>
