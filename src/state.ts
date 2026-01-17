@@ -1,5 +1,6 @@
 import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, Leaf } from './types'
 import { STORAGE_KEY } from './constants'
+import presetData from '../assets/trunk-map-preset.json'
 
 // --- Schema Versioning & Migration ---
 // The _version field tracks schema version for safe migrations over time.
@@ -558,6 +559,7 @@ function normalizeNodeData(value: unknown): NodeData | null {
     goalValue?: unknown
     goalTitle?: unknown
     sprouts?: unknown
+    leaves?: unknown
   }
   const label = typeof payload.label === 'string' ? payload.label : ''
   const noteValue = typeof payload.note === 'string' ? payload.note : ''
@@ -573,6 +575,16 @@ function normalizeNodeData(value: unknown): NodeData | null {
       typeof s.title === 'string'
     )
     if (sprouts.length === 0) sprouts = undefined
+  }
+
+  // Check for existing leaves array
+  let leaves: Leaf[] | undefined
+  if (Array.isArray(payload.leaves)) {
+    leaves = payload.leaves.filter((l): l is Leaf =>
+      l && typeof l === 'object' &&
+      typeof l.id === 'string'
+    )
+    if (leaves.length === 0) leaves = undefined
   }
 
   // Migrate legacy goal fields to sprouts (only if no sprouts exist)
@@ -600,14 +612,52 @@ function normalizeNodeData(value: unknown): NodeData | null {
     }
   }
 
-  if (!label && !note && !sprouts) return null
-  return { label, note, sprouts }
+  if (!label && !note && !sprouts && !leaves) return null
+  return { label, note, sprouts, leaves }
+}
+
+// Preset labels are the permanent map structure - twigs/branches/trunk labels never change
+const presetLabels: Record<string, { label: string; note: string }> = {}
+const circles = (presetData as { circles?: Record<string, { label?: string; note?: string }> }).circles
+if (circles) {
+  Object.entries(circles).forEach(([key, value]) => {
+    if (value && typeof value === 'object') {
+      const label = typeof value.label === 'string' ? value.label : ''
+      const note = typeof value.note === 'string' ? value.note : ''
+      presetLabels[key] = { label, note }
+    }
+  })
+}
+// Preset loaded - 73 nodes of permanent map structure
+
+// Get the permanent label for a node from the preset
+export function getPresetLabel(nodeId: string): string {
+  return presetLabels[nodeId]?.label || ''
+}
+
+// Get the permanent note for a node from the preset
+export function getPresetNote(nodeId: string): string {
+  return presetLabels[nodeId]?.note || ''
+}
+
+function loadPreset(): Record<string, NodeData> {
+  // Convert preset labels to NodeData format
+  const preset: Record<string, NodeData> = {}
+  Object.entries(presetLabels).forEach(([key, value]) => {
+    if (value.label || value.note) {
+      preset[key] = { label: value.label, note: value.note }
+    }
+  })
+  return preset
 }
 
 function loadState(): Record<string, NodeData> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return {}
+    if (!raw) {
+      // No saved data - load from preset
+      return loadPreset()
+    }
     const parsed = JSON.parse(raw)
     if (parsed && typeof parsed === 'object') {
       // Run migrations to bring data to current schema
@@ -624,13 +674,17 @@ function loadState(): Record<string, NodeData> {
         }
       })
 
+      // If no data was loaded (e.g., empty object), load preset
+      if (Object.keys(nextState).length === 0) {
+        return loadPreset()
+      }
+
       // Save migrated data back if version changed
       if (!parsed._version || parsed._version < CURRENT_SCHEMA_VERSION) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
           _version: CURRENT_SCHEMA_VERSION,
           nodes: nextState,
         }))
-        console.log(`[MIGRATION] Data migrated from v${parsed._version || 0} to v${CURRENT_SCHEMA_VERSION}`)
       }
 
       return nextState
@@ -638,7 +692,8 @@ function loadState(): Record<string, NodeData> {
   } catch (error) {
     console.warn('Could not read saved notes', error)
   }
-  return {}
+  // Fallback to preset if parsing failed
+  return loadPreset()
 }
 
 export const nodeState: Record<string, NodeData> = loadState()

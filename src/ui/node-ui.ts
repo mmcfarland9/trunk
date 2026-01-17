@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getActiveSprouts } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getActiveSprouts, getPresetLabel, getPresetNote } from '../state'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
@@ -145,15 +145,21 @@ export function syncNode(element: HTMLButtonElement): void {
   const nodeId = element.dataset.nodeId
   if (!nodeId) return
 
+  // Preset labels are the permanent map structure - use them as the source of truth
+  const presetLabel = getPresetLabel(nodeId)
+  const presetNote = getPresetNote(nodeId)
   const stored = nodeState[nodeId]
   const defaultLabel = element.dataset.defaultLabel || ''
-  const storedLabel = stored?.label?.trim() || ''
-  const label = storedLabel || defaultLabel
+
+  // Labels come from preset first, then stored, then default
+  const label = presetLabel || stored?.label?.trim() || defaultLabel
 
   setNodeLabel(element, label)
 
-  const hasContent = Boolean(stored && (stored.note?.trim() || (storedLabel && storedLabel !== defaultLabel)))
-  element.dataset.filled = hasContent ? 'true' : 'false'
+  // Has content if there's a preset label/note, or stored data beyond the default
+  const hasPresetContent = Boolean(presetLabel || presetNote)
+  const hasStoredContent = Boolean(stored && (stored.note?.trim() || stored.sprouts?.length || stored.leaves?.length))
+  element.dataset.filled = (hasPresetContent || hasStoredContent) ? 'true' : 'false'
 }
 
 export function setFocusedNode(
@@ -197,15 +203,17 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   focusSection?.classList.remove('is-empty')
 
   const nodeId = target.dataset.nodeId
-  const defaultLabel = target.dataset.defaultLabel || ''
   const stored = nodeId ? nodeState[nodeId] : undefined
-  const label = stored?.label?.trim() || ''
-  const note = stored?.note?.trim() || ''
-  const hasCustomLabel = Boolean(label && label !== defaultLabel)
+  // Preset labels are the source of truth for the map structure
+  const presetLabel = nodeId ? getPresetLabel(nodeId) : ''
+  const presetNote = nodeId ? getPresetNote(nodeId) : ''
+  const label = presetLabel || stored?.label?.trim() || ''
+  const note = presetNote || stored?.note?.trim() || ''
+  const hasLabel = Boolean(label)
   const isTwig = target.classList.contains('twig')
   const isTrunk = target.classList.contains('trunk')
   const placeholder = getNodePlaceholder(target)
-  const displayLabel = hasCustomLabel ? label : isTwig ? 'Add title...' : placeholder
+  const displayLabel = hasLabel ? label : isTwig ? 'Add title...' : placeholder
 
   // Show hierarchy type label in meta
   if (isTrunk) {
@@ -216,7 +224,7 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
     focusMeta.textContent = 'BRANCH'
   }
   focusTitle.textContent = displayLabel
-  focusTitle.classList.toggle('is-muted', !hasCustomLabel)
+  focusTitle.classList.toggle('is-muted', !hasLabel)
 
   focusNote.style.display = ''
   if (note) {
