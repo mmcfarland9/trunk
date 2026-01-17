@@ -2726,49 +2726,9 @@
 
 .shine-dialog-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
-}
-
-.shine-dialog-cancel,
-.shine-dialog-save {
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-ascii);
-  font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-
-.shine-dialog-cancel {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink-faint);
-}
-
-.shine-dialog-cancel:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.shine-dialog-save {
-  background: rgba(255, 193, 7, 0.1);
-  border: 1px solid var(--sun);
-  color: var(--sun);
-}
-
-.shine-dialog-save:hover:not(:disabled) {
-  background: rgba(255, 193, 7, 0.2);
-}
-
-.shine-dialog-save:disabled {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--ink-faint);
-  cursor: default;
-  opacity: 0.5;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-3);
 }
 
 /* ===== Leaf Cards (in Twig View) ===== */

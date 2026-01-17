@@ -1765,8 +1765,8 @@ export function buildApp(
         <p class="shine-dialog-sprout-meta"></p>
         <textarea class="shine-dialog-journal" placeholder="Reflect on this journey. What did you learn? Where might it lead next?"></textarea>
         <div class="shine-dialog-actions">
-          <button type="button" class="shine-dialog-cancel">Cancel</button>
-          <button type="button" class="shine-dialog-save">Radiate</button>
+          <button type="button" class="action-btn action-btn-passive action-btn-neutral shine-dialog-cancel">Cancel</button>
+          <button type="button" class="action-btn action-btn-progress action-btn-sun shine-dialog-save">Radiate</button>
         </div>
       </div>
     </div>
