@@ -431,7 +431,7 @@ function createSproutItem(
       waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'
       waterBtn.textContent = 'Harvest'
     } else {
-      waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-action-btn'
+      waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-action-btn'
       waterBtn.textContent = 'Water'
     }
 

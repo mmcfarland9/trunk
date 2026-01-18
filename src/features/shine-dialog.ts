@@ -1,6 +1,6 @@
-import type { AppContext } from '../types'
+import type { AppContext, SunEntry } from '../types'
 import sunPromptsRaw from '../assets/sun-prompts.txt?raw'
-import { spendSun, canAffordSun, addSunEntry, getSunAvailable, getSunCapacity, wasShoneThisWeek } from '../state'
+import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, getSunCapacity, wasShoneThisWeek, getPresetLabel, getTwigLeaves } from '../state'
 
 export type ShineDialogCallbacks = {
   onSunMeterChange: () => void
@@ -31,8 +31,88 @@ function getRandomSunPrompt(): string {
   return prompt
 }
 
+// Get all twigs that have data (labels)
+function getAllTwigs(): { twigId: string; twigLabel: string }[] {
+  const twigs: { twigId: string; twigLabel: string }[] = []
+
+  // Check all branch-X-twig-Y combinations
+  for (let b = 0; b < 8; b++) {
+    for (let t = 0; t < 8; t++) {
+      const twigId = `branch-${b}-twig-${t}`
+      const label = getPresetLabel(twigId)
+      if (label) {
+        twigs.push({ twigId, twigLabel: label })
+      }
+    }
+  }
+
+  return twigs
+}
+
+// Get all leaves across all twigs
+function getAllLeaves(): { twigId: string; twigLabel: string; leafId: string; leafTitle: string }[] {
+  const leaves: { twigId: string; twigLabel: string; leafId: string; leafTitle: string }[] = []
+
+  for (let b = 0; b < 8; b++) {
+    for (let t = 0; t < 8; t++) {
+      const twigId = `branch-${b}-twig-${t}`
+      const twigLabel = getPresetLabel(twigId)
+      if (!twigLabel) continue
+
+      const twigLeaves = getTwigLeaves(twigId)
+      const twigSprouts = nodeState[twigId]?.sprouts || []
+
+      for (const leaf of twigLeaves) {
+        // Get the most recent sprout title as the leaf title
+        const leafSprouts = twigSprouts.filter(s => s.leafId === leaf.id)
+        const mostRecent = leafSprouts.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0]
+
+        if (mostRecent) {
+          leaves.push({
+            twigId,
+            twigLabel,
+            leafId: leaf.id,
+            leafTitle: mostRecent.title || 'Untitled Leaf'
+          })
+        }
+      }
+    }
+  }
+
+  return leaves
+}
+
+// Randomly select a twig or leaf to reflect on
+function selectRandomTarget(): SunEntry['context'] {
+  const twigs = getAllTwigs()
+  const leaves = getAllLeaves()
+
+  // 50% chance of selecting a leaf if leaves exist, otherwise always a twig
+  const selectLeaf = leaves.length > 0 && Math.random() < 0.5
+
+  if (selectLeaf) {
+    const leaf = leaves[Math.floor(Math.random() * leaves.length)]
+    return {
+      type: 'leaf',
+      twigId: leaf.twigId,
+      twigLabel: leaf.twigLabel,
+      leafId: leaf.leafId,
+      leafTitle: leaf.leafTitle
+    }
+  } else {
+    const twig = twigs[Math.floor(Math.random() * twigs.length)]
+    return {
+      type: 'twig',
+      twigId: twig.twigId,
+      twigLabel: twig.twigLabel
+    }
+  }
+}
+
 export type ShineDialogApi = {
-  openShineDialog: (twig: { twigId: string; twigLabel: string }) => void
+  openShineDialog: () => void
   updateSunMeter: () => void
 }
 
@@ -41,7 +121,7 @@ export function initShineDialog(
   callbacks: ShineDialogCallbacks
 ): ShineDialogApi {
   // Shine dialog state
-  let currentShiningTwig: { twigId: string } | null = null
+  let currentContext: SunEntry['context'] | null = null
 
   function updateSunMeter() {
     const available = getSunAvailable()
@@ -57,10 +137,10 @@ export function initShineDialog(
     shineDialogSave.disabled = !hasContent
   }
 
-  function openShineDialog(twig: { twigId: string; twigLabel: string }) {
-    // Check if already shone this week on this twig
-    if (wasShoneThisWeek(twig.twigId)) {
-      callbacks.onSetStatus('Already reflected on this twig this week!', 'warning')
+  function openShineDialog() {
+    // Check if already shone this week
+    if (wasShoneThisWeek()) {
+      callbacks.onSetStatus('Already shone this week!', 'warning')
       return
     }
 
@@ -69,10 +149,21 @@ export function initShineDialog(
       return
     }
 
+    // Randomly select a twig or leaf
+    const target = selectRandomTarget()
+    currentContext = target
+
     const { shineDialog, shineDialogTitle, shineDialogMeta, shineDialogJournal } = ctx.elements
-    currentShiningTwig = { twigId: twig.twigId }
-    shineDialogTitle.textContent = twig.twigLabel || 'Untitled Twig'
-    shineDialogMeta.textContent = 'Weekly Reflection'
+
+    // Display what was selected
+    if (target.type === 'leaf') {
+      shineDialogTitle.textContent = target.leafTitle || 'Untitled Leaf'
+      shineDialogMeta.textContent = `on ${target.twigLabel}`
+    } else {
+      shineDialogTitle.textContent = target.twigLabel
+      shineDialogMeta.textContent = 'Life Facet'
+    }
+
     shineDialogJournal.value = ''
     shineDialogJournal.placeholder = getRandomSunPrompt()
     updateRadiateButtonState()
@@ -84,7 +175,7 @@ export function initShineDialog(
     const { shineDialog, shineDialogJournal } = ctx.elements
     shineDialog.classList.add('hidden')
     shineDialogJournal.value = ''
-    currentShiningTwig = null
+    currentContext = null
   }
 
   function saveSunEntry() {
@@ -101,14 +192,14 @@ export function initShineDialog(
       return
     }
 
-    if (currentShiningTwig) {
+    if (currentContext) {
       spendSun()
       updateSunMeter()
 
-      // Save sun entry to TWIG data (not sprout)
+      // Save sun entry to global log with context
       const prompt = shineDialogJournal.placeholder
-      addSunEntry(currentShiningTwig.twigId, entry, prompt)
-      callbacks.onSetStatus('Light radiated on this facet of life!', 'info')
+      addSunEntry(entry, prompt, currentContext)
+      callbacks.onSetStatus('Light radiated!', 'info')
     }
 
     closeShineDialog()

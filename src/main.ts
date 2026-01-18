@@ -1,6 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources, wasShoneThisWeek, canAffordSun, sunLog } from './state'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
@@ -90,8 +90,9 @@ function updateSoilMeter(): void {
   const available = getSoilAvailable()
   const capacity = getSoilCapacity()
   domResult.elements.soilMeterFill.style.width = `${(available / capacity) * 100}%`
-  // Show 1 decimal place if fractional, otherwise whole number
-  const availStr = available % 1 === 0 ? String(available) : available.toFixed(1)
+  // Round to 2 decimal places to avoid floating point display issues
+  const rounded = Math.round(available * 100) / 100
+  const availStr = rounded % 1 === 0 ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, '')
   domResult.elements.soilMeterValue.textContent = `${availStr}/${capacity}`
 }
 
@@ -122,7 +123,10 @@ const waterDialogApi = initWaterDialog(ctx, {
 })
 
 const shineDialogApi = initShineDialog(ctx, {
-  onSunMeterChange: () => shineDialogApi.updateSunMeter(),
+  onSunMeterChange: () => {
+    shineDialogApi.updateSunMeter()
+    domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
+  },
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
 })
 
@@ -165,7 +169,6 @@ const twigView = buildTwigView(mapPanel, {
     return newTwig ?? null
   },
   onWaterClick: (sprout) => waterDialogApi.openWaterDialog(sprout),
-  onShineClick: (sprout) => shineDialogApi.openShineDialog(sprout),
   onGraftClick: (leafId, twigId, branchIndex) => {
     setViewModeState('leaf', branchIndex, twigId)
     ctx.leafView?.open(leafId, twigId, branchIndex, true)
@@ -195,8 +198,24 @@ const leafView = buildLeafView(mapPanel, {
 ctx.twigView = twigView
 ctx.leafView = leafView
 
-const { exportButton } = getActionButtons(domResult.elements.shell)
+const { exportButton, sunLogButton } = getActionButtons(domResult.elements.shell)
 exportButton.addEventListener('click', () => handleExport(ctx))
+
+// Sun Log - simple text display
+sunLogButton.addEventListener('click', () => {
+  if (sunLog.length === 0) {
+    alert('No sun entries yet.')
+    return
+  }
+  const text = sunLog.map(entry => {
+    const date = new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const target = entry.context.type === 'leaf'
+      ? `${entry.context.leafTitle} (${entry.context.twigLabel})`
+      : entry.context.twigLabel
+    return `[${date}] ${target}\n${entry.content}\n`
+  }).join('\n---\n\n')
+  alert(text)
+})
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
 
@@ -278,7 +297,8 @@ domResult.elements.debugClockBtn.addEventListener('click', () => {
   advanceClockByDays(1)
   updateDebugClockDisplay()
   updateWaterMeter() // Water resets daily
-  shineDialogApi.updateSunMeter() // Sun resets daily
+  shineDialogApi.updateSunMeter() // Sun resets weekly
+  domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
   // Re-render any open twig view to update sprout states
   if (ctx.twigView?.isOpen()) {
     const activeBranchIndex = getActiveBranchIndex()
@@ -370,6 +390,15 @@ updateStatusMeta(ctx.elements)
 updateSoilMeter()
 updateWaterMeter()
 shineDialogApi.updateSunMeter()
+
+// Shine button - opens shine dialog for global reflection
+function updateShineButtonState(): void {
+  domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
+}
+domResult.elements.shineBtn.addEventListener('click', () => {
+  shineDialogApi.openShineDialog()
+})
+updateShineButtonState()
 
 let resizeId = 0
 const resizeObserver = new ResizeObserver(() => {

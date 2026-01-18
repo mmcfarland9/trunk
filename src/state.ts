@@ -14,6 +14,7 @@ const CURRENT_SCHEMA_VERSION = 1
 type StoredState = {
   _version: number
   nodes: Record<string, NodeData>
+  sunLog?: SunEntry[] // Global shine journal log
 }
 
 type MigrationFn = (data: Record<string, unknown>) => Record<string, unknown>
@@ -545,47 +546,31 @@ export function addWaterEntry(
   return true
 }
 
-// Add a sun entry (shine) to a TWIG (not sprout)
-// Sun is for philosophical reflection on life facets
+// Add a sun entry to the global shine log
+// Includes context about the randomly selected twig or leaf
 export function addSunEntry(
-  twigId: string,
   content: string,
-  prompt?: string
+  prompt: string | undefined,
+  context: SunEntry['context']
 ): void {
-  const data = nodeState[twigId]
-  if (!data) {
-    console.warn(`Cannot add sun entry: twig ${twigId} not found`)
-    return
-  }
-
-  if (!data.sunEntries) {
-    data.sunEntries = []
-  }
-
-  data.sunEntries.push({
+  sunLog.push({
     timestamp: getDebugDate().toISOString(),
     content,
     prompt,
+    context,
   })
-
-  // Cap sun entries to prevent unbounded growth (52 weeks = 1 year)
-  if (data.sunEntries.length > MAX_SUN_ENTRIES_PER_TWIG) {
-    data.sunEntries = data.sunEntries.slice(-MAX_SUN_ENTRIES_PER_TWIG)
-  }
-
   saveState()
 }
 
-export function getTwigSunEntries(twigId: string): SunEntry[] {
-  return nodeState[twigId]?.sunEntries || []
+export function getSunLog(): SunEntry[] {
+  return sunLog
 }
 
-export function wasShoneThisWeek(twigId: string): boolean {
-  const entries = getTwigSunEntries(twigId)
-  if (!entries.length) return false
+export function wasShoneThisWeek(): boolean {
+  if (!sunLog.length) return false
 
   const thisWeek = getWeekString(getDebugDate())
-  return entries.some(entry => {
+  return sunLog.some(entry => {
     const entryWeek = getWeekString(new Date(entry.timestamp))
     return entryWeek === thisWeek
   })
@@ -779,6 +764,24 @@ function loadState(): Record<string, NodeData> {
 export const nodeState: Record<string, NodeData> = loadState()
 export let lastSavedAt: Date | null = null
 
+// Global sun log - philosophical reflections on randomly selected twigs/leaves
+function loadSunLog(): SunEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed?.sunLog && Array.isArray(parsed.sunLog)) {
+        return parsed.sunLog
+      }
+    }
+  } catch (error) {
+    console.warn('Could not load sun log', error)
+  }
+  return []
+}
+
+export const sunLog: SunEntry[] = loadSunLog()
+
 export function saveState(onSaved?: () => void): void {
   try {
     // Cap journal entries before saving to prevent unbounded growth
@@ -786,10 +789,16 @@ export function saveState(onSaved?: () => void): void {
       data.sprouts?.forEach(capJournalEntries)
     })
 
+    // Cap sun log to prevent unbounded growth (52 weeks = 1 year of entries)
+    const cappedSunLog = sunLog.length > MAX_SUN_ENTRIES_PER_TWIG
+      ? sunLog.slice(-MAX_SUN_ENTRIES_PER_TWIG)
+      : sunLog
+
     // Save with version for future migrations
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       _version: CURRENT_SCHEMA_VERSION,
       nodes: nodeState,
+      sunLog: cappedSunLog,
     }))
     lastSavedAt = new Date()
     onSaved?.()

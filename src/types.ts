@@ -16,12 +16,20 @@ export type WaterEntry = {
   prompt?: string
 }
 
-// Sun entry - journal entries when shining on a TWIG (philosophical reflection on life facets)
-// Sun is twig-level, not sprout-level - you reflect on "movement" or "intimacy" as concepts
+// Sun entry - global philosophical reflection log
+// Randomly selects a twig or leaf to reflect on
 export type SunEntry = {
   timestamp: string
   content: string
   prompt?: string
+  // Context: what was randomly selected for reflection
+  context: {
+    type: 'twig' | 'leaf'
+    twigId: string
+    twigLabel: string
+    leafId?: string
+    leafTitle?: string // derived from most recent sprout title
+  }
 }
 
 // Leaf - a saga/trajectory of related sprouts (identity derived from its sprouts)
@@ -49,7 +57,6 @@ export type Sprout = {
   // Leaf association
   leafId?: string
   waterEntries?: WaterEntry[]
-  sunEntries?: SunEntry[] // Legacy: being migrated to twig-level
   graftedFromId?: string
 }
 
@@ -80,8 +87,6 @@ export type NodeData = {
   // Sprout and leaf data
   sprouts?: Sprout[]
   leaves?: Leaf[]
-  // Twig-level sun entries (philosophical reflection on life facets)
-  sunEntries?: SunEntry[]
   // Legacy fields (for migration, will be converted to sprouts)
   goalType?: GoalType
   goalValue?: number
@@ -155,6 +160,7 @@ export type AppElements = {
   waterMeterValue: HTMLSpanElement
   sunMeterFill: HTMLDivElement
   sunMeterValue: HTMLSpanElement
+  shineBtn: HTMLButtonElement
   shineDialog: HTMLDivElement
   shineDialogTitle: HTMLParagraphElement
   shineDialogMeta: HTMLParagraphElement

@@ -56,6 +56,11 @@ export function buildApp(
   exportButton.className = 'action-button'
   exportButton.textContent = 'Export'
 
+  const sunLogButton = document.createElement('button')
+  sunLogButton.type = 'button'
+  sunLogButton.className = 'action-button'
+  sunLogButton.textContent = 'Sun Log'
+
   const encyclopediaButtons = {
     garden: createEncyclopediaButton('🌱 Garden', 'garden'),
     lab: createEncyclopediaButton('🧬 Lab', 'lab'),
@@ -83,7 +88,8 @@ export function buildApp(
   actions.append(
     settingsButton,
     importButton,
-    exportButton
+    exportButton,
+    sunLogButton
   )
 
   // Global Soil meter
@@ -156,10 +162,16 @@ export function buildApp(
   sunTrack.append(sunFill)
   sunMeter.append(sunLabel, sunTrack, sunValue)
 
+  // Shine button - opens random reflection dialog
+  const shineBtn = document.createElement('button')
+  shineBtn.type = 'button'
+  shineBtn.className = 'action-btn action-btn-passive action-btn-sun shine-btn'
+  shineBtn.textContent = 'Shine'
+
   // Meter group for visual cohesion
   const meterGroup = document.createElement('div')
   meterGroup.className = 'meter-group'
-  meterGroup.append(soilMeter, waterMeter, sunMeter)
+  meterGroup.append(soilMeter, waterMeter, sunMeter, shineBtn)
 
   header.append(actions, meterGroup, logo, importInput)
 
@@ -1834,6 +1846,7 @@ export function buildApp(
     waterMeterValue: waterValue,
     sunMeterFill: sunFill,
     sunMeterValue: sunValue,
+    shineBtn,
     shineDialog,
     shineDialogTitle: shineDialog.querySelector<HTMLParagraphElement>('.shine-dialog-sprout-title')!,
     shineDialogMeta: shineDialog.querySelector<HTMLParagraphElement>('.shine-dialog-sprout-meta')!,
@@ -1846,6 +1859,7 @@ export function buildApp(
   // Wire up button handlers (will be connected to features in main.ts)
   settingsButton.dataset.action = 'settings'
   exportButton.dataset.action = 'export'
+  sunLogButton.dataset.action = 'sunlog'
   return {
     elements,
     branchGroups,
@@ -1885,11 +1899,13 @@ function getBloomDelay(twigIndex: number): number {
 export function getActionButtons(shell: HTMLDivElement): {
   settingsButton: HTMLButtonElement
   exportButton: HTMLButtonElement
+  sunLogButton: HTMLButtonElement
   encyclopediaButtons: HTMLButtonElement[]
 } {
   return {
     settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
     exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
+    sunLogButton: shell.querySelector<HTMLButtonElement>('[data-action="sunlog"]')!,
     encyclopediaButtons: Array.from(shell.querySelectorAll<HTMLButtonElement>('.encyclopedia-btn')),
   }
 }

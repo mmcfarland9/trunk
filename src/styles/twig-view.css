@@ -521,9 +521,14 @@
   text-align: left;
 }
 
-/* Water button in twig cards - always visible */
+/* Water button in twig cards - always visible, slightly lowered */
 .sprout-card .sprout-water-btn {
   opacity: 1;
+  margin-top: 2px;
+}
+
+.sprout-card .sprout-water-btn:disabled {
+  opacity: 0.4;
 }
 
 /* History card states */
