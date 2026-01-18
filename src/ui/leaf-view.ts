@@ -419,7 +419,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
       const cost = calculateSoilCost(selectedSeason, selectedEnvironment)
       if (!canAffordSoil(cost)) return
 
-      spendSoil(cost)
+      spendSoil(cost, 'Grafted sprout', title)
       callbacks.onSoilChange?.()
 
       const endDate = getEndDate(selectedSeason)

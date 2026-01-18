@@ -106,10 +106,10 @@ describe('App Smoke Tests', () => {
       expect(typeof waterDialog.initWaterDialog).toBe('function')
     })
 
-    it('should export initShineDialog', async () => {
+    it('should export initShine', async () => {
       const shineDialog = await import('../features/shine-dialog')
-      expect(shineDialog.initShineDialog).toBeDefined()
-      expect(typeof shineDialog.initShineDialog).toBe('function')
+      expect(shineDialog.initShine).toBeDefined()
+      expect(typeof shineDialog.initShine).toBe('function')
     })
 
     it('should export initSproutsDialog', async () => {

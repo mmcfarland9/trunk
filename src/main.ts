@@ -1,6 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources, wasShoneThisWeek, canAffordSun, sunLog, getNotificationSettings, saveNotificationSettings, getSunRecoveryRate } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -20,7 +20,7 @@ import {
 import { updateStats, initSidebarSprouts } from './features/progress'
 import { setStatus, updateStatusMeta } from './features/status'
 import { initWaterDialog } from './features/water-dialog'
-import { initShineDialog } from './features/shine-dialog'
+import { initShine } from './features/shine-dialog'
 import { initSproutsDialog } from './features/sprouts-dialog'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
 
@@ -94,12 +94,12 @@ function updateSoilMeter(): void {
   domResult.elements.soilMeterValue.textContent = `${available.toFixed(2)}/${capacity.toFixed(2)}`
 }
 
-// Water meter update function
+// Water meter update function - toggle circle fill states
 function updateWaterMeter(): void {
   const available = getWaterAvailable()
-  const capacity = getWaterCapacity()
-  domResult.elements.waterMeterFill.style.width = `${(available / capacity) * 100}%`
-  domResult.elements.waterMeterValue.textContent = `${available}/${capacity}`
+  domResult.elements.waterCircles.forEach((circle, i) => {
+    circle.classList.toggle('is-filled', i < available)
+  })
 }
 
 // Initialize context first (partial, will be completed after dialog init)
@@ -120,24 +120,12 @@ const waterDialogApi = initWaterDialog(ctx, {
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
 })
 
-const shineDialogApi = initShineDialog(ctx, {
-  onSunMeterChange: () => {
-    shineDialogApi.updateSunMeter()
-    updateShineButton()
-  },
+const shineApi = initShine(ctx, {
+  onSunMeterChange: () => shineApi.updateSunMeter(),
   onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
+  onShineComplete: populateSunLog,
 })
-
-function updateShineButton() {
-  const shone = wasShoneThisWeek()
-  domResult.elements.shineBtn.disabled = shone || !canAffordSun()
-  if (shone) {
-    domResult.elements.shineBtn.textContent = 'Shone'
-  } else {
-    domResult.elements.shineBtn.innerHTML = `Shine <span class="btn-soil-gain">(+${getSunRecoveryRate().toFixed(2)})</span>`
-  }
-}
 
 initSproutsDialog(ctx, {
   onUpdateStats: navCallbacks.onUpdateStats,
@@ -295,7 +283,7 @@ domResult.elements.settingsSaveBtn.addEventListener('click', () => {
   setStatus(ctx.elements, 'Settings saved', 'info')
 })
 
-// Sun Log dialog - view all shine journal entries
+// Sun Ledger dialog - view shine journal entries + shine input
 function formatSunLogTimestamp(dateStr: string): string {
   const date = new Date(dateStr)
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -337,6 +325,7 @@ function populateSunLog(): void {
 }
 
 function openSunLogDialog(): void {
+  shineApi.populateSunLogShine()
   populateSunLog()
   domResult.elements.sunLogDialog.classList.remove('hidden')
 }
@@ -360,6 +349,74 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !domResult.elements.sunLogDialog.classList.contains('hidden')) {
     e.preventDefault()
     closeSunLogDialog()
+  }
+})
+
+// Soil Bag dialog - soil gains and losses
+function formatSoilTimestamp(dateStr: string): string {
+  const date = new Date(dateStr)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${month}/${day} ${time}`
+}
+
+function populateSoilBag(): void {
+  const entries = [...soilLog].reverse() // Reverse chronological (newest first)
+  const isEmpty = entries.length === 0
+
+  domResult.elements.soilBagDialogEmpty.style.display = isEmpty ? 'block' : 'none'
+  domResult.elements.soilBagDialogEntries.style.display = isEmpty ? 'none' : 'flex'
+
+  if (isEmpty) return
+
+  domResult.elements.soilBagDialogEntries.innerHTML = entries.map(entry => {
+    const amountClass = entry.amount > 0 ? 'is-gain' : 'is-loss'
+    const amountText = entry.amount > 0 ? `+${entry.amount.toFixed(2)}` : entry.amount.toFixed(2)
+    const contextHtml = entry.context
+      ? `<span class="soil-bag-entry-context">${entry.context}</span>`
+      : ''
+    const timestamp = formatSoilTimestamp(entry.timestamp)
+
+    return `
+      <div class="soil-bag-entry">
+        <div class="soil-bag-entry-info">
+          <span class="soil-bag-entry-reason">${entry.reason}</span>
+          ${contextHtml}
+        </div>
+        <div>
+          <span class="soil-bag-entry-amount ${amountClass}">${amountText}</span>
+          <span class="soil-bag-entry-timestamp">${timestamp}</span>
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
+function openSoilBagDialog(): void {
+  populateSoilBag()
+  domResult.elements.soilBagDialog.classList.remove('hidden')
+}
+
+function closeSoilBagDialog(): void {
+  domResult.elements.soilBagDialog.classList.add('hidden')
+}
+
+// Click soil meter to open soil bag
+domResult.elements.soilMeter.addEventListener('click', openSoilBagDialog)
+
+domResult.elements.soilBagDialogClose.addEventListener('click', closeSoilBagDialog)
+
+domResult.elements.soilBagDialog.addEventListener('click', (e) => {
+  if (e.target === domResult.elements.soilBagDialog) {
+    closeSoilBagDialog()
+  }
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !domResult.elements.soilBagDialog.classList.contains('hidden')) {
+    e.preventDefault()
+    closeSoilBagDialog()
   }
 })
 
@@ -614,8 +671,7 @@ domResult.elements.debugClockBtn.addEventListener('click', () => {
   advanceClockByDays(1)
   updateDebugClockDisplay()
   updateWaterMeter() // Water resets daily
-  shineDialogApi.updateSunMeter() // Sun resets weekly
-  updateShineButton()
+  shineApi.updateSunMeter() // Sun resets weekly
   // Re-render any open twig view to update sprout states
   if (ctx.twigView?.isOpen()) {
     const activeBranchIndex = getActiveBranchIndex()
@@ -635,7 +691,7 @@ domResult.elements.debugSoilResetBtn.addEventListener('click', () => {
   resetResources()
   updateSoilMeter()
   updateWaterMeter()
-  shineDialogApi.updateSunMeter()
+  shineApi.updateSunMeter()
   setStatus(ctx.elements, 'Resources reset to default', 'info')
 })
 
@@ -698,12 +754,8 @@ updateFocus(null, ctx)
 updateStatusMeta(ctx.elements)
 updateSoilMeter()
 updateWaterMeter()
-shineDialogApi.updateSunMeter()
+shineApi.updateSunMeter()
 
-// Shine button - opens shine dialog for global reflection
-domResult.elements.shineBtn.addEventListener('click', () => {
-  shineDialogApi.openShineDialog()
-})
 
 let resizeId = 0
 const resizeObserver = new ResizeObserver(() => {

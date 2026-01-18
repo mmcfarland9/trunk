@@ -1,4 +1,4 @@
-import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, Leaf, NotificationSettings } from './types'
+import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings } from './types'
 import { STORAGE_KEY } from './constants'
 import presetData from '../assets/trunk-map-preset.json'
 
@@ -15,6 +15,7 @@ type StoredState = {
   _version: number
   nodes: Record<string, NodeData>
   sunLog?: SunEntry[] // Global shine journal log
+  soilLog?: SoilEntry[] // Soil gains and losses
 }
 
 type MigrationFn = (data: Record<string, unknown>) => Record<string, unknown>
@@ -96,7 +97,6 @@ const LEGACY_SUN_KEY = 'trunk-sun-v1'
 
 const DEFAULT_SOIL_CAPACITY = 4  // Start humble - room for a few 1-week goals
 const MAX_SOIL_CAPACITY = 100    // Lifetime ceiling - mythical to achieve
-const MINIMUM_SOIL = 1           // Floor - always able to plant a humble 1w goal
 
 // Recovery rates (slow, bonsai-style)
 // Water: Quick daily engagement with active sprouts
@@ -187,10 +187,6 @@ export function getCapacityReward(environment: SproutEnvironment, season: Sprout
 
 export function getMaxSoilCapacity(): number {
   return MAX_SOIL_CAPACITY
-}
-
-export function getMinimumSoil(): number {
-  return MINIMUM_SOIL
 }
 
 // How much soil is recovered per watering (sprout-level, daily)
@@ -306,36 +302,37 @@ export function canAffordSoil(cost: number): boolean {
   return soilState.available >= cost
 }
 
-export function spendSoil(cost: number): boolean {
+export function spendSoil(cost: number, reason?: string, context?: string): boolean {
   if (!canAffordSoil(cost)) return false
   soilState.available -= cost
+  if (reason) {
+    addSoilEntry(-cost, reason, context)
+  }
   saveResourceState()
   return true
 }
 
-// Ensure soil never stays below minimum (called periodically or on recovery)
-export function enforceMinimumSoil(): void {
-  if (soilState.available < MINIMUM_SOIL) {
-    soilState.available = MINIMUM_SOIL
-    saveResourceState()
-  }
-}
-
-export function recoverSoil(amount: number, capacityBonus: number = 0): void {
+export function recoverSoil(amount: number, capacityBonus: number = 0, reason?: string, context?: string): void {
+  const prevAvailable = soilState.available
   soilState.available = Math.min(soilState.available + amount, soilState.capacity + capacityBonus)
-  // Enforce minimum floor
-  soilState.available = Math.max(soilState.available, MINIMUM_SOIL)
+  const actualRecovered = soilState.available - prevAvailable
+  if (reason && actualRecovered > 0) {
+    addSoilEntry(actualRecovered, reason, context)
+  }
   if (capacityBonus > 0) {
     soilState.capacity += capacityBonus
   }
   saveResourceState()
 }
 
-export function recoverPartialSoil(amount: number, fraction: number): void {
+export function recoverPartialSoil(amount: number, fraction: number, reason?: string, context?: string): void {
   const recovered = Math.floor(amount * fraction)
+  const prevAvailable = soilState.available
   soilState.available = Math.min(soilState.available + recovered, soilState.capacity)
-  // Enforce minimum floor
-  soilState.available = Math.max(soilState.available, MINIMUM_SOIL)
+  const actualRecovered = soilState.available - prevAvailable
+  if (reason && actualRecovered > 0) {
+    addSoilEntry(actualRecovered, reason, context)
+  }
   saveResourceState()
 }
 
@@ -782,6 +779,35 @@ function loadSunLog(): SunEntry[] {
 
 export const sunLog: SunEntry[] = loadSunLog()
 
+// Global soil log - tracks soil gains and losses
+function loadSoilLog(): SoilEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed?.soilLog && Array.isArray(parsed.soilLog)) {
+        return parsed.soilLog
+      }
+    }
+  } catch (error) {
+    console.warn('Could not load soil log', error)
+  }
+  return []
+}
+
+export const soilLog: SoilEntry[] = loadSoilLog()
+
+// Add a soil entry to the log
+export function addSoilEntry(amount: number, reason: string, context?: string): void {
+  soilLog.push({
+    timestamp: getDebugDate().toISOString(),
+    amount,
+    reason,
+    context,
+  })
+  // Don't call saveState here - it will be called by the caller
+}
+
 export function saveState(onSaved?: () => void): void {
   try {
     // Cap journal entries before saving to prevent unbounded growth
@@ -794,11 +820,18 @@ export function saveState(onSaved?: () => void): void {
       ? sunLog.slice(-MAX_SUN_ENTRIES_PER_TWIG)
       : sunLog
 
+    // Cap soil log to prevent unbounded growth (keep last 200 entries)
+    const MAX_SOIL_LOG_ENTRIES = 200
+    const cappedSoilLog = soilLog.length > MAX_SOIL_LOG_ENTRIES
+      ? soilLog.slice(-MAX_SOIL_LOG_ENTRIES)
+      : soilLog
+
     // Save with version for future migrations
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       _version: CURRENT_SCHEMA_VERSION,
       nodes: nodeState,
       sunLog: cappedSunLog,
+      soilLog: cappedSoilLog,
     }))
     lastSavedAt = new Date()
     onSaved?.()

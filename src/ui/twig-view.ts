@@ -619,10 +619,10 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           // Times (environment + season) base reward
           const resultMultiplier = result === 5 ? 1.0 : result === 4 ? 0.5 : 0.25
           const baseReward = getCapacityReward(sprout.environment, sprout.season)
-          recoverSoil(sprout.soilCost, baseReward * resultMultiplier)
+          recoverSoil(sprout.soilCost, baseReward * resultMultiplier, 'Harvested sprout', sprout.title)
         } else {
           // Failed sprouts recover partial soil (learning from failure)
-          recoverSoil(sprout.soilCost * 0.5)
+          recoverSoil(sprout.soilCost * 0.5, 0, 'Failed sprout', sprout.title)
         }
 
         setSprouts(sprouts)
@@ -764,7 +764,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     if (!title) return
 
     const cost = calculateSoilCost(selectedSeason, selectedEnvironment)
-    if (!spendSoil(cost)) return
+    if (!spendSoil(cost, 'Planted sprout', title)) return
 
     const nodeId = getCurrentNodeId()
     if (!nodeId) return

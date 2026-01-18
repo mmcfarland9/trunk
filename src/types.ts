@@ -32,6 +32,14 @@ export type SunEntry = {
   }
 }
 
+// Soil entry - tracks soil gains and losses
+export type SoilEntry = {
+  timestamp: string
+  amount: number // positive = gain, negative = loss
+  reason: string // e.g., "Planted sprout", "Shone light", "Watered sprout"
+  context?: string // optional detail like sprout title
+}
+
 // Leaf - a saga/trajectory of related sprouts (identity derived from its sprouts)
 export type LeafStatus = 'active' | 'dormant' | 'archived'
 
@@ -171,18 +179,8 @@ export type AppElements = {
   waterDialogSave: HTMLButtonElement
   soilMeterFill: HTMLDivElement
   soilMeterValue: HTMLSpanElement
-  waterMeterFill: HTMLDivElement
-  waterMeterValue: HTMLSpanElement
-  sunMeterFill: HTMLDivElement
-  sunMeterValue: HTMLSpanElement
-  shineBtn: HTMLButtonElement
-  shineDialog: HTMLDivElement
-  shineDialogTitle: HTMLParagraphElement
-  shineDialogMeta: HTMLParagraphElement
-  shineDialogJournal: HTMLTextAreaElement
-  shineDialogClose: HTMLButtonElement
-  shineDialogCancel: HTMLButtonElement
-  shineDialogSave: HTMLButtonElement
+  waterCircles: HTMLSpanElement[]
+  sunCircle: HTMLSpanElement
   settingsDialog: HTMLDivElement
   settingsDialogClose: HTMLButtonElement
   settingsEmailInput: HTMLInputElement
@@ -200,9 +198,20 @@ export type AppElements = {
   waterMeter: HTMLDivElement
   sunLogDialog: HTMLDivElement
   sunLogDialogClose: HTMLButtonElement
+  sunLogShineSection: HTMLDivElement
+  sunLogShineTitle: HTMLParagraphElement
+  sunLogShineMeta: HTMLParagraphElement
+  sunLogShineJournal: HTMLTextAreaElement
+  sunLogShineBtn: HTMLButtonElement
+  sunLogShineShone: HTMLDivElement
   sunLogDialogEmpty: HTMLParagraphElement
   sunLogDialogEntries: HTMLDivElement
   sunMeter: HTMLDivElement
+  soilBagDialog: HTMLDivElement
+  soilBagDialogClose: HTMLButtonElement
+  soilBagDialogEmpty: HTMLParagraphElement
+  soilBagDialogEntries: HTMLDivElement
+  soilMeter: HTMLDivElement
 }
 
 export type AppContext = {

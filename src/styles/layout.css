@@ -1,7 +1,7 @@
 /* === Shell === */
 .app-shell { width: min(1400px, 100%); display: flex; flex-direction: column; gap: 0.25rem; height: 100%; animation: fade-in 600ms ease; }
 .app-header { display: flex; justify-content: flex-start; align-items: center; gap: var(--space-3); padding-bottom: var(--space-2); margin-bottom: 1.5rem; position: relative; z-index: 20; }
-.header-logo { position: absolute; top: 2rem; right: 1rem; width: 144px; height: 144px; object-fit: contain; pointer-events: none; }
+.header-logo { position: absolute; top: 2rem; right: 0; width: 144px; height: 144px; object-fit: contain; pointer-events: none; }
 
 /* === Resource Meters (unified) === */
 .resource-meter {
@@ -28,6 +28,14 @@
   background: var(--border-subtle);
   border: 1px solid var(--border-subtle);
   overflow: hidden;
+}
+
+.resource-meter-track.resource-circles {
+  width: auto;
+  height: auto;
+  overflow: visible;
+  background: transparent;
+  border: none;
 }
 
 .resource-meter-fill {
@@ -58,6 +66,26 @@
 .sun-meter {
   --meter-color: var(--sun);
   --meter-bg: rgba(212, 160, 0, 0.04);
+}
+
+/* Circle-based meters (water, sun) */
+.resource-circles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.resource-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  transition: background 200ms ease;
+}
+
+.resource-circle.is-filled {
+  background: var(--meter-color, var(--ink));
 }
 
 /* === Future Ideas Folder === */

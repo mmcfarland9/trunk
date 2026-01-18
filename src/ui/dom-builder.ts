@@ -1,7 +1,7 @@
 import type { AppElements, BranchGroup } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import { syncNode } from './node-ui'
-import { getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getSunRecoveryRate, wasShoneThisWeek } from '../state'
+import { getSoilAvailable, getSoilCapacity, getWaterAvailable } from '../state'
 import ampersandImage from '../../assets/ampersand_alpha.png'
 
 export type DomBuilderResult = {
@@ -110,7 +110,7 @@ export function buildApp(
   soilTrack.append(soilFill)
   soilMeter.append(soilLabel, soilTrack, soilValue)
 
-  // Global Water meter
+  // Global Water meter - 3 circles
   const waterMeter = document.createElement('div')
   waterMeter.className = 'resource-meter water-meter'
 
@@ -119,22 +119,23 @@ export function buildApp(
   waterLabel.textContent = 'Water:'
 
   const waterTrack = document.createElement('div')
-  waterTrack.className = 'resource-meter-track'
+  waterTrack.className = 'resource-meter-track resource-circles'
 
-  const waterFill = document.createElement('div')
-  waterFill.className = 'resource-meter-fill'
   const initialWaterAvailable = getWaterAvailable()
-  const initialWaterCapacity = getWaterCapacity()
-  waterFill.style.width = `${(initialWaterAvailable / initialWaterCapacity) * 100}%`
+  const waterCircles: HTMLSpanElement[] = []
+  for (let i = 0; i < 3; i++) {
+    const circle = document.createElement('span')
+    circle.className = 'resource-circle water-circle'
+    if (i < initialWaterAvailable) {
+      circle.classList.add('is-filled')
+    }
+    waterCircles.push(circle)
+    waterTrack.append(circle)
+  }
 
-  const waterValue = document.createElement('span')
-  waterValue.className = 'resource-meter-value'
-  waterValue.textContent = `${initialWaterAvailable}/${initialWaterCapacity}`
+  waterMeter.append(waterLabel, waterTrack)
 
-  waterTrack.append(waterFill)
-  waterMeter.append(waterLabel, waterTrack, waterValue)
-
-  // Global Sun meter (visual only for now)
+  // Global Sun meter - 1 circle
   const sunMeter = document.createElement('div')
   sunMeter.className = 'resource-meter sun-meter'
 
@@ -143,35 +144,18 @@ export function buildApp(
   sunLabel.textContent = 'Sun:'
 
   const sunTrack = document.createElement('div')
-  sunTrack.className = 'resource-meter-track'
+  sunTrack.className = 'resource-meter-track resource-circles'
 
-  const sunFill = document.createElement('div')
-  sunFill.className = 'resource-meter-fill'
-  sunFill.style.width = '100%' // 3/3
+  const sunCircle = document.createElement('span')
+  sunCircle.className = 'resource-circle sun-circle is-filled'
+  sunTrack.append(sunCircle)
 
-  const sunValue = document.createElement('span')
-  sunValue.className = 'resource-meter-value'
-  sunValue.textContent = '3/3'
-
-  sunTrack.append(sunFill)
-  sunMeter.append(sunLabel, sunTrack, sunValue)
-
-  // Shine button - opens random reflection dialog
-  const shineBtn = document.createElement('button')
-  shineBtn.type = 'button'
-  shineBtn.className = 'action-btn action-btn-passive action-btn-sun shine-btn'
-  const alreadyShone = wasShoneThisWeek()
-  if (alreadyShone) {
-    shineBtn.textContent = 'Shone'
-    shineBtn.disabled = true
-  } else {
-    shineBtn.innerHTML = `Shine <span class="btn-soil-gain">(+${getSunRecoveryRate().toFixed(2)})</span>`
-  }
+  sunMeter.append(sunLabel, sunTrack)
 
   // Meter group for visual cohesion
   const meterGroup = document.createElement('div')
   meterGroup.className = 'meter-group'
-  meterGroup.append(soilMeter, waterMeter, sunMeter, shineBtn)
+  meterGroup.append(soilMeter, waterMeter, sunMeter)
 
   header.append(actions, meterGroup, logo, importInput)
 
@@ -1776,27 +1760,6 @@ export function buildApp(
     </div>
   `
 
-  // Shine journaling dialog (for cultivated sprouts)
-  const shineDialog = document.createElement('div')
-  shineDialog.className = 'shine-dialog hidden'
-  shineDialog.innerHTML = `
-    <div class="shine-dialog-box">
-      <div class="shine-dialog-header">
-        <h2 class="shine-dialog-title">Shine Light</h2>
-        <button type="button" class="shine-dialog-close">×</button>
-      </div>
-      <div class="shine-dialog-body">
-        <p class="shine-dialog-sprout-title"></p>
-        <p class="shine-dialog-sprout-meta"></p>
-        <textarea class="shine-dialog-journal" placeholder="Reflect on this journey. What did you learn? Where might it lead next?"></textarea>
-        <div class="shine-dialog-actions">
-          <button type="button" class="action-btn action-btn-passive action-btn-neutral shine-dialog-cancel">Cancel</button>
-          <button type="button" class="action-btn action-btn-progress action-btn-sun shine-dialog-save">Radiate</button>
-        </div>
-      </div>
-    </div>
-  `
-
   // Settings dialog
   const settingsDialog = document.createElement('div')
   settingsDialog.className = 'settings-dialog hidden'
@@ -1898,23 +1861,53 @@ export function buildApp(
     </div>
   `
 
-  // Sun Log dialog - view all shine journal entries
+  // Sun Log dialog - view all shine journal entries + shine input at top
   const sunLogDialog = document.createElement('div')
   sunLogDialog.className = 'sun-log-dialog hidden'
   sunLogDialog.innerHTML = `
     <div class="sun-log-dialog-box">
       <div class="sun-log-dialog-header">
-        <h2 class="sun-log-dialog-title">Sun Log</h2>
+        <h2 class="sun-log-dialog-title">Sun Ledge</h2>
         <button type="button" class="sun-log-dialog-close">×</button>
       </div>
       <div class="sun-log-dialog-body">
-        <p class="sun-log-empty">No entries yet. Shine to reflect on your journey.</p>
+        <div class="sun-log-shine-section">
+          <div class="sun-log-shine-target">
+            <p class="sun-log-shine-title"></p>
+            <p class="sun-log-shine-meta"></p>
+          </div>
+          <textarea class="sun-log-shine-journal" placeholder="Reflect on this journey..."></textarea>
+          <div class="sun-log-shine-actions">
+            <button type="button" class="action-btn action-btn-progress action-btn-sun sun-log-shine-btn">Radiate</button>
+          </div>
+        </div>
+        <div class="sun-log-shine-shone">
+          <p class="sun-log-shine-shone-text">✓ Shone this week</p>
+        </div>
+        <h3 class="sun-log-section-title">Past Reflections</h3>
+        <p class="sun-log-empty">No entries yet.</p>
         <div class="sun-log-entries"></div>
       </div>
     </div>
   `
 
-  shell.append(header, body, sproutsDialog, gardenGuideDialog, waterDialog, shineDialog, settingsDialog, waterCanDialog, sunLogDialog, futureIdeasFolder)
+  // Soil Bag dialog - view soil gains and losses
+  const soilBagDialog = document.createElement('div')
+  soilBagDialog.className = 'soil-bag-dialog hidden'
+  soilBagDialog.innerHTML = `
+    <div class="soil-bag-dialog-box">
+      <div class="soil-bag-dialog-header">
+        <h2 class="soil-bag-dialog-title">Soil Bag</h2>
+        <button type="button" class="soil-bag-dialog-close">×</button>
+      </div>
+      <div class="soil-bag-dialog-body">
+        <p class="soil-bag-empty">No soil activity yet.</p>
+        <div class="soil-bag-entries"></div>
+      </div>
+    </div>
+  `
+
+  shell.append(header, body, sproutsDialog, gardenGuideDialog, waterDialog, settingsDialog, waterCanDialog, sunLogDialog, soilBagDialog, futureIdeasFolder)
   appRoot.append(shell)
 
   const elements: AppElements = {
@@ -1957,18 +1950,8 @@ export function buildApp(
     waterDialogSave: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-save')!,
     soilMeterFill: soilFill,
     soilMeterValue: soilValue,
-    waterMeterFill: waterFill,
-    waterMeterValue: waterValue,
-    sunMeterFill: sunFill,
-    sunMeterValue: sunValue,
-    shineBtn,
-    shineDialog,
-    shineDialogTitle: shineDialog.querySelector<HTMLParagraphElement>('.shine-dialog-sprout-title')!,
-    shineDialogMeta: shineDialog.querySelector<HTMLParagraphElement>('.shine-dialog-sprout-meta')!,
-    shineDialogJournal: shineDialog.querySelector<HTMLTextAreaElement>('.shine-dialog-journal')!,
-    shineDialogClose: shineDialog.querySelector<HTMLButtonElement>('.shine-dialog-close')!,
-    shineDialogCancel: shineDialog.querySelector<HTMLButtonElement>('.shine-dialog-cancel')!,
-    shineDialogSave: shineDialog.querySelector<HTMLButtonElement>('.shine-dialog-save')!,
+    waterCircles,
+    sunCircle,
     settingsDialog,
     settingsDialogClose: settingsDialog.querySelector<HTMLButtonElement>('.settings-dialog-close')!,
     settingsEmailInput: settingsDialog.querySelector<HTMLInputElement>('.settings-email-input')!,
@@ -1986,9 +1969,20 @@ export function buildApp(
     waterMeter,
     sunLogDialog,
     sunLogDialogClose: sunLogDialog.querySelector<HTMLButtonElement>('.sun-log-dialog-close')!,
+    sunLogShineSection: sunLogDialog.querySelector<HTMLDivElement>('.sun-log-shine-section')!,
+    sunLogShineTitle: sunLogDialog.querySelector<HTMLParagraphElement>('.sun-log-shine-title')!,
+    sunLogShineMeta: sunLogDialog.querySelector<HTMLParagraphElement>('.sun-log-shine-meta')!,
+    sunLogShineJournal: sunLogDialog.querySelector<HTMLTextAreaElement>('.sun-log-shine-journal')!,
+    sunLogShineBtn: sunLogDialog.querySelector<HTMLButtonElement>('.sun-log-shine-btn')!,
+    sunLogShineShone: sunLogDialog.querySelector<HTMLDivElement>('.sun-log-shine-shone')!,
     sunLogDialogEmpty: sunLogDialog.querySelector<HTMLParagraphElement>('.sun-log-empty')!,
     sunLogDialogEntries: sunLogDialog.querySelector<HTMLDivElement>('.sun-log-entries')!,
     sunMeter,
+    soilBagDialog,
+    soilBagDialogClose: soilBagDialog.querySelector<HTMLButtonElement>('.soil-bag-dialog-close')!,
+    soilBagDialogEmpty: soilBagDialog.querySelector<HTMLParagraphElement>('.soil-bag-empty')!,
+    soilBagDialogEntries: soilBagDialog.querySelector<HTMLDivElement>('.soil-bag-entries')!,
+    soilMeter,
   }
 
   // Wire up button handlers (will be connected to features in main.ts)

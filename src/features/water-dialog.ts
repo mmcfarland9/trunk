@@ -105,7 +105,8 @@ export function initWaterDialog(
     if (currentWateringSprout) {
       // Spend water, gain soil
       spendWater()
-      recoverSoil(getSoilRecoveryRate())
+      const sproutTitle = ctx.elements.waterDialogTitle.textContent || 'Sprout'
+      recoverSoil(getSoilRecoveryRate(), 0, 'Watered sprout', sproutTitle)
       callbacks.onWaterMeterChange()
       callbacks.onSoilMeterChange()
 

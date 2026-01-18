@@ -1,11 +1,12 @@
 import type { AppContext, SunEntry } from '../types'
 import sunPromptsRaw from '../assets/sun-prompts.txt?raw'
-import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, getSunCapacity, wasShoneThisWeek, getPresetLabel, getTwigLeaves, recoverSoil, getSunRecoveryRate } from '../state'
+import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek, getPresetLabel, getTwigLeaves, recoverSoil, getSunRecoveryRate } from '../state'
 
-export type ShineDialogCallbacks = {
+export type ShineCallbacks = {
   onSunMeterChange: () => void
   onSoilMeterChange: () => void
   onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
+  onShineComplete: () => void
 }
 
 // Parse sun prompts (skip comments and empty lines)
@@ -86,9 +87,14 @@ function getAllLeaves(): { twigId: string; twigLabel: string; leafId: string; le
 }
 
 // Randomly select a twig or leaf to reflect on
-function selectRandomTarget(): SunEntry['context'] {
+function selectRandomTarget(): SunEntry['context'] | null {
   const twigs = getAllTwigs()
   const leaves = getAllLeaves()
+
+  // Need at least one twig or leaf to select
+  if (twigs.length === 0 && leaves.length === 0) {
+    return null
+  }
 
   // 50% chance of selecting a leaf if leaves exist, otherwise always a twig
   const selectLeaf = leaves.length > 0 && Math.random() < 0.5
@@ -102,7 +108,7 @@ function selectRandomTarget(): SunEntry['context'] {
       leafId: leaf.leafId,
       leafTitle: leaf.leafTitle
     }
-  } else {
+  } else if (twigs.length > 0) {
     const twig = twigs[Math.floor(Math.random() * twigs.length)]
     return {
       type: 'twig',
@@ -110,78 +116,94 @@ function selectRandomTarget(): SunEntry['context'] {
       twigLabel: twig.twigLabel
     }
   }
+
+  return null
 }
 
-export type ShineDialogApi = {
-  openShineDialog: () => void
+export type ShineApi = {
   updateSunMeter: () => void
+  populateSunLogShine: () => void
 }
 
-export function initShineDialog(
+export function initShine(
   ctx: AppContext,
-  callbacks: ShineDialogCallbacks
-): ShineDialogApi {
-  // Shine dialog state
+  callbacks: ShineCallbacks
+): ShineApi {
+  // Current shine context (selected when dialog opens)
   let currentContext: SunEntry['context'] | null = null
 
   function updateSunMeter() {
     const available = getSunAvailable()
-    const capacity = getSunCapacity()
-    const pct = capacity > 0 ? (available / capacity) * 100 : 0
-    ctx.elements.sunMeterFill.style.width = `${pct}%`
-    ctx.elements.sunMeterValue.textContent = `${available}/${capacity}`
+    ctx.elements.sunCircle.classList.toggle('is-filled', available > 0)
   }
 
   function updateRadiateButtonState() {
-    const { shineDialogJournal, shineDialogSave } = ctx.elements
-    const hasContent = shineDialogJournal.value.trim().length > 0
-    shineDialogSave.disabled = !hasContent
+    const { sunLogShineJournal, sunLogShineBtn } = ctx.elements
+    const hasContent = sunLogShineJournal.value.trim().length > 0
+    sunLogShineBtn.disabled = !hasContent
   }
 
-  function openShineDialog() {
+  function populateSunLogShine() {
+    const {
+      sunLogShineSection,
+      sunLogShineTitle,
+      sunLogShineMeta,
+      sunLogShineJournal,
+      sunLogShineBtn,
+      sunLogShineShone
+    } = ctx.elements
+
     // Check if already shone this week
     if (wasShoneThisWeek()) {
-      callbacks.onSetStatus('Already shone this week!', 'warning')
+      sunLogShineSection.classList.add('hidden')
+      sunLogShineShone.classList.remove('hidden')
+      currentContext = null
       return
     }
 
+    // Check if we can afford sun
     if (!canAffordSun()) {
-      callbacks.onSetStatus('No sun left this week!', 'warning')
+      sunLogShineSection.classList.add('hidden')
+      sunLogShineShone.classList.remove('hidden')
+      currentContext = null
       return
     }
 
-    // Randomly select a twig or leaf
+    // Select a random target
     const target = selectRandomTarget()
-    currentContext = target
+    if (!target) {
+      // No twigs/leaves to shine on
+      sunLogShineSection.classList.add('hidden')
+      sunLogShineShone.classList.remove('hidden')
+      currentContext = null
+      return
+    }
 
-    const { shineDialog, shineDialogTitle, shineDialogMeta, shineDialogJournal } = ctx.elements
+    currentContext = target
 
     // Display what was selected
     if (target.type === 'leaf') {
-      shineDialogTitle.textContent = target.leafTitle || 'Untitled Leaf'
-      shineDialogMeta.textContent = `on ${target.twigLabel}`
+      sunLogShineTitle.textContent = target.leafTitle || 'Untitled Leaf'
+      sunLogShineMeta.textContent = `on ${target.twigLabel}`
     } else {
-      shineDialogTitle.textContent = target.twigLabel
-      shineDialogMeta.textContent = 'Life Facet'
+      sunLogShineTitle.textContent = target.twigLabel
+      sunLogShineMeta.textContent = 'Life Facet'
     }
 
-    shineDialogJournal.value = ''
-    shineDialogJournal.placeholder = getRandomSunPrompt()
-    updateRadiateButtonState()
-    shineDialog.classList.remove('hidden')
-    shineDialogJournal.focus()
-  }
+    sunLogShineJournal.value = ''
+    sunLogShineJournal.placeholder = getRandomSunPrompt()
+    sunLogShineBtn.disabled = true
 
-  function closeShineDialog() {
-    const { shineDialog, shineDialogJournal } = ctx.elements
-    shineDialog.classList.add('hidden')
-    shineDialogJournal.value = ''
-    currentContext = null
+    sunLogShineSection.classList.remove('hidden')
+    sunLogShineShone.classList.add('hidden')
+
+    // Focus the journal after a brief delay (for dialog animation)
+    setTimeout(() => sunLogShineJournal.focus(), 100)
   }
 
   function saveSunEntry() {
-    const { shineDialogJournal } = ctx.elements
-    const entry = shineDialogJournal.value.trim()
+    const { sunLogShineJournal } = ctx.elements
+    const entry = sunLogShineJournal.value.trim()
 
     if (!entry) {
       return
@@ -189,7 +211,6 @@ export function initShineDialog(
 
     if (!canAffordSun()) {
       callbacks.onSetStatus('No sun left this week!', 'warning')
-      closeShineDialog()
       return
     }
 
@@ -198,35 +219,29 @@ export function initShineDialog(
       updateSunMeter()
 
       // Recover soil from shining
-      recoverSoil(getSunRecoveryRate())
+      const shineContext = currentContext.type === 'leaf'
+        ? currentContext.leafTitle || currentContext.twigLabel
+        : currentContext.twigLabel
+      recoverSoil(getSunRecoveryRate(), 0, 'Shone light', shineContext)
       callbacks.onSoilMeterChange()
 
       // Save sun entry to global log with context
-      const prompt = shineDialogJournal.placeholder
+      const prompt = sunLogShineJournal.placeholder
       addSunEntry(entry, prompt, currentContext)
       callbacks.onSetStatus('Light radiated!', 'info')
-    }
 
-    closeShineDialog()
+      // Refresh the shine section (will show "shone" state) and log
+      populateSunLogShine()
+      callbacks.onShineComplete()
+    }
   }
 
-  // Wire up shine dialog handlers
-  ctx.elements.shineDialogClose.addEventListener('click', closeShineDialog)
-  ctx.elements.shineDialogCancel.addEventListener('click', closeShineDialog)
-  ctx.elements.shineDialogSave.addEventListener('click', saveSunEntry)
-  ctx.elements.shineDialogJournal.addEventListener('input', updateRadiateButtonState)
-  ctx.elements.shineDialog.addEventListener('click', (e) => {
-    if (e.target === ctx.elements.shineDialog) closeShineDialog()
-  })
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !ctx.elements.shineDialog.classList.contains('hidden')) {
-      e.preventDefault()
-      closeShineDialog()
-    }
-  })
+  // Wire up shine handlers
+  ctx.elements.sunLogShineJournal.addEventListener('input', updateRadiateButtonState)
+  ctx.elements.sunLogShineBtn.addEventListener('click', saveSunEntry)
 
   return {
-    openShineDialog,
     updateSunMeter,
+    populateSunLogShine,
   }
 }
