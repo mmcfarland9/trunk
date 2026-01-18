@@ -248,36 +248,13 @@
   text-decoration-color: var(--ink);
 }
 
-/* Sidebar water button - hover reveal behavior */
-.sprout-water-btn {
+/* Sidebar action buttons - hover reveal behavior */
+.sidebar-action-btn {
   margin-left: auto;
-  padding: var(--space-1) var(--space-2);
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  border: 1px solid var(--water);
-  color: var(--water);
-  background: transparent;
-  cursor: pointer;
   opacity: 0;
-  transition: opacity 100ms ease, background 100ms ease;
+  transition: opacity 100ms ease;
 }
 
-.sprout-item:hover .sprout-water-btn {
+.sprout-item:hover .sidebar-action-btn {
   opacity: 1;
-}
-
-.sprout-water-btn:hover {
-  background: rgba(70, 130, 180, 0.15);
-}
-
-.sprout-water-btn.is-ready {
-  border-color: var(--twig);
-  color: var(--twig);
-}
-
-.sprout-water-btn.is-ready:hover {
-  background: rgba(58, 107, 74, 0.15);
 }

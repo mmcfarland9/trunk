@@ -349,6 +349,16 @@ initSidebarSprouts(
       setViewModeState('leaf', branchIndex, twigId)
       ctx.leafView?.open(leafId, twigId, branchIndex)
     }
+  },
+  (leafId, twigId, branchIndex) => {
+    // Navigate to leaf view with graft form open
+    const twig = ctx.nodeLookup.get(twigId)
+    if (twig) {
+      clearSidebarPreview(ctx)
+      enterTwigView(twig, branchIndex, ctx, navCallbacks)
+      setViewModeState('leaf', branchIndex, twigId)
+      ctx.leafView?.open(leafId, twigId, branchIndex, true) // startWithGraftForm = true
+    }
   }
 )
 

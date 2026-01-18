@@ -1,6 +1,6 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate } from '../state'
+import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   const { backToTrunkButton } = ctx.elements
@@ -75,12 +75,14 @@ export type SidebarBranchCallbacks = {
 
 export type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
 export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
+export type SidebarGraftCallback = (leafId: string, twigId: string, branchIndex: number) => void
 
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedBranchCallbacks: SidebarBranchCallbacks | undefined
 let storedTwigClick: SidebarTwigCallback | undefined
 let storedLeafClick: SidebarLeafCallback | undefined
+let storedGraftClick: SidebarGraftCallback | undefined
 
 function parseBranchIndex(twigId: string): number {
   // Parse "branch-X-twig-Y" to get X
@@ -110,7 +112,7 @@ function getAllSproutsFromState(): { active: SproutWithLocation[], cultivated: S
 
   Object.entries(nodeState).forEach(([nodeId, data]) => {
     if (!data.sprouts) return
-    const twigLabel = data.label || nodeId
+    const twigLabel = getPresetLabel(nodeId) || nodeId
     const branchIndex = parseBranchIndex(nodeId)
 
     getActiveSprouts(data.sprouts).forEach(s => {
@@ -146,12 +148,11 @@ function groupByTwig(sprouts: SproutWithLocation[]): Map<string, SproutWithLocat
 }
 
 function getTwigLabel(twigId: string): string {
-  const data = nodeState[twigId]
-  const storedLabel = data?.label?.trim() || ''
-  if (storedLabel) {
-    return storedLabel
+  const presetLabel = getPresetLabel(twigId)
+  if (presetLabel) {
+    return presetLabel
   }
-  // Parse twig number from ID like "branch-0-twig-3"
+  // Fallback: parse twig number from ID like "branch-0-twig-3"
   const match = twigId.match(/twig-(\d+)$/)
   return match ? `Twig ${parseInt(match[1], 10) + 1}` : twigId
 }
@@ -161,7 +162,8 @@ export function initSidebarSprouts(
   onWaterClick?: (sprout: SproutWithLocation) => void,
   branchCallbacks?: SidebarBranchCallbacks,
   onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback
+  onLeafClick?: SidebarLeafCallback,
+  onGraftClick?: SidebarGraftCallback
 ): void {
   const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
 
@@ -170,6 +172,7 @@ export function initSidebarSprouts(
   storedBranchCallbacks = branchCallbacks
   storedTwigClick = onTwigClick
   storedLeafClick = onLeafClick
+  storedGraftClick = onGraftClick
 
   // Set default states: Both sections expanded
   activeSproutsToggle.classList.add('is-expanded')
@@ -202,6 +205,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const branchCallbacks = storedBranchCallbacks
   const onTwigClick = storedTwigClick
   const onLeafClick = storedLeafClick
+  const onGraftClick = storedGraftClick
 
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
@@ -237,7 +241,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       activeSproutsList.append(item)
     })
     filteredCultivated.forEach(sprout => {
-      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
       cultivatedSproutsList.append(item)
     })
   } else if (viewMode === 'branch') {
@@ -259,7 +263,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
         folder.append(item)
       })
       cultivatedSproutsList.append(folder)
@@ -283,7 +287,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
       const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
+        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
         folder.append(item)
       })
       cultivatedSproutsList.append(folder)
@@ -365,7 +369,8 @@ function createSproutItem(
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback
+  onLeafClick?: SidebarLeafCallback,
+  onGraftClick?: SidebarGraftCallback
 ): HTMLDivElement {
   const item = document.createElement('div')
   item.className = 'sprout-item'
@@ -419,14 +424,14 @@ function createSproutItem(
   if (isActive && onWaterClick) {
     const waterBtn = document.createElement('button')
     waterBtn.type = 'button'
-    waterBtn.className = 'sprout-water-btn'
 
     // Check if sprout is ready (on or past due date)
     const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
     if (isReady) {
+      waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'
       waterBtn.textContent = 'Harvest'
-      waterBtn.classList.add('is-ready')
     } else {
+      waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-action-btn'
       waterBtn.textContent = 'Water'
     }
 
@@ -435,6 +440,19 @@ function createSproutItem(
       onWaterClick(sprout)
     })
     item.append(waterBtn)
+  }
+
+  // Graft action for cultivated sprouts with a leaf (appears on hover)
+  if (!isActive && sprout.leafId && onGraftClick) {
+    const graftBtn = document.createElement('button')
+    graftBtn.type = 'button'
+    graftBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'
+    graftBtn.textContent = 'Graft'
+    graftBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      onGraftClick(sprout.leafId!, sprout.twigId, sprout.branchIndex)
+    })
+    item.append(graftBtn)
   }
 
   return item
