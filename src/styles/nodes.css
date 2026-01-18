@@ -107,7 +107,9 @@
 .canvas.is-zoomed .branch-group.is-active .twig[data-filled='true'][data-label-lines='2'] { font-size: calc(var(--char) * 0.65); }
 .canvas.is-zoomed .branch-group.is-active .twig[data-filled='true'][data-label-lines='3'] { font-size: calc(var(--char) * 0.6); }
 /* In branch view, twigs appear instantly (no fade) */
-.canvas.is-zoomed .branch-group.is-active .twig { transition: transform 200ms ease-out; }
+.canvas.is-zoomed .branch-group.is-active .twig { transition: transform 200ms ease-out, color 150ms ease; }
+/* Twig hover in branch view - darken to invite click */
+.canvas.is-zoomed .branch-group.is-active .twig:hover { color: var(--wood); }
 .canvas.is-zooming .branch-group.is-active .twig { transition: opacity 480ms ease-out, transform 200ms ease-out; transition-delay: var(--twig-delay, 0ms); }
 
 /* Trunk */
