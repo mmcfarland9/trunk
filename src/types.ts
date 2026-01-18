@@ -16,7 +16,8 @@ export type WaterEntry = {
   prompt?: string
 }
 
-// Sun entry - journal entries when shining on a cultivated sprout (reflection/planning)
+// Sun entry - journal entries when shining on a TWIG (philosophical reflection on life facets)
+// Sun is twig-level, not sprout-level - you reflect on "movement" or "intimacy" as concepts
 export type SunEntry = {
   timestamp: string
   content: string
@@ -48,7 +49,7 @@ export type Sprout = {
   // Leaf association
   leafId?: string
   waterEntries?: WaterEntry[]
-  sunEntries?: SunEntry[]
+  sunEntries?: SunEntry[] // Legacy: being migrated to twig-level
   graftedFromId?: string
 }
 
@@ -79,6 +80,8 @@ export type NodeData = {
   // Sprout and leaf data
   sprouts?: Sprout[]
   leaves?: Leaf[]
+  // Twig-level sun entries (philosophical reflection on life facets)
+  sunEntries?: SunEntry[]
   // Legacy fields (for migration, will be converted to sprouts)
   goalType?: GoalType
   goalValue?: number
