@@ -9,7 +9,6 @@ import {
   getSoilAvailable,
   canAffordSoil,
   spendSoil,
-  getDebugNow,
 } from '../state'
 
 export type LeafViewCallbacks = {
@@ -38,6 +37,9 @@ type LogEntry = {
     reflection?: string
     isSuccess?: boolean
     graftedFromTitle?: string
+    bloomWither?: string
+    bloomBudding?: string
+    bloomFlourish?: string
   }
 }
 
@@ -75,16 +77,11 @@ function getResultEmoji(result: number): string {
 
 function formatDateTime(dateStr: string): string {
   const date = new Date(dateStr)
-  const now = getDebugNow()
-  const diff = now - date.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  }
-  if (days === 1) return 'yesterday'
-  if (days < 7) return `${days} days ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = date.getFullYear()
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${month}/${day}/${year} ${time}`
 }
 
 function getEndDate(season: SproutSeason, startDate: Date = new Date()): Date {
@@ -160,6 +157,9 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
         data: {
           season: sprout.season,
           environment: sprout.environment,
+          bloomWither: sprout.bloomWither,
+          bloomBudding: sprout.bloomBudding,
+          bloomFlourish: sprout.bloomFlourish,
         }
       })
 
@@ -217,7 +217,15 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
     const timeStr = formatDateTime(entry.timestamp)
 
     switch (entry.type) {
-      case 'sprout-start':
+      case 'sprout-start': {
+        const hasBloom = entry.data.bloomWither || entry.data.bloomBudding || entry.data.bloomFlourish
+        const bloomHtml = hasBloom ? `
+          <p class="log-entry-bloom">
+            ${entry.data.bloomWither ? `<span class="bloom-item">🥀 <em>${entry.data.bloomWither}</em></span>` : ''}
+            ${entry.data.bloomBudding ? `<span class="bloom-item">🌱 <em>${entry.data.bloomBudding}</em></span>` : ''}
+            ${entry.data.bloomFlourish ? `<span class="bloom-item">🌲 <em>${entry.data.bloomFlourish}</em></span>` : ''}
+          </p>
+        ` : ''
         return `
           <div class="log-entry log-entry-start" data-sprout-id="${entry.sproutId}">
             <div class="log-entry-header">
@@ -226,8 +234,10 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
             </div>
             <p class="log-entry-title">${entry.sproutTitle}</p>
             <p class="log-entry-meta">${getSeasonLabel(entry.data.season!)} · ${getEnvironmentLabel(entry.data.environment!)}</p>
+            ${bloomHtml}
           </div>
         `
+      }
 
       case 'watering':
         return `
@@ -372,9 +382,11 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
         graftSoilCost.textContent = `${cost} soil (${available} avail)`
         graftSoilCost.classList.toggle('is-warning', !canAfford)
         graftConfirmBtn.disabled = !hasAllFields || !canAfford
+        graftConfirmBtn.innerHTML = `Plant <span class="btn-soil-cost">(-${cost.toFixed(2)})</span>`
       } else {
         graftSoilCost.textContent = ''
         graftConfirmBtn.disabled = true
+        graftConfirmBtn.textContent = 'Plant'
       }
     }
 

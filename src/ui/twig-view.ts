@@ -17,6 +17,7 @@ import {
   getTwigLeaves,
   getSproutsByLeaf,
   createLeaf,
+  getSoilRecoveryRate,
 } from '../state'
 
 export type TwigViewCallbacks = {
@@ -139,10 +140,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             ${ENVIRONMENTS.map(e => `<button type="button" class="sprout-env-btn" data-env="${e}">${getEnvironmentLabel(e)}</button>`).join('')}
           </div>
           <div class="env-hint-area">
-            <span class="env-hint" data-for="fertile">[gentle · no capacity reward]</span>
-            <span class="env-hint" data-for="firm">[steady · +1 max capacity]</span>
-            <span class="env-hint" data-for="barren">[bold · +2 max capacity]</span>
+            <span class="env-hint" data-for="fertile">[Comfortable terrain · no soil bonus]</span>
+            <span class="env-hint" data-for="firm">[New obstacles · +1 soil capacity]</span>
+            <span class="env-hint" data-for="barren">[Hostile conditions · +2 soil capacity]</span>
           </div>
+          <label class="sprout-field-label">Bloom <span class="field-hint">(optional)</span></label>
+          <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
+          <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
+          <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
           <div class="sprout-soil-cost"></div>
           <div class="action-btn-group action-btn-group-right">
             <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
@@ -188,6 +193,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   const envBtns = container.querySelectorAll<HTMLButtonElement>('.sprout-env-btn')
   const envHints = container.querySelectorAll<HTMLSpanElement>('.env-hint')
   const soilCostDisplay = container.querySelector<HTMLDivElement>('.sprout-soil-cost')!
+  const witherInput = container.querySelector<HTMLInputElement>('.sprout-wither-input')!
+  const buddingInput = container.querySelector<HTMLInputElement>('.sprout-budding-input')!
+  const flourishInput = container.querySelector<HTMLInputElement>('.sprout-flourish-input')!
   const setBtn = container.querySelector<HTMLButtonElement>('.sprout-set-btn')!
   const activeCount = container.querySelector<HTMLSpanElement>('.active-count')!
   const cultivatedCount = container.querySelector<HTMLSpanElement>('.cultivated-count')!
@@ -270,13 +278,26 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const isAffordable = canAffordSoil(cost)
     setBtn.disabled = !isFormComplete || !isAffordable
 
-    // Button always says "Plant" - disabled state handles visual feedback
-    setBtn.textContent = 'Plant'
+    // Show cost on button
+    if (cost > 0) {
+      setBtn.innerHTML = `Plant <span class="btn-soil-cost">(-${cost.toFixed(2)})</span>`
+    } else {
+      setBtn.textContent = 'Plant'
+    }
   }
 
   function renderHistoryCard(s: Sprout): string {
     const hasLeaf = !!s.leafId
     const canGraft = s.state === 'completed' && hasLeaf
+
+    const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
+    const bloomHtml = hasBloom ? `
+      <p class="sprout-card-bloom">
+        ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${s.bloomWither}</em></span>` : ''}
+        ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${s.bloomBudding}</em></span>` : ''}
+        ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${s.bloomFlourish}</em></span>` : ''}
+      </p>
+    ` : ''
 
     return `
       <div class="sprout-card sprout-history-card ${s.state === 'failed' ? 'is-failed' : 'is-completed'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${s.id}" ${hasLeaf ? `data-leaf-id="${s.leafId}"` : ''}>
@@ -285,6 +306,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           <button type="button" class="sprout-delete-btn" aria-label="Uproot">x</button>
         </div>
         <p class="sprout-card-title">${s.title}</p>
+        ${bloomHtml}
         <div class="sprout-result-section">
           <span class="sprout-result-display">${getResultEmoji(s.result || 1)} ${s.result || 1}/5</span>
           <span class="sprout-card-date">${s.completedAt ? formatDate(new Date(s.completedAt)) : ''}</span>
@@ -306,6 +328,15 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const hasLeaf = !!s.leafId
     const watered = wasWateredToday(s)
 
+    const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
+    const bloomHtml = hasBloom ? `
+      <p class="sprout-card-bloom">
+        ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${s.bloomWither}</em></span>` : ''}
+        ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${s.bloomBudding}</em></span>` : ''}
+        ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${s.bloomFlourish}</em></span>` : ''}
+      </p>
+    ` : ''
+
     return `
       <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${s.id}" ${hasLeaf ? `data-leaf-id="${s.leafId}"` : ''}>
         <div class="sprout-card-header">
@@ -313,15 +344,16 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           <button type="button" class="sprout-delete-btn" aria-label="Uproot">x</button>
         </div>
         <p class="sprout-card-title">${s.title}</p>
+        ${bloomHtml}
 
         ${ready ? `
           <p class="sprout-card-status">Ready to harvest</p>
-          <div class="sprout-complete-section">
+          <div class="sprout-complete-section" data-soil-cost="${s.soilCost}" data-environment="${s.environment}" data-season="${s.season}">
             <div class="sprout-result-slider">
               <input type="range" min="1" max="5" value="1" class="result-slider" />
               <span class="result-value">${getResultEmoji(1)}</span>
             </div>
-            <textarea class="sprout-reflection-input" placeholder="Recap (optional)..." rows="2"></textarea>
+            <textarea class="sprout-reflection-input" placeholder="Details (optional)..." rows="2"></textarea>
             <div class="action-btn-group action-btn-group-right">
               <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-complete-btn">Harvest</button>
             </div>
@@ -338,7 +370,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             </div>
             <div class="sprout-growing-footer">
               <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
-              <button type="button" class="action-btn action-btn-progress action-btn-water sprout-water-btn" ${watered ? 'disabled' : ''}>Water</button>
+              <button type="button" class="action-btn ${watered ? 'action-btn-passive' : 'action-btn-progress'} action-btn-water sprout-water-btn" ${watered ? 'disabled' : ''}>${watered ? 'Watered' : `Water <span class="btn-soil-gain">(+${getSoilRecoveryRate().toFixed(2)})</span>`}</button>
             </div>
           </div>
         `}
@@ -520,12 +552,35 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       })
 
       if (slider && valueDisplay) {
+        const completeSection = card.querySelector<HTMLDivElement>('.sprout-complete-section')
+        const soilCost = parseFloat(completeSection?.dataset.soilCost || '0')
+        const environment = completeSection?.dataset.environment as SproutEnvironment
+        const season = completeSection?.dataset.season as SproutSeason
+
+        function updateHarvestButton(resultVal: number): void {
+          if (!completeBtn) return
+          const isSuccess = resultVal >= 3
+          if (isSuccess) {
+            const resultMultiplier = resultVal === 5 ? 1.0 : resultVal === 4 ? 0.5 : 0.25
+            const baseReward = getCapacityReward(environment, season)
+            const capGain = baseReward * resultMultiplier
+            completeBtn.innerHTML = `Harvest <span class="btn-soil-gain">(+${soilCost.toFixed(2)}, +${capGain.toFixed(2)} cap)</span>`
+          } else {
+            const recovery = soilCost * 0.5
+            completeBtn.innerHTML = `Harvest <span class="btn-soil-gain">(+${recovery.toFixed(2)})</span>`
+          }
+        }
+
         slider.addEventListener('input', () => {
           result = parseInt(slider.value, 10)
           hasSelected = true
           valueDisplay.textContent = getResultEmoji(result)
           if (completeBtn) completeBtn.disabled = false
+          updateHarvestButton(result)
         })
+
+        // Initialize with default value
+        updateHarvestButton(1)
       }
 
       completeBtn?.addEventListener('click', () => {
@@ -660,6 +715,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     selectedSeason = null
     selectedEnvironment = null
     sproutTitleInput.value = ''
+    witherInput.value = ''
+    buddingInput.value = ''
+    flourishInput.value = ''
     seasonBtns.forEach(btn => btn.classList.remove('is-active'))
     envBtns.forEach(btn => btn.classList.remove('is-active'))
     envHints.forEach(h => h.classList.remove('is-visible'))
@@ -715,6 +773,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const leaf = createLeaf(nodeId)
 
     const now = new Date()
+    const bloomWither = witherInput.value.trim() || undefined
+    const bloomBudding = buddingInput.value.trim() || undefined
+    const bloomFlourish = flourishInput.value.trim() || undefined
     const newSprout: Sprout = {
       id: generateSproutId(),
       title,
@@ -725,6 +786,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       createdAt: now.toISOString(),
       activatedAt: now.toISOString(),
       endDate: getEndDate(selectedSeason, now).toISOString(),
+      bloomWither,
+      bloomBudding,
+      bloomFlourish,
       leafId: leaf.id,
     }
 

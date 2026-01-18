@@ -91,10 +91,7 @@ function updateSoilMeter(): void {
   const available = getSoilAvailable()
   const capacity = getSoilCapacity()
   domResult.elements.soilMeterFill.style.width = `${(available / capacity) * 100}%`
-  // Round to 2 decimal places to avoid floating point display issues
-  const rounded = Math.round(available * 100) / 100
-  const availStr = rounded % 1 === 0 ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, '')
-  domResult.elements.soilMeterValue.textContent = `${availStr}/${capacity}`
+  domResult.elements.soilMeterValue.textContent = `${available.toFixed(2)}/${capacity.toFixed(2)}`
 }
 
 // Water meter update function
@@ -128,6 +125,7 @@ const shineDialogApi = initShineDialog(ctx, {
     shineDialogApi.updateSunMeter()
     domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
   },
+  onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
 })
 
@@ -209,7 +207,12 @@ sunLogButton.addEventListener('click', () => {
     return
   }
   const text = sunLog.map(entry => {
-    const date = new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const d = new Date(entry.timestamp)
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const year = d.getFullYear()
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    const date = `${month}/${day}/${year} ${time}`
     const target = entry.context.type === 'leaf'
       ? `${entry.context.leafTitle} (${entry.context.twigLabel})`
       : entry.context.twigLabel

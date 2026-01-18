@@ -1,6 +1,6 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel } from '../state'
+import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   const { backToTrunkButton } = ctx.elements
@@ -427,12 +427,20 @@ function createSproutItem(
 
     // Check if sprout is ready (on or past due date)
     const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
+    // Check if already watered today
+    const today = getDebugDate().toISOString().split('T')[0]
+    const watered = sprout.waterEntries?.some(entry => entry.timestamp.split('T')[0] === today) ?? false
+
     if (isReady) {
       waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'
       waterBtn.textContent = 'Harvest'
+    } else if (watered) {
+      waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-action-btn'
+      waterBtn.textContent = 'Watered'
+      waterBtn.disabled = true
     } else {
       waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-action-btn'
-      waterBtn.textContent = 'Water'
+      waterBtn.innerHTML = `Water <span class="btn-soil-gain">(+${getSoilRecoveryRate().toFixed(2)})</span>`
     }
 
     waterBtn.addEventListener('click', (e) => {

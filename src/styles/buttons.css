@@ -137,6 +137,13 @@
   --btn-rgb: 138, 74, 58;
 }
 
+/* Soil cost/gain indicators on buttons */
+.btn-soil-cost,
+.btn-soil-gain {
+  color: var(--wood);
+  font-weight: normal;
+}
+
 /* Container for split button layout */
 .action-btn-group {
   display: flex;

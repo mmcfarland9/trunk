@@ -1,9 +1,10 @@
 import type { AppContext, SunEntry } from '../types'
 import sunPromptsRaw from '../assets/sun-prompts.txt?raw'
-import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, getSunCapacity, wasShoneThisWeek, getPresetLabel, getTwigLeaves } from '../state'
+import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, getSunCapacity, wasShoneThisWeek, getPresetLabel, getTwigLeaves, recoverSoil, getSunRecoveryRate } from '../state'
 
 export type ShineDialogCallbacks = {
   onSunMeterChange: () => void
+  onSoilMeterChange: () => void
   onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
 }
 
@@ -195,6 +196,10 @@ export function initShineDialog(
     if (currentContext) {
       spendSun()
       updateSunMeter()
+
+      // Recover soil from shining
+      recoverSoil(getSunRecoveryRate())
+      callbacks.onSoilMeterChange()
 
       // Save sun entry to global log with context
       const prompt = shineDialogJournal.placeholder
