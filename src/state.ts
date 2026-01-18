@@ -64,7 +64,7 @@ function runMigrations(raw: Record<string, unknown>): StoredState {
 
 // Journal entry cap - prevents localStorage overflow over decades
 const MAX_WATER_ENTRIES_PER_SPROUT = 365  // 1 year of daily entries
-const MAX_SUN_ENTRIES_PER_SPROUT = 52     // 1 year of weekly entries
+const MAX_SUN_ENTRIES_PER_TWIG = 52     // 1 year of weekly entries
 
 function capJournalEntries(sprout: Sprout): void {
   if (sprout.waterEntries && sprout.waterEntries.length > MAX_WATER_ENTRIES_PER_SPROUT) {
@@ -569,8 +569,8 @@ export function addSunEntry(
   })
 
   // Cap sun entries to prevent unbounded growth (52 weeks = 1 year)
-  if (data.sunEntries.length > MAX_SUN_ENTRIES_PER_SPROUT) {
-    data.sunEntries = data.sunEntries.slice(-MAX_SUN_ENTRIES_PER_SPROUT)
+  if (data.sunEntries.length > MAX_SUN_ENTRIES_PER_TWIG) {
+    data.sunEntries = data.sunEntries.slice(-MAX_SUN_ENTRIES_PER_TWIG)
   }
 
   saveState()
