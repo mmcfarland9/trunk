@@ -931,6 +931,16 @@ export function setHoveredBranchIndex(index: number | null): void {
   hoveredBranchIndex = index
 }
 
+let hoveredTwigId: string | null = null
+
+export function getHoveredTwigId(): string | null {
+  return hoveredTwigId
+}
+
+export function setHoveredTwigId(id: string | null): void {
+  hoveredTwigId = id
+}
+
 export function getIsSidebarHover(): boolean {
   return sidebarHover
 }

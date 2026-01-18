@@ -8,7 +8,7 @@ import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
 import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
-import { setupHoverBranch } from './features/hover-branch'
+import { setupHoverBranch, setupHoverTwig } from './features/hover-branch'
 import { handleExport, handleImport, checkExportReminder } from './features/import-export'
 import {
   setViewMode,
@@ -774,6 +774,7 @@ window.addEventListener('resize', () => positionNodes(ctx))
 
 startWind(ctx)
 setupHoverBranch(ctx, navCallbacks)
+setupHoverTwig(ctx)
 
 // Check for export reminder after a short delay (don't compete with initial status)
 setTimeout(() => checkExportReminder(ctx), 2000)

@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getActiveSprouts, getPresetLabel, getPresetNote } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
@@ -237,26 +237,9 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   focusNote.classList.toggle('is-muted', !note)
 
   // Sprout display only for twigs
-  if (isTwig) {
-    focusGoal.style.display = ''
-    const sprouts = stored?.sprouts || []
-    const activeSprouts = getActiveSprouts(sprouts)
-
-    if (activeSprouts.length > 0) {
-      const sproutList = activeSprouts.map(s => {
-        const name = s.title || 'Untitled'
-        return `${name} (${s.season})`
-      }).join('<br>')
-      focusGoal.innerHTML = `Active (${activeSprouts.length}):<br>${sproutList}`
-      focusGoal.classList.remove('is-muted')
-    } else {
-      focusGoal.textContent = 'No growing sprouts'
-      focusGoal.classList.add('is-muted')
-    }
-  } else {
-    focusGoal.style.display = 'none'
-    focusGoal.textContent = ''
-  }
+  // Hide focusGoal - sprouts are shown in the sidebar list
+  focusGoal.style.display = 'none'
+  focusGoal.textContent = ''
 }
 
 const TWIG_TARGET_RATIO = 16 / 9

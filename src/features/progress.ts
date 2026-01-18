@@ -1,6 +1,6 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate } from '../state'
+import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -205,17 +205,20 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const activeBranchIndex = getActiveBranchIndex()
   const activeTwigId = getActiveTwigId()
   const hoveredBranchIndex = getHoveredBranchIndex()
+  const hoveredTwigId = getHoveredTwigId()
 
   // Filter based on current view or hover state
   let filteredActive = active
   let filteredCultivated = cultivated
   // Effective branch index: hovered (in overview) or active (in branch view)
   const effectiveBranchIndex = viewMode === 'overview' ? hoveredBranchIndex : activeBranchIndex
+  // Effective twig: active (in twig view) or hovered (in branch view)
+  const effectiveTwigId = viewMode === 'twig' ? activeTwigId : (viewMode === 'branch' ? hoveredTwigId : null)
 
-  if (viewMode === 'twig' && activeTwigId) {
-    // Twig view: only show sprouts from this twig
-    filteredActive = active.filter(s => s.twigId === activeTwigId)
-    filteredCultivated = cultivated.filter(s => s.twigId === activeTwigId)
+  if (effectiveTwigId) {
+    // Twig view OR hovering twig in branch view: only show sprouts from this twig
+    filteredActive = active.filter(s => s.twigId === effectiveTwigId)
+    filteredCultivated = cultivated.filter(s => s.twigId === effectiveTwigId)
   } else if ((viewMode === 'branch' && activeBranchIndex !== null) || (viewMode === 'overview' && hoveredBranchIndex !== null)) {
     // Branch view OR hovering a branch: only show sprouts from this branch
     const branchIdx = effectiveBranchIndex!
@@ -232,13 +235,15 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   activeSproutsList.replaceChildren()
   cultivatedSproutsList.replaceChildren()
 
-  // Determine display mode: twig view, branch view (or hovering branch), or overview
+  // Determine display mode: twig view (or hovering twig), branch view (or hovering branch), or overview
   const isHoveringBranch = viewMode === 'overview' && hoveredBranchIndex !== null
-  const showTwigGrouping = viewMode === 'branch' || isHoveringBranch
+  const isHoveringTwig = viewMode === 'branch' && hoveredTwigId !== null
+  const showFlatList = viewMode === 'twig' || isHoveringTwig
+  const showTwigGrouping = (viewMode === 'branch' && !isHoveringTwig) || isHoveringBranch
   const branchIdxForTwigFolders = isHoveringBranch ? hoveredBranchIndex : activeBranchIndex
 
-  if (viewMode === 'twig') {
-    // Twig view: flat list, no grouping
+  if (showFlatList) {
+    // Twig view OR hovering twig: flat list, no grouping
     filteredActive.forEach(sprout => {
       const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
       activeSproutsList.append(item)

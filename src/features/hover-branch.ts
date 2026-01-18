@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
+import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
 import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
 import { updateScopedProgress, updateSidebarSprouts } from './progress'
 import type { NavigationCallbacks } from './navigation'
@@ -235,4 +235,37 @@ function getBranchIndexFromPosition(
   }
 
   return closestIndex
+}
+
+export function setupHoverTwig(ctx: AppContext): void {
+  // Add hover listeners to all twigs for branch view sidebar preview
+  ctx.branchGroups.forEach(group => {
+    group.twigs.forEach(twig => {
+      twig.addEventListener('mouseenter', () => {
+        if (getViewMode() !== 'branch') return
+        const twigId = twig.dataset.nodeId
+        if (!twigId || twigId === getHoveredTwigId()) return
+
+        setHoveredTwigId(twigId)
+        updateFocus(twig, ctx)
+        updateSidebarSprouts(ctx)
+      })
+
+      twig.addEventListener('mouseleave', () => {
+        if (getViewMode() !== 'branch') return
+        if (getHoveredTwigId() === null) return
+
+        setHoveredTwigId(null)
+        // Reset focus to the branch
+        const activeBranchIndex = getActiveBranchIndex()
+        if (activeBranchIndex !== null) {
+          const branchGroup = ctx.branchGroups[activeBranchIndex]
+          if (branchGroup) {
+            updateFocus(branchGroup.branch, ctx)
+          }
+        }
+        updateSidebarSprouts(ctx)
+      })
+    })
+  })
 }
