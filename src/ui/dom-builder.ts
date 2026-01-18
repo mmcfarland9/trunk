@@ -387,7 +387,7 @@ export function buildApp(
       <div class="sprouts-list" data-section="active"></div>
       <button type="button" class="sprouts-toggle" data-section="cultivated">
         <span class="sprouts-toggle-arrow">▼</span>
-        <span class="sprouts-toggle-label">Cultivated</span>
+        <span class="sprouts-toggle-label">Graft</span>
         <span class="sprouts-toggle-count">(0)</span>
       </button>
       <div class="sprouts-list" data-section="cultivated"></div>

@@ -323,7 +323,6 @@ domResult.elements.backToTrunkButton.addEventListener('click', () => {
 initSidebarSprouts(
   ctx,
   (sprout) => waterDialogApi.openWaterDialog(sprout),
-  (sprout) => shineDialogApi.openShineDialog(sprout),
   {
     onHoverStart: (index) => previewBranchFromSidebar(ctx, index),
     onHoverEnd: () => clearSidebarPreview(ctx),
