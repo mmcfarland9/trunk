@@ -793,6 +793,20 @@ document.addEventListener('keydown', (e) => {
     return
   }
 
+  // Arrow keys cycle through branches in branch view
+  if (getViewMode() === 'branch' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    const currentIndex = getActiveBranchIndex()
+    if (currentIndex === null) return
+
+    const branchCount = ctx.branchGroups.length
+    const newIndex = e.key === 'ArrowRight'
+      ? (currentIndex + 1) % branchCount
+      : (currentIndex - 1 + branchCount) % branchCount
+
+    enterBranchView(newIndex, ctx, navCallbacks)
+    return
+  }
+
   const num = parseInt(e.key, 10)
   if (num < 1 || num > 8) return
 
