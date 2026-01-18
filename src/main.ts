@@ -1,6 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources, wasShoneThisWeek, canAffordSun, sunLog, getNotificationSettings, saveNotificationSettings } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources, wasShoneThisWeek, canAffordSun, sunLog, getNotificationSettings, saveNotificationSettings, getSunRecoveryRate } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -123,11 +123,21 @@ const waterDialogApi = initWaterDialog(ctx, {
 const shineDialogApi = initShineDialog(ctx, {
   onSunMeterChange: () => {
     shineDialogApi.updateSunMeter()
-    domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
+    updateShineButton()
   },
   onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
 })
+
+function updateShineButton() {
+  const shone = wasShoneThisWeek()
+  domResult.elements.shineBtn.disabled = shone || !canAffordSun()
+  if (shone) {
+    domResult.elements.shineBtn.textContent = 'Shone'
+  } else {
+    domResult.elements.shineBtn.innerHTML = `Shine <span class="btn-soil-gain">(+${getSunRecoveryRate().toFixed(2)})</span>`
+  }
+}
 
 initSproutsDialog(ctx, {
   onUpdateStats: navCallbacks.onUpdateStats,
@@ -387,7 +397,7 @@ domResult.elements.debugClockBtn.addEventListener('click', () => {
   updateDebugClockDisplay()
   updateWaterMeter() // Water resets daily
   shineDialogApi.updateSunMeter() // Sun resets weekly
-  domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
+  updateShineButton()
   // Re-render any open twig view to update sprout states
   if (ctx.twigView?.isOpen()) {
     const activeBranchIndex = getActiveBranchIndex()
@@ -481,13 +491,9 @@ updateWaterMeter()
 shineDialogApi.updateSunMeter()
 
 // Shine button - opens shine dialog for global reflection
-function updateShineButtonState(): void {
-  domResult.elements.shineBtn.disabled = wasShoneThisWeek() || !canAffordSun()
-}
 domResult.elements.shineBtn.addEventListener('click', () => {
   shineDialogApi.openShineDialog()
 })
-updateShineButtonState()
 
 let resizeId = 0
 const resizeObserver = new ResizeObserver(() => {

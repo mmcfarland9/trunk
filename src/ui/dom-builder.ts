@@ -1,7 +1,7 @@
 import type { AppElements, BranchGroup } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import { syncNode } from './node-ui'
-import { getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getSunRecoveryRate } from '../state'
+import { getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getSunRecoveryRate, wasShoneThisWeek } from '../state'
 import ampersandImage from '../../assets/ampersand_alpha.png'
 
 export type DomBuilderResult = {
@@ -166,7 +166,13 @@ export function buildApp(
   const shineBtn = document.createElement('button')
   shineBtn.type = 'button'
   shineBtn.className = 'action-btn action-btn-passive action-btn-sun shine-btn'
-  shineBtn.innerHTML = `Shine <span class="btn-soil-gain">(+${getSunRecoveryRate().toFixed(2)})</span>`
+  const alreadyShone = wasShoneThisWeek()
+  if (alreadyShone) {
+    shineBtn.textContent = 'Shone'
+    shineBtn.disabled = true
+  } else {
+    shineBtn.innerHTML = `Shine <span class="btn-soil-gain">(+${getSunRecoveryRate().toFixed(2)})</span>`
+  }
 
   // Meter group for visual cohesion
   const meterGroup = document.createElement('div')
