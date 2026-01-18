@@ -32,7 +32,7 @@ function getRandomSunPrompt(): string {
 }
 
 export type ShineDialogApi = {
-  openShineDialog: (sprout: { id: string; title: string; twigId: string; twigLabel: string }) => void
+  openShineDialog: (twig: { twigId: string; twigLabel: string }) => void
   updateSunMeter: () => void
 }
 
@@ -41,7 +41,7 @@ export function initShineDialog(
   callbacks: ShineDialogCallbacks
 ): ShineDialogApi {
   // Shine dialog state
-  let currentShiningSprout: { id: string; twigId: string } | null = null
+  let currentShiningTwig: { twigId: string } | null = null
 
   function updateSunMeter() {
     const available = getSunAvailable()
@@ -57,10 +57,10 @@ export function initShineDialog(
     shineDialogSave.disabled = !hasContent
   }
 
-  function openShineDialog(sprout: { id: string; title: string; twigId: string; twigLabel: string }) {
-    // Check if already shone this week (sun is for weekly planning/reflection on the TWIG)
-    if (wasShoneThisWeek(sprout.twigId)) {
-      callbacks.onSetStatus('Already reflected on this facet this week! Come back next week.', 'warning')
+  function openShineDialog(twig: { twigId: string; twigLabel: string }) {
+    // Check if already shone this week on this twig
+    if (wasShoneThisWeek(twig.twigId)) {
+      callbacks.onSetStatus('Already reflected on this twig this week!', 'warning')
       return
     }
 
@@ -70,9 +70,9 @@ export function initShineDialog(
     }
 
     const { shineDialog, shineDialogTitle, shineDialogMeta, shineDialogJournal } = ctx.elements
-    currentShiningSprout = { id: sprout.id, twigId: sprout.twigId }
-    shineDialogTitle.textContent = sprout.title || 'Untitled Sprout'
-    shineDialogMeta.textContent = sprout.twigLabel
+    currentShiningTwig = { twigId: twig.twigId }
+    shineDialogTitle.textContent = twig.twigLabel || 'Untitled Twig'
+    shineDialogMeta.textContent = 'Weekly Reflection'
     shineDialogJournal.value = ''
     shineDialogJournal.placeholder = getRandomSunPrompt()
     updateRadiateButtonState()
@@ -84,7 +84,7 @@ export function initShineDialog(
     const { shineDialog, shineDialogJournal } = ctx.elements
     shineDialog.classList.add('hidden')
     shineDialogJournal.value = ''
-    currentShiningSprout = null
+    currentShiningTwig = null
   }
 
   function saveSunEntry() {
@@ -101,14 +101,14 @@ export function initShineDialog(
       return
     }
 
-    if (currentShiningSprout) {
+    if (currentShiningTwig) {
       spendSun()
       updateSunMeter()
 
-      // Save sun entry to TWIG data (twig-level reflection)
+      // Save sun entry to TWIG data (not sprout)
       const prompt = shineDialogJournal.placeholder
-      addSunEntry(currentShiningSprout.twigId, entry, prompt)
-      callbacks.onSetStatus('Light radiated on this life facet!', 'info')
+      addSunEntry(currentShiningTwig.twigId, entry, prompt)
+      callbacks.onSetStatus('Light radiated on this facet of life!', 'info')
     }
 
     closeShineDialog()
