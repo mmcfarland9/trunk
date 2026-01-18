@@ -281,28 +281,3 @@
 .sprout-water-btn.is-ready:hover {
   background: rgba(58, 107, 74, 0.15);
 }
-
-/* Sidebar shine button - hover reveal behavior */
-.sprout-shine-btn {
-  margin-left: auto;
-  padding: var(--space-1) var(--space-2);
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  border: 1px solid var(--sun);
-  color: var(--sun);
-  background: transparent;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 100ms ease, background 100ms ease;
-}
-
-.sprout-item:hover .sprout-shine-btn {
-  opacity: 1;
-}
-
-.sprout-shine-btn:hover {
-  background: rgba(212, 160, 0, 0.15);
-}
