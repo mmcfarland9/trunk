@@ -174,11 +174,11 @@ export function initSidebarSprouts(
   storedTwigClick = onTwigClick
   storedLeafClick = onLeafClick
 
-  // Set default states: Active expanded, Cultivated collapsed
+  // Set default states: Both sections expanded
   activeSproutsToggle.classList.add('is-expanded')
   activeSproutsList.classList.remove('is-collapsed')
-  cultivatedSproutsToggle.classList.remove('is-expanded')
-  cultivatedSproutsList.classList.add('is-collapsed')
+  cultivatedSproutsToggle.classList.add('is-expanded')
+  cultivatedSproutsList.classList.remove('is-collapsed')
 
   // Set up collapsible toggles
   activeSproutsToggle.addEventListener('click', () => {
