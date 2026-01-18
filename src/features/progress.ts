@@ -3,14 +3,7 @@ import { TWIG_COUNT } from '../constants'
 import { nodeState, getHoveredBranchIndex, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate } from '../state'
 
 export function updateStats(ctx: AppContext): void {
-  const { backToTrunkButton } = ctx.elements
-
-  updateScopedProgress(ctx)
-
-  // Show "Back to trunk" only in branch view
-  const isBranchView = getViewMode() === 'branch'
-  backToTrunkButton.style.display = isBranchView ? '' : 'none'
-
+  updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
   updateSidebarSprouts(ctx)
 }
 
@@ -23,7 +16,7 @@ function countActiveSproutsForTwigs(twigs: HTMLButtonElement[]): number {
 }
 
 export function updateScopedProgress(ctx: AppContext): void {
-  const { progressCount, progressFill } = ctx.elements
+  const { progressCount, progressFill, backToTrunkButton } = ctx.elements
   const { branchGroups } = ctx
   const viewMode = getViewMode()
   const hoveredIndex = getHoveredBranchIndex()
@@ -32,6 +25,9 @@ export function updateScopedProgress(ctx: AppContext): void {
   const activeBranchIndex = viewMode === 'branch'
     ? getActiveBranchIndex()
     : hoveredIndex
+
+  // Show "Back to trunk" only in actual branch view (not when hovering)
+  backToTrunkButton.style.display = viewMode === 'branch' ? '' : 'none'
 
   if (activeBranchIndex !== null) {
     const branchGroup = branchGroups[activeBranchIndex]
@@ -68,8 +64,6 @@ export function updateScopedProgress(ctx: AppContext): void {
 type SproutWithLocation = Sprout & { twigId: string, twigLabel: string, branchIndex: number }
 
 export type SidebarBranchCallbacks = {
-  onHoverStart: (index: number) => void
-  onHoverEnd: () => void
   onClick: (index: number) => void
 }
 
@@ -210,19 +204,23 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
   const activeTwigId = getActiveTwigId()
+  const hoveredBranchIndex = getHoveredBranchIndex()
 
-  // Filter based on current view
+  // Filter based on current view or hover state
   let filteredActive = active
   let filteredCultivated = cultivated
+  // Effective branch index: hovered (in overview) or active (in branch view)
+  const effectiveBranchIndex = viewMode === 'overview' ? hoveredBranchIndex : activeBranchIndex
 
   if (viewMode === 'twig' && activeTwigId) {
     // Twig view: only show sprouts from this twig
     filteredActive = active.filter(s => s.twigId === activeTwigId)
     filteredCultivated = cultivated.filter(s => s.twigId === activeTwigId)
-  } else if (viewMode === 'branch' && activeBranchIndex !== null) {
-    // Branch view: only show sprouts from this branch
-    filteredActive = active.filter(s => s.branchIndex === activeBranchIndex)
-    filteredCultivated = cultivated.filter(s => s.branchIndex === activeBranchIndex)
+  } else if ((viewMode === 'branch' && activeBranchIndex !== null) || (viewMode === 'overview' && hoveredBranchIndex !== null)) {
+    // Branch view OR hovering a branch: only show sprouts from this branch
+    const branchIdx = effectiveBranchIndex!
+    filteredActive = active.filter(s => s.branchIndex === branchIdx)
+    filteredCultivated = cultivated.filter(s => s.branchIndex === branchIdx)
   }
 
   // Update counts
@@ -234,6 +232,11 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   activeSproutsList.replaceChildren()
   cultivatedSproutsList.replaceChildren()
 
+  // Determine display mode: twig view, branch view (or hovering branch), or overview
+  const isHoveringBranch = viewMode === 'overview' && hoveredBranchIndex !== null
+  const showTwigGrouping = viewMode === 'branch' || isHoveringBranch
+  const branchIdxForTwigFolders = isHoveringBranch ? hoveredBranchIndex : activeBranchIndex
+
   if (viewMode === 'twig') {
     // Twig view: flat list, no grouping
     filteredActive.forEach(sprout => {
@@ -244,14 +247,14 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
       cultivatedSproutsList.append(item)
     })
-  } else if (viewMode === 'branch') {
-    // Branch view: group by twig
+  } else if (showTwigGrouping && branchIdxForTwigFolders !== null) {
+    // Branch view OR hovering branch: group by twig
     const activeByTwig = groupByTwig(filteredActive)
     const cultivatedByTwig = groupByTwig(filteredCultivated)
 
     activeByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
-      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
+      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
       sprouts.forEach(sprout => {
         const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
         folder.append(item)
@@ -261,7 +264,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
     cultivatedByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
-      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, activeBranchIndex!)
+      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
       sprouts.forEach(sprout => {
         const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
         folder.append(item)
@@ -269,7 +272,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       cultivatedSproutsList.append(folder)
     })
   } else {
-    // Overview: group by branch
+    // Overview (not hovering): group by branch
     const activeByBranch = groupByBranch(filteredActive)
     const cultivatedByBranch = groupByBranch(filteredCultivated)
 
@@ -323,8 +326,6 @@ function createBranchFolder(
   // Click navigates to branch view
   if (callbacks) {
     header.addEventListener('click', () => callbacks.onClick(branchIndex))
-    header.addEventListener('mouseenter', () => callbacks.onHoverStart(branchIndex))
-    header.addEventListener('mouseleave', () => callbacks.onHoverEnd())
   }
 
   return folder

@@ -1,7 +1,7 @@
 import type { AppContext } from '../types'
 import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
 import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
-import { updateScopedProgress } from './progress'
+import { updateScopedProgress, updateSidebarSprouts } from './progress'
 import type { NavigationCallbacks } from './navigation'
 import { updateFocus } from '../ui/node-ui'
 
@@ -16,8 +16,9 @@ export function previewBranchFromSidebar(ctx: AppContext, branchIndex: number): 
   setIsSidebarHover(true)
   setHoveredBranchIndex(branchIndex)
   updateVisibility(ctx)
-  // Update progress to show this branch's twig count
+  // Update progress and sprouts list to show this branch
   updateScopedProgress(ctx)
+  updateSidebarSprouts(ctx)
 }
 
 export function clearSidebarPreview(ctx: AppContext): void {
@@ -25,8 +26,9 @@ export function clearSidebarPreview(ctx: AppContext): void {
   setIsSidebarHover(false)
   setHoveredBranchIndex(null)
   updateVisibility(ctx)
-  // Reset progress to show trunk totals
+  // Reset progress and sprouts list to show trunk totals
   updateScopedProgress(ctx)
+  updateSidebarSprouts(ctx)
 }
 
 export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
@@ -41,6 +43,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       const focused = getFocusedNode()
       updateFocus(focused, ctx)
       updateScopedProgress(ctx)
+      updateSidebarSprouts(ctx)
     }
     scrollAccumulator = 0
   }
@@ -83,6 +86,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
       if (branchGroup) {
         updateFocus(branchGroup.branch, ctx)
         updateScopedProgress(ctx)
+        updateSidebarSprouts(ctx)
       }
     }
   }

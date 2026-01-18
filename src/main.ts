@@ -8,7 +8,7 @@ import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
 import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
-import { setupHoverBranch, previewBranchFromSidebar, clearSidebarPreview } from './features/hover-branch'
+import { setupHoverBranch } from './features/hover-branch'
 import { handleExport, handleImport, checkExportReminder } from './features/import-export'
 import {
   setViewMode,
@@ -207,29 +207,8 @@ const leafView = buildLeafView(mapPanel, {
 ctx.twigView = twigView
 ctx.leafView = leafView
 
-const { exportButton, sunLogButton, settingsButton } = getActionButtons(domResult.elements.shell)
+const { exportButton, settingsButton } = getActionButtons(domResult.elements.shell)
 exportButton.addEventListener('click', () => handleExport(ctx))
-
-// Sun Log - simple text display
-sunLogButton.addEventListener('click', () => {
-  if (sunLog.length === 0) {
-    alert('No sun entries yet.')
-    return
-  }
-  const text = sunLog.map(entry => {
-    const d = new Date(entry.timestamp)
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    const year = d.getFullYear()
-    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    const date = `${month}/${day}/${year} ${time}`
-    const target = entry.context.type === 'leaf'
-      ? `${entry.context.leafTitle} (${entry.context.twigLabel})`
-      : entry.context.twigLabel
-    return `[${date}] ${target}\n${entry.content}\n`
-  }).join('\n---\n\n')
-  alert(text)
-})
 
 // Settings dialog
 function populateSettingsForm(): void {
@@ -314,6 +293,245 @@ domResult.elements.settingsSaveBtn.addEventListener('click', () => {
   saveNotificationSettings(settings)
   closeSettingsDialog()
   setStatus(ctx.elements, 'Settings saved', 'info')
+})
+
+// Sun Log dialog - view all shine journal entries
+function formatSunLogTimestamp(dateStr: string): string {
+  const date = new Date(dateStr)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = date.getFullYear()
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${month}/${day}/${year} ${time}`
+}
+
+function populateSunLog(): void {
+  const entries = [...sunLog].reverse() // Reverse chronological (newest first)
+  const isEmpty = entries.length === 0
+
+  domResult.elements.sunLogDialogEmpty.style.display = isEmpty ? 'block' : 'none'
+  domResult.elements.sunLogDialogEntries.style.display = isEmpty ? 'none' : 'flex'
+
+  if (isEmpty) return
+
+  domResult.elements.sunLogDialogEntries.innerHTML = entries.map(entry => {
+    const context = entry.context.type === 'leaf'
+      ? `${entry.context.leafTitle} · ${entry.context.twigLabel}`
+      : entry.context.twigLabel
+    const timestamp = formatSunLogTimestamp(entry.timestamp)
+    const promptHtml = entry.prompt
+      ? `<p class="sun-log-entry-prompt">"${entry.prompt}"</p>`
+      : ''
+
+    return `
+      <div class="sun-log-entry">
+        <div class="sun-log-entry-header">
+          <span class="sun-log-entry-context">${context}</span>
+          <span class="sun-log-entry-timestamp">${timestamp}</span>
+        </div>
+        ${promptHtml}
+        <p class="sun-log-entry-content">${entry.content}</p>
+      </div>
+    `
+  }).join('')
+}
+
+function openSunLogDialog(): void {
+  populateSunLog()
+  domResult.elements.sunLogDialog.classList.remove('hidden')
+}
+
+function closeSunLogDialog(): void {
+  domResult.elements.sunLogDialog.classList.add('hidden')
+}
+
+// Click sun meter to open sun log
+domResult.elements.sunMeter.addEventListener('click', openSunLogDialog)
+
+domResult.elements.sunLogDialogClose.addEventListener('click', closeSunLogDialog)
+
+domResult.elements.sunLogDialog.addEventListener('click', (e) => {
+  if (e.target === domResult.elements.sunLogDialog) {
+    closeSunLogDialog()
+  }
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !domResult.elements.sunLogDialog.classList.contains('hidden')) {
+    e.preventDefault()
+    closeSunLogDialog()
+  }
+})
+
+// Water Can dialog - waterable sprouts + water log
+function formatWaterLogTimestamp(dateStr: string): string {
+  const date = new Date(dateStr)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = date.getFullYear()
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${month}/${day}/${year} ${time}`
+}
+
+type WaterableSprout = {
+  sproutId: string
+  twigId: string
+  title: string
+  twigLabel: string
+}
+
+type WaterLogEntry = {
+  timestamp: string
+  content: string
+  prompt?: string
+  sproutTitle: string
+  twigLabel: string
+}
+
+function getWaterableSprouts(): WaterableSprout[] {
+  const today = getDebugDate().toISOString().split('T')[0]
+  const waterable: WaterableSprout[] = []
+
+  for (const [nodeId, data] of Object.entries(nodeState)) {
+    if (!nodeId.includes('twig') || !data.sprouts) continue
+    const twigLabel = data.label || nodeId
+
+    for (const sprout of data.sprouts) {
+      if (sprout.state !== 'active') continue
+      const wateredToday = sprout.waterEntries?.some(e => e.timestamp.split('T')[0] === today) ?? false
+      if (!wateredToday) {
+        waterable.push({
+          sproutId: sprout.id,
+          twigId: nodeId,
+          title: sprout.title,
+          twigLabel,
+        })
+      }
+    }
+  }
+  return waterable
+}
+
+function getAllWaterEntries(): WaterLogEntry[] {
+  const entries: WaterLogEntry[] = []
+
+  for (const [nodeId, data] of Object.entries(nodeState)) {
+    if (!nodeId.includes('twig') || !data.sprouts) continue
+    const twigLabel = data.label || nodeId
+
+    for (const sprout of data.sprouts) {
+      if (!sprout.waterEntries) continue
+      for (const entry of sprout.waterEntries) {
+        entries.push({
+          timestamp: entry.timestamp,
+          content: entry.content,
+          prompt: entry.prompt,
+          sproutTitle: sprout.title,
+          twigLabel,
+        })
+      }
+    }
+  }
+
+  // Sort reverse chronological
+  return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+}
+
+function populateWaterCan(): void {
+  const waterable = getWaterableSprouts()
+  const logEntries = getAllWaterEntries()
+
+  // Waterable sprouts section
+  const hasWaterable = waterable.length > 0
+  domResult.elements.waterCanEmptySprouts.style.display = hasWaterable ? 'none' : 'block'
+  domResult.elements.waterCanSproutsList.style.display = hasWaterable ? 'flex' : 'none'
+
+  if (hasWaterable) {
+    domResult.elements.waterCanSproutsList.innerHTML = waterable.map(s => `
+      <div class="water-can-sprout-item" data-twig-id="${s.twigId}" data-sprout-id="${s.sproutId}">
+        <div class="water-can-sprout-info">
+          <span class="water-can-sprout-title">${s.title}</span>
+          <span class="water-can-sprout-meta">${s.twigLabel}</span>
+        </div>
+        <button type="button" class="action-btn action-btn-progress action-btn-water water-can-water-btn">Water</button>
+      </div>
+    `).join('')
+
+    // Wire up water buttons
+    domResult.elements.waterCanSproutsList.querySelectorAll('.water-can-water-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const item = (e.target as HTMLElement).closest('.water-can-sprout-item') as HTMLElement
+        const twigId = item.dataset.twigId!
+        const sproutId = item.dataset.sproutId!
+        closeWaterCanDialog()
+        // Open the individual water dialog via the water-dialog feature
+        const data = nodeState[twigId]
+        const sprout = data?.sprouts?.find(s => s.id === sproutId)
+        if (sprout) {
+          const twigLabel = data?.label || twigId
+          waterDialogApi.openWaterDialog({
+            id: sprout.id,
+            title: sprout.title,
+            twigId,
+            twigLabel,
+            season: sprout.season,
+          })
+        }
+      })
+    })
+  }
+
+  // Water log section
+  const hasLog = logEntries.length > 0
+  domResult.elements.waterCanEmptyLog.style.display = hasLog ? 'none' : 'block'
+  domResult.elements.waterCanLogEntries.style.display = hasLog ? 'flex' : 'none'
+
+  if (hasLog) {
+    domResult.elements.waterCanLogEntries.innerHTML = logEntries.map(entry => {
+      const timestamp = formatWaterLogTimestamp(entry.timestamp)
+      const promptHtml = entry.prompt
+        ? `<p class="water-can-log-entry-prompt">"${entry.prompt}"</p>`
+        : ''
+
+      return `
+        <div class="water-can-log-entry">
+          <div class="water-can-log-entry-header">
+            <span class="water-can-log-entry-context">${entry.sproutTitle} · ${entry.twigLabel}</span>
+            <span class="water-can-log-entry-timestamp">${timestamp}</span>
+          </div>
+          ${promptHtml}
+          <p class="water-can-log-entry-content">${entry.content}</p>
+        </div>
+      `
+    }).join('')
+  }
+}
+
+function openWaterCanDialog(): void {
+  populateWaterCan()
+  domResult.elements.waterCanDialog.classList.remove('hidden')
+}
+
+function closeWaterCanDialog(): void {
+  domResult.elements.waterCanDialog.classList.add('hidden')
+}
+
+// Click water meter to open water can
+domResult.elements.waterMeter.addEventListener('click', openWaterCanDialog)
+
+domResult.elements.waterCanDialogClose.addEventListener('click', closeWaterCanDialog)
+
+domResult.elements.waterCanDialog.addEventListener('click', (e) => {
+  if (e.target === domResult.elements.waterCanDialog) {
+    closeWaterCanDialog()
+  }
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !domResult.elements.waterCanDialog.classList.contains('hidden')) {
+    e.preventDefault()
+    closeWaterCanDialog()
+  }
 })
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
@@ -443,18 +661,12 @@ initSidebarSprouts(
   ctx,
   (sprout) => waterDialogApi.openWaterDialog(sprout),
   {
-    onHoverStart: (index) => previewBranchFromSidebar(ctx, index),
-    onHoverEnd: () => clearSidebarPreview(ctx),
-    onClick: (index) => {
-      clearSidebarPreview(ctx)
-      enterBranchView(index, ctx, navCallbacks)
-    }
+    onClick: (index) => enterBranchView(index, ctx, navCallbacks)
   },
   (twigId, branchIndex) => {
     // Navigate to twig view
     const twig = ctx.nodeLookup.get(twigId)
     if (twig) {
-      clearSidebarPreview(ctx)
       enterTwigView(twig, branchIndex, ctx, navCallbacks)
     }
   },
@@ -462,7 +674,6 @@ initSidebarSprouts(
     // Navigate to leaf view
     const twig = ctx.nodeLookup.get(twigId)
     if (twig) {
-      clearSidebarPreview(ctx)
       // Enter twig view first, then open leaf view
       enterTwigView(twig, branchIndex, ctx, navCallbacks)
       setViewModeState('leaf', branchIndex, twigId)
@@ -473,7 +684,6 @@ initSidebarSprouts(
     // Navigate to leaf view with graft form open
     const twig = ctx.nodeLookup.get(twigId)
     if (twig) {
-      clearSidebarPreview(ctx)
       enterTwigView(twig, branchIndex, ctx, navCallbacks)
       setViewModeState('leaf', branchIndex, twigId)
       ctx.leafView?.open(leafId, twigId, branchIndex, true) // startWithGraftForm = true

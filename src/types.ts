@@ -191,6 +191,18 @@ export type AppElements = {
   settingsHarvestCheckbox: HTMLInputElement
   settingsShineCheckbox: HTMLInputElement
   settingsSaveBtn: HTMLButtonElement
+  waterCanDialog: HTMLDivElement
+  waterCanDialogClose: HTMLButtonElement
+  waterCanEmptySprouts: HTMLParagraphElement
+  waterCanSproutsList: HTMLDivElement
+  waterCanEmptyLog: HTMLParagraphElement
+  waterCanLogEntries: HTMLDivElement
+  waterMeter: HTMLDivElement
+  sunLogDialog: HTMLDivElement
+  sunLogDialogClose: HTMLButtonElement
+  sunLogDialogEmpty: HTMLParagraphElement
+  sunLogDialogEntries: HTMLDivElement
+  sunMeter: HTMLDivElement
 }
 
 export type AppContext = {

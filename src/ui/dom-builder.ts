@@ -56,11 +56,6 @@ export function buildApp(
   exportButton.className = 'action-button'
   exportButton.textContent = 'Export'
 
-  const sunLogButton = document.createElement('button')
-  sunLogButton.type = 'button'
-  sunLogButton.className = 'action-button'
-  sunLogButton.textContent = 'Sun Log'
-
   const encyclopediaButtons = {
     garden: createEncyclopediaButton('🌱 Garden', 'garden'),
     lab: createEncyclopediaButton('🧬 Lab', 'lab'),
@@ -88,8 +83,7 @@ export function buildApp(
   actions.append(
     settingsButton,
     importButton,
-    exportButton,
-    sunLogButton
+    exportButton
   )
 
   // Global Soil meter
@@ -392,11 +386,9 @@ export function buildApp(
       <div class="progress-track">
         <span class="progress-fill" style="width: 0%"></span>
       </div>
-      <div class="progress-actions">
-        <button type="button" class="panel-button back-to-trunk">← Back to trunk</button>
-      </div>
     </section>
     <section class="panel-section sprouts-section">
+      <button type="button" class="panel-button back-to-trunk">← Back to trunk</button>
       <button type="button" class="sprouts-toggle is-expanded" data-section="active">
         <span class="sprouts-toggle-arrow">▼</span>
         <span class="sprouts-toggle-label">Growing</span>
@@ -1882,7 +1874,47 @@ export function buildApp(
     </div>
   `
 
-  shell.append(header, body, sproutsDialog, gardenGuideDialog, waterDialog, shineDialog, settingsDialog, futureIdeasFolder)
+  // Water Can dialog - waterable sprouts + water log
+  const waterCanDialog = document.createElement('div')
+  waterCanDialog.className = 'water-can-dialog hidden'
+  waterCanDialog.innerHTML = `
+    <div class="water-can-dialog-box">
+      <div class="water-can-dialog-header">
+        <h2 class="water-can-dialog-title">Watering Can</h2>
+        <button type="button" class="water-can-dialog-close">×</button>
+      </div>
+      <div class="water-can-dialog-body">
+        <div class="water-can-section water-can-sprouts-section">
+          <h3 class="water-can-section-title">Ready to Water</h3>
+          <p class="water-can-empty-sprouts">All sprouts watered today!</p>
+          <div class="water-can-sprouts-list"></div>
+        </div>
+        <div class="water-can-section water-can-log-section">
+          <h3 class="water-can-section-title">Water Log</h3>
+          <p class="water-can-empty-log">No water entries yet.</p>
+          <div class="water-can-log-entries"></div>
+        </div>
+      </div>
+    </div>
+  `
+
+  // Sun Log dialog - view all shine journal entries
+  const sunLogDialog = document.createElement('div')
+  sunLogDialog.className = 'sun-log-dialog hidden'
+  sunLogDialog.innerHTML = `
+    <div class="sun-log-dialog-box">
+      <div class="sun-log-dialog-header">
+        <h2 class="sun-log-dialog-title">Sun Log</h2>
+        <button type="button" class="sun-log-dialog-close">×</button>
+      </div>
+      <div class="sun-log-dialog-body">
+        <p class="sun-log-empty">No entries yet. Shine to reflect on your journey.</p>
+        <div class="sun-log-entries"></div>
+      </div>
+    </div>
+  `
+
+  shell.append(header, body, sproutsDialog, gardenGuideDialog, waterDialog, shineDialog, settingsDialog, waterCanDialog, sunLogDialog, futureIdeasFolder)
   appRoot.append(shell)
 
   const elements: AppElements = {
@@ -1945,12 +1977,23 @@ export function buildApp(
     settingsHarvestCheckbox: settingsDialog.querySelector<HTMLInputElement>('.settings-harvest-checkbox')!,
     settingsShineCheckbox: settingsDialog.querySelector<HTMLInputElement>('.settings-shine-checkbox')!,
     settingsSaveBtn: settingsDialog.querySelector<HTMLButtonElement>('.settings-save-btn')!,
+    waterCanDialog,
+    waterCanDialogClose: waterCanDialog.querySelector<HTMLButtonElement>('.water-can-dialog-close')!,
+    waterCanEmptySprouts: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-empty-sprouts')!,
+    waterCanSproutsList: waterCanDialog.querySelector<HTMLDivElement>('.water-can-sprouts-list')!,
+    waterCanEmptyLog: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-empty-log')!,
+    waterCanLogEntries: waterCanDialog.querySelector<HTMLDivElement>('.water-can-log-entries')!,
+    waterMeter,
+    sunLogDialog,
+    sunLogDialogClose: sunLogDialog.querySelector<HTMLButtonElement>('.sun-log-dialog-close')!,
+    sunLogDialogEmpty: sunLogDialog.querySelector<HTMLParagraphElement>('.sun-log-empty')!,
+    sunLogDialogEntries: sunLogDialog.querySelector<HTMLDivElement>('.sun-log-entries')!,
+    sunMeter,
   }
 
   // Wire up button handlers (will be connected to features in main.ts)
   settingsButton.dataset.action = 'settings'
   exportButton.dataset.action = 'export'
-  sunLogButton.dataset.action = 'sunlog'
   return {
     elements,
     branchGroups,
@@ -1990,13 +2033,11 @@ function getBloomDelay(twigIndex: number): number {
 export function getActionButtons(shell: HTMLDivElement): {
   settingsButton: HTMLButtonElement
   exportButton: HTMLButtonElement
-  sunLogButton: HTMLButtonElement
   encyclopediaButtons: HTMLButtonElement[]
 } {
   return {
     settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
     exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
-    sunLogButton: shell.querySelector<HTMLButtonElement>('[data-action="sunlog"]')!,
     encyclopediaButtons: Array.from(shell.querySelectorAll<HTMLButtonElement>('.encyclopedia-btn')),
   }
 }
