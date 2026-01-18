@@ -6,6 +6,7 @@ export type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
   onSoilMeterChange: () => void
   onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
+  onWaterComplete: () => void
 }
 
 // Parse watering prompts (skip comments and empty lines)
@@ -117,6 +118,7 @@ export function initWaterDialog(
     }
 
     closeWaterDialog()
+    callbacks.onWaterComplete()
   }
 
   // Wire up water dialog handlers

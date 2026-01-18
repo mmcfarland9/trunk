@@ -409,6 +409,9 @@ export function spendSun(cost: number = 1): boolean {
 // --- Reset All Resources ---
 
 export function resetResources(): void {
+  // Reset clock offset first so dates are real time
+  clockOffset = 0
+
   soilState.available = DEFAULT_SOIL_CAPACITY
   soilState.capacity = DEFAULT_SOIL_CAPACITY
   waterState.available = DEFAULT_WATER_CAPACITY
@@ -417,7 +420,24 @@ export function resetResources(): void {
   sunState.available = DEFAULT_SUN_CAPACITY
   sunState.capacity = DEFAULT_SUN_CAPACITY
   sunState.lastResetDate = getWeekString(new Date())
+
+  // Clear sun log so wasShoneThisWeek() returns false
+  sunLog.length = 0
+
+  // Clear soil log
+  soilLog.length = 0
+
+  // Clear water entries from all sprouts
+  for (const data of Object.values(nodeState)) {
+    if (data.sprouts) {
+      for (const sprout of data.sprouts) {
+        sprout.waterEntries = []
+      }
+    }
+  }
+
   saveResourceState()
+  saveState()
 }
 
 // --- Debug Clock ---

@@ -118,6 +118,7 @@ const waterDialogApi = initWaterDialog(ctx, {
   onWaterMeterChange: updateWaterMeter,
   onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
+  onWaterComplete: openWaterCanDialog,
 })
 
 const shineApi = initShine(ctx, {
@@ -692,7 +693,11 @@ domResult.elements.debugSoilResetBtn.addEventListener('click', () => {
   updateSoilMeter()
   updateWaterMeter()
   shineApi.updateSunMeter()
-  setStatus(ctx.elements, 'Resources reset to default', 'info')
+  // Reset clock display
+  domResult.elements.debugClockOffset.textContent = '+0d'
+  // Refresh sidebar sprouts (water state may have changed)
+  updateStats(ctx)
+  setStatus(ctx.elements, 'All resources and logs reset', 'info')
 })
 
 domResult.elements.debugClearSproutsBtn.addEventListener('click', () => {

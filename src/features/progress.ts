@@ -369,7 +369,7 @@ function createSproutItem(
   sprout: SproutWithLocation,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  onTwigClick?: SidebarTwigCallback,
+  _onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback,
   onGraftClick?: SidebarGraftCallback
 ): HTMLDivElement {
@@ -404,19 +404,7 @@ function createSproutItem(
   meta.className = 'sprout-item-meta'
   const endDateStr = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
 
-  // Make twig label clickable
-  const twigLink = document.createElement('button')
-  twigLink.type = 'button'
-  twigLink.className = 'sprout-twig-link'
-  twigLink.textContent = sprout.twigLabel
-  if (onTwigClick) {
-    twigLink.addEventListener('click', (e) => {
-      e.stopPropagation()
-      onTwigClick(sprout.twigId, sprout.branchIndex)
-    })
-  }
-
-  meta.append('· ', twigLink, ` · ${endDateStr}`)
+  meta.textContent = `· ${endDateStr}`
 
   info.append(meta)
   item.append(info)

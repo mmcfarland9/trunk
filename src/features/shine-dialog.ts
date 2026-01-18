@@ -134,7 +134,8 @@ export function initShine(
 
   function updateSunMeter() {
     const available = getSunAvailable()
-    ctx.elements.sunCircle.classList.toggle('is-filled', available > 0)
+    const canShine = available > 0 && !wasShoneThisWeek()
+    ctx.elements.sunCircle.classList.toggle('is-filled', canShine)
   }
 
   function updateRadiateButtonState() {
