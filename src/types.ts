@@ -78,6 +78,17 @@ export type SunState = {
   capacity: number
 }
 
+// Notification settings - stored locally, backend integration later
+export type NotificationSettings = {
+  email: string
+  checkInFrequency: 'daily' | 'every3days' | 'weekly' | 'off'
+  preferredTime: 'morning' | 'afternoon' | 'evening'
+  events: {
+    harvestReady: boolean
+    shineAvailable: boolean
+  }
+}
+
 // Legacy goal type (for migration)
 export type GoalType = 'binary' | 'continuous'
 
@@ -168,6 +179,14 @@ export type AppElements = {
   shineDialogClose: HTMLButtonElement
   shineDialogCancel: HTMLButtonElement
   shineDialogSave: HTMLButtonElement
+  settingsDialog: HTMLDivElement
+  settingsDialogClose: HTMLButtonElement
+  settingsEmailInput: HTMLInputElement
+  settingsFrequencyInputs: NodeListOf<HTMLInputElement>
+  settingsTimeInputs: NodeListOf<HTMLInputElement>
+  settingsHarvestCheckbox: HTMLInputElement
+  settingsShineCheckbox: HTMLInputElement
+  settingsSaveBtn: HTMLButtonElement
 }
 
 export type AppContext = {

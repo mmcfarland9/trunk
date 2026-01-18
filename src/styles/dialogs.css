@@ -1162,3 +1162,170 @@
   align-items: center;
   margin-top: var(--space-3);
 }
+
+/* === Settings Dialog === */
+.settings-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fade-in 150ms ease;
+}
+
+.settings-dialog.hidden {
+  display: none;
+}
+
+.settings-dialog-box {
+  width: min(420px, 90vw);
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: scale-in 200ms ease;
+}
+
+.settings-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-dialog-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.settings-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.settings-dialog-close:hover {
+  color: var(--ink);
+}
+
+.settings-dialog-body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-label {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.settings-email-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--ink);
+  transition: border-color 150ms ease;
+}
+
+.settings-email-input:focus {
+  outline: none;
+  border-color: var(--twig);
+}
+
+.settings-email-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.settings-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.settings-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+.settings-radio input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.settings-radio:has(input:checked) {
+  color: var(--ink);
+}
+
+.settings-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+.settings-checkbox input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.settings-checkbox:has(input:checked) {
+  color: var(--ink);
+}
+
+.settings-time-section.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.settings-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.settings-note {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  text-align: center;
+  font-style: italic;
+}

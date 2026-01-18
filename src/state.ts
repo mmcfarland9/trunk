@@ -1,4 +1,4 @@
-import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, Leaf } from './types'
+import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, Leaf, NotificationSettings } from './types'
 import { STORAGE_KEY } from './constants'
 import presetData from '../assets/trunk-map-preset.json'
 
@@ -908,4 +908,57 @@ export function isBranchView(): boolean {
 
 export function isTwigView(): boolean {
   return viewMode === 'twig' && activeTwigId !== null
+}
+
+// --- Notification Settings ---
+// Stored separately from main state for cleaner separation
+// Backend integration comes later - this is just local storage for now
+
+const SETTINGS_STORAGE_KEY = 'trunk-settings-v1'
+
+const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  email: '',
+  checkInFrequency: 'off',
+  preferredTime: 'morning',
+  events: {
+    harvestReady: true,
+    shineAvailable: true,
+  },
+}
+
+function loadNotificationSettings(): NotificationSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      // Merge with defaults to handle any missing fields
+      return {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        ...parsed,
+        events: {
+          ...DEFAULT_NOTIFICATION_SETTINGS.events,
+          ...parsed?.events,
+        },
+      }
+    }
+  } catch (error) {
+    console.warn('Could not load notification settings', error)
+  }
+  return { ...DEFAULT_NOTIFICATION_SETTINGS }
+}
+
+let notificationSettings: NotificationSettings = loadNotificationSettings()
+
+export function getNotificationSettings(): NotificationSettings {
+  return notificationSettings
+}
+
+export function saveNotificationSettings(settings: NotificationSettings): void {
+  notificationSettings = settings
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+    // TODO: sync settings to backend when available
+  } catch (error) {
+    console.warn('Could not save notification settings', error)
+  }
 }

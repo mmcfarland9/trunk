@@ -1,6 +1,7 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources, wasShoneThisWeek, canAffordSun, sunLog } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, resetResources, wasShoneThisWeek, canAffordSun, sunLog, getNotificationSettings, saveNotificationSettings } from './state'
+import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
@@ -198,7 +199,7 @@ const leafView = buildLeafView(mapPanel, {
 ctx.twigView = twigView
 ctx.leafView = leafView
 
-const { exportButton, sunLogButton } = getActionButtons(domResult.elements.shell)
+const { exportButton, sunLogButton, settingsButton } = getActionButtons(domResult.elements.shell)
 exportButton.addEventListener('click', () => handleExport(ctx))
 
 // Sun Log - simple text display
@@ -215,6 +216,91 @@ sunLogButton.addEventListener('click', () => {
     return `[${date}] ${target}\n${entry.content}\n`
   }).join('\n---\n\n')
   alert(text)
+})
+
+// Settings dialog
+function populateSettingsForm(): void {
+  const settings = getNotificationSettings()
+  domResult.elements.settingsEmailInput.value = settings.email
+
+  // Set frequency radio
+  domResult.elements.settingsFrequencyInputs.forEach(input => {
+    input.checked = input.value === settings.checkInFrequency
+  })
+
+  // Set time radio
+  domResult.elements.settingsTimeInputs.forEach(input => {
+    input.checked = input.value === settings.preferredTime
+  })
+
+  // Set checkboxes
+  domResult.elements.settingsHarvestCheckbox.checked = settings.events.harvestReady
+  domResult.elements.settingsShineCheckbox.checked = settings.events.shineAvailable
+
+  // Update time section disabled state
+  updateTimeSection(settings.checkInFrequency)
+}
+
+function updateTimeSection(frequency: string): void {
+  const timeSection = domResult.elements.settingsDialog.querySelector('.settings-time-section')
+  if (timeSection) {
+    timeSection.classList.toggle('is-disabled', frequency === 'off')
+  }
+}
+
+function getSettingsFromForm(): NotificationSettings {
+  let frequency: NotificationSettings['checkInFrequency'] = 'off'
+  domResult.elements.settingsFrequencyInputs.forEach(input => {
+    if (input.checked) frequency = input.value as NotificationSettings['checkInFrequency']
+  })
+
+  let preferredTime: NotificationSettings['preferredTime'] = 'morning'
+  domResult.elements.settingsTimeInputs.forEach(input => {
+    if (input.checked) preferredTime = input.value as NotificationSettings['preferredTime']
+  })
+
+  return {
+    email: domResult.elements.settingsEmailInput.value.trim(),
+    checkInFrequency: frequency,
+    preferredTime,
+    events: {
+      harvestReady: domResult.elements.settingsHarvestCheckbox.checked,
+      shineAvailable: domResult.elements.settingsShineCheckbox.checked,
+    },
+  }
+}
+
+function openSettingsDialog(): void {
+  populateSettingsForm()
+  domResult.elements.settingsDialog.classList.remove('hidden')
+}
+
+function closeSettingsDialog(): void {
+  domResult.elements.settingsDialog.classList.add('hidden')
+}
+
+settingsButton.addEventListener('click', openSettingsDialog)
+
+domResult.elements.settingsDialogClose.addEventListener('click', closeSettingsDialog)
+
+domResult.elements.settingsDialog.addEventListener('click', (e) => {
+  if (e.target === domResult.elements.settingsDialog) {
+    closeSettingsDialog()
+  }
+})
+
+// Update time section when frequency changes
+domResult.elements.settingsFrequencyInputs.forEach(input => {
+  input.addEventListener('change', () => {
+    updateTimeSection(input.value)
+  })
+})
+
+domResult.elements.settingsSaveBtn.addEventListener('click', () => {
+  const settings = getSettingsFromForm()
+  saveNotificationSettings(settings)
+  closeSettingsDialog()
+  setStatus(ctx.elements, 'Settings saved', 'info')
 })
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))

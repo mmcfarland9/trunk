@@ -1799,7 +1799,84 @@ export function buildApp(
     </div>
   `
 
-  shell.append(header, body, sproutsDialog, gardenGuideDialog, waterDialog, shineDialog, futureIdeasFolder)
+  // Settings dialog
+  const settingsDialog = document.createElement('div')
+  settingsDialog.className = 'settings-dialog hidden'
+  settingsDialog.innerHTML = `
+    <div class="settings-dialog-box">
+      <div class="settings-dialog-header">
+        <h2 class="settings-dialog-title">Settings</h2>
+        <button type="button" class="settings-dialog-close">×</button>
+      </div>
+      <div class="settings-dialog-body">
+        <div class="settings-section">
+          <label class="settings-label">Email</label>
+          <input type="email" class="settings-email-input" placeholder="your@email.com" />
+        </div>
+
+        <div class="settings-section">
+          <label class="settings-label">Check-in Reminders</label>
+          <div class="settings-radio-group settings-frequency-group">
+            <label class="settings-radio">
+              <input type="radio" name="frequency" value="daily" />
+              <span>Daily</span>
+            </label>
+            <label class="settings-radio">
+              <input type="radio" name="frequency" value="every3days" />
+              <span>Every 3 days</span>
+            </label>
+            <label class="settings-radio">
+              <input type="radio" name="frequency" value="weekly" />
+              <span>Weekly</span>
+            </label>
+            <label class="settings-radio">
+              <input type="radio" name="frequency" value="off" />
+              <span>Off</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section settings-time-section">
+          <label class="settings-label">Preferred Time</label>
+          <div class="settings-radio-group settings-time-group">
+            <label class="settings-radio">
+              <input type="radio" name="time" value="morning" />
+              <span>Morning</span>
+            </label>
+            <label class="settings-radio">
+              <input type="radio" name="time" value="afternoon" />
+              <span>Afternoon</span>
+            </label>
+            <label class="settings-radio">
+              <input type="radio" name="time" value="evening" />
+              <span>Evening</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <label class="settings-label">Event Notifications</label>
+          <div class="settings-checkbox-group">
+            <label class="settings-checkbox">
+              <input type="checkbox" class="settings-harvest-checkbox" />
+              <span>Sprout ready to harvest</span>
+            </label>
+            <label class="settings-checkbox">
+              <input type="checkbox" class="settings-shine-checkbox" />
+              <span>Shine available</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-dialog-actions">
+          <button type="button" class="action-btn action-btn-progress action-btn-twig settings-save-btn">Save</button>
+        </div>
+        <p class="settings-note">Email notifications coming soon</p>
+      </div>
+    </div>
+  `
+
+  shell.append(header, body, sproutsDialog, gardenGuideDialog, waterDialog, shineDialog, settingsDialog, futureIdeasFolder)
   appRoot.append(shell)
 
   const elements: AppElements = {
@@ -1854,6 +1931,14 @@ export function buildApp(
     shineDialogClose: shineDialog.querySelector<HTMLButtonElement>('.shine-dialog-close')!,
     shineDialogCancel: shineDialog.querySelector<HTMLButtonElement>('.shine-dialog-cancel')!,
     shineDialogSave: shineDialog.querySelector<HTMLButtonElement>('.shine-dialog-save')!,
+    settingsDialog,
+    settingsDialogClose: settingsDialog.querySelector<HTMLButtonElement>('.settings-dialog-close')!,
+    settingsEmailInput: settingsDialog.querySelector<HTMLInputElement>('.settings-email-input')!,
+    settingsFrequencyInputs: settingsDialog.querySelectorAll<HTMLInputElement>('input[name="frequency"]'),
+    settingsTimeInputs: settingsDialog.querySelectorAll<HTMLInputElement>('input[name="time"]'),
+    settingsHarvestCheckbox: settingsDialog.querySelector<HTMLInputElement>('.settings-harvest-checkbox')!,
+    settingsShineCheckbox: settingsDialog.querySelector<HTMLInputElement>('.settings-shine-checkbox')!,
+    settingsSaveBtn: settingsDialog.querySelector<HTMLButtonElement>('.settings-save-btn')!,
   }
 
   // Wire up button handlers (will be connected to features in main.ts)
