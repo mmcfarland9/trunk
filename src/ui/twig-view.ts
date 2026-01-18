@@ -153,13 +153,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
           </div>
         </div>
-        <div class="twig-nav-row">
-          <button type="button" class="twig-back-btn">< back to branch</button>
-          <div class="twig-nav-arrows">
-            <button type="button" class="twig-prev-btn" title="Previous twig">prev</button>
-            <button type="button" class="twig-next-btn" title="Next twig">next</button>
-          </div>
-        </div>
       </div>
       <div class="sprout-column sprout-active">
         <h3 class="column-title">Growing <span class="active-count">(0)</span></h3>
@@ -184,7 +177,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   mapPanel.append(container)
 
   // Element references
-  const backBtn = container.querySelector<HTMLButtonElement>('.twig-back-btn')!
   const titleInput = container.querySelector<HTMLInputElement>('.twig-title-input')!
   const noteInput = container.querySelector<HTMLTextAreaElement>('.twig-note-input')!
   const sproutTitleInput = container.querySelector<HTMLInputElement>('.sprout-title-input')!
@@ -205,8 +197,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   const confirmMessage = container.querySelector<HTMLParagraphElement>('.confirm-dialog-message')!
   const confirmCancelBtn = container.querySelector<HTMLButtonElement>('.confirm-dialog-cancel')!
   const confirmConfirmBtn = container.querySelector<HTMLButtonElement>('.confirm-dialog-confirm')!
-  const prevBtn = container.querySelector<HTMLButtonElement>('.twig-prev-btn')!
-  const nextBtn = container.querySelector<HTMLButtonElement>('.twig-next-btn')!
 
   // Form state
   let selectedSeason: SproutSeason | null = null
@@ -800,26 +790,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     callbacks.onSoilChange?.()
   })
 
-  // Back button
-  backBtn.addEventListener('click', () => {
-    close()
-    callbacks.onClose()
-  })
-
-  // Navigation buttons
-  prevBtn.addEventListener('click', () => {
-    if (!callbacks.onNavigate) return
-    const prevTwig = callbacks.onNavigate('prev')
-    if (prevTwig) open(prevTwig)
-  })
-
-  nextBtn.addEventListener('click', () => {
-    if (!callbacks.onNavigate) return
-    const nextTwig = callbacks.onNavigate('next')
-    if (nextTwig) open(nextTwig)
-  })
-
-  // Keyboard handler
+  // Keyboard handler (arrow keys for secret twig navigation)
   function handleKeydown(e: KeyboardEvent): void {
     if (container.classList.contains('hidden')) return
 

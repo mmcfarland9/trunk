@@ -153,6 +153,7 @@ export type AppElements = {
   progressCount: HTMLParagraphElement
   progressFill: HTMLSpanElement
   backToTrunkButton: HTMLButtonElement
+  backToBranchButton: HTMLButtonElement
   activeSproutsToggle: HTMLButtonElement
   activeSproutsList: HTMLDivElement
   cultivatedSproutsToggle: HTMLButtonElement

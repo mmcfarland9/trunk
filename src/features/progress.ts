@@ -16,7 +16,7 @@ function countActiveSproutsForTwigs(twigs: HTMLButtonElement[]): number {
 }
 
 export function updateScopedProgress(ctx: AppContext): void {
-  const { progressCount, progressFill, backToTrunkButton } = ctx.elements
+  const { progressCount, progressFill, backToTrunkButton, backToBranchButton } = ctx.elements
   const { branchGroups } = ctx
   const viewMode = getViewMode()
   const hoveredIndex = getHoveredBranchIndex()
@@ -26,8 +26,10 @@ export function updateScopedProgress(ctx: AppContext): void {
     ? getActiveBranchIndex()
     : hoveredIndex
 
-  // Show "Back to trunk" only in actual branch view (not when hovering)
+  // Show "Back to trunk" only in actual branch view (not when hovering or in twig view)
   backToTrunkButton.style.display = viewMode === 'branch' ? '' : 'none'
+  // Show "Back to branch" only in twig view
+  backToBranchButton.style.display = viewMode === 'twig' ? '' : 'none'
 
   if (activeBranchIndex !== null) {
     const branchGroup = branchGroups[activeBranchIndex]

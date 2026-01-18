@@ -3,7 +3,8 @@
 .panel-section { padding: var(--space-2) 0; flex-shrink: 0; }
 .panel-section.sprouts-section { padding: 0; flex-shrink: 1; position: relative; padding-top: 1.5rem; }
 .panel-section.is-empty { display: none; }
-.back-to-trunk {
+.back-to-trunk,
+.back-to-branch {
   position: absolute;
   top: 0;
   left: 0;

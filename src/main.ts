@@ -717,6 +717,10 @@ domResult.elements.backToTrunkButton.addEventListener('click', () => {
   returnToOverview(ctx, navCallbacks)
 })
 
+domResult.elements.backToBranchButton.addEventListener('click', () => {
+  returnToBranchView(ctx, navCallbacks)
+})
+
 // Initialize sidebar sprout sections with branch hover/click callbacks
 initSidebarSprouts(
   ctx,

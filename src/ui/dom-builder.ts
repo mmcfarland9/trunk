@@ -373,6 +373,7 @@ export function buildApp(
     </section>
     <section class="panel-section sprouts-section">
       <button type="button" class="panel-button back-to-trunk">← Back to trunk</button>
+      <button type="button" class="panel-button back-to-branch">← Back to branch</button>
       <button type="button" class="sprouts-toggle is-expanded" data-section="active">
         <span class="sprouts-toggle-arrow">▼</span>
         <span class="sprouts-toggle-label">Growing</span>
@@ -1924,6 +1925,7 @@ export function buildApp(
     progressCount: sidePanel.querySelector<HTMLParagraphElement>('.progress-count')!,
     progressFill: sidePanel.querySelector<HTMLSpanElement>('.progress-fill')!,
     backToTrunkButton: sidePanel.querySelector<HTMLButtonElement>('.back-to-trunk')!,
+    backToBranchButton: sidePanel.querySelector<HTMLButtonElement>('.back-to-branch')!,
     activeSproutsToggle: sidePanel.querySelector<HTMLButtonElement>('.sprouts-toggle[data-section="active"]')!,
     activeSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="active"]')!,
     cultivatedSproutsToggle: sidePanel.querySelector<HTMLButtonElement>('.sprouts-toggle[data-section="cultivated"]')!,
