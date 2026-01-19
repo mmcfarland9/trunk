@@ -64,18 +64,6 @@ function runMigrations(raw: Record<string, unknown>): StoredState {
   }
 }
 
-// Journal entry cap - prevents localStorage overflow over decades
-const MAX_WATER_ENTRIES_PER_SPROUT = 365  // 1 year of daily entries
-const MAX_SUN_ENTRIES_PER_TWIG = 52     // 1 year of weekly entries
-
-function capJournalEntries(sprout: Sprout): void {
-  if (sprout.waterEntries && sprout.waterEntries.length > MAX_WATER_ENTRIES_PER_SPROUT) {
-    // Keep most recent entries, remove oldest
-    sprout.waterEntries = sprout.waterEntries.slice(-MAX_WATER_ENTRIES_PER_SPROUT)
-  }
-  // Sun entries are now at twig level, not sprout level
-}
-
 // --- Resource System (Unified) ---
 // All resources (soil, water, sun) stored together for simpler backup/migration.
 
@@ -897,28 +885,13 @@ export function addSoilEntry(amount: number, reason: string, context?: string): 
 
 export function saveState(onSaved?: () => void): void {
   try {
-    // Cap journal entries before saving to prevent unbounded growth
-    Object.values(nodeState).forEach(data => {
-      data.sprouts?.forEach(capJournalEntries)
-    })
-
-    // Cap sun log to prevent unbounded growth (52 weeks = 1 year of entries)
-    const cappedSunLog = sunLog.length > MAX_SUN_ENTRIES_PER_TWIG
-      ? sunLog.slice(-MAX_SUN_ENTRIES_PER_TWIG)
-      : sunLog
-
-    // Cap soil log to prevent unbounded growth (keep last 200 entries)
-    const MAX_SOIL_LOG_ENTRIES = 200
-    const cappedSoilLog = soilLog.length > MAX_SOIL_LOG_ENTRIES
-      ? soilLog.slice(-MAX_SOIL_LOG_ENTRIES)
-      : soilLog
-
     // Save with version for future migrations
+    // No caps on logs - full history preserved for accurate state reconstruction
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       _version: CURRENT_SCHEMA_VERSION,
       nodes: nodeState,
-      sunLog: cappedSunLog,
-      soilLog: cappedSoilLog,
+      sunLog,
+      soilLog,
     }))
     lastSavedAt = new Date()
     onSaved?.()
