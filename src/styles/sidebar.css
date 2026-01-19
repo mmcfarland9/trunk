@@ -216,7 +216,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  flex: 1;
+  min-width: 0;
 }
 
 .sprout-item-title-link {
@@ -228,6 +229,9 @@
   text-decoration: underline;
   text-decoration-color: transparent;
   transition: color 100ms ease, text-decoration-color 100ms ease;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sprout-item-title-link:hover {
@@ -258,11 +262,18 @@
 
 /* Sidebar action buttons - hover reveal behavior */
 .sidebar-action-btn {
-  margin-left: auto;
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 100ms ease;
+  font-size: 0.6rem;
+  padding: 0.15rem 0.4rem;
 }
 
 .sprout-item:hover .sidebar-action-btn {
   opacity: 1;
+  pointer-events: auto;
 }
