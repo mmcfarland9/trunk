@@ -1,6 +1,6 @@
 import type { AppContext } from '../types'
 import wateringPromptsRaw from '../assets/watering-prompts.txt?raw'
-import { nodeState, getDebugDate, spendWater, canAffordWater, recoverSoil, addWaterEntry, getSoilRecoveryRate } from '../state'
+import { nodeState, spendWater, canAffordWater, recoverSoil, addWaterEntry, getSoilRecoveryRate, wasWateredThisWeek } from '../state'
 
 export type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
@@ -36,14 +36,12 @@ function getRandomPrompt(): string {
   return prompt
 }
 
-function wasWateredToday(twigId: string, sproutId: string): boolean {
+function wasSproutWateredThisWeek(twigId: string, sproutId: string): boolean {
   const data = nodeState[twigId]
   if (!data?.sprouts) return false
   const sprout = data.sprouts.find(s => s.id === sproutId)
-  if (!sprout?.waterEntries?.length) return false
-
-  const today = getDebugDate().toISOString().split('T')[0]
-  return sprout.waterEntries.some(entry => entry.timestamp.split('T')[0] === today)
+  if (!sprout) return false
+  return wasWateredThisWeek(sprout)
 }
 
 export type WaterDialogApi = {
@@ -64,9 +62,9 @@ export function initWaterDialog(
   }
 
   function openWaterDialog(sprout: { id: string; title: string; twigId: string; twigLabel: string; season: string }) {
-    // Check if already watered today
-    if (wasWateredToday(sprout.twigId, sprout.id)) {
-      callbacks.onSetStatus('Already watered today! Come back tomorrow.', 'warning')
+    // Check if already watered this week
+    if (wasSproutWateredThisWeek(sprout.twigId, sprout.id)) {
+      callbacks.onSetStatus('Already watered this week!', 'warning')
       return
     }
 

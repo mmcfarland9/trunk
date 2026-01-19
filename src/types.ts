@@ -192,8 +192,8 @@ export type AppElements = {
   settingsSaveBtn: HTMLButtonElement
   waterCanDialog: HTMLDivElement
   waterCanDialogClose: HTMLButtonElement
-  waterCanEmptySprouts: HTMLParagraphElement
-  waterCanSproutsList: HTMLDivElement
+  waterCanStatusText: HTMLParagraphElement
+  waterCanStatusReset: HTMLParagraphElement
   waterCanEmptyLog: HTMLParagraphElement
   waterCanLogEntries: HTMLDivElement
   waterMeter: HTMLDivElement
@@ -205,6 +205,7 @@ export type AppElements = {
   sunLogShineJournal: HTMLTextAreaElement
   sunLogShineBtn: HTMLButtonElement
   sunLogShineShone: HTMLDivElement
+  sunLogShineShoneReset: HTMLParagraphElement
   sunLogDialogEmpty: HTMLParagraphElement
   sunLogDialogEntries: HTMLDivElement
   sunMeter: HTMLDivElement

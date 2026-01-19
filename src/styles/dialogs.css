@@ -1402,6 +1402,34 @@
   gap: var(--space-5);
 }
 
+/* Status box - mirrors Sun Ledge styling but with blue */
+.water-can-status-box {
+  background: rgba(70, 130, 180, 0.06);
+  border: 1px solid rgba(70, 130, 180, 0.2);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.water-can-status-text {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--water);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.water-can-status-reset {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.water-can-status-reset.hidden {
+  display: none;
+}
+
 .water-can-section-title {
   margin: 0 0 var(--space-3) 0;
   font-family: var(--font-ascii);
@@ -1666,6 +1694,12 @@
   color: var(--sun);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.sun-log-shine-shone-reset {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
 }
 
 .sun-log-section-title {

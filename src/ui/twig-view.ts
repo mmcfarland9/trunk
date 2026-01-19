@@ -6,7 +6,6 @@ import {
   getActiveSprouts,
   getHistorySprouts,
   getDebugNow,
-  getDebugDate,
   calculateSoilCost,
   getCapacityReward,
   getSoilAvailable,
@@ -18,6 +17,7 @@ import {
   getSproutsByLeaf,
   createLeaf,
   getSoilRecoveryRate,
+  wasWateredThisWeek,
 } from '../state'
 
 export type TwigViewCallbacks = {
@@ -108,11 +108,7 @@ function getDaysRemaining(sprout: Sprout): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
-function wasWateredToday(sprout: Sprout): boolean {
-  if (!sprout.waterEntries?.length) return false
-  const today = getDebugDate().toISOString().split('T')[0]
-  return sprout.waterEntries.some(entry => entry.timestamp.split('T')[0] === today)
-}
+// wasWateredThisWeek is now imported from state.ts
 
 export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallbacks): TwigViewApi {
   const container = document.createElement('div')
@@ -316,7 +312,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const progress = getGrowthProgress(s)
     const daysLeft = getDaysRemaining(s)
     const hasLeaf = !!s.leafId
-    const watered = wasWateredToday(s)
+    const watered = wasWateredThisWeek(s)
 
     const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
     const bloomHtml = hasBloom ? `

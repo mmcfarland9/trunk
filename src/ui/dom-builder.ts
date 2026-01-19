@@ -1838,7 +1838,7 @@ export function buildApp(
     </div>
   `
 
-  // Water Can dialog - waterable sprouts + water log
+  // Water Can dialog - status box + water log
   const waterCanDialog = document.createElement('div')
   waterCanDialog.className = 'water-can-dialog hidden'
   waterCanDialog.innerHTML = `
@@ -1848,10 +1848,9 @@ export function buildApp(
         <button type="button" class="water-can-dialog-close">×</button>
       </div>
       <div class="water-can-dialog-body">
-        <div class="water-can-section water-can-sprouts-section">
-          <h3 class="water-can-section-title">Ready to Water</h3>
-          <p class="water-can-empty-sprouts">All sprouts watered today!</p>
-          <div class="water-can-sprouts-list"></div>
+        <div class="water-can-status-box">
+          <p class="water-can-status-text"></p>
+          <p class="water-can-status-reset hidden"></p>
         </div>
         <div class="water-can-section water-can-log-section">
           <h3 class="water-can-section-title">Water Log</h3>
@@ -1884,6 +1883,7 @@ export function buildApp(
         </div>
         <div class="sun-log-shine-shone">
           <p class="sun-log-shine-shone-text">✓ Shone this week</p>
+          <p class="sun-log-shine-shone-reset"></p>
         </div>
         <h3 class="sun-log-section-title">Past Reflections</h3>
         <p class="sun-log-empty">No entries yet.</p>
@@ -1964,8 +1964,8 @@ export function buildApp(
     settingsSaveBtn: settingsDialog.querySelector<HTMLButtonElement>('.settings-save-btn')!,
     waterCanDialog,
     waterCanDialogClose: waterCanDialog.querySelector<HTMLButtonElement>('.water-can-dialog-close')!,
-    waterCanEmptySprouts: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-empty-sprouts')!,
-    waterCanSproutsList: waterCanDialog.querySelector<HTMLDivElement>('.water-can-sprouts-list')!,
+    waterCanStatusText: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-status-text')!,
+    waterCanStatusReset: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-status-reset')!,
     waterCanEmptyLog: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-empty-log')!,
     waterCanLogEntries: waterCanDialog.querySelector<HTMLDivElement>('.water-can-log-entries')!,
     waterMeter,
@@ -1977,6 +1977,7 @@ export function buildApp(
     sunLogShineJournal: sunLogDialog.querySelector<HTMLTextAreaElement>('.sun-log-shine-journal')!,
     sunLogShineBtn: sunLogDialog.querySelector<HTMLButtonElement>('.sun-log-shine-btn')!,
     sunLogShineShone: sunLogDialog.querySelector<HTMLDivElement>('.sun-log-shine-shone')!,
+    sunLogShineShoneReset: sunLogDialog.querySelector<HTMLParagraphElement>('.sun-log-shine-shone-reset')!,
     sunLogDialogEmpty: sunLogDialog.querySelector<HTMLParagraphElement>('.sun-log-empty')!,
     sunLogDialogEntries: sunLogDialog.querySelector<HTMLDivElement>('.sun-log-entries')!,
     sunMeter,

@@ -204,6 +204,70 @@ export function getSunRecoveryRate(): number {
 const DEFAULT_WATER_CAPACITY = 3
 const DEFAULT_SUN_CAPACITY = 1  // Weekly, so just 1
 
+// --- Reset Time System ---
+// Both water (daily) and sun (weekly) reset at 6:00 AM
+const RESET_HOUR = 6 // 6:00 AM local time
+
+// Get the most recent daily reset time (6am today or yesterday if before 6am)
+export function getTodayResetTime(): Date {
+  const now = getDebugDate()
+  const reset = new Date(now)
+  reset.setHours(RESET_HOUR, 0, 0, 0)
+
+  // If we haven't hit 6am yet, reset time is yesterday at 6am
+  if (now < reset) {
+    reset.setDate(reset.getDate() - 1)
+  }
+  return reset
+}
+
+// Get the most recent weekly reset time (Sunday at 6am)
+export function getWeekResetTime(): Date {
+  const now = getDebugDate()
+  const reset = new Date(now)
+  reset.setHours(RESET_HOUR, 0, 0, 0)
+
+  // Find most recent Sunday
+  const daysSinceSunday = reset.getDay() // 0 = Sunday
+  reset.setDate(reset.getDate() - daysSinceSunday)
+
+  // If today is Sunday but before 6am, go back a week
+  if (now.getDay() === 0 && now < reset) {
+    reset.setDate(reset.getDate() - 7)
+  }
+
+  return reset
+}
+
+// Get next daily reset time (tomorrow at 6am, or today at 6am if before 6am)
+export function getNextWaterReset(): Date {
+  const reset = getTodayResetTime()
+  reset.setDate(reset.getDate() + 1)
+  return reset
+}
+
+// Get next weekly reset time (next Sunday at 6am)
+export function getNextSunReset(): Date {
+  const reset = getWeekResetTime()
+  reset.setDate(reset.getDate() + 7)
+  return reset
+}
+
+// Format reset time as "Resets Wed 01/22 at 6:00 AM"
+export function formatResetTime(date: Date): string {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const day = days[date.getDay()]
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const dayNum = String(date.getDate()).padStart(2, '0')
+
+  let hours = date.getHours()
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  hours = hours % 12 || 12
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `Resets ${day} ${month}/${dayNum} at ${hours}:${minutes} ${ampm}`
+}
+
 type ResourceStoredState = {
   soil: SoilState
   water: WaterState & { lastResetDate?: string }
@@ -336,22 +400,29 @@ export function recoverPartialSoil(amount: number, fraction: number, reason?: st
   saveResourceState()
 }
 
-// --- Water API ---
+// --- Water API (Derived from logs) ---
+// Water availability is derived from waterEntries across all sprouts.
+// No stored counter - timestamps are the truth.
 
-export function checkWaterDailyReset(): boolean {
-  const today = getDateString(getDebugDate())
-  if (waterState.lastResetDate !== today) {
-    waterState.available = waterState.capacity
-    waterState.lastResetDate = today
-    saveResourceState()
-    return true
+// Count water entries since today's reset time (6am)
+export function getWaterUsedToday(): number {
+  const resetTime = getTodayResetTime()
+  let count = 0
+
+  for (const data of Object.values(nodeState)) {
+    for (const sprout of data.sprouts ?? []) {
+      for (const entry of sprout.waterEntries ?? []) {
+        if (new Date(entry.timestamp) >= resetTime) {
+          count++
+        }
+      }
+    }
   }
-  return false
+  return count
 }
 
 export function getWaterAvailable(): number {
-  checkWaterDailyReset()
-  return waterState.available
+  return Math.max(0, waterState.capacity - getWaterUsedToday())
 }
 
 export function getWaterCapacity(): number {
@@ -359,34 +430,34 @@ export function getWaterCapacity(): number {
 }
 
 export function canAffordWater(cost: number = 1): boolean {
-  checkWaterDailyReset()
-  return waterState.available >= cost
+  return getWaterAvailable() >= cost
 }
 
+// spendWater now just validates - the actual "spending" happens when waterEntry is added
 export function spendWater(cost: number = 1): boolean {
-  checkWaterDailyReset()
-  if (!canAffordWater(cost)) return false
-  waterState.available -= cost
-  saveResourceState()
-  return true
+  return canAffordWater(cost)
 }
 
-// --- Sun API (Weekly reset for planning/reflection) ---
+// Check if a sprout was watered this week (for per-sprout weekly cooldown)
+// Sprouts only need watering once per week - prevents fatigue
+export function wasWateredThisWeek(sprout: Sprout): boolean {
+  if (!sprout.waterEntries?.length) return false
+  const resetTime = getWeekResetTime()
+  return sprout.waterEntries.some(entry => new Date(entry.timestamp) >= resetTime)
+}
 
-export function checkSunWeeklyReset(): boolean {
-  const thisWeek = getWeekString(getDebugDate())
-  if (sunState.lastResetDate !== thisWeek) {
-    sunState.available = sunState.capacity
-    sunState.lastResetDate = thisWeek
-    saveResourceState()
-    return true
-  }
-  return false
+// --- Sun API (Derived from logs) ---
+// Sun availability is derived from sunLog entries.
+// No stored counter - timestamps are the truth.
+
+// Count sun entries since this week's reset time (Sunday 6am)
+export function getSunUsedThisWeek(): number {
+  const resetTime = getWeekResetTime()
+  return sunLog.filter(entry => new Date(entry.timestamp) >= resetTime).length
 }
 
 export function getSunAvailable(): number {
-  checkSunWeeklyReset()
-  return sunState.available
+  return Math.max(0, sunState.capacity - getSunUsedThisWeek())
 }
 
 export function getSunCapacity(): number {
@@ -394,16 +465,12 @@ export function getSunCapacity(): number {
 }
 
 export function canAffordSun(cost: number = 1): boolean {
-  checkSunWeeklyReset()
-  return sunState.available >= cost
+  return getSunAvailable() >= cost
 }
 
+// spendSun now just validates - the actual "spending" happens when sunLog entry is added
 export function spendSun(cost: number = 1): boolean {
-  checkSunWeeklyReset()
-  if (!canAffordSun(cost)) return false
-  sunState.available -= cost
-  saveResourceState()
-  return true
+  return canAffordSun(cost)
 }
 
 // --- Reset All Resources ---

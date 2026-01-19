@@ -1,6 +1,6 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate } from '../state'
+import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate, wasWateredThisWeek } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -423,9 +423,8 @@ function createSproutItem(
 
     // Check if sprout is ready (on or past due date)
     const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
-    // Check if already watered today
-    const today = getDebugDate().toISOString().split('T')[0]
-    const watered = sprout.waterEntries?.some(entry => entry.timestamp.split('T')[0] === today) ?? false
+    // Check if already watered this week (per-sprout weekly cooldown)
+    const watered = wasWateredThisWeek(sprout)
 
     if (isReady) {
       waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'

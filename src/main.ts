@@ -1,6 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -431,43 +431,12 @@ function formatWaterLogTimestamp(dateStr: string): string {
   return `${month}/${day}/${year} ${time}`
 }
 
-type WaterableSprout = {
-  sproutId: string
-  twigId: string
-  title: string
-  twigLabel: string
-}
-
 type WaterLogEntry = {
   timestamp: string
   content: string
   prompt?: string
   sproutTitle: string
   twigLabel: string
-}
-
-function getWaterableSprouts(): WaterableSprout[] {
-  const today = getDebugDate().toISOString().split('T')[0]
-  const waterable: WaterableSprout[] = []
-
-  for (const [nodeId, data] of Object.entries(nodeState)) {
-    if (!nodeId.includes('twig') || !data.sprouts) continue
-    const twigLabel = data.label || nodeId
-
-    for (const sprout of data.sprouts) {
-      if (sprout.state !== 'active') continue
-      const wateredToday = sprout.waterEntries?.some(e => e.timestamp.split('T')[0] === today) ?? false
-      if (!wateredToday) {
-        waterable.push({
-          sproutId: sprout.id,
-          twigId: nodeId,
-          title: sprout.title,
-          twigLabel,
-        })
-      }
-    }
-  }
-  return waterable
 }
 
 function getAllWaterEntries(): WaterLogEntry[] {
@@ -496,47 +465,19 @@ function getAllWaterEntries(): WaterLogEntry[] {
 }
 
 function populateWaterCan(): void {
-  const waterable = getWaterableSprouts()
   const logEntries = getAllWaterEntries()
 
-  // Waterable sprouts section
-  const hasWaterable = waterable.length > 0
-  domResult.elements.waterCanEmptySprouts.style.display = hasWaterable ? 'none' : 'block'
-  domResult.elements.waterCanSproutsList.style.display = hasWaterable ? 'flex' : 'none'
+  // Status box - show water remaining or empty + reset time
+  const available = getWaterAvailable()
+  const capacity = getWaterCapacity()
 
-  if (hasWaterable) {
-    domResult.elements.waterCanSproutsList.innerHTML = waterable.map(s => `
-      <div class="water-can-sprout-item" data-twig-id="${s.twigId}" data-sprout-id="${s.sproutId}">
-        <div class="water-can-sprout-info">
-          <span class="water-can-sprout-title">${s.title}</span>
-          <span class="water-can-sprout-meta">${s.twigLabel}</span>
-        </div>
-        <button type="button" class="action-btn action-btn-progress action-btn-water water-can-water-btn">Water</button>
-      </div>
-    `).join('')
-
-    // Wire up water buttons
-    domResult.elements.waterCanSproutsList.querySelectorAll('.water-can-water-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const item = (e.target as HTMLElement).closest('.water-can-sprout-item') as HTMLElement
-        const twigId = item.dataset.twigId!
-        const sproutId = item.dataset.sproutId!
-        closeWaterCanDialog()
-        // Open the individual water dialog via the water-dialog feature
-        const data = nodeState[twigId]
-        const sprout = data?.sprouts?.find(s => s.id === sproutId)
-        if (sprout) {
-          const twigLabel = data?.label || twigId
-          waterDialogApi.openWaterDialog({
-            id: sprout.id,
-            title: sprout.title,
-            twigId,
-            twigLabel,
-            season: sprout.season,
-          })
-        }
-      })
-    })
+  if (available > 0) {
+    domResult.elements.waterCanStatusText.textContent = `${available}/${capacity} remaining`
+    domResult.elements.waterCanStatusReset.classList.add('hidden')
+  } else {
+    domResult.elements.waterCanStatusText.textContent = 'Empty'
+    domResult.elements.waterCanStatusReset.textContent = formatResetTime(getNextWaterReset())
+    domResult.elements.waterCanStatusReset.classList.remove('hidden')
   }
 
   // Water log section

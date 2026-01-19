@@ -1,6 +1,6 @@
 import type { AppContext, SunEntry } from '../types'
 import sunPromptsRaw from '../assets/sun-prompts.txt?raw'
-import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek, getPresetLabel, getTwigLeaves, recoverSoil, getSunRecoveryRate } from '../state'
+import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek, getPresetLabel, getTwigLeaves, recoverSoil, getSunRecoveryRate, getNextSunReset, formatResetTime } from '../state'
 
 export type ShineCallbacks = {
   onSunMeterChange: () => void
@@ -151,13 +151,15 @@ export function initShine(
       sunLogShineMeta,
       sunLogShineJournal,
       sunLogShineBtn,
-      sunLogShineShone
+      sunLogShineShone,
+      sunLogShineShoneReset
     } = ctx.elements
 
     // Check if already shone this week
     if (wasShoneThisWeek()) {
       sunLogShineSection.classList.add('hidden')
       sunLogShineShone.classList.remove('hidden')
+      sunLogShineShoneReset.textContent = formatResetTime(getNextSunReset())
       currentContext = null
       return
     }
@@ -166,6 +168,7 @@ export function initShine(
     if (!canAffordSun()) {
       sunLogShineSection.classList.add('hidden')
       sunLogShineShone.classList.remove('hidden')
+      sunLogShineShoneReset.textContent = formatResetTime(getNextSunReset())
       currentContext = null
       return
     }
