@@ -96,6 +96,7 @@
 .debug-toggle { position: fixed; bottom: 1rem; right: 1rem; display: none; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--ink-faint); cursor: pointer; user-select: none; z-index: 100; }
 .debug-toggle input { cursor: pointer; }
 .debug-panel { position: fixed; bottom: 1rem; left: 1rem; display: flex; flex-direction: column; gap: var(--space-2); z-index: 100; }
+.debug-panel.hidden { display: none; }
 .debug-btn { display: flex; justify-content: center; align-items: center; background: transparent; border: 1px solid #c44; color: #c44; padding: var(--space-1) var(--space-2); font-family: var(--font-ascii); font-size: var(--text-sm); cursor: pointer; transition: border-color 150ms ease, color 150ms ease, background 150ms ease; }
 .debug-btn:hover { border-color: #a33; color: #a33; background: rgba(204, 68, 68, 0.05); }
 .debug-lock-btn { min-width: 7ch; border-color: var(--border); color: var(--ink-faint); }
