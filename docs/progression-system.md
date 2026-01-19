@@ -71,83 +71,89 @@ Scaled so per-week rate is roughly equal, with ~40% bonus for longer commitments
 
 ### 2. Environment Multiplier
 
-| Environment | Multiplier |
-|-------------|------------|
-| Fertile | 1.0x |
-| Firm | 1.4x |
-| Barren | 2.0x |
+Challenge is rewarded - harder environments give better return on risk:
+
+| Environment | Cost Mult | Reward Mult | Return on Risk |
+|-------------|-----------|-------------|----------------|
+| Fertile | 1.0x | 1.1x | 10% bonus |
+| Firm | 1.5x | 1.75x | 17% bonus |
+| Barren | 2.0x | 2.4x | 20% bonus |
 
 ### 3. Result Multiplier (1-5 scale)
 
-Every honest effort grows you. No punishment, just slower growth for lesser results:
+Compressed spread: showing up matters. Every honest attempt grows you:
 
 | Result | Multiplier | Meaning |
 |--------|------------|---------|
-| 1 | 0.2 | You showed up - tiny growth |
-| 2 | 0.4 | Partial effort |
-| 3 | 0.6 | Solid, honest work |
-| 4 | 0.8 | Strong execution |
+| 1 | 0.4 | You showed up - 40% reward |
+| 2 | 0.55 | Partial effort |
+| 3 | 0.7 | Solid, honest work |
+| 4 | 0.85 | Strong execution |
 | 5 | 1.0 | Excellence - full reward |
 
-### 4. Diminishing Returns Factor
+### 4. Diminishing Returns Factor (Quadratic)
 
-As you approach max capacity, growth slows toward zero:
+As you approach max capacity, growth slows dramatically toward zero:
 
 ```
-diminishing = 1 - (current_capacity / 100)
+diminishing = (1 - current_capacity / 100)²
 ```
 
 | Current Capacity | Diminishing Factor | Effective Growth |
 |------------------|-------------------|------------------|
-| 4 (start) | 0.96 | 96% of base |
-| 25 | 0.75 | 75% of base |
-| 50 | 0.50 | 50% of base |
-| 75 | 0.25 | 25% of base |
-| 90 | 0.10 | 10% of base |
-| 99 | 0.01 | 1% of base |
+| 4 (start) | 0.92 | 92% of base |
+| 25 | 0.56 | 56% of base |
+| 50 | 0.25 | 25% of base |
+| 75 | 0.0625 | 6.25% of base |
+| 90 | 0.01 | 1% of base |
+| 95 | 0.0025 | 0.25% of base |
 
 ---
 
 ## Full Rewards Matrix
 
-### Fertile Environment (1.0x)
+### Fertile Environment (1.1x)
 
 | Season | R=1 | R=2 | R=3 | R=4 | R=5 |
 |--------|-----|-----|-----|-----|-----|
-| 1w | 0.02 | 0.05 | 0.07 | 0.10 | 0.12 |
-| 2w | 0.05 | 0.10 | 0.16 | 0.21 | 0.26 |
-| 1m | 0.11 | 0.22 | 0.34 | 0.45 | 0.56 |
-| 3m | 0.39 | 0.78 | 1.17 | 1.56 | 1.95 |
-| 6m | 0.83 | 1.66 | 2.50 | 3.33 | 4.16 |
-| 1y | 1.77 | 3.54 | 5.30 | 7.07 | 8.84 |
+| 1w | 0.05 | 0.07 | 0.09 | 0.11 | 0.13 |
+| 2w | 0.11 | 0.16 | 0.20 | 0.24 | 0.29 |
+| 1m | 0.25 | 0.34 | 0.43 | 0.52 | 0.62 |
+| 3m | 0.86 | 1.18 | 1.50 | 1.82 | 2.15 |
+| 6m | 1.83 | 2.52 | 3.20 | 3.89 | 4.58 |
+| 1y | 3.89 | 5.35 | 6.81 | 8.27 | 9.72 |
 
-*Note: These are base values before diminishing returns.*
+*Note: These are base values before quadratic diminishing returns.*
 
-### Firm Environment (1.4x)
-
-| Season | R=1 | R=2 | R=3 | R=4 | R=5 |
-|--------|-----|-----|-----|-----|-----|
-| 1w | 0.03 | 0.07 | 0.10 | 0.13 | 0.17 |
-| 2w | 0.07 | 0.15 | 0.22 | 0.29 | 0.36 |
-| 1m | 0.16 | 0.31 | 0.47 | 0.63 | 0.78 |
-| 3m | 0.55 | 1.09 | 1.64 | 2.18 | 2.73 |
-| 6m | 1.16 | 2.33 | 3.49 | 4.66 | 5.82 |
-| 1y | 2.48 | 4.95 | 7.43 | 9.90 | 12.38 |
-
-### Barren Environment (2.0x)
+### Firm Environment (1.75x)
 
 | Season | R=1 | R=2 | R=3 | R=4 | R=5 |
 |--------|-----|-----|-----|-----|-----|
-| 1w | 0.05 | 0.10 | 0.14 | 0.19 | 0.24 |
-| 2w | 0.10 | 0.21 | 0.31 | 0.42 | 0.52 |
-| 1m | 0.22 | 0.45 | 0.67 | 0.90 | 1.12 |
-| 3m | 0.78 | 1.56 | 2.34 | 3.12 | 3.90 |
-| 6m | 1.66 | 3.33 | 4.99 | 6.66 | 8.32 |
-| 1y | 3.54 | 7.07 | 10.61 | 14.14 | 17.68 |
+| 1w | 0.08 | 0.12 | 0.15 | 0.18 | 0.21 |
+| 2w | 0.18 | 0.25 | 0.32 | 0.39 | 0.46 |
+| 1m | 0.39 | 0.54 | 0.69 | 0.83 | 0.98 |
+| 3m | 1.37 | 1.88 | 2.39 | 2.90 | 3.41 |
+| 6m | 2.91 | 4.00 | 5.10 | 6.19 | 7.28 |
+| 1y | 6.19 | 8.51 | 10.83 | 13.15 | 15.47 |
+
+### Barren Environment (2.4x)
+
+| Season | R=1 | R=2 | R=3 | R=4 | R=5 |
+|--------|-----|-----|-----|-----|-----|
+| 1w | 0.12 | 0.16 | 0.20 | 0.24 | 0.29 |
+| 2w | 0.25 | 0.34 | 0.44 | 0.53 | 0.62 |
+| 1m | 0.54 | 0.74 | 0.94 | 1.14 | 1.34 |
+| 3m | 1.87 | 2.57 | 3.28 | 3.98 | 4.68 |
+| 6m | 3.99 | 5.49 | 6.99 | 8.49 | 9.98 |
+| 1y | 8.49 | 11.67 | 14.85 | 18.03 | 21.22 |
 
 ---
 
 ## Example User Journeys
+
+> **Note:** These projections use the old linear diminishing model. With quadratic diminishing,
+> progression is faster early but dramatically slower at high capacity. A committed user now
+> targets ~90 capacity at 10 years, approaching 100 after 20 years.
 
 ### The Steady Practitioner
 
@@ -202,12 +208,13 @@ diminishing = 1 - (current_capacity / 100)
 
 ## Design Principles
 
-1. **No punishment** - Every honest effort grows you, even result=1
-2. **Slow and steady** - Bonsai philosophy, not sprint mentality
-3. **Commitment rewarded** - Longer seasons give slightly better per-week rates
-4. **Risk rewarded** - Barren environment doubles growth rate
-5. **Diminishing returns** - Prevents "god mode", keeps growth meaningful
-6. **Lifetime ceiling** - 100 capacity is aspirational, not achievable
+1. **Showing up counts** - Every honest effort grows you (40% reward even at result=1)
+2. **Challenge rewarded** - Harder environments give better return on risk (10-20% bonus)
+3. **Slow and steady** - Bonsai philosophy, not sprint mentality
+4. **Commitment rewarded** - Longer seasons give slightly better per-week rates
+5. **Quadratic diminishing** - Growth slows dramatically as you approach max
+6. **Journaling supplements** - Water/sun meaningful but goal completion is the engine
+7. **Lifetime ceiling** - 100 capacity approached after ~20 years of commitment
 
 ---
 
@@ -223,9 +230,9 @@ Soil is restored through daily engagement and weekly reflection. The process is 
 | Property | Value |
 |----------|-------|
 | Capacity | 3 per day |
-| Restoration | +0.1 soil per water |
+| Restoration | +0.05 soil per water |
 | Target | Active sprouts |
-| Max weekly | ~2.1 soil |
+| Max weekly | ~1.05 soil |
 
 Water requires active sprouts - you're journaling about specific goals.
 
@@ -237,9 +244,9 @@ Water requires active sprouts - you're journaling about specific goals.
 | Property | Value |
 |----------|-------|
 | Capacity | 1 per week |
-| Restoration | +0.5 soil per shine |
+| Restoration | +0.35 soil per shine |
 | Target | Any twig (always available) |
-| Max weekly | 0.5 soil |
+| Max weekly | 0.35 soil |
 
 Sun is twig-level, not sprout-level. You reflect on "movement" or "intimacy" as concepts in your life, not on specific goals. This makes reflection always available, even without active sprouts.
 
@@ -247,8 +254,10 @@ Sun is twig-level, not sprout-level. You reflect on "movement" or "intimacy" as 
 
 | Scenario | Weekly Recovery | Notes |
 |----------|-----------------|-------|
-| Full engagement (3 water/day + sun) | ~2.6 soil | Active user with sprouts |
-| Sun only (no active sprouts) | 0.5 soil | Recovery from empty state |
+| Full engagement (3 water/day + sun) | ~1.4 soil | Active user with sprouts |
+| Sun only (no active sprouts) | 0.35 soil | Recovery from empty state |
+
+Journaling is meaningful but supplementary. Goal completion remains the engine.
 
 ### Safety Net: Minimum Floor
 
@@ -256,17 +265,18 @@ Soil can never stay below **1**. This ensures you can always plant a humble 1-we
 
 **Recovery from empty state**:
 - Floor: 1 soil
-- Sun only: +0.5/week
-- Time to reach starting capacity (4): ~6 weeks
+- Sun only: +0.35/week
+- Time to reach starting capacity (4): ~9 weeks
 
 ### Recovery Time Examples
 
 | Goal Cost | Example | Recovery Time (full engagement) |
 |-----------|---------|-------------------------------|
-| 1 | 1w fertile | ~3 days |
-| 3 | 1m fertile | ~8 days |
-| 5 | 3m fertile | ~14 days |
-| 8 | 6m fertile | ~22 days |
-| 12 | 1y fertile | ~33 days |
+| 1 | 1w fertile | ~5 days |
+| 3 | 1m fertile | ~2 weeks |
+| 5 | 3m fertile | ~3.5 weeks |
+| 8 | 6m fertile | ~6 weeks |
+| 12 | 1y fertile | ~9 weeks |
+| 24 | 1y barren | ~17 weeks |
 
 This pacing forces **selectivity** - you can't have everything, you must choose.

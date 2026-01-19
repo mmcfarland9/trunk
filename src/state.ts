@@ -89,8 +89,8 @@ const MAX_SOIL_CAPACITY = 100    // Lifetime ceiling - mythical to achieve
 // Recovery rates (slow, bonsai-style)
 // Water: Quick daily engagement with active sprouts
 // Sun: Thoughtful weekly reflection on life facets (twigs)
-const SOIL_RECOVERY_PER_WATER = 0.1   // 3x/day = 0.3/day = ~2.1/week
-const SOIL_RECOVERY_PER_SUN = 0.5     // 1x/week - reflection is valuable
+const SOIL_RECOVERY_PER_WATER = 0.05  // 3x/day = 0.15/day = ~1.05/week
+const SOIL_RECOVERY_PER_SUN = 0.35    // 1x/week - meaningful but supplementary
 
 // Base costs by season (longer goals require building up capacity)
 const SEASON_BASE_COST: Record<SproutSeason, number> = {
@@ -127,21 +127,21 @@ const SEASON_BASE_REWARD: Record<SproutSeason, number> = {
   '1y': 8.84,   // ~0.17/week
 }
 
-// Environment reward multiplier (harder = faster growth)
+// Environment reward multiplier (harder = better return on risk)
 const ENVIRONMENT_REWARD_MULT: Record<SproutEnvironment, number> = {
-  fertile: 1.0,  // Safe path - normal growth
-  firm: 1.4,     // Some friction - modest boost
-  barren: 2.0,   // Real challenge - double growth
+  fertile: 1.1,   // Safe path - 10% bonus
+  firm: 1.75,     // Some friction - 17% bonus
+  barren: 2.4,    // Real challenge - 20% bonus
 }
 
 // Result multiplier (1-5 scale from sprout completion)
-// Every honest effort grows you, excellence shines
+// Compressed spread: showing up matters, every attempt grows you
 const RESULT_REWARD_MULT: Record<number, number> = {
-  1: 0.2,  // You showed up - tiny growth
-  2: 0.4,  // Partial effort
-  3: 0.6,  // Solid, honest work
-  4: 0.8,  // Strong execution
-  5: 1.0,  // Excellence - full reward
+  1: 0.4,   // You showed up - 40% reward
+  2: 0.55,  // Partial effort
+  3: 0.7,   // Solid, honest work
+  4: 0.85,  // Strong execution
+  5: 1.0,   // Excellence - full reward
 }
 
 export function calculateSoilCost(season: SproutSeason, environment: SproutEnvironment): number {
@@ -160,10 +160,10 @@ export function calculateCapacityReward(
 ): number {
   const base = SEASON_BASE_REWARD[season]
   const envMult = ENVIRONMENT_REWARD_MULT[environment]
-  const resultMult = RESULT_REWARD_MULT[result] ?? RESULT_REWARD_MULT[3] // Default to 0.6
+  const resultMult = RESULT_REWARD_MULT[result] ?? RESULT_REWARD_MULT[3] // Default to 0.7
 
-  // Logistic diminishing returns - growth slows as you approach max
-  const diminishingFactor = Math.max(0, 1 - (currentCapacity / MAX_SOIL_CAPACITY))
+  // Quadratic diminishing returns - growth slows dramatically as you approach max
+  const diminishingFactor = Math.max(0, Math.pow(1 - (currentCapacity / MAX_SOIL_CAPACITY), 2))
 
   return base * envMult * resultMult * diminishingFactor
 }
