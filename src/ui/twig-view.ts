@@ -13,6 +13,7 @@ import {
   spendSoil,
   recoverSoil,
   recoverPartialSoil,
+  addSoilEntry,
   getTwigLeaves,
   getSproutsByLeaf,
   createLeaf,
@@ -483,7 +484,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           const hasLeafHistory = sprout.leafId && sprouts.some(
             s => s.id !== sprout.id && s.leafId === sprout.leafId
           )
-          const soilReturn = Math.floor(sprout.soilCost * 0.25)
+          const soilReturn = sprout.soilCost * 0.25
           const soilMsg = soilReturn > 0 ? ` (+${soilReturn} soil returned)` : ''
           if (hasLeafHistory) {
             confirmMsg = `Are you sure you want to uproot this sprout? This will only affect the most recent part of this leaf's history.${soilMsg}`
@@ -500,7 +501,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         if (!confirmed) return
 
         if (sprout.state === 'active') {
-          // Uproot returns 25% of soil cost
+          // Uproot returns 25% of soil cost - always log even if amount is 0
+          const soilReturn = sprout.soilCost * 0.25
+          addSoilEntry(soilReturn, 'Uprooted sprout', sprout.title)
           recoverPartialSoil(sprout.soilCost, 0.25)
           callbacks.onSoilChange?.()
         }

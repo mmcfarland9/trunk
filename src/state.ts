@@ -390,7 +390,7 @@ export function recoverSoil(amount: number, capacityBonus: number = 0, reason?: 
 }
 
 export function recoverPartialSoil(amount: number, fraction: number, reason?: string, context?: string): void {
-  const recovered = Math.floor(amount * fraction)
+  const recovered = amount * fraction
   const prevAvailable = soilState.available
   soilState.available = Math.min(soilState.available + recovered, soilState.capacity)
   const actualRecovered = soilState.available - prevAvailable
