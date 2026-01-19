@@ -21,7 +21,6 @@ import { updateStats, initSidebarSprouts } from './features/progress'
 import { setStatus, updateStatusMeta } from './features/status'
 import { initWaterDialog } from './features/water-dialog'
 import { initShine } from './features/shine-dialog'
-import { initSproutsDialog } from './features/sprouts-dialog'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
 
 const app = document.querySelector<HTMLDivElement>('#app')
@@ -126,10 +125,6 @@ const shineApi = initShine(ctx, {
   onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
   onShineComplete: populateSunLog,
-})
-
-initSproutsDialog(ctx, {
-  onUpdateStats: navCallbacks.onUpdateStats,
 })
 
 const mapPanel = domResult.elements.canvas.parentElement as HTMLElement
@@ -534,68 +529,6 @@ document.addEventListener('keydown', (e) => {
 })
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
-
-// Encyclopedia dialog
-const guideTabs = domResult.elements.gardenGuideDialog.querySelectorAll<HTMLButtonElement>('.guide-tab')
-const guidePanels = domResult.elements.gardenGuideDialog.querySelectorAll<HTMLDivElement>('.guide-panel')
-const { encyclopediaButtons } = getActionButtons(domResult.elements.shell)
-
-function openEncyclopediaTab(tabName: string): void {
-  // Update tabs
-  guideTabs.forEach(t => {
-    if (t.dataset.tab === tabName) {
-      t.classList.add('is-active')
-    } else {
-      t.classList.remove('is-active')
-    }
-  })
-
-  // Update panels
-  guidePanels.forEach(panel => {
-    if (panel.dataset.panel === tabName) {
-      panel.classList.add('is-active')
-    } else {
-      panel.classList.remove('is-active')
-    }
-  })
-
-  // Show dialog
-  domResult.elements.gardenGuideDialog.classList.remove('hidden')
-}
-
-encyclopediaButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tab = btn.dataset.encyclopediaTab
-    if (tab) openEncyclopediaTab(tab)
-  })
-})
-
-domResult.elements.gardenGuideClose.addEventListener('click', () => {
-  domResult.elements.gardenGuideDialog.classList.add('hidden')
-})
-
-domResult.elements.gardenGuideDialog.addEventListener('click', (e) => {
-  if (e.target === domResult.elements.gardenGuideDialog) {
-    domResult.elements.gardenGuideDialog.classList.add('hidden')
-  }
-})
-
-// Tab switching within the encyclopedia dialog
-guideTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    const targetPanel = tab.dataset.tab
-    if (targetPanel) openEncyclopediaTab(targetPanel)
-  })
-})
-
-// Close garden guide on Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !domResult.elements.gardenGuideDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    domResult.elements.gardenGuideDialog.classList.add('hidden')
-  }
-}, true)
 
 domResult.elements.debugCheckbox.addEventListener('change', (e) => {
   setDebugHoverZone((e.target as HTMLInputElement).checked)

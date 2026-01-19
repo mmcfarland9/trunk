@@ -1,6 +1,6 @@
 import type { AppContext, NodeData, Sprout, Leaf } from '../types'
-import { nodeState, saveState, clearState, hasNodeData } from '../state'
-import { syncNode, setNodeLabel, setFocusedNode, updateFocus } from '../ui/node-ui'
+import { nodeState, saveState, hasNodeData } from '../state'
+import { syncNode } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
 
 const EXPORT_REMINDER_KEY = 'trunk-last-export'
@@ -73,25 +73,6 @@ export function handleExport(ctx: AppContext): void {
 
   recordExportDate()
   flashStatus(ctx.elements, 'Exported JSON file.', 'success')
-}
-
-export function handleReset(ctx: AppContext, callbacks: ImportExportCallbacks): void {
-  const confirmed = window.confirm('Reset everything? This clears all labels, notes, sprouts, and leaves permanently.')
-  if (!confirmed) return
-
-  clearState()
-
-  ctx.allNodes.forEach((node) => {
-    setNodeLabel(node, node.dataset.defaultLabel || '')
-    node.dataset.filled = 'false'
-  })
-
-  callbacks.onSetViewMode('overview')
-  setFocusedNode(null, ctx, () => {})
-  updateFocus(null, ctx)
-  callbacks.onUpdateStats()
-  updateStatusMeta(ctx.elements)
-  flashStatus(ctx.elements, 'Map reset to a clean slate.', 'warning')
 }
 
 export async function handleImport(

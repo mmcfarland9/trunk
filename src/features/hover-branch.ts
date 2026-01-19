@@ -1,35 +1,13 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex, getIsSidebarHover, setIsSidebarHover } from '../state'
+import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex, setIsSidebarHover } from '../state'
 import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
 import { updateScopedProgress, updateSidebarSprouts } from './progress'
 import type { NavigationCallbacks } from './navigation'
 import { updateFocus } from '../ui/node-ui'
 
-// Note: updateFocus, updateScopedProgress are used by graphic hover (setupHoverBranch), not sidebar hover
-
 const HOVER_MIN_RADIUS_RATIO = 0.55
 const HOVER_MAX_RADIUS_RATIO = 1.35
 const SCROLL_THRESHOLD = 150 // pixels of scroll delta needed to trigger zoom
-
-export function previewBranchFromSidebar(ctx: AppContext, branchIndex: number): void {
-  if (getViewMode() !== 'overview') return
-  setIsSidebarHover(true)
-  setHoveredBranchIndex(branchIndex)
-  updateVisibility(ctx)
-  // Update progress and sprouts list to show this branch
-  updateScopedProgress(ctx)
-  updateSidebarSprouts(ctx)
-}
-
-export function clearSidebarPreview(ctx: AppContext): void {
-  if (!getIsSidebarHover()) return
-  setIsSidebarHover(false)
-  setHoveredBranchIndex(null)
-  updateVisibility(ctx)
-  // Reset progress and sprouts list to show trunk totals
-  updateScopedProgress(ctx)
-  updateSidebarSprouts(ctx)
-}
 
 export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
   const { canvas } = ctx.elements

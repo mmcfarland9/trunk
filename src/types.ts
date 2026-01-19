@@ -170,8 +170,6 @@ export type AppElements = {
   sproutsDialog: HTMLDivElement
   sproutsDialogContent: HTMLDivElement
   sproutsDialogClose: HTMLButtonElement
-  gardenGuideDialog: HTMLDivElement
-  gardenGuideClose: HTMLButtonElement
   waterDialog: HTMLDivElement
   waterDialogTitle: HTMLParagraphElement
   waterDialogMeta: HTMLParagraphElement

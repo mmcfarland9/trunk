@@ -67,7 +67,6 @@ describe('App Smoke Tests', () => {
       const modules = [
         'water-dialog.ts',
         'shine-dialog.ts',
-        'sprouts-dialog.ts',
         'navigation.ts',
         'progress.ts',
         'status.ts',
@@ -110,12 +109,6 @@ describe('App Smoke Tests', () => {
       const shineDialog = await import('../features/shine-dialog')
       expect(shineDialog.initShine).toBeDefined()
       expect(typeof shineDialog.initShine).toBe('function')
-    })
-
-    it('should export initSproutsDialog', async () => {
-      const sproutsDialog = await import('../features/sprouts-dialog')
-      expect(sproutsDialog.initSproutsDialog).toBeDefined()
-      expect(typeof sproutsDialog.initSproutsDialog).toBe('function')
     })
   })
 
