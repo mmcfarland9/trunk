@@ -593,15 +593,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           sprout.leafId = newLeaf.id
         }
 
-        console.log('[HARVEST] Sprout after completion:', {
-          id: sprout.id,
-          title: sprout.title,
-          state: sprout.state,
-          result: sprout.result,
-          leafId: sprout.leafId,
-          nodeId,
-        })
-
         // Recover soil based on outcome
         if (isSuccess) {
           // Capacity bonus scales with result: 3=0.25, 4=0.5, 5=1.0 (multiplier)

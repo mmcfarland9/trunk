@@ -296,9 +296,9 @@ export function buildApp(
     canvas.append(wrapper)
   }
 
-  // Debug panel
+  // Debug panel (hidden by default, toggle with d+b keystroke)
   const debugPanel = document.createElement('div')
-  debugPanel.className = 'debug-panel'
+  debugPanel.className = 'debug-panel hidden'
 
   // Debug mode master toggle
   const debugModeLabel = document.createElement('label')
@@ -1933,6 +1933,7 @@ export function buildApp(
     statusMessage: sidePanel.querySelector<HTMLParagraphElement>('.status-message')!,
     statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,
     importInput,
+    debugPanel,
     debugCheckbox,
     debugClockBtn,
     debugSoilResetBtn,

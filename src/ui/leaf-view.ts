@@ -133,13 +133,6 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
     const data = nodeState[currentTwigId]
     if (!data?.sprouts) return []
     const sprouts = getSproutsByLeaf(data.sprouts, currentLeafId)
-    console.log('[LEAF VIEW] getSprouts:', {
-      twigId: currentTwigId,
-      leafId: currentLeafId,
-      allSproutsCount: data.sprouts.length,
-      matchingSproutsCount: sprouts.length,
-      allLeafIds: data.sprouts.map(s => s.leafId),
-    })
     return sprouts
   }
 
@@ -321,7 +314,6 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
     // If no leaf exists but we have sprouts, auto-create the leaf
     if (!leaf && sprouts.length > 0 && currentTwigId && currentLeafId) {
-      console.log('[LEAF VIEW] Auto-creating missing leaf:', currentLeafId)
       // Create the leaf in state and persist
       const data = nodeState[currentTwigId]
       if (data) {

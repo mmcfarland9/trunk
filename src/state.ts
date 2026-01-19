@@ -315,7 +315,6 @@ function loadResourceState(): ResourceStoredState {
       localStorage.removeItem(LEGACY_WATER_KEY)
       localStorage.removeItem(LEGACY_SUN_KEY)
 
-      console.log('[MIGRATION] Resources migrated to unified storage')
       return migrated
     }
   } catch (error) {
@@ -605,13 +604,6 @@ export function addWaterEntry(
     timestamp: new Date().toISOString(),
     content,
     prompt,
-  })
-
-  console.log('[WATER] Entry added:', {
-    twigId,
-    sproutId,
-    sproutTitle: sprout.title,
-    waterEntriesCount: sprout.waterEntries.length,
   })
 
   saveState()

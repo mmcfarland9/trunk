@@ -161,6 +161,7 @@ export type AppElements = {
   statusMessage: HTMLParagraphElement
   statusMeta: HTMLParagraphElement
   importInput: HTMLInputElement
+  debugPanel: HTMLDivElement
   debugCheckbox: HTMLInputElement
   debugClockBtn: HTMLButtonElement
   debugSoilResetBtn: HTMLButtonElement

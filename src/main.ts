@@ -785,3 +785,22 @@ document.addEventListener('keydown', (e) => {
     }
   }
 })
+
+// Debug panel toggle: press 'd' then 'b' within 500ms
+let lastKeyTime = 0
+let lastKey = ''
+document.addEventListener('keydown', (e) => {
+  // Skip if in input/textarea
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+  const now = Date.now()
+  if (e.key === 'd') {
+    lastKey = 'd'
+    lastKeyTime = now
+  } else if (e.key === 'b' && lastKey === 'd' && now - lastKeyTime < 500) {
+    domResult.elements.debugPanel.classList.toggle('hidden')
+    lastKey = ''
+  } else {
+    lastKey = ''
+  }
+})
