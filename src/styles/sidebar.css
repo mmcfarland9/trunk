@@ -262,7 +262,8 @@
 }
 
 /* Sidebar action buttons - hover reveal behavior */
-.sidebar-action-btn {
+.sidebar-action-btn,
+.sidebar-action-btn:disabled {
   position: absolute;
   right: 0.4rem;
   top: 50%;
@@ -277,6 +278,10 @@
 .sprout-item:hover .sidebar-action-btn {
   opacity: 1;
   pointer-events: auto;
+}
+
+.sprout-item:hover .sidebar-action-btn:disabled {
+  opacity: 0.5;
 }
 
 .sprout-item:hover .sprout-item-meta {
