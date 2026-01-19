@@ -411,7 +411,7 @@ function createSproutItem(
   meta.className = 'sprout-item-meta'
   const endDateStr = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
 
-  meta.textContent = `· ${endDateStr}`
+  meta.textContent = endDateStr
 
   info.append(meta)
   item.append(info)

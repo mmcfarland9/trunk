@@ -241,6 +241,7 @@
 .sprout-item-meta {
   color: var(--ink-faint);
   white-space: nowrap;
+  transition: opacity 100ms ease;
 }
 
 .sprout-twig-link {
@@ -276,4 +277,8 @@
 .sprout-item:hover .sidebar-action-btn {
   opacity: 1;
   pointer-events: auto;
+}
+
+.sprout-item:hover .sprout-item-meta {
+  opacity: 0;
 }
