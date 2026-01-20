@@ -327,6 +327,7 @@
 }
 
 .sidebar-stacked-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -351,7 +352,6 @@
 .sidebar-stacked-meta {
   color: var(--ink-faint);
   flex-shrink: 0;
-  transition: opacity 100ms ease;
   margin-left: auto;
   text-align: right;
 }
@@ -360,20 +360,10 @@
   font-size: 0.55rem;
   padding: 0.1rem 0.25rem;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 100ms ease;
 }
 
-.sidebar-stacked-row:hover .sidebar-stacked-action {
-  opacity: 1;
-}
-
-.sidebar-stacked-row:hover .sidebar-stacked-action:disabled {
+.sidebar-stacked-action:disabled {
   opacity: 0.5;
-}
-
-.sidebar-stacked-row:hover .sidebar-stacked-meta {
-  opacity: 0;
 }
 
 /* Indentation for nested elements inside folders */

@@ -448,14 +448,9 @@ function createStackedLeafCard(
     title.className = 'sidebar-stacked-title'
     title.textContent = sprout.title || 'Untitled'
 
-    const meta = document.createElement('span')
-    meta.className = 'sidebar-stacked-meta'
     const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
-    meta.textContent = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
 
-    row.append(title, meta)
-
-    // Water button
+    // Water button (left of date)
     if (onWaterClick) {
       const watered = wasWateredThisWeek(sprout)
       const waterBtn = document.createElement('button')
@@ -477,8 +472,16 @@ function createStackedLeafCard(
         e.stopPropagation()
         onWaterClick(sprout)
       })
-      row.append(waterBtn)
+      row.append(title, waterBtn)
+    } else {
+      row.append(title)
     }
+
+    // Date (always at right edge)
+    const meta = document.createElement('span')
+    meta.className = 'sidebar-stacked-meta'
+    meta.textContent = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
+    row.append(meta)
 
     rows.append(row)
   })
