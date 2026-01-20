@@ -118,7 +118,6 @@ const ENVIRONMENT_COST_MULT: Record<SproutEnvironment, number> = {
 // Base rewards by season - scaled so per-week rate is roughly equal
 // with slight bonus for longer commitments (~40% better from 1w→1y)
 const SEASON_BASE_REWARD: Record<SproutSeason, number> = {
-  '1w': 0.12,   // ~0.12/week
   '2w': 0.26,   // ~0.13/week
   '1m': 0.56,   // ~0.14/week
   '3m': 1.95,   // ~0.15/week
