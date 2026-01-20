@@ -168,6 +168,42 @@ function getTwigLabel(twigId: string): string {
   return match ? `Twig ${parseInt(match[1], 10) + 1}` : twigId
 }
 
+// Helper to render sprouts grouped by leaf into a container
+function renderLeafGroupedSprouts(
+  sprouts: SproutWithLocation[],
+  container: HTMLElement,
+  isActive: boolean,
+  onWaterClick?: (sprout: SproutWithLocation) => void,
+  onTwigClick?: SidebarTwigCallback,
+  onLeafClick?: SidebarLeafCallback
+): void {
+  const { standalone, byLeaf } = groupByLeaf(sprouts)
+
+  // Render leaf groups (stacked if multiple sprouts)
+  byLeaf.forEach((leafSprouts, leafId) => {
+    const twigId = leafSprouts[0]?.twigId
+    if (!twigId) return
+    const leaf = getLeafById(twigId, leafId)
+    const leafName = leaf?.name || 'Unnamed Leaf'
+
+    if (leafSprouts.length === 1) {
+      // Single sprout in leaf: render normally
+      const item = createSproutItem(leafSprouts[0], isActive, isActive ? onWaterClick : undefined, onTwigClick, onLeafClick)
+      container.append(item)
+    } else {
+      // Multiple sprouts: render stacked card
+      const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick)
+      container.append(card)
+    }
+  })
+
+  // Render standalone sprouts
+  standalone.forEach(sprout => {
+    const item = createSproutItem(sprout, isActive, isActive ? onWaterClick : undefined, onTwigClick, onLeafClick)
+    container.append(item)
+  })
+}
+
 export function initSidebarSprouts(
   ctx: AppContext,
   onWaterClick?: (sprout: SproutWithLocation) => void,
@@ -257,84 +293,43 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const branchIdxForTwigFolders = isHoveringBranch ? hoveredBranchIndex : activeBranchIndex
 
   if (showFlatList) {
-    // Twig view OR hovering twig: group active by leaf, show standalone separately
-    const { standalone, byLeaf } = groupByLeaf(filteredActive)
-
-    // Render leaf groups (stacked if multiple sprouts)
-    byLeaf.forEach((sprouts, leafId) => {
-      const twigId = sprouts[0]?.twigId
-      if (!twigId) return
-      const leaf = getLeafById(twigId, leafId)
-      const leafName = leaf?.name || 'Unnamed Leaf'
-
-      if (sprouts.length === 1) {
-        // Single sprout in leaf: render normally
-        const item = createSproutItem(sprouts[0], true, onWaterClick, onTwigClick, onLeafClick)
-        activeSproutsList.append(item)
-      } else {
-        // Multiple sprouts: render stacked card
-        const card = createStackedLeafCard(leafName, leafId, sprouts, onWaterClick, onLeafClick)
-        activeSproutsList.append(card)
-      }
-    })
-
-    // Render standalone sprouts
-    standalone.forEach(sprout => {
-      const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
-      activeSproutsList.append(item)
-    })
-
-    // Cultivated stays flat (historical)
-    filteredCultivated.forEach(sprout => {
-      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
-      cultivatedSproutsList.append(item)
-    })
+    // Twig view OR hovering twig: group by leaf
+    renderLeafGroupedSprouts(filteredActive, activeSproutsList, true, onWaterClick, onTwigClick, onLeafClick)
+    renderLeafGroupedSprouts(filteredCultivated, cultivatedSproutsList, false, undefined, onTwigClick, onLeafClick)
   } else if (showTwigGrouping && branchIdxForTwigFolders !== null) {
-    // Branch view OR hovering branch: group by twig
+    // Branch view OR hovering branch: group by twig, then by leaf within each twig
     const activeByTwig = groupByTwig(filteredActive)
     const cultivatedByTwig = groupByTwig(filteredCultivated)
 
     activeByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
-        folder.append(item)
-      })
+      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onTwigClick, onLeafClick)
       activeSproutsList.append(folder)
     })
 
     cultivatedByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
-        folder.append(item)
-      })
+      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onTwigClick, onLeafClick)
       cultivatedSproutsList.append(folder)
     })
   } else {
-    // Overview (not hovering): group by branch
+    // Overview (not hovering): group by branch, then by leaf within each branch
     const activeByBranch = groupByBranch(filteredActive)
     const cultivatedByBranch = groupByBranch(filteredCultivated)
 
     activeByBranch.forEach((sprouts, branchIndex) => {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
       const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
-      sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
-        folder.append(item)
-      })
+      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onTwigClick, onLeafClick)
       activeSproutsList.append(folder)
     })
 
     cultivatedByBranch.forEach((sprouts, branchIndex) => {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
       const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
-      sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
-        folder.append(item)
-      })
+      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onTwigClick, onLeafClick)
       cultivatedSproutsList.append(folder)
     })
   }

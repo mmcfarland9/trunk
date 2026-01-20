@@ -242,6 +242,8 @@
   color: var(--ink-faint);
   white-space: nowrap;
   transition: opacity 100ms ease;
+  margin-left: auto;
+  text-align: right;
 }
 
 .sprout-twig-link {
@@ -350,6 +352,8 @@
   color: var(--ink-faint);
   flex-shrink: 0;
   transition: opacity 100ms ease;
+  margin-left: auto;
+  text-align: right;
 }
 
 .sidebar-stacked-action {
@@ -370,4 +374,15 @@
 
 .sidebar-stacked-row:hover .sidebar-stacked-meta {
   opacity: 0;
+}
+
+/* Indentation for nested leaf groups inside twig/branch folders */
+.twig-folder .sidebar-stacked-card,
+.twig-folder .sprout-item {
+  margin-left: 0.4rem;
+}
+
+.branch-folder .sidebar-stacked-card,
+.branch-folder .sprout-item {
+  margin-left: 0.4rem;
 }
