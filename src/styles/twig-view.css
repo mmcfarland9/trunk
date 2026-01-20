@@ -187,7 +187,7 @@
 .sprout-draft-form {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1);
   padding: var(--space-2);
 }
 
@@ -213,11 +213,12 @@
 .sprout-leaf-select {
   width: 100%;
   border: none;
+  border-bottom: 1px solid var(--border);
   background: transparent;
   font-family: var(--font-ascii);
   font-size: calc(var(--char) * 0.65);
   color: var(--ink);
-  padding: 0.25rem 0;
+  padding: 0.3rem 0;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4l3 4 3-4'/%3E%3C/svg%3E");
@@ -227,6 +228,7 @@
 
 .sprout-leaf-select:focus {
   outline: none;
+  border-color: var(--wood);
 }
 
 .sprout-leaf-select option {
@@ -241,15 +243,17 @@
 
 .sprout-new-leaf-name {
   border: none;
+  border-bottom: 1px solid var(--border);
   background: transparent;
   font-family: var(--font-ascii);
   font-size: calc(var(--char) * 0.65);
   color: var(--ink);
-  padding: 0.25rem 0;
+  padding: 0.3rem 0;
 }
 
 .sprout-new-leaf-name:focus {
   outline: none;
+  border-color: var(--wood);
 }
 
 .sprout-new-leaf-name.hidden {
@@ -258,15 +262,17 @@
 
 .sprout-title-input {
   border: none;
+  border-bottom: 1px solid var(--border);
   background: transparent;
   font-family: var(--font-ascii);
   font-size: calc(var(--char) * 0.65);
   color: var(--ink);
-  padding: 0.25rem 0;
+  padding: 0.3rem 0;
 }
 
 .sprout-title-input:focus {
   outline: none;
+  border-color: var(--wood);
 }
 
 .sprout-field-label {
@@ -275,7 +281,7 @@
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 .sprout-field-label .field-hint {
@@ -288,17 +294,19 @@
 .sprout-budding-input,
 .sprout-flourish-input {
   border: none;
+  border-bottom: 1px solid var(--border);
   background: transparent;
   font-family: var(--font-ascii);
   font-size: calc(var(--char) * 0.6);
   color: var(--ink);
-  padding: 0.2rem 0;
+  padding: 0.25rem 0;
 }
 
 .sprout-wither-input:focus,
 .sprout-budding-input:focus,
 .sprout-flourish-input:focus {
   outline: none;
+  border-color: var(--wood);
 }
 
 .sprout-season-selector {
