@@ -354,12 +354,24 @@
   flex-shrink: 0;
   margin-left: auto;
   text-align: right;
+  padding-right: 0.1rem;
 }
 
 .sidebar-stacked-action {
   font-size: 0.55rem;
   padding: 0.1rem 0.25rem;
   flex-shrink: 0;
+  margin-right: 0.3rem;
+}
+
+/* Hide "water" button until hover, but "watered" stays visible */
+.sidebar-stacked-action:not(:disabled) {
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.sidebar-stacked-row:hover .sidebar-stacked-action:not(:disabled) {
+  opacity: 1;
 }
 
 .sidebar-stacked-action:disabled {
