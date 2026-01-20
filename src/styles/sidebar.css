@@ -287,3 +287,87 @@
 .sprout-item:hover .sprout-item-meta {
   opacity: 0;
 }
+
+/* === Sidebar Stacked Leaf Cards === */
+/* For leaves with multiple active sprouts in twig view */
+
+.sidebar-stacked-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.15rem 0;
+  border-left: 2px solid var(--twig);
+  padding-left: 0.4rem;
+}
+
+.sidebar-stacked-header {
+  background: transparent;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--ink-light);
+  cursor: pointer;
+  text-align: left;
+  padding: 0.1rem 0;
+  transition: color 150ms ease;
+}
+
+.sidebar-stacked-header:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.sidebar-stacked-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.sidebar-stacked-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.2rem;
+  font-size: 0.65rem;
+  transition: background 150ms ease;
+}
+
+.sidebar-stacked-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.sidebar-stacked-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.sidebar-stacked-meta {
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  transition: opacity 100ms ease;
+}
+
+.sidebar-stacked-action {
+  font-size: 0.55rem;
+  padding: 0.1rem 0.25rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.sidebar-stacked-row:hover .sidebar-stacked-action {
+  opacity: 1;
+}
+
+.sidebar-stacked-row:hover .sidebar-stacked-action:disabled {
+  opacity: 0.5;
+}
+
+.sidebar-stacked-row:hover .sidebar-stacked-meta {
+  opacity: 0;
+}

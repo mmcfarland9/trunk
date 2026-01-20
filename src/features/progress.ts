@@ -1,6 +1,6 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate, wasWateredThisWeek } from '../state'
+import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate, wasWateredThisWeek, getLeafById } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -141,6 +141,23 @@ function groupByTwig(sprouts: SproutWithLocation[]): Map<string, SproutWithLocat
   return grouped
 }
 
+function groupByLeaf(sprouts: SproutWithLocation[]): { standalone: SproutWithLocation[], byLeaf: Map<string, SproutWithLocation[]> } {
+  const standalone: SproutWithLocation[] = []
+  const byLeaf = new Map<string, SproutWithLocation[]>()
+
+  sprouts.forEach(sprout => {
+    if (!sprout.leafId) {
+      standalone.push(sprout)
+    } else {
+      const list = byLeaf.get(sprout.leafId) || []
+      list.push(sprout)
+      byLeaf.set(sprout.leafId, list)
+    }
+  })
+
+  return { standalone, byLeaf }
+}
+
 function getTwigLabel(twigId: string): string {
   const presetLabel = getPresetLabel(twigId)
   if (presetLabel) {
@@ -240,11 +257,34 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const branchIdxForTwigFolders = isHoveringBranch ? hoveredBranchIndex : activeBranchIndex
 
   if (showFlatList) {
-    // Twig view OR hovering twig: flat list, no grouping
-    filteredActive.forEach(sprout => {
+    // Twig view OR hovering twig: group active by leaf, show standalone separately
+    const { standalone, byLeaf } = groupByLeaf(filteredActive)
+
+    // Render leaf groups (stacked if multiple sprouts)
+    byLeaf.forEach((sprouts, leafId) => {
+      const twigId = sprouts[0]?.twigId
+      if (!twigId) return
+      const leaf = getLeafById(twigId, leafId)
+      const leafName = leaf?.name || 'Unnamed Leaf'
+
+      if (sprouts.length === 1) {
+        // Single sprout in leaf: render normally
+        const item = createSproutItem(sprouts[0], true, onWaterClick, onTwigClick, onLeafClick)
+        activeSproutsList.append(item)
+      } else {
+        // Multiple sprouts: render stacked card
+        const card = createStackedLeafCard(leafName, leafId, sprouts, onWaterClick, onLeafClick)
+        activeSproutsList.append(card)
+      }
+    })
+
+    // Render standalone sprouts
+    standalone.forEach(sprout => {
       const item = createSproutItem(sprout, true, onWaterClick, onTwigClick, onLeafClick)
       activeSproutsList.append(item)
     })
+
+    // Cultivated stays flat (historical)
     filteredCultivated.forEach(sprout => {
       const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
       cultivatedSproutsList.append(item)
@@ -365,6 +405,79 @@ function createTwigFolder(
   }
 
   return folder
+}
+
+function createStackedLeafCard(
+  leafName: string,
+  leafId: string,
+  sprouts: SproutWithLocation[],
+  onWaterClick?: (sprout: SproutWithLocation) => void,
+  onLeafClick?: SidebarLeafCallback
+): HTMLDivElement {
+  const card = document.createElement('div')
+  card.className = 'sidebar-stacked-card'
+
+  // Leaf header (clickable to open leaf view)
+  const header = document.createElement('button')
+  header.type = 'button'
+  header.className = 'sidebar-stacked-header'
+  header.textContent = leafName
+  if (onLeafClick && sprouts[0]) {
+    header.addEventListener('click', () => {
+      onLeafClick(leafId, sprouts[0].twigId, sprouts[0].branchIndex)
+    })
+  }
+  card.append(header)
+
+  // Sprout rows
+  const rows = document.createElement('div')
+  rows.className = 'sidebar-stacked-rows'
+
+  sprouts.forEach(sprout => {
+    const row = document.createElement('div')
+    row.className = 'sidebar-stacked-row'
+
+    const title = document.createElement('span')
+    title.className = 'sidebar-stacked-title'
+    title.textContent = sprout.title || 'Untitled'
+
+    const meta = document.createElement('span')
+    meta.className = 'sidebar-stacked-meta'
+    const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
+    meta.textContent = isReady ? 'READY' : sprout.season
+
+    row.append(title, meta)
+
+    // Water button
+    if (onWaterClick) {
+      const watered = wasWateredThisWeek(sprout)
+      const waterBtn = document.createElement('button')
+      waterBtn.type = 'button'
+
+      if (isReady) {
+        waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-stacked-action'
+        waterBtn.textContent = '🌾'
+      } else if (watered) {
+        waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-stacked-action'
+        waterBtn.textContent = '✓'
+        waterBtn.disabled = true
+      } else {
+        waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
+        waterBtn.textContent = '💧'
+      }
+
+      waterBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        onWaterClick(sprout)
+      })
+      row.append(waterBtn)
+    }
+
+    rows.append(row)
+  })
+
+  card.append(rows)
+  return card
 }
 
 function createSproutItem(
