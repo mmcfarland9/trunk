@@ -192,6 +192,58 @@
   border: 1px solid var(--border);
 }
 
+/* Leaf select dropdown */
+.sprout-leaf-select {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border-strong);
+  background: transparent;
+  font-family: var(--font-ascii);
+  font-size: calc(var(--char) * 0.7 * var(--twig-scale));
+  color: var(--ink);
+  padding: 0.35rem 0;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4l3 4 3-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+}
+
+.sprout-leaf-select:focus {
+  outline: none;
+  border-color: var(--wood);
+}
+
+.sprout-leaf-select option {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ascii);
+}
+
+.sprout-leaf-select option:disabled {
+  color: var(--ink-faint);
+}
+
+.sprout-new-leaf-name {
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-ascii);
+  font-size: calc(var(--char) * 0.7 * var(--twig-scale));
+  color: var(--ink);
+  padding: 0.35rem 0;
+  margin-top: var(--space-1);
+}
+
+.sprout-new-leaf-name:focus {
+  outline: none;
+  border-color: var(--wood);
+}
+
+.sprout-new-leaf-name.hidden {
+  display: none;
+}
+
 .sprout-title-input {
   border: none;
   border-bottom: 1px solid var(--border-strong);

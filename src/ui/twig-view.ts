@@ -124,6 +124,12 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       <div class="sprout-column sprout-drafts">
         <h3 class="column-title">New</h3>
         <div class="sprout-draft-form">
+          <label class="sprout-field-label">Leaf <span class="field-hint">(saga)</span></label>
+          <select class="sprout-leaf-select">
+            <option value="" disabled selected>Select a leaf...</option>
+            <option value="__new__">+ Create new leaf</option>
+          </select>
+          <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
           <input type="text" class="sprout-title-input" placeholder="Describe this sprout." maxlength="60" />
           <label class="sprout-field-label">Season</label>
           <div class="sprout-season-selector">
@@ -143,12 +149,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
           <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
           <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
-          <label class="sprout-field-label">Leaf <span class="field-hint">(saga)</span></label>
-          <select class="sprout-leaf-select">
-            <option value="">No leaf (standalone)</option>
-            <option value="__new__">Create new leaf...</option>
-          </select>
-          <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
           <div class="sprout-soil-cost"></div>
           <div class="action-btn-group action-btn-group-right">
             <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
@@ -253,6 +253,13 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const hasSeason = selectedSeason !== null
     const hasEnv = selectedEnvironment !== null
 
+    // Leaf is required - either existing leaf selected or new leaf name provided
+    const leafValue = leafSelect.value
+    const isNewLeaf = leafValue === '__new__'
+    const hasLeaf = isNewLeaf
+      ? newLeafNameInput.value.trim().length > 0
+      : leafValue !== ''
+
     // Calculate and display soil cost
     if (hasSeason && hasEnv) {
       const cost = calculateSoilCost(selectedSeason!, selectedEnvironment!)
@@ -265,8 +272,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       soilCostDisplay.classList.remove('insufficient')
     }
 
-    // Check if form is ready and affordable
-    const isFormComplete = hasTitle && hasSeason && hasEnv
+    // Check if form is ready and affordable (leaf is now required)
+    const isFormComplete = hasTitle && hasSeason && hasEnv && hasLeaf
     const cost = hasSeason && hasEnv ? calculateSoilCost(selectedSeason!, selectedEnvironment!) : 0
     const isAffordable = canAffordSoil(cost)
     setBtn.disabled = !isFormComplete || !isAffordable
@@ -870,7 +877,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   document.addEventListener('keydown', handleKeydown)
 
   function populateLeafSelect(): void {
-    // Clear existing options except first two (standalone and new)
+    // Clear existing options except first two (placeholder and new)
     while (leafSelect.options.length > 2) {
       leafSelect.remove(2)
     }
@@ -885,6 +892,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         leafSelect.appendChild(option)
       })
     }
+    // Reset to placeholder
+    leafSelect.selectedIndex = 0
   }
 
   function open(twigNode: HTMLButtonElement): void {
