@@ -147,7 +147,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  border-left: 2px solid var(--twig);
+  border-left: 2px solid var(--wood);
   padding-left: 0.5rem;
   margin-left: 0.2rem;
 }
@@ -163,13 +163,13 @@
   font-family: var(--font-body);
   font-size: 0.7rem;
   font-weight: 500;
-  color: var(--twig);
+  color: var(--wood);
   cursor: pointer;
   transition: background 150ms ease;
 }
 
 .twig-folder-header:hover {
-  background: rgba(100, 170, 100, 0.1);
+  background: rgba(139, 90, 43, 0.1);
 }
 
 .twig-folder-label {
