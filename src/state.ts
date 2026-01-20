@@ -22,18 +22,35 @@ type MigrationFn = (data: Record<string, unknown>) => Record<string, unknown>
 
 // Migration functions: each transforms from version N to N+1
 const MIGRATIONS: Record<number, MigrationFn> = {
-  // Version 1 → 2: Remove 1w sprouts (convert to 2w)
+  // Version 1 → 2: Remove 1w sprouts, add leaf names, remove leaf status
   2: (data) => {
     const nodes = data.nodes as Record<string, unknown>
 
-    // Convert 1w sprouts to 2w
     Object.values(nodes).forEach((node: unknown) => {
-      const n = node as { sprouts?: Array<{ season: string }> }
+      const n = node as {
+        sprouts?: Array<{ season: string; title: string; leafId?: string }>,
+        leaves?: Array<{ id: string; name?: string; status?: string }>
+      }
+
+      // Convert 1w sprouts to 2w
       if (n.sprouts) {
         n.sprouts.forEach(sprout => {
           if (sprout.season === '1w') {
             sprout.season = '2w'
           }
+        })
+      }
+
+      // Add name to leaves, remove status
+      if (n.leaves) {
+        n.leaves.forEach(leaf => {
+          if (!leaf.name) {
+            // Derive name from most recent sprout on this leaf
+            const leafSprouts = n.sprouts?.filter(s => s.leafId === leaf.id) || []
+            const mostRecent = leafSprouts[leafSprouts.length - 1]
+            leaf.name = mostRecent?.title || 'Unnamed Saga'
+          }
+          delete leaf.status
         })
       }
     })
