@@ -5,7 +5,7 @@ export type BranchGroup = {
 }
 
 // Sprout types (replacing goal system)
-export type SproutSeason = '1w' | '2w' | '1m' | '3m' | '6m' | '1y'
+export type SproutSeason = '2w' | '1m' | '3m' | '6m' | '1y'
 export type SproutState = 'draft' | 'active' | 'completed' | 'failed'
 export type SproutEnvironment = 'fertile' | 'firm' | 'barren'
 
