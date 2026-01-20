@@ -46,6 +46,8 @@ function wasSproutWateredThisWeek(twigId: string, sproutId: string): boolean {
 
 export type WaterDialogApi = {
   openWaterDialog: (sprout: { id: string; title: string; twigId: string; twigLabel: string; season: string }) => void
+  closeWaterDialog: () => void
+  isOpen: () => boolean
 }
 
 export function initWaterDialog(
@@ -127,14 +129,10 @@ export function initWaterDialog(
   ctx.elements.waterDialog.addEventListener('click', (e) => {
     if (e.target === ctx.elements.waterDialog) closeWaterDialog()
   })
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !ctx.elements.waterDialog.classList.contains('hidden')) {
-      e.preventDefault()
-      closeWaterDialog()
-    }
-  })
 
   return {
     openWaterDialog,
+    closeWaterDialog,
+    isOpen: () => !ctx.elements.waterDialog.classList.contains('hidden'),
   }
 }

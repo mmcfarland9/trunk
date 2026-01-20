@@ -71,12 +71,14 @@ export type SidebarBranchCallbacks = {
 
 export type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
 export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
+export type SidebarHarvestCallback = (sprout: SproutWithLocation) => void
 
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedBranchCallbacks: SidebarBranchCallbacks | undefined
 let storedTwigClick: SidebarTwigCallback | undefined
 let storedLeafClick: SidebarLeafCallback | undefined
+let storedHarvestClick: SidebarHarvestCallback | undefined
 
 function parseBranchIndex(twigId: string): number {
   // Parse "branch-X-twig-Y" to get X
@@ -174,8 +176,9 @@ function renderLeafGroupedSprouts(
   container: HTMLElement,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback
+  _onTwigClick?: SidebarTwigCallback,
+  onLeafClick?: SidebarLeafCallback,
+  onHarvestClick?: SidebarHarvestCallback
 ): void {
   const { standalone, byLeaf } = groupByLeaf(sprouts)
 
@@ -187,13 +190,13 @@ function renderLeafGroupedSprouts(
     const leafName = leaf?.name || 'Unnamed Leaf'
 
     // Always render as stacked card, even for single sprouts
-    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick, onTwigClick)
+    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick, isActive ? onHarvestClick : undefined)
     container.append(card)
   })
 
   // Render standalone sprouts (no leaf) - these shouldn't exist but handle gracefully
   standalone.forEach(sprout => {
-    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick, onTwigClick)
+    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick, isActive ? onHarvestClick : undefined)
     container.append(card)
   })
 }
@@ -203,7 +206,8 @@ export function initSidebarSprouts(
   onWaterClick?: (sprout: SproutWithLocation) => void,
   branchCallbacks?: SidebarBranchCallbacks,
   onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback
+  onLeafClick?: SidebarLeafCallback,
+  onHarvestClick?: SidebarHarvestCallback
 ): void {
   const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
 
@@ -212,6 +216,7 @@ export function initSidebarSprouts(
   storedBranchCallbacks = branchCallbacks
   storedTwigClick = onTwigClick
   storedLeafClick = onLeafClick
+  storedHarvestClick = onHarvestClick
 
   // Set default states: Both sections expanded
   activeSproutsToggle.classList.add('is-expanded')
@@ -244,6 +249,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const branchCallbacks = storedBranchCallbacks
   const onTwigClick = storedTwigClick
   const onLeafClick = storedLeafClick
+  const onHarvestClick = storedHarvestClick
 
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
@@ -288,8 +294,8 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
   if (showFlatList) {
     // Twig view OR hovering twig: group by leaf
-    renderLeafGroupedSprouts(filteredActive, activeSproutsList, true, onWaterClick, onTwigClick, onLeafClick)
-    renderLeafGroupedSprouts(filteredCultivated, cultivatedSproutsList, false, undefined, onTwigClick, onLeafClick)
+    renderLeafGroupedSprouts(filteredActive, activeSproutsList, true, onWaterClick, onTwigClick, onLeafClick, onHarvestClick)
+    renderLeafGroupedSprouts(filteredCultivated, cultivatedSproutsList, false, undefined, onTwigClick, onLeafClick, undefined)
   } else if (showTwigGrouping && branchIdxForTwigFolders !== null) {
     // Branch view OR hovering branch: group by twig, then by leaf within each twig
     const activeByTwig = groupByTwig(filteredActive)
@@ -298,14 +304,14 @@ export function updateSidebarSprouts(ctx: AppContext): void {
     activeByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onTwigClick, onLeafClick)
+      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onTwigClick, onLeafClick, onHarvestClick)
       activeSproutsList.append(folder)
     })
 
     cultivatedByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onTwigClick, onLeafClick)
+      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onTwigClick, onLeafClick, undefined)
       cultivatedSproutsList.append(folder)
     })
   } else {
@@ -322,7 +328,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       byTwig.forEach((twigSprouts, twigId) => {
         const twigLabel = getTwigLabel(twigId)
         const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
-        renderLeafGroupedSprouts(twigSprouts, twigFolder, true, onWaterClick, onTwigClick, onLeafClick)
+        renderLeafGroupedSprouts(twigSprouts, twigFolder, true, onWaterClick, onTwigClick, onLeafClick, onHarvestClick)
         branchFolder.append(twigFolder)
       })
 
@@ -338,7 +344,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       byTwig.forEach((twigSprouts, twigId) => {
         const twigLabel = getTwigLabel(twigId)
         const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
-        renderLeafGroupedSprouts(twigSprouts, twigFolder, false, undefined, onTwigClick, onLeafClick)
+        renderLeafGroupedSprouts(twigSprouts, twigFolder, false, undefined, onTwigClick, onLeafClick, undefined)
         branchFolder.append(twigFolder)
       })
 
@@ -420,7 +426,7 @@ function createStackedLeafCard(
   sprouts: SproutWithLocation[],
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onLeafClick?: SidebarLeafCallback,
-  onTwigClick?: SidebarTwigCallback
+  onHarvestClick?: SidebarHarvestCallback
 ): HTMLDivElement {
   const card = document.createElement('div')
   card.className = 'sidebar-stacked-card'
@@ -457,15 +463,15 @@ function createStackedLeafCard(
     }
 
     // Action button (left of date)
-    if (isReady && onTwigClick) {
-      // Harvest button - navigates to twig view
+    if (isReady && onHarvestClick) {
+      // Harvest button - opens harvest dialog
       const harvestBtn = document.createElement('button')
       harvestBtn.type = 'button'
-      harvestBtn.className = 'action-btn action-btn-progress action-btn-twig sidebar-stacked-action'
+      harvestBtn.className = 'action-btn action-btn-progress action-btn-harvest sidebar-stacked-action'
       harvestBtn.textContent = 'harvest'
       harvestBtn.addEventListener('click', (e) => {
         e.stopPropagation()
-        onTwigClick(sprout.twigId, sprout.branchIndex)
+        onHarvestClick(sprout)
       })
       row.append(title, harvestBtn)
     } else if (onWaterClick) {

@@ -174,6 +174,16 @@ export type AppElements = {
   waterDialogClose: HTMLButtonElement
   waterDialogCancel: HTMLButtonElement
   waterDialogSave: HTMLButtonElement
+  harvestDialog: HTMLDivElement
+  harvestDialogTitle: HTMLParagraphElement
+  harvestDialogMeta: HTMLParagraphElement
+  harvestDialogSlider: HTMLInputElement
+  harvestDialogResultEmoji: HTMLSpanElement
+  harvestDialogBloomHints: NodeListOf<HTMLParagraphElement>
+  harvestDialogReflection: HTMLTextAreaElement
+  harvestDialogClose: HTMLButtonElement
+  harvestDialogCancel: HTMLButtonElement
+  harvestDialogSave: HTMLButtonElement
   soilMeterFill: HTMLDivElement
   soilMeterValue: HTMLSpanElement
   waterCircles: HTMLSpanElement[]

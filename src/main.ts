@@ -20,6 +20,7 @@ import {
 import { updateStats, initSidebarSprouts } from './features/progress'
 import { setStatus, updateStatusMeta } from './features/status'
 import { initWaterDialog } from './features/water-dialog'
+import { initHarvestDialog } from './features/harvest-dialog'
 import { initShine } from './features/shine-dialog'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
 
@@ -120,6 +121,12 @@ const waterDialogApi = initWaterDialog(ctx, {
   onWaterComplete: openWaterCanDialog,
 })
 
+const harvestDialogApi = initHarvestDialog(ctx, {
+  onSoilMeterChange: updateSoilMeter,
+  onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
+  onHarvestComplete: navCallbacks.onUpdateStats,
+})
+
 const shineApi = initShine(ctx, {
   onSunMeterChange: () => shineApi.updateSunMeter(),
   onSoilMeterChange: updateSoilMeter,
@@ -162,6 +169,7 @@ const twigView = buildTwigView(mapPanel, {
     return newTwig ?? null
   },
   onWaterClick: (sprout) => waterDialogApi.openWaterDialog(sprout),
+  onHarvestClick: (sprout) => harvestDialogApi.openHarvestDialog(sprout),
 })
 
 const leafView = buildLeafView(mapPanel, {
@@ -347,12 +355,6 @@ domResult.elements.sunLogDialog.addEventListener('click', (e) => {
   }
 })
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !domResult.elements.sunLogDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    closeSunLogDialog()
-  }
-})
 
 // Soil Bag dialog - soil gains and losses
 function formatSoilTimestamp(dateStr: string): string {
@@ -415,12 +417,6 @@ domResult.elements.soilBagDialog.addEventListener('click', (e) => {
   }
 })
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !domResult.elements.soilBagDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    closeSoilBagDialog()
-  }
-})
 
 // Water Can dialog - waterable sprouts + water log
 function formatWaterLogTimestamp(dateStr: string): string {
@@ -527,12 +523,6 @@ domResult.elements.waterCanDialog.addEventListener('click', (e) => {
   }
 })
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !domResult.elements.waterCanDialog.classList.contains('hidden')) {
-    e.preventDefault()
-    closeWaterCanDialog()
-  }
-})
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
 
@@ -624,6 +614,21 @@ initSidebarSprouts(
       setViewModeState('leaf', branchIndex, twigId)
       ctx.leafView?.open(leafId, twigId, branchIndex)
     }
+  },
+  (sprout) => {
+    // Open harvest dialog
+    harvestDialogApi.openHarvestDialog({
+      id: sprout.id,
+      title: sprout.title,
+      twigId: sprout.twigId,
+      twigLabel: sprout.twigLabel,
+      season: sprout.season,
+      environment: sprout.environment,
+      soilCost: sprout.soilCost,
+      bloomWither: sprout.bloomWither,
+      bloomBudding: sprout.bloomBudding,
+      bloomFlourish: sprout.bloomFlourish,
+    })
   }
 )
 
@@ -656,13 +661,55 @@ setTimeout(() => checkExportReminder(ctx), 2000)
 
 // Global keyboard navigation
 document.addEventListener('keydown', (e) => {
-  // Don't handle if twig view is open (it has its own handler)
-  if (ctx.twigView?.isOpen()) return
+  // Handle Escape: close dialogs first, then zoom back
+  if (e.key === 'Escape') {
+    // Priority 1: Close any open dialog
+    if (waterDialogApi.isOpen()) {
+      e.preventDefault()
+      waterDialogApi.closeWaterDialog()
+      return
+    }
+    if (harvestDialogApi.isOpen()) {
+      e.preventDefault()
+      harvestDialogApi.closeHarvestDialog()
+      return
+    }
+    if (!domResult.elements.sunLogDialog.classList.contains('hidden')) {
+      e.preventDefault()
+      closeSunLogDialog()
+      return
+    }
+    if (!domResult.elements.soilBagDialog.classList.contains('hidden')) {
+      e.preventDefault()
+      closeSoilBagDialog()
+      return
+    }
+    if (!domResult.elements.waterCanDialog.classList.contains('hidden')) {
+      e.preventDefault()
+      closeWaterCanDialog()
+      return
+    }
+    if (!domResult.elements.settingsDialog.classList.contains('hidden')) {
+      e.preventDefault()
+      closeSettingsDialog()
+      return
+    }
 
-  if (e.key === 'Escape' && getViewMode() === 'branch') {
-    returnToOverview(ctx, navCallbacks)
+    // Priority 2: Let twig/leaf views handle their own escape (they have internal handlers)
+    if (ctx.twigView?.isOpen() || ctx.leafView?.isOpen()) {
+      return // Let their handlers deal with it
+    }
+
+    // Priority 3: Navigation zoom back
+    if (getViewMode() === 'branch') {
+      returnToOverview(ctx, navCallbacks)
+      return
+    }
     return
   }
+
+  // Don't handle other keys if twig view is open
+  if (ctx.twigView?.isOpen()) return
 
   // Arrow keys cycle through branches in branch view
   if (getViewMode() === 'branch' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {

@@ -7,11 +7,9 @@ import {
   getHistorySprouts,
   getDebugNow,
   calculateSoilCost,
-  getCapacityReward,
   getSoilAvailable,
   canAffordSoil,
   spendSoil,
-  recoverSoil,
   recoverPartialSoil,
   addSoilEntry,
   getTwigLeaves,
@@ -29,6 +27,18 @@ export type TwigViewCallbacks = {
   onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
   onWaterClick?: (sprout: { id: string, title: string, twigId: string, twigLabel: string, season: string }) => void
+  onHarvestClick?: (sprout: {
+    id: string
+    title: string
+    twigId: string
+    twigLabel: string
+    season: SproutSeason
+    environment: SproutEnvironment
+    soilCost: number
+    bloomWither?: string
+    bloomBudding?: string
+    bloomFlourish?: string
+  }) => void
 }
 
 const SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
@@ -331,16 +341,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         ${bloomHtml}
 
         ${ready ? `
-          <p class="sprout-card-status">Ready to harvest</p>
-          <div class="sprout-complete-section" data-soil-cost="${s.soilCost}" data-environment="${s.environment}" data-season="${s.season}">
-            <div class="sprout-result-slider">
-              <input type="range" min="1" max="5" value="1" class="result-slider" />
-              <span class="result-value">${getResultEmoji(1)}</span>
-            </div>
-            <textarea class="sprout-reflection-input" placeholder="Details (optional)..." rows="2"></textarea>
-            <div class="action-btn-group action-btn-group-right">
-              <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-complete-btn">Harvest</button>
-            </div>
+          <div class="sprout-ready-footer">
+            <p class="sprout-card-status">Ready to harvest</p>
+            <button type="button" class="action-btn action-btn-progress action-btn-harvest sprout-harvest-btn">Harvest</button>
           </div>
         ` : `
           <div class="sprout-growing-footer">
@@ -515,97 +518,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       })
     })
 
-    // Complete buttons and result controls
-    container.querySelectorAll<HTMLDivElement>('.sprout-active-card').forEach(card => {
-      const id = card.dataset.id
-      if (!id) return
-
-      const completeBtn = card.querySelector<HTMLButtonElement>('.sprout-complete-btn')
-      const reflectionInput = card.querySelector<HTMLTextAreaElement>('.sprout-reflection-input')
-      const resultBtns = card.querySelectorAll<HTMLButtonElement>('.result-btn')
-      const slider = card.querySelector<HTMLInputElement>('.result-slider')
-      const valueDisplay = card.querySelector<HTMLSpanElement>('.result-value')
-
-      let result = 0
-      let hasSelected = false
-
-      // Start disabled
-      if (completeBtn) completeBtn.disabled = true
-
-      resultBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          result = parseInt(btn.dataset.result || '0', 10)
-          hasSelected = true
-          resultBtns.forEach(b => b.classList.toggle('is-active', b === btn))
-          if (completeBtn) completeBtn.disabled = false
-        })
-      })
-
-      if (slider && valueDisplay) {
-        const completeSection = card.querySelector<HTMLDivElement>('.sprout-complete-section')
-        const soilCost = parseFloat(completeSection?.dataset.soilCost || '0')
-        const environment = completeSection?.dataset.environment as SproutEnvironment
-        const season = completeSection?.dataset.season as SproutSeason
-
-        function updateHarvestButton(resultVal: number): void {
-          if (!completeBtn) return
-          const isSuccess = resultVal >= 3
-          if (isSuccess) {
-            const resultMultiplier = resultVal === 5 ? 1.0 : resultVal === 4 ? 0.5 : 0.25
-            const baseReward = getCapacityReward(environment, season)
-            const capGain = baseReward * resultMultiplier
-            completeBtn.innerHTML = `Harvest <span class="btn-soil-gain">(+${soilCost.toFixed(2)}, +${capGain.toFixed(2)} cap)</span>`
-          } else {
-            const recovery = soilCost * 0.5
-            completeBtn.innerHTML = `Harvest <span class="btn-soil-gain">(+${recovery.toFixed(2)})</span>`
-          }
-        }
-
-        slider.addEventListener('input', () => {
-          result = parseInt(slider.value, 10)
-          hasSelected = true
-          valueDisplay.textContent = getResultEmoji(result)
-          if (completeBtn) completeBtn.disabled = false
-          updateHarvestButton(result)
-        })
-
-        // Initialize with default value
-        updateHarvestButton(1)
-      }
-
-      completeBtn?.addEventListener('click', () => {
-        if (!hasSelected) return
-        const sprouts = getSprouts()
-        const sprout = sprouts.find(s => s.id === id)
-        if (!sprout) return
-
-        // 1-2 = failed, 3-5 = success
-        const isSuccess = result >= 3
-        sprout.state = isSuccess ? 'completed' : 'failed'
-        sprout.result = result
-        sprout.reflection = reflectionInput?.value.trim() || undefined
-        sprout.completedAt = new Date().toISOString()
-
-        // Standalone sprouts (no leafId) are valid - no auto-leaf creation
-
-        // Recover soil based on outcome
-        if (isSuccess) {
-          // Capacity bonus scales with result: 3=0.25, 4=0.5, 5=1.0 (multiplier)
-          // Times (environment + season) base reward
-          const resultMultiplier = result === 5 ? 1.0 : result === 4 ? 0.5 : 0.25
-          const baseReward = getCapacityReward(sprout.environment, sprout.season)
-          recoverSoil(sprout.soilCost, baseReward * resultMultiplier, 'Harvested sprout', sprout.title)
-        } else {
-          // Failed sprouts recover partial soil (learning from failure)
-          recoverSoil(sprout.soilCost * 0.5, 0, 'Failed sprout', sprout.title)
-        }
-
-        setSprouts(sprouts)
-        renderSprouts()
-        callbacks.onSoilChange?.()
-      })
-    })
-
     // Leaf cards - click anywhere on the card to open leaf view
     container.querySelectorAll<HTMLDivElement>('.leaf-card').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -708,6 +620,38 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             twigId: nodeId,
             twigLabel,
             season: getSeasonLabel(sprout.season),
+          })
+        }
+      })
+    })
+
+    // Harvest buttons - open harvest dialog
+    container.querySelectorAll<HTMLButtonElement>('.sprout-harvest-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const card = btn.closest('.sprout-card') as HTMLElement
+        const id = card?.dataset.id
+        if (!id) return
+
+        const sprouts = getSprouts()
+        const sprout = sprouts.find(s => s.id === id)
+        if (!sprout) return
+
+        const nodeId = getCurrentNodeId()
+        const twigLabel = currentTwigNode?.dataset.defaultLabel || 'Twig'
+
+        if (callbacks.onHarvestClick && nodeId) {
+          callbacks.onHarvestClick({
+            id: sprout.id,
+            title: sprout.title,
+            twigId: nodeId,
+            twigLabel,
+            season: sprout.season,
+            environment: sprout.environment,
+            soilCost: sprout.soilCost,
+            bloomWither: sprout.bloomWither,
+            bloomBudding: sprout.bloomBudding,
+            bloomFlourish: sprout.bloomFlourish,
           })
         }
       })

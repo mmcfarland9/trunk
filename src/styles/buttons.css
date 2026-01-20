@@ -137,6 +137,12 @@
   --btn-rgb: 138, 74, 58;
 }
 
+.action-btn-harvest {
+  border-color: var(--wood);
+  color: var(--wood);
+  --btn-rgb: 139, 90, 43;
+}
+
 /* Soil cost/gain indicators on buttons */
 .btn-soil-cost,
 .btn-soil-gain {

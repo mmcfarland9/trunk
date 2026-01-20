@@ -372,6 +372,39 @@ export function buildApp(
     </div>
   `
 
+  // Harvest dialog
+  const harvestDialog = document.createElement('div')
+  harvestDialog.className = 'harvest-dialog hidden'
+  harvestDialog.innerHTML = `
+    <div class="harvest-dialog-box">
+      <div class="harvest-dialog-header">
+        <h2 class="harvest-dialog-title">Harvest Sprout</h2>
+        <button type="button" class="harvest-dialog-close">×</button>
+      </div>
+      <div class="harvest-dialog-body">
+        <p class="harvest-dialog-sprout-title"></p>
+        <p class="harvest-dialog-sprout-meta"></p>
+        <div class="harvest-dialog-result">
+          <label class="harvest-dialog-label">How did it go?</label>
+          <div class="harvest-dialog-slider-row">
+            <input type="range" min="1" max="5" value="3" class="harvest-dialog-slider" />
+            <span class="harvest-dialog-result-emoji">🌿</span>
+          </div>
+          <div class="harvest-dialog-bloom-hints">
+            <p class="harvest-dialog-bloom-hint" data-level="1"></p>
+            <p class="harvest-dialog-bloom-hint" data-level="3"></p>
+            <p class="harvest-dialog-bloom-hint" data-level="5"></p>
+          </div>
+        </div>
+        <textarea class="harvest-dialog-reflection" placeholder="Reflect on what you learned..."></textarea>
+        <div class="harvest-dialog-actions">
+          <button type="button" class="action-btn action-btn-passive action-btn-neutral harvest-dialog-cancel">Cancel</button>
+          <button type="button" class="action-btn action-btn-progress action-btn-twig harvest-dialog-save">Harvest</button>
+        </div>
+      </div>
+    </div>
+  `
+
   // Settings dialog
   const settingsDialog = document.createElement('div')
   settingsDialog.className = 'settings-dialog hidden'
@@ -519,7 +552,7 @@ export function buildApp(
     </div>
   `
 
-  shell.append(header, body, sproutsDialog, waterDialog, settingsDialog, waterCanDialog, sunLogDialog, soilBagDialog)
+  shell.append(header, body, sproutsDialog, waterDialog, harvestDialog, settingsDialog, waterCanDialog, sunLogDialog, soilBagDialog)
   appRoot.append(shell)
 
   const elements: AppElements = {
@@ -560,6 +593,16 @@ export function buildApp(
     waterDialogClose: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-close')!,
     waterDialogCancel: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-cancel')!,
     waterDialogSave: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-save')!,
+    harvestDialog,
+    harvestDialogTitle: harvestDialog.querySelector<HTMLParagraphElement>('.harvest-dialog-sprout-title')!,
+    harvestDialogMeta: harvestDialog.querySelector<HTMLParagraphElement>('.harvest-dialog-sprout-meta')!,
+    harvestDialogSlider: harvestDialog.querySelector<HTMLInputElement>('.harvest-dialog-slider')!,
+    harvestDialogResultEmoji: harvestDialog.querySelector<HTMLSpanElement>('.harvest-dialog-result-emoji')!,
+    harvestDialogBloomHints: harvestDialog.querySelectorAll<HTMLParagraphElement>('.harvest-dialog-bloom-hint'),
+    harvestDialogReflection: harvestDialog.querySelector<HTMLTextAreaElement>('.harvest-dialog-reflection')!,
+    harvestDialogClose: harvestDialog.querySelector<HTMLButtonElement>('.harvest-dialog-close')!,
+    harvestDialogCancel: harvestDialog.querySelector<HTMLButtonElement>('.harvest-dialog-cancel')!,
+    harvestDialogSave: harvestDialog.querySelector<HTMLButtonElement>('.harvest-dialog-save')!,
     soilMeterFill: soilFill,
     soilMeterValue: soilValue,
     waterCircles,

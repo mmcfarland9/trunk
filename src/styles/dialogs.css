@@ -381,6 +381,174 @@
 
 /* Button styles now handled by .action-btn system */
 
+/* === Harvest Dialog === */
+.harvest-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fade-in 150ms ease;
+}
+
+.harvest-dialog.hidden {
+  display: none;
+}
+
+.harvest-dialog-box {
+  width: min(480px, 90vw);
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: scale-in 200ms ease;
+}
+
+.harvest-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(100, 170, 100, 0.08);
+}
+
+.harvest-dialog-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--twig);
+}
+
+.harvest-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.harvest-dialog-close:hover {
+  color: var(--ink);
+}
+
+.harvest-dialog-body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.harvest-dialog-sprout-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.harvest-dialog-sprout-meta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.harvest-dialog-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.harvest-dialog-label {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+.harvest-dialog-slider-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.harvest-dialog-slider {
+  flex: 1;
+  height: 6px;
+  cursor: pointer;
+  appearance: none;
+  background: var(--border-strong);
+}
+
+.harvest-dialog-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--twig);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.harvest-dialog-result-emoji {
+  font-size: 1.5rem;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.harvest-dialog-bloom-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.harvest-dialog-bloom-hint {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.harvest-dialog-bloom-hint:empty {
+  display: none;
+}
+
+.harvest-dialog-reflection {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--ink);
+  resize: vertical;
+  transition: border-color 150ms ease;
+}
+
+.harvest-dialog-reflection:focus {
+  outline: none;
+  border-color: var(--twig);
+}
+
+.harvest-dialog-reflection::placeholder {
+  color: var(--ink-faint);
+}
+
+.harvest-dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
 /* === Shine (Sun) Journaling Dialog === */
 .shine-dialog {
   position: fixed;
