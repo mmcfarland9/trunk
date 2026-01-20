@@ -187,18 +187,15 @@
 .sprout-draft-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--border);
+  gap: var(--space-1);
+  padding: var(--space-2);
 }
 
-/* Sprout section title - divider line above sprout fields */
+/* Sprout section title */
 .sprout-section-title {
-  margin: var(--space-3) 0 var(--space-1);
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--border);
+  margin: var(--space-2) 0 0;
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.55 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.5);
   font-weight: 500;
   color: var(--ink-faint);
   text-transform: uppercase;
@@ -216,22 +213,20 @@
 .sprout-leaf-select {
   width: 100%;
   border: none;
-  border-bottom: 1px solid var(--border-strong);
   background: transparent;
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.7 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.6);
   color: var(--ink);
-  padding: 0.35rem 0;
+  padding: 0.2rem 0;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4l3 4 3-4'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4l3 4 3-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0 center;
 }
 
 .sprout-leaf-select:focus {
   outline: none;
-  border-color: var(--wood);
 }
 
 .sprout-leaf-select option {
@@ -246,18 +241,15 @@
 
 .sprout-new-leaf-name {
   border: none;
-  border-bottom: 1px solid var(--border);
   background: transparent;
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.7 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.6);
   color: var(--ink);
-  padding: 0.35rem 0;
-  margin-top: var(--space-1);
+  padding: 0.2rem 0;
 }
 
 .sprout-new-leaf-name:focus {
   outline: none;
-  border-color: var(--wood);
 }
 
 .sprout-new-leaf-name.hidden {
@@ -266,22 +258,20 @@
 
 .sprout-title-input {
   border: none;
-  border-bottom: 1px solid var(--border-strong);
   background: transparent;
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.75 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.6);
   color: var(--ink);
-  padding: 0.35rem 0;
+  padding: 0.2rem 0;
 }
 
 .sprout-title-input:focus {
   outline: none;
-  border-color: var(--wood);
 }
 
 .sprout-field-label {
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.55 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.5);
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -298,19 +288,17 @@
 .sprout-budding-input,
 .sprout-flourish-input {
   border: none;
-  border-bottom: 1px solid var(--border);
   background: transparent;
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.65 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.55);
   color: var(--ink);
-  padding: 0.35rem 0;
+  padding: 0.15rem 0;
 }
 
 .sprout-wither-input:focus,
 .sprout-budding-input:focus,
 .sprout-flourish-input:focus {
   outline: none;
-  border-color: var(--wood);
 }
 
 .sprout-season-selector {
