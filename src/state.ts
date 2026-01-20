@@ -573,24 +573,13 @@ export function getSproutsByLeaf(sprouts: Sprout[], leafId: string): Sprout[] {
   return sprouts.filter(s => s.leafId === leafId)
 }
 
-export function updateLeafStatus(twigId: string, leafId: string): void {
-  const data = nodeState[twigId]
-  if (!data?.leaves) return
-
-  const leaf = data.leaves.find(l => l.id === leafId)
-  if (!leaf) return
-
-  const sprouts = getSproutsByLeaf(data.sprouts || [], leafId)
-  const hasActive = sprouts.some(s => s.state === 'active')
-
-  if (hasActive) {
-    leaf.status = 'active'
-  } else if (sprouts.length > 0) {
-    leaf.status = 'dormant'
-  }
+// Leaf status is now derived from sprouts, not stored
+// Helper to check if a leaf has active sprouts
+export function isLeafActive(sprouts: Sprout[], leafId: string): boolean {
+  return getSproutsByLeaf(sprouts, leafId).some(s => s.state === 'active')
 }
 
-export function createLeaf(twigId: string): Leaf {
+export function createLeaf(twigId: string, name: string): Leaf {
   if (!nodeState[twigId]) {
     nodeState[twigId] = { label: '', note: '' }
   }
@@ -600,7 +589,7 @@ export function createLeaf(twigId: string): Leaf {
 
   const leaf: Leaf = {
     id: generateLeafId(),
-    status: 'active',
+    name,
     createdAt: new Date().toISOString(),
   }
 
@@ -695,8 +684,7 @@ export function graftFromLeaf(
 
   data.sprouts.push(newSprout)
 
-  // Update leaf status to active
-  updateLeafStatus(twigId, leafId)
+  // Leaf status is now derived from sprouts
 
   saveState()
   return newSprout

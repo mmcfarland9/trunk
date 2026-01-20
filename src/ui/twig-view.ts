@@ -143,6 +143,12 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
           <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
           <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
+          <label class="sprout-field-label">Leaf <span class="field-hint">(saga)</span></label>
+          <select class="sprout-leaf-select">
+            <option value="">No leaf (standalone)</option>
+            <option value="__new__">Create new leaf...</option>
+          </select>
+          <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
           <div class="sprout-soil-cost"></div>
           <div class="action-btn-group action-btn-group-right">
             <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
@@ -183,6 +189,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   const witherInput = container.querySelector<HTMLInputElement>('.sprout-wither-input')!
   const buddingInput = container.querySelector<HTMLInputElement>('.sprout-budding-input')!
   const flourishInput = container.querySelector<HTMLInputElement>('.sprout-flourish-input')!
+  const leafSelect = container.querySelector<HTMLSelectElement>('.sprout-leaf-select')!
+  const newLeafNameInput = container.querySelector<HTMLInputElement>('.sprout-new-leaf-name')!
   const setBtn = container.querySelector<HTMLButtonElement>('.sprout-set-btn')!
   const activeCount = container.querySelector<HTMLSpanElement>('.active-count')!
   const cultivatedCount = container.querySelector<HTMLSpanElement>('.cultivated-count')!
@@ -583,13 +591,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         sprout.reflection = reflectionInput?.value.trim() || undefined
         sprout.completedAt = new Date().toISOString()
 
-        // Auto-create a leaf for this sprout if it doesn't have one
-        // (creates a saga/trajectory starting with this sprout)
-        const nodeId = getCurrentNodeId()
-        if (nodeId && !sprout.leafId) {
-          const newLeaf = createLeaf(nodeId)
-          sprout.leafId = newLeaf.id
-        }
+        // Standalone sprouts (no leafId) are valid - no auto-leaf creation
 
         // Recover soil based on outcome
         if (isSuccess) {
@@ -696,6 +698,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     witherInput.value = ''
     buddingInput.value = ''
     flourishInput.value = ''
+    leafSelect.value = ''
+    newLeafNameInput.value = ''
+    newLeafNameInput.classList.add('hidden')
     seasonBtns.forEach(btn => btn.classList.remove('is-active'))
     envBtns.forEach(btn => btn.classList.remove('is-active'))
     envHints.forEach(h => h.classList.remove('is-visible'))
@@ -735,6 +740,17 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   // Sprout title input
   sproutTitleInput.addEventListener('input', updateFormState)
 
+  // Leaf select - show/hide new leaf name input
+  leafSelect.addEventListener('change', () => {
+    if (leafSelect.value === '__new__') {
+      newLeafNameInput.classList.remove('hidden')
+      newLeafNameInput.focus()
+    } else {
+      newLeafNameInput.classList.add('hidden')
+      newLeafNameInput.value = ''
+    }
+  })
+
   // Set button - create sprout
   setBtn.addEventListener('click', () => {
     if (!selectedSeason || !selectedEnvironment) return
@@ -747,8 +763,19 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const nodeId = getCurrentNodeId()
     if (!nodeId) return
 
-    // Create leaf immediately so sprout is clickable from the start
-    const leaf = createLeaf(nodeId)
+    // Determine leaf assignment based on leaf picker
+    let leafId: string | undefined
+    const leafChoice = leafSelect.value
+    if (leafChoice === '__new__') {
+      // Create new leaf with the provided name
+      const leafName = newLeafNameInput.value.trim() || title
+      const newLeaf = createLeaf(nodeId, leafName)
+      leafId = newLeaf.id
+    } else if (leafChoice) {
+      // Use existing leaf
+      leafId = leafChoice
+    }
+    // If leafChoice is "", sprout is standalone (no leafId)
 
     const now = new Date()
     const bloomWither = witherInput.value.trim() || undefined
@@ -767,7 +794,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       bloomWither,
       bloomBudding,
       bloomFlourish,
-      leafId: leaf.id,
+      leafId,
     }
 
     const sprouts = getSprouts()
@@ -806,6 +833,24 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   }
   document.addEventListener('keydown', handleKeydown)
 
+  function populateLeafSelect(): void {
+    // Clear existing options except first two (standalone and new)
+    while (leafSelect.options.length > 2) {
+      leafSelect.remove(2)
+    }
+    // Add existing leaves for this twig
+    const nodeId = getCurrentNodeId()
+    if (nodeId) {
+      const leaves = getTwigLeaves(nodeId)
+      leaves.forEach(leaf => {
+        const option = document.createElement('option')
+        option.value = leaf.id
+        option.textContent = leaf.name
+        leafSelect.appendChild(option)
+      })
+    }
+  }
+
   function open(twigNode: HTMLButtonElement): void {
     currentTwigNode = twigNode
     const nodeId = twigNode.dataset.nodeId
@@ -819,6 +864,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     noteInput.value = data?.note || ''
 
     resetForm()
+    populateLeafSelect()
     renderSprouts()
     container.classList.remove('hidden')
   }

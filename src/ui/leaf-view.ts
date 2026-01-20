@@ -316,9 +316,11 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
       const data = nodeState[currentTwigId]
       if (data) {
         if (!data.leaves) data.leaves = []
+        // Derive name from most recent sprout
+        const leafName = sprouts[sprouts.length - 1]?.title || 'Unnamed Saga'
         data.leaves.push({
           id: currentLeafId,
-          status: 'active',
+          name: leafName,
           createdAt: new Date().toISOString(),
         })
         saveState()
