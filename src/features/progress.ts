@@ -463,7 +463,7 @@ function createStackedLeafCard(
         waterBtn.disabled = true
       } else {
         waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
-        waterBtn.textContent = '💧'
+        waterBtn.textContent = 'water'
       }
 
       waterBtn.addEventListener('click', (e) => {

@@ -385,7 +385,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         ${ready
           ? '<span class="stacked-status is-ready">Ready</span>'
           : `<span class="stacked-progress">${daysLeft}d</span>`}
-        <button type="button" class="action-btn ${ready ? 'action-btn-twig' : (watered ? 'action-btn-passive' : 'action-btn-progress')} action-btn-water stacked-water-btn" data-sprout-id="${s.id}" ${watered && !ready ? 'disabled' : ''}>${ready ? '🌾' : (watered ? '💧' : '💧')}</button>
+        <button type="button" class="action-btn ${ready ? 'action-btn-twig' : (watered ? 'action-btn-passive' : 'action-btn-progress')} action-btn-water stacked-water-btn" data-sprout-id="${s.id}" ${watered && !ready ? 'disabled' : ''}>${ready ? '🌾' : 'water'}</button>
       </div>
     `
   }
@@ -414,7 +414,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       // Multiple active sprouts - render as stacked card
       return `
         <div class="sprout-card sprout-card-stacked" data-leaf-id="${leafId}">
-          <div class="leaf-header">🌿 ${leafName}</div>
+          <div class="leaf-header">${leafName}</div>
           <div class="stacked-sprouts">
             ${activeSprouts.map(s => renderStackedSproutRow(s)).join('')}
           </div>
