@@ -17,7 +17,7 @@ export type LeafViewCallbacks = {
   onSoilChange?: () => void
 }
 
-const SEASONS: SproutSeason[] = ['1w', '2w', '1m', '3m', '6m', '1y']
+const SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
 const ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
 
 // Unified log entry types
@@ -45,7 +45,6 @@ type LogEntry = {
 
 function getSeasonLabel(season: SproutSeason): string {
   const labels: Record<SproutSeason, string> = {
-    '1w': '1 week',
     '2w': '2 weeks',
     '1m': '1 month',
     '3m': '3 months',
@@ -87,7 +86,6 @@ function formatDateTime(dateStr: string): string {
 function getEndDate(season: SproutSeason, startDate: Date = new Date()): Date {
   const end = new Date(startDate)
   switch (season) {
-    case '1w': end.setDate(end.getDate() + 7); break
     case '2w': end.setDate(end.getDate() + 14); break
     case '1m': end.setMonth(end.getMonth() + 1); break
     case '3m': end.setMonth(end.getMonth() + 3); break
