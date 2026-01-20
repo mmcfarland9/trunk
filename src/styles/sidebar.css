@@ -346,6 +346,14 @@
   background: rgba(0, 0, 0, 0.03);
 }
 
+.sidebar-stacked-row.is-ready {
+  background: rgba(100, 170, 100, 0.15);
+}
+
+.sidebar-stacked-row.is-ready:hover {
+  background: rgba(100, 170, 100, 0.25);
+}
+
 .sidebar-stacked-title {
   flex: 1;
   min-width: 0;

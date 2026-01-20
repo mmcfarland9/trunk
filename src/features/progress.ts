@@ -450,6 +450,11 @@ function createStackedLeafCard(
 
     const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
 
+    // Highlight row in green when ready to harvest
+    if (isReady) {
+      row.classList.add('is-ready')
+    }
+
     // Water button (left of date)
     if (onWaterClick) {
       const watered = wasWateredThisWeek(sprout)
@@ -458,7 +463,7 @@ function createStackedLeafCard(
 
       if (isReady) {
         waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-stacked-action'
-        waterBtn.textContent = '🌾'
+        waterBtn.textContent = 'harvest'
       } else if (watered) {
         waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-stacked-action'
         waterBtn.textContent = 'watered'
