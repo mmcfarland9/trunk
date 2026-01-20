@@ -41,8 +41,6 @@ export type SoilEntry = {
 }
 
 // Leaf - a saga/trajectory of related sprouts (identity derived from its sprouts)
-export type LeafStatus = 'active' | 'dormant' | 'archived'
-
 export type Leaf = {
   id: string
   name: string
