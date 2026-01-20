@@ -45,7 +45,7 @@ export type LeafStatus = 'active' | 'dormant' | 'archived'
 
 export type Leaf = {
   id: string
-  status: LeafStatus
+  name: string
   createdAt: string
 }
 
