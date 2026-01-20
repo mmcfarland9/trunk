@@ -461,7 +461,7 @@ function createStackedLeafCard(
         waterBtn.textContent = '🌾'
       } else if (watered) {
         waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-stacked-action'
-        waterBtn.textContent = '✓'
+        waterBtn.textContent = 'watered'
         waterBtn.disabled = true
       } else {
         waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
