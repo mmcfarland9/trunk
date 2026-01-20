@@ -174,7 +174,7 @@ function renderLeafGroupedSprouts(
   container: HTMLElement,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  _onTwigClick?: SidebarTwigCallback,
+  onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback
 ): void {
   const { standalone, byLeaf } = groupByLeaf(sprouts)
@@ -187,13 +187,13 @@ function renderLeafGroupedSprouts(
     const leafName = leaf?.name || 'Unnamed Leaf'
 
     // Always render as stacked card, even for single sprouts
-    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick)
+    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick, onTwigClick)
     container.append(card)
   })
 
   // Render standalone sprouts (no leaf) - these shouldn't exist but handle gracefully
   standalone.forEach(sprout => {
-    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick)
+    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick, onTwigClick)
     container.append(card)
   })
 }
@@ -419,7 +419,8 @@ function createStackedLeafCard(
   leafId: string,
   sprouts: SproutWithLocation[],
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  onLeafClick?: SidebarLeafCallback
+  onLeafClick?: SidebarLeafCallback,
+  onTwigClick?: SidebarTwigCallback
 ): HTMLDivElement {
   const card = document.createElement('div')
   card.className = 'sidebar-stacked-card'
@@ -455,16 +456,25 @@ function createStackedLeafCard(
       row.classList.add('is-ready')
     }
 
-    // Water button (left of date)
-    if (onWaterClick) {
+    // Action button (left of date)
+    if (isReady && onTwigClick) {
+      // Harvest button - navigates to twig view
+      const harvestBtn = document.createElement('button')
+      harvestBtn.type = 'button'
+      harvestBtn.className = 'action-btn action-btn-progress action-btn-twig sidebar-stacked-action'
+      harvestBtn.textContent = 'harvest'
+      harvestBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        onTwigClick(sprout.twigId, sprout.branchIndex)
+      })
+      row.append(title, harvestBtn)
+    } else if (onWaterClick) {
+      // Water button
       const watered = wasWateredThisWeek(sprout)
       const waterBtn = document.createElement('button')
       waterBtn.type = 'button'
 
-      if (isReady) {
-        waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-stacked-action'
-        waterBtn.textContent = 'harvest'
-      } else if (watered) {
+      if (watered) {
         waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-stacked-action'
         waterBtn.textContent = 'watered'
         waterBtn.disabled = true
