@@ -83,7 +83,7 @@ const LEGACY_SUN_KEY = 'trunk-sun-v1'
 // Max capacity (100) is a lifetime goal - essentially unreachable.
 // See docs/progression-system.md for full math and examples.
 
-const DEFAULT_SOIL_CAPACITY = 4  // Start humble - room for a few 1-week goals
+const DEFAULT_SOIL_CAPACITY = 10  // Room for ~5 concurrent 2-week sprouts
 const MAX_SOIL_CAPACITY = 100    // Lifetime ceiling - mythical to achieve
 
 // Recovery rates (slow, bonsai-style)
