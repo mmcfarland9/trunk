@@ -94,8 +94,7 @@ const SOIL_RECOVERY_PER_SUN = 0.35    // 1x/week - meaningful but supplementary
 
 // Base costs by season (longer goals require building up capacity)
 const SEASON_BASE_COST: Record<SproutSeason, number> = {
-  '1w': 1,   // Cheap - the building blocks
-  '2w': 2,
+  '2w': 2,   // Minimum commitment
   '1m': 3,
   '3m': 5,   // Requires ~5 capacity (need to grow first)
   '6m': 8,   // Serious commitment
