@@ -192,6 +192,20 @@
   border: 1px solid var(--border);
 }
 
+/* Sprout form header */
+.sprout-form-header {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-ascii);
+  font-size: calc(var(--char) * 0.85 * var(--twig-scale));
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sprout-form-header .field-hint {
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
 /* Leaf select dropdown */
 .sprout-leaf-select {
   width: 100%;
