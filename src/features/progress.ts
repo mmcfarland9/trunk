@@ -444,7 +444,7 @@ function createStackedLeafCard(
     const meta = document.createElement('span')
     meta.className = 'sidebar-stacked-meta'
     const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
-    meta.textContent = isReady ? 'READY' : sprout.season
+    meta.textContent = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
 
     row.append(title, meta)
 
