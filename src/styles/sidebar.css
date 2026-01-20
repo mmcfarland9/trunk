@@ -318,12 +318,12 @@
   cursor: pointer;
   text-align: left;
   padding: 0.1rem 0;
-  transition: color 150ms ease;
+  transition: color 150ms ease, background 150ms ease;
 }
 
 .sidebar-stacked-header:hover {
-  color: var(--ink);
-  text-decoration: underline;
+  color: var(--twig);
+  background: rgba(139, 90, 43, 0.1);
 }
 
 .sidebar-stacked-rows {
