@@ -130,14 +130,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             <option value="__new__">+ Create new leaf</option>
           </select>
           <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
-          <p class="sprout-section-title">Sprout <span class="field-hint">(goal)</span></p>
+          <p class="sprout-section-title">Sprout <span class="field-hint">(task)</span></p>
           <input type="text" class="sprout-title-input" placeholder="Describe this sprout." maxlength="60" />
-          <label class="sprout-field-label">Season</label>
+          <label class="sprout-field-label">Season <span class="field-hint">(period)</span></label>
           <div class="sprout-season-selector">
             ${SEASONS.map(s => `<button type="button" class="sprout-season-btn" data-season="${s}">${s}</button>`).join('')}
           </div>
           <div class="sprout-end-date"></div>
-          <label class="sprout-field-label">Environment</label>
+          <label class="sprout-field-label">Environment <span class="field-hint">(difficulty)</span></label>
           <div class="sprout-environment-selector">
             ${ENVIRONMENTS.map(e => `<button type="button" class="sprout-env-btn" data-env="${e}">${getEnvironmentLabel(e)}</button>`).join('')}
           </div>
@@ -146,7 +146,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             <span class="env-hint" data-for="firm">[New obstacles · +1 soil capacity]</span>
             <span class="env-hint" data-for="barren">[Hostile conditions · +2 soil capacity]</span>
           </div>
-          <label class="sprout-field-label">Bloom <span class="field-hint">(optional)</span></label>
+          <label class="sprout-field-label">Bloom <span class="field-hint">(outcomes)</span></label>
           <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
           <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
           <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
