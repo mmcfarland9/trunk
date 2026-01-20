@@ -16,6 +16,7 @@ import {
   addSoilEntry,
   getTwigLeaves,
   getSproutsByLeaf,
+  getLeafById,
   createLeaf,
   getSoilRecoveryRate,
   wasWateredThisWeek,
@@ -364,38 +365,69 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     `
   }
 
-  function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boolean): string {
-    // Layer count for subtle depth effect (capped at 3)
-    const layerCount = Math.min(sprouts.length, 3)
+  function renderStackedSproutRow(s: Sprout): string {
+    const ready = isReady(s)
+    const daysLeft = getDaysRemaining(s)
+    const watered = wasWateredThisWeek(s)
 
-    // Only show the TOP sprout - most recent active if growing, most recent completed if cultivated
-    let topSprout: Sprout
-    if (isGrowing) {
-      // Show the active sprout
-      const activeSprouts = sprouts.filter(s => s.state === 'active')
-      topSprout = activeSprouts.sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )[0]
-    } else {
-      // Show most recent completed sprout
-      topSprout = sprouts.sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )[0]
-    }
-
-    if (!topSprout) return ''
-
-    // Render just the one card with leaf data attributes
-    const cardHtml = isGrowing
-      ? renderActiveCard(topSprout)
-      : renderHistoryCard(topSprout)
-
-    // Wrap in leaf container for click handling and layer effect
     return `
-      <div class="leaf-card" data-leaf-id="${leafId}" data-layers="${layerCount}">
-        ${cardHtml}
+      <div class="stacked-sprout-row" data-id="${s.id}">
+        <span class="stacked-season">[${s.season}]</span>
+        <span class="stacked-title">${s.title}</span>
+        ${ready
+          ? '<span class="stacked-status is-ready">Ready</span>'
+          : `<span class="stacked-progress">${daysLeft}d</span>`}
+        <button type="button" class="action-btn ${ready ? 'action-btn-twig' : (watered ? 'action-btn-passive' : 'action-btn-progress')} action-btn-water stacked-water-btn" data-sprout-id="${s.id}" ${watered && !ready ? 'disabled' : ''}>${ready ? '🌾' : (watered ? '💧' : '💧')}</button>
       </div>
     `
+  }
+
+  function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boolean): string {
+    const nodeId = getCurrentNodeId()
+    const leaf = nodeId ? getLeafById(nodeId, leafId) : undefined
+    const leafName = leaf?.name || 'Unnamed Saga'
+
+    if (isGrowing) {
+      // Get all active sprouts for this leaf
+      const activeSprouts = sprouts.filter(s => s.state === 'active')
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+
+      if (activeSprouts.length === 0) return ''
+
+      // If only one active sprout, render normally
+      if (activeSprouts.length === 1) {
+        return `
+          <div class="leaf-card" data-leaf-id="${leafId}">
+            ${renderActiveCard(activeSprouts[0])}
+          </div>
+        `
+      }
+
+      // Multiple active sprouts - render as stacked card
+      return `
+        <div class="sprout-card sprout-card-stacked" data-leaf-id="${leafId}">
+          <div class="leaf-header">🌿 ${leafName}</div>
+          <div class="stacked-sprouts">
+            ${activeSprouts.map(s => renderStackedSproutRow(s)).join('')}
+          </div>
+        </div>
+      `
+    } else {
+      // Cultivated - show most recent completed sprout
+      const completedSprouts = sprouts.filter(s => s.state === 'completed' || s.state === 'failed')
+      const topSprout = completedSprouts.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0]
+
+      if (!topSprout) return ''
+
+      const layerCount = Math.min(completedSprouts.length, 3)
+      return `
+        <div class="leaf-card" data-leaf-id="${leafId}" data-layers="${layerCount}">
+          ${renderHistoryCard(topSprout)}
+        </div>
+      `
+    }
   }
 
   function renderSprouts(): void {
@@ -650,6 +682,32 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
         const sprouts = getSprouts()
         const sprout = sprouts.find(s => s.id === id)
+        if (!sprout) return
+
+        const nodeId = getCurrentNodeId()
+        const twigLabel = currentTwigNode?.dataset.defaultLabel || 'Twig'
+
+        if (callbacks.onWaterClick && nodeId) {
+          callbacks.onWaterClick({
+            id: sprout.id,
+            title: sprout.title,
+            twigId: nodeId,
+            twigLabel,
+            season: getSeasonLabel(sprout.season),
+          })
+        }
+      })
+    })
+
+    // Stacked water buttons - open water dialog for individual sprout in stacked card
+    container.querySelectorAll<HTMLButtonElement>('.stacked-water-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const sproutId = btn.dataset.sproutId
+        if (!sproutId) return
+
+        const sprouts = getSprouts()
+        const sprout = sprouts.find(s => s.id === sproutId)
         if (!sprout) return
 
         const nodeId = getCurrentNodeId()
