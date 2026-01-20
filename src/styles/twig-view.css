@@ -192,18 +192,24 @@
   border: 1px solid var(--border);
 }
 
-/* Sprout form header */
-.sprout-form-header {
-  margin: 0 0 var(--space-2);
+/* Sprout section title - divider line above sprout fields */
+.sprout-section-title {
+  margin: var(--space-3) 0 var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
   font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.85 * var(--twig-scale));
+  font-size: calc(var(--char) * 0.55 * var(--twig-scale));
   font-weight: 500;
-  color: var(--ink);
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.sprout-form-header .field-hint {
+.sprout-section-title .field-hint {
   font-weight: 400;
-  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0.7;
 }
 
 /* Leaf select dropdown */

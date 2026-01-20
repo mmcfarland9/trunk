@@ -124,13 +124,13 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       <div class="sprout-column sprout-drafts">
         <h3 class="column-title">New</h3>
         <div class="sprout-draft-form">
-          <p class="sprout-form-header">Sprout <span class="field-hint">(goal)</span></p>
           <label class="sprout-field-label">Leaf <span class="field-hint">(saga)</span></label>
           <select class="sprout-leaf-select">
             <option value="" disabled selected>Select a leaf...</option>
             <option value="__new__">+ Create new leaf</option>
           </select>
           <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
+          <p class="sprout-section-title">Sprout <span class="field-hint">(goal)</span></p>
           <input type="text" class="sprout-title-input" placeholder="Describe this sprout." maxlength="60" />
           <label class="sprout-field-label">Season</label>
           <div class="sprout-season-selector">
