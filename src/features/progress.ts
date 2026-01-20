@@ -1,6 +1,6 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, getSoilRecoveryRate, wasWateredThisWeek, getLeafById } from '../state'
+import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, wasWateredThisWeek, getLeafById } from '../state'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -174,33 +174,27 @@ function renderLeafGroupedSprouts(
   container: HTMLElement,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  onTwigClick?: SidebarTwigCallback,
+  _onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback
 ): void {
   const { standalone, byLeaf } = groupByLeaf(sprouts)
 
-  // Render leaf groups (stacked if multiple sprouts)
+  // Render leaf groups - always use stacked card format for consistency
   byLeaf.forEach((leafSprouts, leafId) => {
     const twigId = leafSprouts[0]?.twigId
     if (!twigId) return
     const leaf = getLeafById(twigId, leafId)
     const leafName = leaf?.name || 'Unnamed Leaf'
 
-    if (leafSprouts.length === 1) {
-      // Single sprout in leaf: render normally
-      const item = createSproutItem(leafSprouts[0], isActive, isActive ? onWaterClick : undefined, onTwigClick, onLeafClick)
-      container.append(item)
-    } else {
-      // Multiple sprouts: render stacked card
-      const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick)
-      container.append(card)
-    }
+    // Always render as stacked card, even for single sprouts
+    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick)
+    container.append(card)
   })
 
-  // Render standalone sprouts
+  // Render standalone sprouts (no leaf) - these shouldn't exist but handle gracefully
   standalone.forEach(sprout => {
-    const item = createSproutItem(sprout, isActive, isActive ? onWaterClick : undefined, onTwigClick, onLeafClick)
-    container.append(item)
+    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick)
+    container.append(card)
   })
 }
 
@@ -491,81 +485,6 @@ function createStackedLeafCard(
 
   card.append(rows)
   return card
-}
-
-function createSproutItem(
-  sprout: SproutWithLocation,
-  isActive: boolean,
-  onWaterClick?: (sprout: SproutWithLocation) => void,
-  _onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback
-): HTMLDivElement {
-  const item = document.createElement('div')
-  item.className = 'sprout-item'
-  if (!isActive) {
-    item.classList.add(sprout.state === 'completed' ? 'is-completed' : 'is-failed')
-  }
-
-  const info = document.createElement('div')
-  info.className = 'sprout-item-info'
-
-  // Make title clickable if sprout has a leaf
-  if (sprout.leafId && onLeafClick) {
-    const titleBtn = document.createElement('button')
-    titleBtn.type = 'button'
-    titleBtn.className = 'sprout-item-title sprout-item-title-link'
-    titleBtn.textContent = sprout.title || 'Untitled'
-    titleBtn.addEventListener('click', (e) => {
-      e.stopPropagation()
-      onLeafClick(sprout.leafId!, sprout.twigId, sprout.branchIndex)
-    })
-    info.append(titleBtn)
-  } else {
-    const title = document.createElement('span')
-    title.className = 'sprout-item-title'
-    title.textContent = sprout.title || 'Untitled'
-    info.append(title)
-  }
-
-  const meta = document.createElement('span')
-  meta.className = 'sprout-item-meta'
-  const endDateStr = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
-
-  meta.textContent = endDateStr
-
-  info.append(meta)
-  item.append(info)
-
-  // Water/Harvest action for growing sprouts (appears on hover)
-  if (isActive && onWaterClick) {
-    const waterBtn = document.createElement('button')
-    waterBtn.type = 'button'
-
-    // Check if sprout is ready (on or past due date)
-    const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
-    // Check if already watered this week (per-sprout weekly cooldown)
-    const watered = wasWateredThisWeek(sprout)
-
-    if (isReady) {
-      waterBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'
-      waterBtn.textContent = 'Harvest'
-    } else if (watered) {
-      waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-action-btn'
-      waterBtn.textContent = 'Watered'
-      waterBtn.disabled = true
-    } else {
-      waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-action-btn'
-      waterBtn.innerHTML = `Water <span class="btn-soil-gain">(+${getSoilRecoveryRate().toFixed(2)})</span>`
-    }
-
-    waterBtn.addEventListener('click', (e) => {
-      e.stopPropagation()
-      onWaterClick(sprout)
-    })
-    item.append(waterBtn)
-  }
-
-  return item
 }
 
 export function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {
