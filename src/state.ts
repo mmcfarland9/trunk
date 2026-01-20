@@ -656,40 +656,6 @@ export function wasShoneThisWeek(): boolean {
   })
 }
 
-// --- Grafting ---
-
-// Graft from a leaf - creates a new sprout on an existing leaf
-// This is a "renewal" of the leaf with a fresh season/environment
-export function graftFromLeaf(
-  twigId: string,
-  leafId: string,
-  newSproutData: Omit<Sprout, 'id' | 'createdAt' | 'leafId'>
-): Sprout | null {
-  const data = nodeState[twigId]
-  if (!data) return null
-
-  // Ensure sprouts array exists
-  if (!data.sprouts) data.sprouts = []
-
-  // Verify the leaf exists
-  const leaf = data.leaves?.find(l => l.id === leafId)
-  if (!leaf) return null
-
-  const newSprout: Sprout = {
-    ...newSproutData,
-    id: generateSproutId(),
-    createdAt: new Date().toISOString(),
-    leafId,
-  }
-
-  data.sprouts.push(newSprout)
-
-  // Leaf status is now derived from sprouts
-
-  saveState()
-  return newSprout
-}
-
 // --- Node State ---
 
 function normalizeNodeData(value: unknown): NodeData | null {

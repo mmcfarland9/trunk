@@ -67,7 +67,6 @@ export type Sprout = {
   // Leaf association
   leafId?: string
   waterEntries?: WaterEntry[]
-  graftedFromId?: string
 }
 
 // Soil system - represents focus/energy capacity
@@ -130,7 +129,7 @@ export type TwigViewApi = {
 
 export type LeafViewApi = {
   container: HTMLDivElement
-  open: (leafId: string, twigId: string, branchIndex: number, startWithGraftForm?: boolean) => void
+  open: (leafId: string, twigId: string, branchIndex: number) => void
   close: () => void
   isOpen: () => boolean
 }

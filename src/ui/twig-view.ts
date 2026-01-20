@@ -28,7 +28,6 @@ export type TwigViewCallbacks = {
   onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
   onWaterClick?: (sprout: { id: string, title: string, twigId: string, twigLabel: string, season: string }) => void
-  onGraftClick?: (leafId: string, twigId: string, branchIndex: number) => void
 }
 
 const SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
@@ -281,7 +280,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
   function renderHistoryCard(s: Sprout): string {
     const hasLeaf = !!s.leafId
-    const canGraft = s.state === 'completed' && hasLeaf
 
     const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
     const bloomHtml = hasBloom ? `
@@ -305,11 +303,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           <span class="sprout-card-date">${s.completedAt ? formatDate(new Date(s.completedAt)) : ''}</span>
         </div>
         ${s.reflection ? `<p class="sprout-card-reflection">${s.reflection}</p>` : ''}
-        ${canGraft ? `
-          <div class="action-btn-group action-btn-group-right">
-            <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-graft-btn" data-leaf-id="${s.leafId}">Graft</button>
-          </div>
-        ` : ''}
       </div>
     `
   }
@@ -674,21 +667,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       })
     })
 
-    // Graft buttons - open leaf view with graft form ready
-    container.querySelectorAll<HTMLButtonElement>('.sprout-graft-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        const leafId = btn.dataset.leafId
-        if (!leafId) return
-
-        const nodeId = getCurrentNodeId()
-        const branchIndex = currentTwigNode?.dataset.branchIndex
-        if (callbacks.onGraftClick && nodeId && branchIndex !== undefined) {
-          close()
-          callbacks.onGraftClick(leafId, nodeId, parseInt(branchIndex, 10))
-        }
-      })
-    })
   }
 
   function resetForm(): void {

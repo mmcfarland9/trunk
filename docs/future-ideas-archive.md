@@ -413,3 +413,12 @@ season -- a phase or period of time
 sprout -- a task or goal to be accomplished within a season
 uproot -- pull a sprout out (delete, remove) for extra soil
 graft -- growing from one successful sprout to another -- a saga
+
+--------
+
+founder ideas:
+
+removing 1w sprouts -- too short, really just moreso a task... adjust all in response
+perhaps locking incrementally longer sprouts/more difficult terrains until you complete easier/shorter?
+for a leaf ---- then stabilizing as an invariants once you feel you've done goals past a year? at some pt -- you just maintain behavior.
+you earned that leaf... it's part of your tree now. "i am the type of person who does this" -- and that's okay. don't need goals now.
