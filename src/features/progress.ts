@@ -71,14 +71,12 @@ export type SidebarBranchCallbacks = {
 
 export type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
 export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
-export type SidebarGraftCallback = (leafId: string, twigId: string, branchIndex: number) => void
 
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedBranchCallbacks: SidebarBranchCallbacks | undefined
 let storedTwigClick: SidebarTwigCallback | undefined
 let storedLeafClick: SidebarLeafCallback | undefined
-let storedGraftClick: SidebarGraftCallback | undefined
 
 function parseBranchIndex(twigId: string): number {
   // Parse "branch-X-twig-Y" to get X
@@ -158,8 +156,7 @@ export function initSidebarSprouts(
   onWaterClick?: (sprout: SproutWithLocation) => void,
   branchCallbacks?: SidebarBranchCallbacks,
   onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback,
-  onGraftClick?: SidebarGraftCallback
+  onLeafClick?: SidebarLeafCallback
 ): void {
   const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
 
@@ -168,7 +165,6 @@ export function initSidebarSprouts(
   storedBranchCallbacks = branchCallbacks
   storedTwigClick = onTwigClick
   storedLeafClick = onLeafClick
-  storedGraftClick = onGraftClick
 
   // Set default states: Both sections expanded
   activeSproutsToggle.classList.add('is-expanded')
@@ -201,7 +197,6 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const branchCallbacks = storedBranchCallbacks
   const onTwigClick = storedTwigClick
   const onLeafClick = storedLeafClick
-  const onGraftClick = storedGraftClick
 
   const viewMode = getViewMode()
   const activeBranchIndex = getActiveBranchIndex()
@@ -251,7 +246,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       activeSproutsList.append(item)
     })
     filteredCultivated.forEach(sprout => {
-      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
+      const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
       cultivatedSproutsList.append(item)
     })
   } else if (showTwigGrouping && branchIdxForTwigFolders !== null) {
@@ -273,7 +268,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
+        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
         folder.append(item)
       })
       cultivatedSproutsList.append(folder)
@@ -297,7 +292,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
       const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
       sprouts.forEach(sprout => {
-        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick, onGraftClick)
+        const item = createSproutItem(sprout, false, undefined, onTwigClick, onLeafClick)
         folder.append(item)
       })
       cultivatedSproutsList.append(folder)
@@ -377,8 +372,7 @@ function createSproutItem(
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
   _onTwigClick?: SidebarTwigCallback,
-  onLeafClick?: SidebarLeafCallback,
-  onGraftClick?: SidebarGraftCallback
+  onLeafClick?: SidebarLeafCallback
 ): HTMLDivElement {
   const item = document.createElement('div')
   item.className = 'sprout-item'
@@ -443,19 +437,6 @@ function createSproutItem(
       onWaterClick(sprout)
     })
     item.append(waterBtn)
-  }
-
-  // Graft action for cultivated sprouts with a leaf (appears on hover)
-  if (!isActive && sprout.leafId && onGraftClick) {
-    const graftBtn = document.createElement('button')
-    graftBtn.type = 'button'
-    graftBtn.className = 'action-btn action-btn-passive action-btn-twig sidebar-action-btn'
-    graftBtn.textContent = 'Graft'
-    graftBtn.addEventListener('click', (e) => {
-      e.stopPropagation()
-      onGraftClick(sprout.leafId!, sprout.twigId, sprout.branchIndex)
-    })
-    item.append(graftBtn)
   }
 
   return item
