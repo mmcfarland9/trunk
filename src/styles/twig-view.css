@@ -187,8 +187,8 @@
 .sprout-draft-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
+  gap: 0.4rem;
+  padding: 0.6rem;
 }
 
 /* Sprout section title */
@@ -218,7 +218,7 @@
   font-family: var(--font-ascii);
   font-size: calc(var(--char) * 0.7);
   color: var(--ink);
-  padding: 0.35rem 0;
+  padding: 0.3rem 0;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4l3 4 3-4'/%3E%3C/svg%3E");
