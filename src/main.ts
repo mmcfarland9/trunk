@@ -1,6 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -285,6 +285,14 @@ function formatSunLogTimestamp(dateStr: string): string {
   return `${month}/${day}/${year} ${time}`
 }
 
+function getBranchLabelFromTwigId(twigId: string): string {
+  // Parse "branch-X-twig-Y" to get branch ID
+  const match = twigId.match(/^(branch-\d+)-twig-\d+$/)
+  if (!match) return ''
+  const branchId = match[1]
+  return getPresetLabel(branchId) || nodeState[branchId]?.label || ''
+}
+
 function populateSunLog(): void {
   const entries = [...sunLog].reverse() // Reverse chronological (newest first)
   const isEmpty = entries.length === 0
@@ -295,9 +303,11 @@ function populateSunLog(): void {
   if (isEmpty) return
 
   domResult.elements.sunLogDialogEntries.innerHTML = entries.map(entry => {
+    const branchLabel = getBranchLabelFromTwigId(entry.context.twigId)
+    const locationLabel = branchLabel ? `${branchLabel} : ${entry.context.twigLabel}` : entry.context.twigLabel
     const context = entry.context.type === 'leaf'
-      ? `${entry.context.leafTitle} · ${entry.context.twigLabel}`
-      : entry.context.twigLabel
+      ? `${entry.context.leafTitle} · ${locationLabel}`
+      : locationLabel
     const timestamp = formatSunLogTimestamp(entry.timestamp)
     const promptHtml = entry.prompt
       ? `<p class="sun-log-entry-prompt">"${entry.prompt}"</p>`
