@@ -848,10 +848,17 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     return !container.classList.contains('hidden')
   }
 
+  function refresh(): void {
+    if (isOpen()) {
+      renderSprouts()
+    }
+  }
+
   return {
     container,
     open,
     close,
     isOpen,
+    refresh,
   }
 }

@@ -118,7 +118,10 @@ const waterDialogApi = initWaterDialog(ctx, {
   onWaterMeterChange: updateWaterMeter,
   onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
-  onWaterComplete: openWaterCanDialog,
+  onWaterComplete: () => {
+    navCallbacks.onUpdateStats()
+    ctx.twigView?.refresh()
+  },
 })
 
 const harvestDialogApi = initHarvestDialog(ctx, {

@@ -125,6 +125,7 @@ export type TwigViewApi = {
   open: (twigNode: HTMLButtonElement) => void
   close: () => void
   isOpen: () => boolean
+  refresh: () => void
 }
 
 export type LeafViewApi = {

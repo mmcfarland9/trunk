@@ -106,11 +106,11 @@ export function initHarvestDialog(
     harvestDialogBloomHints.forEach(hint => {
       const level = hint.dataset.level
       if (level === '1') {
-        hint.textContent = sprout.bloomWither ? `1-2: ${sprout.bloomWither}` : ''
+        hint.textContent = sprout.bloomWither ? `withered: ${sprout.bloomWither}` : ''
       } else if (level === '3') {
-        hint.textContent = sprout.bloomBudding ? `3-4: ${sprout.bloomBudding}` : ''
+        hint.textContent = sprout.bloomBudding ? `budded: ${sprout.bloomBudding}` : ''
       } else if (level === '5') {
-        hint.textContent = sprout.bloomFlourish ? `5: ${sprout.bloomFlourish}` : ''
+        hint.textContent = sprout.bloomFlourish ? `flourished: ${sprout.bloomFlourish}` : ''
       }
     })
 
