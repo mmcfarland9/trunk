@@ -9,7 +9,7 @@ import presetData from '../assets/trunk-map-preset.json'
 // 2. Add a migration function to MIGRATIONS
 // 3. The migration runs automatically on load
 
-const CURRENT_SCHEMA_VERSION = 1
+const CURRENT_SCHEMA_VERSION = 2
 
 type StoredState = {
   _version: number
@@ -21,13 +21,25 @@ type StoredState = {
 type MigrationFn = (data: Record<string, unknown>) => Record<string, unknown>
 
 // Migration functions: each transforms from version N to N+1
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MIGRATIONS: Record<number, MigrationFn> = {
-  // Example: Version 1 → 2 migration
-  // 2: (data) => {
-  //   // Transform v1 structure to v2
-  //   return { ...data, newField: 'default' }
-  // },
+  // Version 1 → 2: Remove 1w sprouts (convert to 2w)
+  2: (data) => {
+    const nodes = data.nodes as Record<string, unknown>
+
+    // Convert 1w sprouts to 2w
+    Object.values(nodes).forEach((node: unknown) => {
+      const n = node as { sprouts?: Array<{ season: string }> }
+      if (n.sprouts) {
+        n.sprouts.forEach(sprout => {
+          if (sprout.season === '1w') {
+            sprout.season = '2w'
+          }
+        })
+      }
+    })
+
+    return data
+  },
 }
 
 function runMigrations(raw: Record<string, unknown>): StoredState {
