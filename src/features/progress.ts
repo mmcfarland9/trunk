@@ -315,22 +315,40 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       cultivatedSproutsList.append(folder)
     })
   } else {
-    // Overview (not hovering): group by branch, then by leaf within each branch
+    // Overview (not hovering): group by branch > twig > leaf
     const activeByBranch = groupByBranch(filteredActive)
     const cultivatedByBranch = groupByBranch(filteredCultivated)
 
-    activeByBranch.forEach((sprouts, branchIndex) => {
+    activeByBranch.forEach((branchSprouts, branchIndex) => {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
-      const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
-      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onTwigClick, onLeafClick)
-      activeSproutsList.append(folder)
+      const branchFolder = createBranchFolder(branchIndex, branchLabel, branchSprouts.length, branchCallbacks)
+
+      // Group by twig within this branch
+      const byTwig = groupByTwig(branchSprouts)
+      byTwig.forEach((twigSprouts, twigId) => {
+        const twigLabel = getTwigLabel(twigId)
+        const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
+        renderLeafGroupedSprouts(twigSprouts, twigFolder, true, onWaterClick, onTwigClick, onLeafClick)
+        branchFolder.append(twigFolder)
+      })
+
+      activeSproutsList.append(branchFolder)
     })
 
-    cultivatedByBranch.forEach((sprouts, branchIndex) => {
+    cultivatedByBranch.forEach((branchSprouts, branchIndex) => {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
-      const folder = createBranchFolder(branchIndex, branchLabel, sprouts.length, branchCallbacks)
-      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onTwigClick, onLeafClick)
-      cultivatedSproutsList.append(folder)
+      const branchFolder = createBranchFolder(branchIndex, branchLabel, branchSprouts.length, branchCallbacks)
+
+      // Group by twig within this branch
+      const byTwig = groupByTwig(branchSprouts)
+      byTwig.forEach((twigSprouts, twigId) => {
+        const twigLabel = getTwigLabel(twigId)
+        const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
+        renderLeafGroupedSprouts(twigSprouts, twigFolder, false, undefined, onTwigClick, onLeafClick)
+        branchFolder.append(twigFolder)
+      })
+
+      cultivatedSproutsList.append(branchFolder)
     })
   }
 }

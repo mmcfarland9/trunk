@@ -376,13 +376,17 @@
   opacity: 0;
 }
 
-/* Indentation for nested leaf groups inside twig/branch folders */
+/* Indentation for nested elements inside folders */
 .twig-folder .sidebar-stacked-card,
 .twig-folder .sprout-item {
   margin-left: 0.4rem;
 }
 
-.branch-folder .sidebar-stacked-card,
-.branch-folder .sprout-item {
+.branch-folder .twig-folder {
+  margin-left: 0.4rem;
+}
+
+.branch-folder > .sidebar-stacked-card,
+.branch-folder > .sprout-item {
   margin-left: 0.4rem;
 }
