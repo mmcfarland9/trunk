@@ -51,7 +51,7 @@ A **sprout** is a goal you're cultivating. Key properties:
 | Property | Description |
 |----------|-------------|
 | **Title** | What you're trying to accomplish |
-| **Season** | Duration: 1w, 2w, 1m, 3m, 6m, 1y |
+| **Season** | Duration: 2w, 1m, 3m, 6m, 1y |
 | **Environment** | Difficulty: fertile (easy), firm (stretch), barren (hard) |
 | **State** | draft → active → completed/failed |
 | **Bloom** | Success criteria at 1/5, 3/5, 5/5 outcomes |
@@ -61,13 +61,13 @@ A **sprout** is a goal you're cultivating. Key properties:
 
 ### Leaves (Sagas)
 
-A **leaf** is a trajectory of related sprouts—a continuing story. When you complete a sprout, you can "graft" a new sprout onto the same leaf, creating a chain of related goals over time.
+A **leaf** is a named trajectory of related sprouts—a continuing story. Each leaf has a name that describes the saga (e.g., "Learning Piano", "Fitness Journey"). Multiple active sprouts can belong to the same leaf, allowing concurrent work on related goals.
 
 ### Resources: Soil, Water, Sun
 
 | Resource | Represents | Capacity | Restores | Used For |
 |----------|------------|----------|----------|----------|
-| **Soil** | Focus/energy budget | Grows over lifetime (4→100) | Goal completion, journaling | Planting sprouts |
+| **Soil** | Focus/energy budget | Grows over lifetime (10→100) | Goal completion, journaling | Planting sprouts |
 | **Water** | Daily attention | 3/day | Midnight reset | Watering active sprouts |
 | **Sun** | Weekly reflection | 1/week | Weekly reset | Shining on any twig |
 
@@ -90,7 +90,7 @@ OVERVIEW ──scroll/click──► BRANCH ──scroll/click──► TWIG ─
 | **Overview** | All 8 branches around trunk | Global stats, all active sprouts |
 | **Branch** | Single branch with 8 twigs | Branch stats, branch's sprouts |
 | **Twig** | Full twig detail panel | Sprout management, create/edit/harvest |
-| **Leaf** | Leaf saga view | Sprout chain history, graft new sprouts |
+| **Leaf** | Leaf saga view | Sprout chain history |
 
 **Hover behavior**: In overview, hovering a branch highlights it and shows its sprouts in sidebar.
 
@@ -100,14 +100,13 @@ OVERVIEW ──scroll/click──► BRANCH ──scroll/click──► TWIG ─
 
 ### Soil Economy
 
-**Starting capacity**: 4 (enough for ~3-4 simple weekly goals)
+**Starting capacity**: 10 (enough for a few concurrent goals)
 **Maximum capacity**: 100 (approached after ~20 years of consistent effort)
 
 **Planting costs** (soil spent):
 
 | Season | Fertile | Firm | Barren |
 |--------|---------|------|--------|
-| 1 week | 1 | 2 | 2 |
 | 2 weeks | 2 | 3 | 4 |
 | 1 month | 3 | 5 | 6 |
 | 3 months | 5 | 8 | 10 |
@@ -156,7 +155,7 @@ type NodeData = {
 type Sprout = {
   id: string
   title: string
-  season: '1w' | '2w' | '1m' | '3m' | '6m' | '1y'
+  season: '2w' | '1m' | '3m' | '6m' | '1y'
   environment: 'fertile' | 'firm' | 'barren'
   state: 'draft' | 'active' | 'completed' | 'failed'
   soilCost: number
@@ -169,7 +168,7 @@ type Sprout = {
 // A saga of related sprouts
 type Leaf = {
   id: string
-  status: 'active' | 'dormant' | 'archived'
+  name: string     // User-provided name for the saga
   createdAt: string
 }
 ```
@@ -240,7 +239,7 @@ src/
 | `state/index.ts` | All state: nodeState, resources, logs, getters/setters, persistence |
 | `dom-builder.ts` | Constructs entire DOM, returns `elements` object and `branchGroups` |
 | `twig-view.ts` | Complex panel for sprout CRUD: create, edit, plant, harvest, uproot |
-| `leaf-view.ts` | Leaf saga view: history of grafted sprouts, graft new ones |
+| `leaf-view.ts` | Leaf saga view: chronological history of related sprouts |
 | `navigation.ts` | View transitions with CSS class changes and callbacks |
 | `layout.ts` | Calculates node positions, draws SVG guide lines, wind animation |
 
