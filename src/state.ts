@@ -1,6 +1,7 @@
 import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings } from './types'
 import { STORAGE_KEY } from './constants'
 import presetData from '../assets/trunk-map-preset.json'
+import { safeSetItem, type StorageResult } from './utils/safe-storage'
 
 // --- Schema Versioning & Migration ---
 // The _version field tracks schema version for safe migrations over time.
@@ -352,10 +353,14 @@ function loadResourceState(): ResourceStoredState {
 }
 
 function saveResourceState(): void {
-  try {
-    localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resourceState))
-  } catch (error) {
-    console.warn('Could not save resource state', error)
+  const result = safeSetItem(RESOURCES_STORAGE_KEY, JSON.stringify(resourceState))
+  if (!result.success) {
+    if (result.isQuotaError) {
+      console.warn('localStorage quota exceeded while saving resources')
+      onQuotaError?.()
+    } else {
+      console.warn('Could not save resource state')
+    }
   }
 }
 
@@ -856,21 +861,42 @@ export function addSoilEntry(amount: number, reason: string, context?: string): 
   // Don't call saveState here - it will be called by the caller
 }
 
-export function saveState(onSaved?: () => void): void {
-  try {
-    // Save with version for future migrations
-    // No caps on logs - full history preserved for accurate state reconstruction
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      _version: CURRENT_SCHEMA_VERSION,
-      nodes: nodeState,
-      sunLog,
-      soilLog,
-    }))
+// Callbacks for storage errors - set by main.ts
+let onQuotaError: (() => void) | null = null
+let onSaveError: ((error: unknown) => void) | null = null
+
+export function setStorageErrorCallbacks(
+  quotaCallback: () => void,
+  errorCallback?: (error: unknown) => void
+): void {
+  onQuotaError = quotaCallback
+  onSaveError = errorCallback ?? null
+}
+
+export function saveState(onSaved?: () => void): StorageResult {
+  // Save with version for future migrations
+  // No caps on logs - full history preserved for accurate state reconstruction
+  const data = JSON.stringify({
+    _version: CURRENT_SCHEMA_VERSION,
+    nodes: nodeState,
+    sunLog,
+    soilLog,
+  })
+
+  const result = safeSetItem(STORAGE_KEY, data)
+
+  if (result.success) {
     lastSavedAt = new Date()
     onSaved?.()
-  } catch (error) {
-    console.warn('Could not save notes', error)
+  } else if (result.isQuotaError) {
+    console.warn('localStorage quota exceeded')
+    onQuotaError?.()
+  } else {
+    console.warn('Could not save notes')
+    onSaveError?.(new Error('Storage unavailable'))
   }
+
+  return result
 }
 
 export function clearState(): void {
@@ -1031,10 +1057,10 @@ export function getNotificationSettings(): NotificationSettings {
 
 export function saveNotificationSettings(settings: NotificationSettings): void {
   notificationSettings = settings
-  try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
-    // TODO: sync settings to backend when available
-  } catch (error) {
-    console.warn('Could not save notification settings', error)
+  const result = safeSetItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+  if (!result.success && result.isQuotaError) {
+    console.warn('localStorage quota exceeded while saving settings')
+    onQuotaError?.()
   }
+  // TODO: sync settings to backend when available
 }

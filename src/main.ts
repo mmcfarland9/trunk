@@ -1,7 +1,7 @@
 import './styles/index.css'
 import type { AppContext } from './types'
 import { escapeHtml } from './utils/escape-html'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel, setStorageErrorCallbacks } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -113,6 +113,18 @@ const ctx: AppContext = {
   twigView: undefined,
   leafView: undefined,
 }
+
+// Set up storage error callbacks
+setStorageErrorCallbacks(
+  () => {
+    // Quota error - prompt user to export data
+    setStatus(ctx.elements, 'Storage full! Please export your data to prevent data loss.', 'error')
+  },
+  () => {
+    // General storage error
+    setStatus(ctx.elements, 'Unable to save changes', 'warning')
+  }
+)
 
 // Initialize dialogs
 const waterDialogApi = initWaterDialog(ctx, {
