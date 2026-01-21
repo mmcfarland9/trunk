@@ -12,7 +12,7 @@ import { safeSetItem, type StorageResult } from './utils/safe-storage'
 
 const CURRENT_SCHEMA_VERSION = 2
 
-type StoredState = {
+export type StoredState = {
   _version: number
   nodes: Record<string, NodeData>
   sunLog?: SunEntry[] // Global shine journal log
@@ -60,7 +60,11 @@ const MIGRATIONS: Record<number, MigrationFn> = {
   },
 }
 
-function runMigrations(raw: Record<string, unknown>): StoredState {
+/**
+ * Run schema migrations on raw data from import or localStorage.
+ * Exported for use by import-export.ts.
+ */
+export function runMigrations(raw: Record<string, unknown>): StoredState {
   let version = typeof raw._version === 'number' ? raw._version : 0
   let data = raw
 

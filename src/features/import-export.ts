@@ -1,7 +1,8 @@
-import type { AppContext, NodeData, Sprout, Leaf } from '../types'
-import { nodeState, saveState, hasNodeData } from '../state'
+import type { AppContext, NodeData } from '../types'
+import { nodeState, saveState, hasNodeData, runMigrations } from '../state'
 import { syncNode } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
+import { sanitizeSprout, sanitizeLeaf } from '../utils/validate-import'
 
 const EXPORT_REMINDER_KEY = 'trunk-last-export'
 const REMINDER_DAYS = 7
@@ -95,9 +96,24 @@ export async function handleImport(
   try {
     const text = await file.text()
     const parsed = JSON.parse(text)
-    const raw = parsed && typeof parsed === 'object' ? (parsed.circles ?? parsed) : null
+
+    // Detect and handle old vs new format
+    // Old format: { circles: {...} } or direct node data
+    // New format: { version: N, circles: {...} } or { _version: N, nodes: {...} }
+    const version = typeof parsed?.version === 'number' ? parsed.version : 0
+    let raw = parsed?.circles ?? parsed?.nodes ?? parsed
+
     if (!raw || typeof raw !== 'object') {
       throw new Error('Invalid format')
+    }
+
+    // Run schema migrations if we have version info
+    if (version > 0 || parsed._version) {
+      const migrated = runMigrations({
+        _version: version || parsed._version || 0,
+        nodes: raw as Record<string, NodeData>,
+      })
+      raw = migrated.nodes
     }
 
     const nextState: Record<string, NodeData> = {}
@@ -112,14 +128,14 @@ export async function handleImport(
       const legacyDetail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
       const note = noteValue || legacyDetail
 
-      // Extract sprouts if present and valid
+      // Extract and sanitize sprouts
       const sprouts = Array.isArray(v.sprouts)
-        ? (v.sprouts as Sprout[]).filter(s => s && typeof s === 'object' && typeof s.id === 'string')
+        ? v.sprouts.map(sanitizeSprout).filter((s): s is NonNullable<typeof s> => s !== null)
         : undefined
 
-      // Extract leaves if present and valid
+      // Extract and sanitize leaves
       const leaves = Array.isArray(v.leaves)
-        ? (v.leaves as Leaf[]).filter(l => l && typeof l === 'object' && typeof l.id === 'string')
+        ? v.leaves.map(sanitizeLeaf).filter((l): l is NonNullable<typeof l> => l !== null)
         : undefined
 
       // Skip nodes with no meaningful data
