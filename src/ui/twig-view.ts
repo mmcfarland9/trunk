@@ -1,4 +1,5 @@
 import type { TwigViewApi, Sprout, SproutSeason, SproutEnvironment } from '../types'
+import { escapeHtml } from '../utils/escape-html'
 import {
   nodeState,
   saveState,
@@ -293,25 +294,25 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
     const bloomHtml = hasBloom ? `
       <p class="sprout-card-bloom">
-        ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${s.bloomWither}</em></span>` : ''}
-        ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${s.bloomBudding}</em></span>` : ''}
-        ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${s.bloomFlourish}</em></span>` : ''}
+        ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${escapeHtml(s.bloomWither)}</em></span>` : ''}
+        ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${escapeHtml(s.bloomBudding)}</em></span>` : ''}
+        ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${escapeHtml(s.bloomFlourish)}</em></span>` : ''}
       </p>
     ` : ''
 
     return `
-      <div class="sprout-card sprout-history-card ${s.state === 'failed' ? 'is-failed' : 'is-completed'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${s.id}" ${hasLeaf ? `data-leaf-id="${s.leafId}"` : ''}>
+      <div class="sprout-card sprout-history-card ${s.state === 'failed' ? 'is-failed' : 'is-completed'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}"` : ''}>
         <div class="sprout-card-header">
           <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
           <button type="button" class="sprout-delete-btn" aria-label="Uproot">x</button>
         </div>
-        <p class="sprout-card-title">${s.title}</p>
+        <p class="sprout-card-title">${escapeHtml(s.title)}</p>
         ${bloomHtml}
         <div class="sprout-result-section">
           <span class="sprout-result-display">${getResultEmoji(s.result || 1)} ${s.result || 1}/5</span>
           <span class="sprout-card-date">${s.completedAt ? formatDate(new Date(s.completedAt)) : ''}</span>
         </div>
-        ${s.reflection ? `<p class="sprout-card-reflection">${s.reflection}</p>` : ''}
+        ${s.reflection ? `<p class="sprout-card-reflection">${escapeHtml(s.reflection)}</p>` : ''}
       </div>
     `
   }
@@ -325,19 +326,19 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
     const bloomHtml = hasBloom ? `
       <p class="sprout-card-bloom">
-        ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${s.bloomWither}</em></span>` : ''}
-        ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${s.bloomBudding}</em></span>` : ''}
-        ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${s.bloomFlourish}</em></span>` : ''}
+        ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${escapeHtml(s.bloomWither)}</em></span>` : ''}
+        ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${escapeHtml(s.bloomBudding)}</em></span>` : ''}
+        ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${escapeHtml(s.bloomFlourish)}</em></span>` : ''}
       </p>
     ` : ''
 
     return `
-      <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${s.id}" ${hasLeaf ? `data-leaf-id="${s.leafId}"` : ''}>
+      <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}"` : ''}>
         <div class="sprout-card-header">
           <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
           <button type="button" class="sprout-delete-btn" aria-label="Uproot">x</button>
         </div>
-        <p class="sprout-card-title">${s.title}</p>
+        <p class="sprout-card-title">${escapeHtml(s.title)}</p>
         ${bloomHtml}
 
         ${ready ? `
@@ -370,7 +371,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       // If only one active sprout, render normally in a leaf wrapper
       if (activeSprouts.length === 1) {
         return `
-          <div class="leaf-card" data-leaf-id="${leafId}">
+          <div class="leaf-card" data-leaf-id="${escapeHtml(leafId)}">
             ${renderActiveCard(activeSprouts[0])}
           </div>
         `
@@ -378,8 +379,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
       // Multiple active sprouts - render each as full card, grouped with border and name
       return `
-        <div class="leaf-card-group is-clickable" data-leaf-id="${leafId}">
-          <div class="leaf-card-group-header">${leafName}</div>
+        <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}">
+          <div class="leaf-card-group-header">${escapeHtml(leafName)}</div>
           <div class="leaf-card-group-sprouts">
             ${activeSprouts.map(s => renderActiveCard(s)).join('')}
           </div>
@@ -396,7 +397,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
       const layerCount = Math.min(completedSprouts.length, 3)
       return `
-        <div class="leaf-card" data-leaf-id="${leafId}" data-layers="${layerCount}">
+        <div class="leaf-card" data-leaf-id="${escapeHtml(leafId)}" data-layers="${layerCount}">
           ${renderHistoryCard(topSprout)}
         </div>
       `

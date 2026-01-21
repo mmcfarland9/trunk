@@ -1,5 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
+import { escapeHtml } from './utils/escape-html'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
@@ -315,13 +316,13 @@ function populateSunLog(): void {
 
   domResult.elements.sunLogDialogEntries.innerHTML = entries.map(entry => {
     const branchLabel = getBranchLabelFromTwigId(entry.context.twigId)
-    const locationLabel = branchLabel ? `${branchLabel} : ${entry.context.twigLabel}` : entry.context.twigLabel
+    const locationLabel = branchLabel ? `${escapeHtml(branchLabel)} : ${escapeHtml(entry.context.twigLabel)}` : escapeHtml(entry.context.twigLabel)
     const context = entry.context.type === 'leaf'
-      ? `${entry.context.leafTitle} · ${locationLabel}`
+      ? `${escapeHtml(entry.context.leafTitle || '')} · ${locationLabel}`
       : locationLabel
     const timestamp = formatSunLogTimestamp(entry.timestamp)
     const promptHtml = entry.prompt
-      ? `<p class="sun-log-entry-prompt">"${entry.prompt}"</p>`
+      ? `<p class="sun-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
       : ''
 
     return `
@@ -331,7 +332,7 @@ function populateSunLog(): void {
           <span class="sun-log-entry-timestamp">${timestamp}</span>
         </div>
         ${promptHtml}
-        <p class="sun-log-entry-content">${entry.content}</p>
+        <p class="sun-log-entry-content">${escapeHtml(entry.content)}</p>
       </div>
     `
   }).join('')
@@ -381,14 +382,14 @@ function populateSoilBag(): void {
     const amountClass = entry.amount > 0 ? 'is-gain' : 'is-loss'
     const amountText = entry.amount > 0 ? `+${entry.amount.toFixed(2)}` : entry.amount.toFixed(2)
     const contextHtml = entry.context
-      ? `<span class="soil-bag-entry-context">${entry.context}</span>`
+      ? `<span class="soil-bag-entry-context">${escapeHtml(entry.context)}</span>`
       : ''
     const timestamp = formatSoilTimestamp(entry.timestamp)
 
     return `
       <div class="soil-bag-entry">
         <div class="soil-bag-entry-info">
-          <span class="soil-bag-entry-reason">${entry.reason}</span>
+          <span class="soil-bag-entry-reason">${escapeHtml(entry.reason)}</span>
           ${contextHtml}
         </div>
         <div>
@@ -489,17 +490,17 @@ function populateWaterCan(): void {
     domResult.elements.waterCanLogEntries.innerHTML = logEntries.map(entry => {
       const timestamp = formatWaterLogTimestamp(entry.timestamp)
       const promptHtml = entry.prompt
-        ? `<p class="water-can-log-entry-prompt">"${entry.prompt}"</p>`
+        ? `<p class="water-can-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
         : ''
 
       return `
         <div class="water-can-log-entry">
           <div class="water-can-log-entry-header">
-            <span class="water-can-log-entry-context">${entry.sproutTitle} · ${entry.twigLabel}</span>
+            <span class="water-can-log-entry-context">${escapeHtml(entry.sproutTitle)} · ${escapeHtml(entry.twigLabel)}</span>
             <span class="water-can-log-entry-timestamp">${timestamp}</span>
           </div>
           ${promptHtml}
-          <p class="water-can-log-entry-content">${entry.content}</p>
+          <p class="water-can-log-entry-content">${escapeHtml(entry.content)}</p>
         </div>
       `
     }).join('')

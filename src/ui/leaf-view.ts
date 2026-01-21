@@ -1,4 +1,5 @@
 import type { LeafViewApi, Sprout, Leaf, SproutSeason, SproutEnvironment } from '../types'
+import { escapeHtml } from '../utils/escape-html'
 import {
   nodeState,
   saveState,
@@ -174,18 +175,18 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
         const hasBloom = entry.data.bloomWither || entry.data.bloomBudding || entry.data.bloomFlourish
         const bloomHtml = hasBloom ? `
           <p class="log-entry-bloom">
-            ${entry.data.bloomWither ? `<span class="bloom-item">🥀 <em>${entry.data.bloomWither}</em></span>` : ''}
-            ${entry.data.bloomBudding ? `<span class="bloom-item">🌱 <em>${entry.data.bloomBudding}</em></span>` : ''}
-            ${entry.data.bloomFlourish ? `<span class="bloom-item">🌲 <em>${entry.data.bloomFlourish}</em></span>` : ''}
+            ${entry.data.bloomWither ? `<span class="bloom-item">🥀 <em>${escapeHtml(entry.data.bloomWither)}</em></span>` : ''}
+            ${entry.data.bloomBudding ? `<span class="bloom-item">🌱 <em>${escapeHtml(entry.data.bloomBudding)}</em></span>` : ''}
+            ${entry.data.bloomFlourish ? `<span class="bloom-item">🌲 <em>${escapeHtml(entry.data.bloomFlourish)}</em></span>` : ''}
           </p>
         ` : ''
         return `
-          <div class="log-entry log-entry-start" data-sprout-id="${entry.sproutId}">
+          <div class="log-entry log-entry-start" data-sprout-id="${escapeHtml(entry.sproutId)}">
             <div class="log-entry-header">
               <span class="log-entry-type">Planted</span>
               <span class="log-entry-time">${timeStr}</span>
             </div>
-            <p class="log-entry-title">${entry.sproutTitle}</p>
+            <p class="log-entry-title">${escapeHtml(entry.sproutTitle)}</p>
             <p class="log-entry-meta">${getSeasonLabel(entry.data.season!)} · ${getEnvironmentLabel(entry.data.environment!)}</p>
             ${bloomHtml}
           </div>
@@ -194,13 +195,13 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
       case 'watering':
         return `
-          <div class="log-entry log-entry-water" data-sprout-id="${entry.sproutId}">
+          <div class="log-entry log-entry-water" data-sprout-id="${escapeHtml(entry.sproutId)}">
             <div class="log-entry-header">
               <span class="log-entry-type">Watered</span>
               <span class="log-entry-time">${timeStr}</span>
             </div>
-            ${entry.data.prompt ? `<p class="log-entry-prompt">${entry.data.prompt}</p>` : ''}
-            <p class="log-entry-content">${entry.data.content}</p>
+            ${entry.data.prompt ? `<p class="log-entry-prompt">${escapeHtml(entry.data.prompt)}</p>` : ''}
+            <p class="log-entry-content">${escapeHtml(entry.data.content || '')}</p>
           </div>
         `
 
@@ -209,14 +210,14 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
         const emoji = getResultEmoji(entry.data.result || 1)
 
         return `
-          <div class="log-entry log-entry-completion ${isCompleted ? 'is-success' : 'is-failed'}" data-sprout-id="${entry.sproutId}">
+          <div class="log-entry log-entry-completion ${isCompleted ? 'is-success' : 'is-failed'}" data-sprout-id="${escapeHtml(entry.sproutId)}">
             <div class="log-entry-header">
               <span class="log-entry-type">${isCompleted ? 'Harvested' : 'Pruned'}</span>
               <span class="log-entry-time">${timeStr}</span>
             </div>
-            <p class="log-entry-title">${entry.sproutTitle}</p>
+            <p class="log-entry-title">${escapeHtml(entry.sproutTitle)}</p>
             <p class="log-entry-result">${emoji} ${entry.data.result}/5</p>
-            ${entry.data.reflection ? `<p class="log-entry-reflection">"${entry.data.reflection}"</p>` : ''}
+            ${entry.data.reflection ? `<p class="log-entry-reflection">"${escapeHtml(entry.data.reflection)}"</p>` : ''}
           </div>
         `
       }
