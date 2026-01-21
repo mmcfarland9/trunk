@@ -1,5 +1,6 @@
 import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
 import { nodeState, saveState, recoverSoil, getCapacityReward } from '../state'
+import { preventDoubleClick } from '../utils/debounce'
 
 export type HarvestDialogCallbacks = {
   onSoilMeterChange: () => void
@@ -170,7 +171,7 @@ export function initHarvestDialog(
   // Wire up harvest dialog handlers
   ctx.elements.harvestDialogClose.addEventListener('click', closeHarvestDialog)
   ctx.elements.harvestDialogCancel.addEventListener('click', closeHarvestDialog)
-  ctx.elements.harvestDialogSave.addEventListener('click', saveHarvest)
+  ctx.elements.harvestDialogSave.addEventListener('click', preventDoubleClick(saveHarvest))
   ctx.elements.harvestDialogSlider.addEventListener('input', () => {
     const result = parseInt(ctx.elements.harvestDialogSlider.value, 10)
     updateResultDisplay(result)

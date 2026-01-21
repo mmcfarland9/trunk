@@ -1,6 +1,7 @@
 import type { AppContext } from '../types'
 import wateringPromptsRaw from '../assets/watering-prompts.txt?raw'
 import { nodeState, spendWater, canAffordWater, recoverSoil, addWaterEntry, getSoilRecoveryRate, wasWateredThisWeek } from '../state'
+import { preventDoubleClick } from '../utils/debounce'
 
 export type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
@@ -124,7 +125,7 @@ export function initWaterDialog(
   // Wire up water dialog handlers
   ctx.elements.waterDialogClose.addEventListener('click', closeWaterDialog)
   ctx.elements.waterDialogCancel.addEventListener('click', closeWaterDialog)
-  ctx.elements.waterDialogSave.addEventListener('click', saveWaterEntry)
+  ctx.elements.waterDialogSave.addEventListener('click', preventDoubleClick(saveWaterEntry))
   ctx.elements.waterDialogJournal.addEventListener('input', updatePourButtonState)
   ctx.elements.waterDialog.addEventListener('click', (e) => {
     if (e.target === ctx.elements.waterDialog) closeWaterDialog()

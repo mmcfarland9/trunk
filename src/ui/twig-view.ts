@@ -1,5 +1,6 @@
 import type { TwigViewApi, Sprout, SproutSeason, SproutEnvironment } from '../types'
 import { escapeHtml } from '../utils/escape-html'
+import { preventDoubleClick } from '../utils/debounce'
 import {
   nodeState,
   saveState,
@@ -250,17 +251,30 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     saveState(callbacks.onSave)
   }
 
+  // Max lengths for form fields
+  const MAX_TITLE_LENGTH = 60
+  const MAX_LEAF_NAME_LENGTH = 40
+  const MAX_BLOOM_LENGTH = 60
+
   function updateFormState(): void {
-    const hasTitle = sproutTitleInput.value.trim().length > 0
+    const title = sproutTitleInput.value.trim()
+    const hasTitle = title.length > 0 && title.length <= MAX_TITLE_LENGTH
     const hasSeason = selectedSeason !== null
     const hasEnv = selectedEnvironment !== null
 
     // Leaf is required - either existing leaf selected or new leaf name provided
     const leafValue = leafSelect.value
     const isNewLeaf = leafValue === '__new__'
+    const newLeafName = newLeafNameInput.value.trim()
     const hasLeaf = isNewLeaf
-      ? newLeafNameInput.value.trim().length > 0
+      ? newLeafName.length > 0 && newLeafName.length <= MAX_LEAF_NAME_LENGTH
       : leafValue !== ''
+
+    // Validate bloom lengths (optional but must be within limits if provided)
+    const witherValid = witherInput.value.trim().length <= MAX_BLOOM_LENGTH
+    const buddingValid = buddingInput.value.trim().length <= MAX_BLOOM_LENGTH
+    const flourishValid = flourishInput.value.trim().length <= MAX_BLOOM_LENGTH
+    const bloomsValid = witherValid && buddingValid && flourishValid
 
     // Calculate and display soil cost
     if (hasSeason && hasEnv) {
@@ -275,7 +289,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     }
 
     // Check if form is ready and affordable (leaf is now required)
-    const isFormComplete = hasTitle && hasSeason && hasEnv && hasLeaf
+    const isFormComplete = hasTitle && hasSeason && hasEnv && hasLeaf && bloomsValid
     const cost = hasSeason && hasEnv ? calculateSoilCost(selectedSeason!, selectedEnvironment!) : 0
     const isAffordable = canAffordSoil(cost)
     setBtn.disabled = !isFormComplete || !isAffordable
@@ -718,10 +732,19 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       newLeafNameInput.classList.add('hidden')
       newLeafNameInput.value = ''
     }
+    updateFormState()
   })
 
-  // Set button - create sprout
-  setBtn.addEventListener('click', () => {
+  // New leaf name input validation
+  newLeafNameInput.addEventListener('input', updateFormState)
+
+  // Bloom inputs validation
+  witherInput.addEventListener('input', updateFormState)
+  buddingInput.addEventListener('input', updateFormState)
+  flourishInput.addEventListener('input', updateFormState)
+
+  // Set button - create sprout (with double-click prevention)
+  setBtn.addEventListener('click', preventDoubleClick(() => {
     if (!selectedSeason || !selectedEnvironment) return
     const title = sproutTitleInput.value.trim()
     if (!title) return
@@ -772,7 +795,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     resetForm()
     renderSprouts()
     callbacks.onSoilChange?.()
-  })
+  }))
 
   // Keyboard handler (arrow keys for secret twig navigation)
   function handleKeydown(e: KeyboardEvent): void {
