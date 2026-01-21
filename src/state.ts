@@ -602,7 +602,7 @@ export function createLeaf(twigId: string, name: string): Leaf {
     createdAt: new Date().toISOString(),
   }
 
-  nodeState[twigId].leaves!.push(leaf)
+  nodeState[twigId].leaves.push(leaf)
   saveState()
   return leaf
 }
@@ -869,6 +869,23 @@ export function addSoilEntry(amount: number, reason: string, context?: string): 
 let onQuotaError: (() => void) | null = null
 let onSaveError: ((error: unknown) => void) | null = null
 
+// Retry queue for failed saves
+let pendingSave = false
+let saveRetryTimeout: number | null = null
+const SAVE_RETRY_DELAY = 5000 // 5 seconds
+
+function scheduleSaveRetry(): void {
+  if (saveRetryTimeout) return
+  pendingSave = true
+  saveRetryTimeout = window.setTimeout(() => {
+    saveRetryTimeout = null
+    if (pendingSave) {
+      pendingSave = false
+      saveState()
+    }
+  }, SAVE_RETRY_DELAY)
+}
+
 export function setStorageErrorCallbacks(
   quotaCallback: () => void,
   errorCallback?: (error: unknown) => void
@@ -891,13 +908,16 @@ export function saveState(onSaved?: () => void): StorageResult {
 
   if (result.success) {
     lastSavedAt = new Date()
+    pendingSave = false // Clear any pending retry
     onSaved?.()
   } else if (result.isQuotaError) {
     console.warn('localStorage quota exceeded')
     onQuotaError?.()
+    // Don't retry quota errors - user needs to clear space
   } else {
-    console.warn('Could not save notes')
+    console.warn('Could not save notes - will retry')
     onSaveError?.(new Error('Storage unavailable'))
+    scheduleSaveRetry() // Schedule retry for transient errors
   }
 
   return result

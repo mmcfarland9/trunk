@@ -131,14 +131,16 @@ export function initHarvestDialog(
 
     if (!currentHarvestSprout) return
 
+    // Extract values early to avoid non-null assertion issues
+    const { id: sproutId, twigId } = currentHarvestSprout
     const result = parseInt(harvestDialogSlider.value, 10)
     const reflection = harvestDialogReflection.value.trim()
 
     // Find and update the sprout
-    const data = nodeState[currentHarvestSprout.twigId]
+    const data = nodeState[twigId]
     if (!data?.sprouts) return
 
-    const sprout = data.sprouts.find(s => s.id === currentHarvestSprout!.id)
+    const sprout = data.sprouts.find(s => s.id === sproutId)
     if (!sprout) return
 
     // 1-2 = failed, 3-5 = success
