@@ -1,4 +1,4 @@
-import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings } from './types'
+import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings, WaterLogEntry } from './types'
 import { STORAGE_KEY } from './constants'
 import presetData from '../assets/trunk-map-preset.json'
 import { safeSetItem, type StorageResult } from './utils/safe-storage'
@@ -433,9 +433,13 @@ export function recoverPartialSoil(amount: number, fraction: number, reason?: st
 // Cache for water count to avoid O(n*m*k) iteration on every call
 let waterCountCache: { resetTime: number; count: number } | null = null
 
-// Invalidate water count cache (called when water entry is added)
+// Cache for all water entries (for water can dialog)
+let waterEntriesCache: WaterLogEntry[] | null = null
+
+// Invalidate water caches (called when water entry is added)
 export function invalidateWaterCountCache(): void {
   waterCountCache = null
+  waterEntriesCache = null
 }
 
 // Count water entries since today's reset time (6am)
@@ -471,6 +475,39 @@ export function getWaterAvailable(): number {
 
 export function getWaterCapacity(): number {
   return waterState.capacity
+}
+
+// Get all water entries across all sprouts (cached)
+export function getAllWaterEntries(): WaterLogEntry[] {
+  if (waterEntriesCache) {
+    return waterEntriesCache
+  }
+
+  const entries: WaterLogEntry[] = []
+
+  for (const [nodeId, data] of Object.entries(nodeState)) {
+    if (!nodeId.includes('twig') || !data.sprouts) continue
+    const twigLabel = data.label || nodeId
+
+    for (const sprout of data.sprouts) {
+      if (!sprout.waterEntries) continue
+      for (const entry of sprout.waterEntries) {
+        entries.push({
+          timestamp: entry.timestamp,
+          content: entry.content,
+          prompt: entry.prompt,
+          sproutTitle: sprout.title,
+          twigLabel,
+        })
+      }
+    }
+  }
+
+  // Sort reverse chronological and cache
+  waterEntriesCache = entries.sort((a, b) =>
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  )
+  return waterEntriesCache
 }
 
 export function canAffordWater(cost: number = 1): boolean {

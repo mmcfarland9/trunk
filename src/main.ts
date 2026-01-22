@@ -1,7 +1,7 @@
 import './styles/index.css'
 import type { AppContext } from './types'
 import { escapeHtml } from './utils/escape-html'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel, setStorageErrorCallbacks } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel, setStorageErrorCallbacks, getAllWaterEntries } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -442,39 +442,6 @@ function formatWaterLogTimestamp(dateStr: string): string {
   const year = date.getFullYear()
   const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   return `${month}/${day}/${year} ${time}`
-}
-
-type WaterLogEntry = {
-  timestamp: string
-  content: string
-  prompt?: string
-  sproutTitle: string
-  twigLabel: string
-}
-
-function getAllWaterEntries(): WaterLogEntry[] {
-  const entries: WaterLogEntry[] = []
-
-  for (const [nodeId, data] of Object.entries(nodeState)) {
-    if (!nodeId.includes('twig') || !data.sprouts) continue
-    const twigLabel = data.label || nodeId
-
-    for (const sprout of data.sprouts) {
-      if (!sprout.waterEntries) continue
-      for (const entry of sprout.waterEntries) {
-        entries.push({
-          timestamp: entry.timestamp,
-          content: entry.content,
-          prompt: entry.prompt,
-          sproutTitle: sprout.title,
-          twigLabel,
-        })
-      }
-    }
-  }
-
-  // Sort reverse chronological
-  return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 }
 
 function populateWaterCan(): void {

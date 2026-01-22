@@ -16,6 +16,15 @@ export type WaterEntry = {
   prompt?: string
 }
 
+// Water log entry - enriched for display in water can dialog
+export type WaterLogEntry = {
+  timestamp: string
+  content: string
+  prompt?: string
+  sproutTitle: string
+  twigLabel: string
+}
+
 // Sun entry - global philosophical reflection log
 // Randomly selects a twig or leaf to reflect on
 export type SunEntry = {
