@@ -406,3 +406,43 @@
 .branch-folder > .sprout-item {
   margin-left: 0.4rem;
 }
+
+/* === Keyboard Hints === */
+.keyboard-hints {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-light);
+  margin-top: auto;
+}
+
+.keyboard-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  display: none;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.keyboard-hint kbd {
+  display: inline-block;
+  padding: 0.1em 0.35em;
+  font-family: var(--font-ascii);
+  font-size: 0.9em;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+/* Show relevant hints based on view mode */
+/* In branch view: show escape and arrows */
+.canvas.is-zoomed ~ .side-panel .hint-escape,
+.canvas.is-zoomed ~ .side-panel .hint-arrows { display: flex; }
+
+/* In twig view: show escape only */
+.canvas.is-twig-zoomed ~ .side-panel .hint-escape { display: flex; }
+.canvas.is-twig-zoomed ~ .side-panel .hint-arrows { display: none; }
+
+/* When hovering branch in overview: show numbers hint */
+.canvas.is-previewing ~ .side-panel .hint-numbers { display: flex; }
