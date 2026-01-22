@@ -87,7 +87,7 @@ export async function handleImport(
   importInput.value = ''
 
   if (hasNodeData()) {
-    const confirmed = window.confirm('Import notes? This will replace existing notes.')
+    const confirmed = window.confirm('Import data? This will replace all existing labels, notes, sprouts, and leaves.')
     if (!confirmed) {
       return
     }
@@ -98,22 +98,30 @@ export async function handleImport(
 
   try {
     const text = await file.text()
-    const parsed = JSON.parse(text)
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      flashStatus(ctx.elements, 'Import failed: File is not valid JSON.', 'error')
+      return
+    }
 
     // Detect and handle old vs new format
     // Old format: { circles: {...} } or direct node data
     // New format: { version: N, circles: {...} } or { _version: N, nodes: {...} }
-    const version = typeof parsed?.version === 'number' ? parsed.version : 0
-    let raw = parsed?.circles ?? parsed?.nodes ?? parsed
+    const parsedObj = parsed as Record<string, unknown>
+    const version = typeof parsedObj?.version === 'number' ? parsedObj.version : 0
+    let raw = parsedObj?.circles ?? parsedObj?.nodes ?? parsed
 
     if (!raw || typeof raw !== 'object') {
-      throw new Error('Invalid format')
+      flashStatus(ctx.elements, 'Import failed: No valid node data found in file.', 'error')
+      return
     }
 
     // Run schema migrations if we have version info
-    if (version > 0 || parsed._version) {
+    if (version > 0 || parsedObj._version) {
       const migrated = runMigrations({
-        _version: version || parsed._version || 0,
+        _version: version || (parsedObj._version as number) || 0,
         nodes: raw as Record<string, NodeData>,
       })
       raw = migrated.nodes
@@ -166,7 +174,7 @@ export async function handleImport(
     callbacks.onUpdateStats()
     flashStatus(ctx.elements, 'Import complete. Notes applied.', 'success')
   } catch (error) {
-    console.error(error)
-    flashStatus(ctx.elements, 'Import failed. Check the JSON format.', 'error')
+    console.error('Import error:', error)
+    flashStatus(ctx.elements, 'Import failed: An unexpected error occurred.', 'error')
   }
 }

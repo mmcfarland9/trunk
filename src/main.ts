@@ -122,7 +122,7 @@ setStorageErrorCallbacks(
   },
   () => {
     // General storage error
-    setStatus(ctx.elements, 'Unable to save changes', 'warning')
+    setStatus(ctx.elements, 'Unable to save. Export your data as backup.', 'warning')
   }
 )
 
