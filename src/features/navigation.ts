@@ -13,6 +13,14 @@ let zoomTimeoutId = 0
 let zoomOriginTimeoutId = 0
 const fadeTimeouts = new Map<number, number>() // branchIndex -> timeoutId
 
+// Clear all pending fade timeouts (used when leaving overview)
+function clearAllFadeTimeouts(): void {
+  fadeTimeouts.forEach((timeoutId) => {
+    window.clearTimeout(timeoutId)
+  })
+  fadeTimeouts.clear()
+}
+
 export type NavigationCallbacks = {
   onPositionNodes: () => void
   onUpdateStats: () => void
@@ -148,6 +156,12 @@ export function setViewMode(
   if (previousMode === 'twig') {
     resetTwigZoomOrigin(ctx)
   }
+
+  // Clear all pending fade timeouts when leaving overview mode
+  if (previousMode === 'overview' && mode !== 'overview') {
+    clearAllFadeTimeouts()
+  }
+
   setViewModeState(mode, branchIndex)
 
   const shouldAnimate = previousMode !== mode || previousBranch !== getActiveBranchIndex()
