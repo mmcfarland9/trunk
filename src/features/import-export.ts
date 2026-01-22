@@ -93,6 +93,9 @@ export async function handleImport(
     }
   }
 
+  // Show loading state
+  flashStatus(ctx.elements, 'Importing...', 'info')
+
   try {
     const text = await file.text()
     const parsed = JSON.parse(text)
