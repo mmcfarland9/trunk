@@ -2,6 +2,13 @@ import type { TwigViewApi, Sprout, SproutSeason, SproutEnvironment } from '../ty
 import { escapeHtml } from '../utils/escape-html'
 import { preventDoubleClick } from '../utils/debounce'
 import {
+  SEASONS,
+  ENVIRONMENTS,
+  getSeasonLabel,
+  getEnvironmentLabel,
+  getResultEmoji,
+} from '../utils/sprout-labels'
+import {
   nodeState,
   saveState,
   generateSproutId,
@@ -43,40 +50,7 @@ export type TwigViewCallbacks = {
   }) => void
 }
 
-const SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
-const ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
-
-function getEnvironmentLabel(env: SproutEnvironment): string {
-  const labels: Record<SproutEnvironment, string> = {
-    fertile: 'Fertile',
-    firm: 'Firm',
-    barren: 'Barren',
-  }
-  return labels[env]
-}
-
-function getSeasonLabel(season: SproutSeason): string {
-  const labels: Record<SproutSeason, string> = {
-    '2w': '2 weeks',
-    '1m': '1 month',
-    '3m': '3 months',
-    '6m': '6 months',
-    '1y': '1 year',
-  }
-  return labels[season]
-}
-
-// Result emoji scale: 1=withered, 2=sprout, 3=sapling, 4=tree, 5=oak
-function getResultEmoji(result: number): string {
-  const emojis: Record<number, string> = {
-    1: '🥀', // withered
-    2: '🌱', // sprout
-    3: '🌿', // sapling
-    4: '🌳', // tree
-    5: '🌲', // strong oak/evergreen
-  }
-  return emojis[result] || '🌱'
-}
+// Labels and emojis imported from ../utils/sprout-labels
 
 function getEndDate(season: SproutSeason, startDate: Date = new Date()): Date {
   const end = new Date(startDate)

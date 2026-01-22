@@ -1,6 +1,11 @@
 import type { LeafViewApi, Sprout, Leaf, SproutSeason, SproutEnvironment } from '../types'
 import { escapeHtml } from '../utils/escape-html'
 import {
+  getSeasonLabel,
+  getEnvironmentLabel,
+  getResultEmoji,
+} from '../utils/sprout-labels'
+import {
   nodeState,
   saveState,
   getLeafById,
@@ -35,36 +40,7 @@ type LogEntry = {
   }
 }
 
-function getSeasonLabel(season: SproutSeason): string {
-  const labels: Record<SproutSeason, string> = {
-    '2w': '2 weeks',
-    '1m': '1 month',
-    '3m': '3 months',
-    '6m': '6 months',
-    '1y': '1 year',
-  }
-  return labels[season]
-}
-
-function getEnvironmentLabel(env: SproutEnvironment): string {
-  const labels: Record<SproutEnvironment, string> = {
-    fertile: 'Fertile',
-    firm: 'Firm',
-    barren: 'Barren',
-  }
-  return labels[env]
-}
-
-function getResultEmoji(result: number): string {
-  const emojis: Record<number, string> = {
-    1: '🥀',
-    2: '🌱',
-    3: '🌿',
-    4: '🌳',
-    5: '🌲',
-  }
-  return emojis[result] || '🌱'
-}
+// Labels and emojis imported from ../utils/sprout-labels
 
 function formatDateTime(dateStr: string): string {
   const date = new Date(dateStr)
