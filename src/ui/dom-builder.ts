@@ -330,8 +330,8 @@ export function buildApp(
       <div class="sprouts-list" data-section="cultivated"></div>
     </section>
     <section class="panel-section">
-      <p class="status-message"></p>
-      <p class="status-meta"></p>
+      <p class="status-message" role="status" aria-live="polite"></p>
+      <p class="status-meta" aria-live="polite"></p>
     </section>
     <section class="panel-section keyboard-hints">
       <p class="keyboard-hint hint-escape" title="Press Escape to go back"><kbd>Esc</kbd> Back</p>
