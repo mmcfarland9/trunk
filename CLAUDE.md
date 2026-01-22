@@ -94,6 +94,22 @@ OVERVIEW ──scroll/click──► BRANCH ──scroll/click──► TWIG ─
 
 **Hover behavior**: In overview, hovering a branch highlights it and shows its sprouts in sidebar.
 
+### Keyboard Navigation
+
+| Key | Context | Action |
+|-----|---------|--------|
+| `Escape` | Any dialog open | Close dialog |
+| `Escape` | Twig view | Return to branch view |
+| `Escape` | Branch view | Return to overview |
+| `1-8` | Overview (not hovering) | Jump to branch N |
+| `1-8` | Overview (hovering branch) | Jump to twig N in hovered branch |
+| `1-8` | Branch view | Jump to twig N in current branch |
+| `←` / `→` | Branch view | Cycle to previous/next branch |
+| `←` / `→` | Twig view | Navigate to previous/next twig |
+| `d` then `b` | Anywhere | Toggle debug panel (within 500ms) |
+
+Visual keyboard hints appear in the sidebar when shortcuts are available for the current view.
+
 ---
 
 ## Progression System
