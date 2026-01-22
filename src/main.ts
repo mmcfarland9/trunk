@@ -659,14 +659,15 @@ shineApi.updateSunMeter()
 
 
 let resizeId = 0
-const resizeObserver = new ResizeObserver(() => {
+const handleResize = () => {
   if (resizeId) {
     window.cancelAnimationFrame(resizeId)
   }
   resizeId = window.requestAnimationFrame(() => positionNodes(ctx))
-})
+}
+const resizeObserver = new ResizeObserver(handleResize)
 resizeObserver.observe(domResult.elements.canvas)
-window.addEventListener('resize', () => positionNodes(ctx))
+window.addEventListener('resize', handleResize)
 
 startWind(ctx)
 setupHoverBranch(ctx, navCallbacks)
