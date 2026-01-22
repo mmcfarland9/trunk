@@ -139,9 +139,11 @@ export function sanitizeSprout(raw: unknown): Sprout | null {
     createdAt: typeof s.createdAt === 'string' ? s.createdAt : new Date().toISOString(),
   }
 
-  // Optional fields
+  // Optional fields - date strings
   if (typeof s.activatedAt === 'string') sprout.activatedAt = s.activatedAt
   if (typeof s.completedAt === 'string') sprout.completedAt = s.completedAt
+  if (typeof s.plantedAt === 'string') sprout.plantedAt = s.plantedAt
+  if (typeof s.harvestedAt === 'string') sprout.harvestedAt = s.harvestedAt
   if (typeof s.endDate === 'string') sprout.endDate = s.endDate
   if (typeof s.result === 'number' && s.result >= 1 && s.result <= 5) sprout.result = s.result
   if (typeof s.reflection === 'string') sprout.reflection = s.reflection
