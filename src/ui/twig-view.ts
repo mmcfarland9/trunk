@@ -71,7 +71,8 @@ function formatDate(date: Date): string {
 }
 
 function isReady(sprout: Sprout): boolean {
-  if (!sprout.endDate) return true
+  // A sprout without an endDate is not ready (endDate is set when planted)
+  if (!sprout.endDate) return false
   return new Date(sprout.endDate).getTime() <= getDebugNow()
 }
 
