@@ -66,14 +66,15 @@ export function handleExport(ctx: AppContext): void {
     String(now.getMinutes()).padStart(2, '0'),
     String(now.getSeconds()).padStart(2, '0'),
   ].join('')
-  link.download = `trunk${timestamp}.json`
+  const filename = `trunk${timestamp}.json`
+  link.download = filename
   document.body.append(link)
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
 
   recordExportDate()
-  flashStatus(ctx.elements, 'Exported JSON file.', 'success')
+  flashStatus(ctx.elements, `Exported ${filename}`, 'success')
 }
 
 export async function handleImport(
