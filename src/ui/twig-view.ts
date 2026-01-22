@@ -143,8 +143,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       </div>
     </div>
     <div class="confirm-dialog hidden">
-      <div class="confirm-dialog-box">
-        <p class="confirm-dialog-message"></p>
+      <div class="confirm-dialog-box" role="alertdialog" aria-modal="true" aria-describedby="confirm-dialog-message">
+        <p id="confirm-dialog-message" class="confirm-dialog-message"></p>
         <div class="confirm-dialog-actions">
           <button type="button" class="action-btn action-btn-passive action-btn-neutral confirm-dialog-cancel">Cancel</button>
           <button type="button" class="action-btn action-btn-progress action-btn-error confirm-dialog-confirm">Uproot</button>

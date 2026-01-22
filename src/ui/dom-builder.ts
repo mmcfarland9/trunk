@@ -346,10 +346,10 @@ export function buildApp(
   const sproutsDialog = document.createElement('div')
   sproutsDialog.className = 'sprouts-dialog hidden'
   sproutsDialog.innerHTML = `
-    <div class="sprouts-dialog-box">
+    <div class="sprouts-dialog-box" role="dialog" aria-modal="true" aria-labelledby="sprouts-dialog-title">
       <div class="sprouts-dialog-header">
-        <h2 class="sprouts-dialog-title">All Sprouts</h2>
-        <button type="button" class="sprouts-dialog-close">×</button>
+        <h2 id="sprouts-dialog-title" class="sprouts-dialog-title">All Sprouts</h2>
+        <button type="button" class="sprouts-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="sprouts-dialog-content"></div>
     </div>
@@ -360,10 +360,10 @@ export function buildApp(
   const waterDialog = document.createElement('div')
   waterDialog.className = 'water-dialog hidden'
   waterDialog.innerHTML = `
-    <div class="water-dialog-box">
+    <div class="water-dialog-box" role="dialog" aria-modal="true" aria-labelledby="water-dialog-title">
       <div class="water-dialog-header">
-        <h2 class="water-dialog-title">Water Sprout</h2>
-        <button type="button" class="water-dialog-close">×</button>
+        <h2 id="water-dialog-title" class="water-dialog-title">Water Sprout</h2>
+        <button type="button" class="water-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="water-dialog-body">
         <p class="water-dialog-sprout-title"></p>
@@ -381,10 +381,10 @@ export function buildApp(
   const harvestDialog = document.createElement('div')
   harvestDialog.className = 'harvest-dialog hidden'
   harvestDialog.innerHTML = `
-    <div class="harvest-dialog-box">
+    <div class="harvest-dialog-box" role="dialog" aria-modal="true" aria-labelledby="harvest-dialog-title">
       <div class="harvest-dialog-header">
-        <h2 class="harvest-dialog-title">Harvest Sprout</h2>
-        <button type="button" class="harvest-dialog-close">×</button>
+        <h2 id="harvest-dialog-title" class="harvest-dialog-title">Harvest Sprout</h2>
+        <button type="button" class="harvest-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="harvest-dialog-body">
         <p class="harvest-dialog-sprout-title"></p>
@@ -416,10 +416,10 @@ export function buildApp(
   const settingsDialog = document.createElement('div')
   settingsDialog.className = 'settings-dialog hidden'
   settingsDialog.innerHTML = `
-    <div class="settings-dialog-box">
+    <div class="settings-dialog-box" role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title">
       <div class="settings-dialog-header">
-        <h2 class="settings-dialog-title">Settings</h2>
-        <button type="button" class="settings-dialog-close">×</button>
+        <h2 id="settings-dialog-title" class="settings-dialog-title">Settings</h2>
+        <button type="button" class="settings-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="settings-dialog-body">
         <div class="settings-section">
@@ -493,10 +493,10 @@ export function buildApp(
   const waterCanDialog = document.createElement('div')
   waterCanDialog.className = 'water-can-dialog hidden'
   waterCanDialog.innerHTML = `
-    <div class="water-can-dialog-box">
+    <div class="water-can-dialog-box" role="dialog" aria-modal="true" aria-labelledby="water-can-dialog-title">
       <div class="water-can-dialog-header">
-        <h2 class="water-can-dialog-title">Watering Can</h2>
-        <button type="button" class="water-can-dialog-close">×</button>
+        <h2 id="water-can-dialog-title" class="water-can-dialog-title">Watering Can</h2>
+        <button type="button" class="water-can-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="water-can-dialog-body">
         <div class="water-can-status-box">
@@ -516,10 +516,10 @@ export function buildApp(
   const sunLogDialog = document.createElement('div')
   sunLogDialog.className = 'sun-log-dialog hidden'
   sunLogDialog.innerHTML = `
-    <div class="sun-log-dialog-box">
+    <div class="sun-log-dialog-box" role="dialog" aria-modal="true" aria-labelledby="sun-log-dialog-title">
       <div class="sun-log-dialog-header">
-        <h2 class="sun-log-dialog-title">Sun Ledge</h2>
-        <button type="button" class="sun-log-dialog-close">×</button>
+        <h2 id="sun-log-dialog-title" class="sun-log-dialog-title">Sun Ledge</h2>
+        <button type="button" class="sun-log-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="sun-log-dialog-body">
         <div class="sun-log-shine-section">
@@ -547,10 +547,10 @@ export function buildApp(
   const soilBagDialog = document.createElement('div')
   soilBagDialog.className = 'soil-bag-dialog hidden'
   soilBagDialog.innerHTML = `
-    <div class="soil-bag-dialog-box">
+    <div class="soil-bag-dialog-box" role="dialog" aria-modal="true" aria-labelledby="soil-bag-dialog-title">
       <div class="soil-bag-dialog-header">
-        <h2 class="soil-bag-dialog-title">Soil Bag</h2>
-        <button type="button" class="soil-bag-dialog-close">×</button>
+        <h2 id="soil-bag-dialog-title" class="soil-bag-dialog-title">Soil Bag</h2>
+        <button type="button" class="soil-bag-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="soil-bag-dialog-body">
         <p class="soil-bag-empty">No soil activity yet.</p>
