@@ -29,7 +29,7 @@ const MIGRATIONS: Record<number, MigrationFn> = {
 
     Object.values(nodes).forEach((node: unknown) => {
       const n = node as {
-        sprouts?: Array<{ season: string; title: string; leafId?: string }>,
+        sprouts?: Array<{ season: string; title: string; leafId?: string; createdAt?: string }>,
         leaves?: Array<{ id: string; name?: string; status?: string }>
       }
 
@@ -46,9 +46,12 @@ const MIGRATIONS: Record<number, MigrationFn> = {
       if (n.leaves) {
         n.leaves.forEach(leaf => {
           if (!leaf.name) {
-            // Derive name from most recent sprout on this leaf
+            // Derive name from most recent sprout on this leaf (by createdAt)
             const leafSprouts = n.sprouts?.filter(s => s.leafId === leaf.id) || []
-            const mostRecent = leafSprouts[leafSprouts.length - 1]
+            const sorted = leafSprouts.sort((a, b) =>
+              new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+            )
+            const mostRecent = sorted[0]
             leaf.name = mostRecent?.title || 'Unnamed Saga'
           }
           delete leaf.status

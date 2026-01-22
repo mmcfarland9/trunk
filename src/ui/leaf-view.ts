@@ -213,8 +213,11 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
       const data = nodeState[currentTwigId]
       if (data) {
         if (!data.leaves) data.leaves = []
-        // Derive name from most recent sprout
-        const leafName = sprouts[sprouts.length - 1]?.title || 'Unnamed Saga'
+        // Derive name from most recent sprout (by createdAt)
+        const sorted = [...sprouts].sort((a, b) =>
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        )
+        const leafName = sorted[0]?.title || 'Unnamed Saga'
         data.leaves.push({
           id: currentLeafId,
           name: leafName,
