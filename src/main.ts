@@ -1,7 +1,6 @@
 import './styles/index.css'
 import type { AppContext } from './types'
-import { escapeHtml } from './utils/escape-html'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, getWaterCapacity, getNextWaterReset, formatResetTime, resetResources, sunLog, soilLog, getNotificationSettings, saveNotificationSettings, getPresetLabel, setStorageErrorCallbacks, getAllWaterEntries } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
 import type { NotificationSettings } from './types'
 import { updateFocus, setFocusedNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
@@ -23,6 +22,7 @@ import { setStatus, updateStatusMeta } from './features/status'
 import { initWaterDialog } from './features/water-dialog'
 import { initHarvestDialog } from './features/harvest-dialog'
 import { initShine } from './features/shine-dialog'
+import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from './features/log-dialogs'
 import { STATUS_DEFAULT_MESSAGE } from './constants'
 
 const app = document.querySelector<HTMLDivElement>('#app')
@@ -143,12 +143,24 @@ const harvestDialogApi = initHarvestDialog(ctx, {
   onHarvestComplete: navCallbacks.onUpdateStats,
 })
 
+// Late-binding container for sun log populate function
+let sunLogPopulate: (() => void) | null = null
+
 const shineApi = initShine(ctx, {
   onSunMeterChange: () => shineApi.updateSunMeter(),
   onSoilMeterChange: updateSoilMeter,
   onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
-  onShineComplete: populateSunLog,
+  onShineComplete: () => sunLogPopulate?.(),
 })
+
+// Initialize log dialogs
+const sunLogApi = initSunLogDialog(domResult.elements, {
+  onPopulateSunLogShine: () => shineApi.populateSunLogShine(),
+})
+sunLogPopulate = sunLogApi.populate
+
+const soilBagApi = initSoilBagDialog(domResult.elements)
+const waterCanApi = initWaterCanDialog(domResult.elements)
 
 const mapPanel = domResult.elements.canvas.parentElement as HTMLElement
 const twigView = buildTwigView(mapPanel, {
@@ -298,214 +310,6 @@ domResult.elements.settingsSaveBtn.addEventListener('click', () => {
   closeSettingsDialog()
   setStatus(ctx.elements, 'Settings saved', 'info')
 })
-
-// Sun Ledger dialog - view shine journal entries + shine input
-function formatSunLogTimestamp(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = date.getFullYear()
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day}/${year} ${time}`
-}
-
-function getBranchLabelFromTwigId(twigId: string): string {
-  // Parse "branch-X-twig-Y" to get branch ID
-  const match = twigId.match(/^(branch-\d+)-twig-\d+$/)
-  if (!match) return ''
-  const branchId = match[1]
-  return getPresetLabel(branchId) || nodeState[branchId]?.label || ''
-}
-
-function populateSunLog(): void {
-  const entries = [...sunLog].reverse() // Reverse chronological (newest first)
-  const isEmpty = entries.length === 0
-
-  domResult.elements.sunLogDialogEmpty.style.display = isEmpty ? 'block' : 'none'
-  domResult.elements.sunLogDialogEntries.style.display = isEmpty ? 'none' : 'flex'
-
-  if (isEmpty) return
-
-  domResult.elements.sunLogDialogEntries.innerHTML = entries.map(entry => {
-    const branchLabel = getBranchLabelFromTwigId(entry.context.twigId)
-    const locationLabel = branchLabel ? `${escapeHtml(branchLabel)} : ${escapeHtml(entry.context.twigLabel)}` : escapeHtml(entry.context.twigLabel)
-    const context = entry.context.type === 'leaf'
-      ? `${escapeHtml(entry.context.leafTitle || '')} · ${locationLabel}`
-      : locationLabel
-    const timestamp = formatSunLogTimestamp(entry.timestamp)
-    const promptHtml = entry.prompt
-      ? `<p class="sun-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
-      : ''
-
-    return `
-      <div class="sun-log-entry">
-        <div class="sun-log-entry-header">
-          <span class="sun-log-entry-context">${context}</span>
-          <span class="sun-log-entry-timestamp">${timestamp}</span>
-        </div>
-        ${promptHtml}
-        <p class="sun-log-entry-content">${escapeHtml(entry.content)}</p>
-      </div>
-    `
-  }).join('')
-}
-
-function openSunLogDialog(): void {
-  shineApi.populateSunLogShine()
-  populateSunLog()
-  domResult.elements.sunLogDialog.classList.remove('hidden')
-}
-
-function closeSunLogDialog(): void {
-  domResult.elements.sunLogDialog.classList.add('hidden')
-}
-
-// Click sun meter to open sun log
-domResult.elements.sunMeter.addEventListener('click', openSunLogDialog)
-
-domResult.elements.sunLogDialogClose.addEventListener('click', closeSunLogDialog)
-
-domResult.elements.sunLogDialog.addEventListener('click', (e) => {
-  if (e.target === domResult.elements.sunLogDialog) {
-    closeSunLogDialog()
-  }
-})
-
-
-// Soil Bag dialog - soil gains and losses
-function formatSoilTimestamp(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day} ${time}`
-}
-
-function populateSoilBag(): void {
-  const entries = [...soilLog].reverse() // Reverse chronological (newest first)
-  const isEmpty = entries.length === 0
-
-  domResult.elements.soilBagDialogEmpty.style.display = isEmpty ? 'block' : 'none'
-  domResult.elements.soilBagDialogEntries.style.display = isEmpty ? 'none' : 'flex'
-
-  if (isEmpty) return
-
-  domResult.elements.soilBagDialogEntries.innerHTML = entries.map(entry => {
-    const amountClass = entry.amount > 0 ? 'is-gain' : 'is-loss'
-    const amountText = entry.amount > 0 ? `+${entry.amount.toFixed(2)}` : entry.amount.toFixed(2)
-    const contextHtml = entry.context
-      ? `<span class="soil-bag-entry-context">${escapeHtml(entry.context)}</span>`
-      : ''
-    const timestamp = formatSoilTimestamp(entry.timestamp)
-
-    return `
-      <div class="soil-bag-entry">
-        <div class="soil-bag-entry-info">
-          <span class="soil-bag-entry-reason">${escapeHtml(entry.reason)}</span>
-          ${contextHtml}
-        </div>
-        <div>
-          <span class="soil-bag-entry-amount ${amountClass}">${amountText}</span>
-          <span class="soil-bag-entry-timestamp">${timestamp}</span>
-        </div>
-      </div>
-    `
-  }).join('')
-}
-
-function openSoilBagDialog(): void {
-  populateSoilBag()
-  domResult.elements.soilBagDialog.classList.remove('hidden')
-}
-
-function closeSoilBagDialog(): void {
-  domResult.elements.soilBagDialog.classList.add('hidden')
-}
-
-// Click soil meter to open soil bag
-domResult.elements.soilMeter.addEventListener('click', openSoilBagDialog)
-
-domResult.elements.soilBagDialogClose.addEventListener('click', closeSoilBagDialog)
-
-domResult.elements.soilBagDialog.addEventListener('click', (e) => {
-  if (e.target === domResult.elements.soilBagDialog) {
-    closeSoilBagDialog()
-  }
-})
-
-
-// Water Can dialog - waterable sprouts + water log
-function formatWaterLogTimestamp(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = date.getFullYear()
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day}/${year} ${time}`
-}
-
-function populateWaterCan(): void {
-  const logEntries = getAllWaterEntries()
-
-  // Status box - show water remaining or empty + reset time
-  const available = getWaterAvailable()
-  const capacity = getWaterCapacity()
-
-  if (available > 0) {
-    domResult.elements.waterCanStatusText.textContent = `${available}/${capacity} remaining`
-    domResult.elements.waterCanStatusReset.classList.add('hidden')
-  } else {
-    domResult.elements.waterCanStatusText.textContent = 'Empty'
-    domResult.elements.waterCanStatusReset.textContent = formatResetTime(getNextWaterReset())
-    domResult.elements.waterCanStatusReset.classList.remove('hidden')
-  }
-
-  // Water log section
-  const hasLog = logEntries.length > 0
-  domResult.elements.waterCanEmptyLog.style.display = hasLog ? 'none' : 'block'
-  domResult.elements.waterCanLogEntries.style.display = hasLog ? 'flex' : 'none'
-
-  if (hasLog) {
-    domResult.elements.waterCanLogEntries.innerHTML = logEntries.map(entry => {
-      const timestamp = formatWaterLogTimestamp(entry.timestamp)
-      const promptHtml = entry.prompt
-        ? `<p class="water-can-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
-        : ''
-
-      return `
-        <div class="water-can-log-entry">
-          <div class="water-can-log-entry-header">
-            <span class="water-can-log-entry-context">${escapeHtml(entry.sproutTitle)} · ${escapeHtml(entry.twigLabel)}</span>
-            <span class="water-can-log-entry-timestamp">${timestamp}</span>
-          </div>
-          ${promptHtml}
-          <p class="water-can-log-entry-content">${escapeHtml(entry.content)}</p>
-        </div>
-      `
-    }).join('')
-  }
-}
-
-function openWaterCanDialog(): void {
-  populateWaterCan()
-  domResult.elements.waterCanDialog.classList.remove('hidden')
-}
-
-function closeWaterCanDialog(): void {
-  domResult.elements.waterCanDialog.classList.add('hidden')
-}
-
-// Click water meter to open water can
-domResult.elements.waterMeter.addEventListener('click', openWaterCanDialog)
-
-domResult.elements.waterCanDialogClose.addEventListener('click', closeWaterCanDialog)
-
-domResult.elements.waterCanDialog.addEventListener('click', (e) => {
-  if (e.target === domResult.elements.waterCanDialog) {
-    closeWaterCanDialog()
-  }
-})
-
 
 domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
 
@@ -658,19 +462,19 @@ document.addEventListener('keydown', (e) => {
       harvestDialogApi.closeHarvestDialog()
       return
     }
-    if (!domResult.elements.sunLogDialog.classList.contains('hidden')) {
+    if (sunLogApi.isOpen()) {
       e.preventDefault()
-      closeSunLogDialog()
+      sunLogApi.close()
       return
     }
-    if (!domResult.elements.soilBagDialog.classList.contains('hidden')) {
+    if (soilBagApi.isOpen()) {
       e.preventDefault()
-      closeSoilBagDialog()
+      soilBagApi.close()
       return
     }
-    if (!domResult.elements.waterCanDialog.classList.contains('hidden')) {
+    if (waterCanApi.isOpen()) {
       e.preventDefault()
-      closeWaterCanDialog()
+      waterCanApi.close()
       return
     }
     if (!domResult.elements.settingsDialog.classList.contains('hidden')) {
