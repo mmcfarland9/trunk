@@ -427,11 +427,26 @@ export function recoverPartialSoil(amount: number, fraction: number, reason?: st
 // Water availability is derived from waterEntries across all sprouts.
 // No stored counter - timestamps are the truth.
 
+// Cache for water count to avoid O(n*m*k) iteration on every call
+let waterCountCache: { resetTime: number; count: number } | null = null
+
+// Invalidate water count cache (called when water entry is added)
+export function invalidateWaterCountCache(): void {
+  waterCountCache = null
+}
+
 // Count water entries since today's reset time (6am)
 export function getWaterUsedToday(): number {
   const resetTime = getTodayResetTime()
-  let count = 0
+  const resetMs = resetTime.getTime()
 
+  // Return cached count if valid for current reset period
+  if (waterCountCache && waterCountCache.resetTime === resetMs) {
+    return waterCountCache.count
+  }
+
+  // Recalculate
+  let count = 0
   for (const data of Object.values(nodeState)) {
     for (const sprout of data.sprouts ?? []) {
       for (const entry of sprout.waterEntries ?? []) {
@@ -441,6 +456,9 @@ export function getWaterUsedToday(): number {
       }
     }
   }
+
+  // Cache the result
+  waterCountCache = { resetTime: resetMs, count }
   return count
 }
 
@@ -525,6 +543,9 @@ export function resetResources(): void {
       }
     }
   }
+
+  // Invalidate water count cache
+  invalidateWaterCountCache()
 
   saveResourceState()
   saveState()
@@ -631,6 +652,7 @@ export function addWaterEntry(
     prompt,
   })
 
+  invalidateWaterCountCache()
   saveState()
   return true
 }

@@ -2,7 +2,7 @@
  * Functional tests for state management.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   calculateSoilCost,
   getActiveSprouts,

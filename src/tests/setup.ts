@@ -3,6 +3,8 @@
  * Sets up mocks and global test environment.
  */
 
+import { beforeEach } from 'vitest'
+
 // Mock localStorage
 const storage: Record<string, string> = {}
 

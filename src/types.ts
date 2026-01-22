@@ -56,10 +56,12 @@ export type Sprout = {
   soilCost: number
   createdAt: string
   activatedAt?: string
+  plantedAt?: string      // Alias for activatedAt (gardening metaphor)
   endDate?: string
   result?: number // 1-5 scale
   reflection?: string
   completedAt?: string
+  harvestedAt?: string    // Alias for completedAt (gardening metaphor)
   // Bloom: describes what each outcome looks like (60 char max each)
   bloomWither?: string    // 1/5 - failure
   bloomBudding?: string   // 3/5 - moderate success
