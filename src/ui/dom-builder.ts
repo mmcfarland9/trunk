@@ -392,7 +392,9 @@ export function buildApp(
         <div class="harvest-dialog-result">
           <label class="harvest-dialog-label">How did it go?</label>
           <div class="harvest-dialog-slider-row">
-            <input type="range" min="1" max="5" value="3" class="harvest-dialog-slider" />
+            <span class="harvest-dialog-slider-label">withered</span>
+            <input type="range" min="1" max="5" value="3" class="harvest-dialog-slider" aria-label="Result from 1 (withered) to 5 (flourished)" />
+            <span class="harvest-dialog-slider-label">flourished</span>
             <span class="harvest-dialog-result-emoji">🌿</span>
           </div>
           <div class="harvest-dialog-bloom-hints">
