@@ -423,6 +423,11 @@ export function buildApp(
       </div>
       <div class="settings-dialog-body">
         <div class="settings-section">
+          <label class="settings-label">Name</label>
+          <input type="text" class="settings-name-input" placeholder="Your name" />
+        </div>
+
+        <div class="settings-section">
           <label class="settings-label">Email</label>
           <input type="email" class="settings-email-input" placeholder="your@email.com" />
         </div>
@@ -616,6 +621,7 @@ export function buildApp(
     sunCircle,
     settingsDialog,
     settingsDialogClose: settingsDialog.querySelector<HTMLButtonElement>('.settings-dialog-close')!,
+    settingsNameInput: settingsDialog.querySelector<HTMLInputElement>('.settings-name-input')!,
     settingsEmailInput: settingsDialog.querySelector<HTMLInputElement>('.settings-email-input')!,
     settingsFrequencyInputs: settingsDialog.querySelectorAll<HTMLInputElement>('input[name="frequency"]'),
     settingsTimeInputs: settingsDialog.querySelectorAll<HTMLInputElement>('input[name="time"]'),

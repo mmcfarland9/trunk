@@ -1,5 +1,5 @@
 import type { AppContext, NodeData } from '../types'
-import { nodeState, saveState, hasNodeData, runMigrations } from '../state'
+import { nodeState, saveState, hasNodeData, runMigrations, getNotificationSettings, saveNotificationSettings } from '../state'
 import { syncNode } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
 import { sanitizeSprout, sanitizeLeaf } from '../utils/validate-import'
@@ -47,10 +47,14 @@ export function checkExportReminder(ctx: AppContext): void {
 }
 
 export function handleExport(ctx: AppContext): void {
+  const settings = getNotificationSettings()
   const payload = {
     version: 3,
     exportedAt: new Date().toISOString(),
     circles: nodeState,
+    settings: {
+      name: settings.name,
+    },
   }
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -167,6 +171,18 @@ export async function handleImport(
     Object.entries(nextState).forEach(([key, value]) => {
       nodeState[key] = value
     })
+
+    // Import settings (name for trunk)
+    if (parsedObj.settings && typeof parsedObj.settings === 'object') {
+      const importedSettings = parsedObj.settings as Record<string, unknown>
+      if (typeof importedSettings.name === 'string') {
+        const currentSettings = getNotificationSettings()
+        saveNotificationSettings({
+          ...currentSettings,
+          name: importedSettings.name,
+        })
+      }
+    }
 
     ctx.allNodes.forEach((node) => syncNode(node))
 

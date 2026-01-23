@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote, getNotificationSettings } from '../state'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
@@ -145,6 +145,15 @@ export function syncNode(element: HTMLButtonElement): void {
   const nodeId = element.dataset.nodeId
   if (!nodeId) return
 
+  // Trunk uses name from settings as its label
+  if (nodeId === 'trunk') {
+    const settings = getNotificationSettings()
+    const label = settings.name || 'Trunk'
+    setNodeLabel(element, label)
+    element.dataset.filled = settings.name ? 'true' : 'false'
+    return
+  }
+
   // Preset labels are the permanent map structure - use them as the source of truth
   const presetLabel = getPresetLabel(nodeId)
   const presetNote = getPresetNote(nodeId)
@@ -203,15 +212,29 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   focusSection?.classList.remove('is-empty')
 
   const nodeId = target.dataset.nodeId
-  const stored = nodeId ? nodeState[nodeId] : undefined
-  // Preset labels are the source of truth for the map structure
-  const presetLabel = nodeId ? getPresetLabel(nodeId) : ''
-  const presetNote = nodeId ? getPresetNote(nodeId) : ''
-  const label = presetLabel || stored?.label?.trim() || ''
-  const note = presetNote || stored?.note?.trim() || ''
-  const hasLabel = Boolean(label)
   const isTwig = target.classList.contains('twig')
   const isTrunk = target.classList.contains('trunk')
+
+  // Trunk uses name from settings
+  let label: string
+  let note: string
+  let hasLabel: boolean
+
+  if (isTrunk) {
+    const settings = getNotificationSettings()
+    label = settings.name || ''
+    note = ''
+    hasLabel = Boolean(label)
+  } else {
+    const stored = nodeId ? nodeState[nodeId] : undefined
+    // Preset labels are the source of truth for the map structure
+    const presetLabel = nodeId ? getPresetLabel(nodeId) : ''
+    const presetNote = nodeId ? getPresetNote(nodeId) : ''
+    label = presetLabel || stored?.label?.trim() || ''
+    note = presetNote || stored?.note?.trim() || ''
+    hasLabel = Boolean(label)
+  }
+
   const placeholder = getNodePlaceholder(target)
   const displayLabel = hasLabel ? label : isTwig ? 'Add title...' : placeholder
 

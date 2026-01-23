@@ -100,6 +100,7 @@ export type SunState = {
 
 // Notification settings - stored locally, backend integration later
 export type NotificationSettings = {
+  name: string // User's name, displayed on trunk
   email: string
   checkInFrequency: 'daily' | 'every3days' | 'weekly' | 'off'
   preferredTime: 'morning' | 'afternoon' | 'evening'
@@ -202,6 +203,7 @@ export type AppElements = {
   sunCircle: HTMLSpanElement
   settingsDialog: HTMLDivElement
   settingsDialogClose: HTMLButtonElement
+  settingsNameInput: HTMLInputElement
   settingsEmailInput: HTMLInputElement
   settingsFrequencyInputs: NodeListOf<HTMLInputElement>
   settingsTimeInputs: NodeListOf<HTMLInputElement>

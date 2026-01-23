@@ -1107,6 +1107,7 @@ export function isTwigView(): boolean {
 const SETTINGS_STORAGE_KEY = 'trunk-settings-v1'
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  name: '',
   email: '',
   checkInFrequency: 'off',
   preferredTime: 'morning',

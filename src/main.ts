@@ -2,7 +2,7 @@ import './styles/index.css'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
 import type { NotificationSettings } from './types'
-import { updateFocus, setFocusedNode } from './ui/node-ui'
+import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
 import { buildApp, getActionButtons } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
@@ -229,6 +229,7 @@ exportButton.addEventListener('click', () => handleExport(ctx))
 // Settings dialog
 function populateSettingsForm(): void {
   const settings = getNotificationSettings()
+  domResult.elements.settingsNameInput.value = settings.name
   domResult.elements.settingsEmailInput.value = settings.email
 
   // Set frequency radio
@@ -268,6 +269,7 @@ function getSettingsFromForm(): NotificationSettings {
   })
 
   return {
+    name: domResult.elements.settingsNameInput.value.trim(),
     email: domResult.elements.settingsEmailInput.value.trim(),
     checkInFrequency: frequency,
     preferredTime,
@@ -307,6 +309,9 @@ domResult.elements.settingsFrequencyInputs.forEach(input => {
 domResult.elements.settingsSaveBtn.addEventListener('click', () => {
   const settings = getSettingsFromForm()
   saveNotificationSettings(settings)
+  // Update trunk label to reflect name change
+  syncNode(domResult.elements.trunk)
+  updateFocus(domResult.elements.trunk, ctx)
   closeSettingsDialog()
   setStatus(ctx.elements, 'Settings saved', 'info')
 })
