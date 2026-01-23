@@ -16,7 +16,7 @@ Growth is slow, deliberate, and intrinsically rewarding. Like cultivating a bons
 **Soil** represents your focus/energy budget for active goals.
 
 - **Starting capacity**: 10 (room for ~3-5 concurrent goals)
-- **Maximum capacity**: 100 (lifetime ceiling, essentially mythical)
+- **Maximum capacity**: 120 (mythical - realistic ceiling after ~50 years is ~100)
 
 ### Soil Cost (Planting Budget)
 
@@ -89,22 +89,22 @@ Results 1-2 are failures, 3-5 are successes. Soil returns upon completion (tied 
 | 4 🌳 | 100% | 0.50× | Tree - strong execution |
 | 5 🌲 | 100% | 1.0× | Oak - excellence |
 
-### 4. Diminishing Returns Factor (Quadratic)
+### 4. Diminishing Returns Factor
 
-As you approach max capacity, growth slows dramatically toward zero:
+As you approach max capacity, growth slows toward zero. The curve is generous early, with meaningful slowdown late:
 
 ```
-diminishing = (1 - current_capacity / 100)²
+diminishing = (1 - current_capacity / 120)^1.5
 ```
 
 | Current Capacity | Diminishing Factor | Effective Growth |
 |------------------|-------------------|------------------|
-| 10 (start) | 0.81 | 81% of base |
-| 25 | 0.56 | 56% of base |
-| 50 | 0.25 | 25% of base |
-| 75 | 0.0625 | 6.25% of base |
-| 90 | 0.01 | 1% of base |
-| 95 | 0.0025 | 0.25% of base |
+| 10 (start) | 0.88 | 88% of base |
+| 25 | 0.71 | 71% of base |
+| 50 | 0.45 | 45% of base |
+| 75 | 0.23 | 23% of base |
+| 100 | 0.07 | 7% of base |
+| 110 | 0.02 | 2% of base |
 
 ---
 

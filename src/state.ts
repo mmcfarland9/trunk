@@ -117,11 +117,12 @@ const LEGACY_SUN_KEY = 'trunk-sun-v1'
 //
 // === THE BONSAI MODEL ===
 // Capacity grows slowly over years, with diminishing returns as you approach max.
-// Max capacity (100) is a lifetime goal - essentially unreachable.
+// Max capacity (120) is a lifetime goal - essentially unreachable.
+// Realistic ceiling after ~50 years of effort is ~100 capacity.
 // See docs/progression-system.md for full math and examples.
 
 const DEFAULT_SOIL_CAPACITY = 10  // Room for ~5 concurrent 2-week sprouts
-const MAX_SOIL_CAPACITY = 100    // Lifetime ceiling - mythical to achieve
+const MAX_SOIL_CAPACITY = 120    // Lifetime ceiling - mythical to achieve
 
 // Recovery rates (slow, bonsai-style)
 // Water: Quick daily engagement with active sprouts
@@ -197,8 +198,9 @@ export function calculateCapacityReward(
   const envMult = ENVIRONMENT_REWARD_MULT[environment]
   const resultMult = RESULT_REWARD_MULT[result] ?? RESULT_REWARD_MULT[3] // Default to 0.7
 
-  // Quadratic diminishing returns - growth slows dramatically as you approach max
-  const diminishingFactor = Math.max(0, Math.pow(1 - (currentCapacity / MAX_SOIL_CAPACITY), 2))
+  // Diminishing returns (exponent 1.5) - growth slows as you approach max
+  // More generous early, still meaningful late-game slowdown
+  const diminishingFactor = Math.max(0, Math.pow(1 - (currentCapacity / MAX_SOIL_CAPACITY), 1.5))
 
   return base * envMult * resultMult * diminishingFactor
 }
