@@ -741,6 +741,7 @@
   color: var(--ink);
 }
 
+.settings-name-input,
 .settings-email-input {
   width: 100%;
   padding: var(--space-2) var(--space-3);
@@ -752,11 +753,13 @@
   transition: border-color 150ms ease;
 }
 
+.settings-name-input:focus,
 .settings-email-input:focus {
   outline: none;
   border-color: var(--twig);
 }
 
+.settings-name-input::placeholder,
 .settings-email-input::placeholder {
   color: var(--ink-faint);
 }
