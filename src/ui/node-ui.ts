@@ -223,7 +223,7 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   if (isTrunk) {
     const settings = getNotificationSettings()
     label = settings.name || ''
-    note = ''
+    note = 'a unified framework\nfor mind, body & spirit'
     hasLabel = Boolean(label)
   } else {
     const stored = nodeId ? nodeState[nodeId] : undefined
