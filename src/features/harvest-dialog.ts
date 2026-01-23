@@ -63,7 +63,8 @@ export function initHarvestDialog(
         const capGain = baseReward * resultMultiplier
         harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${currentHarvestSprout.soilCost.toFixed(1)}, +${capGain.toFixed(2)} cap)</span>`
       } else {
-        const recovery = currentHarvestSprout.soilCost * 0.5
+        const failureReturn = result === 1 ? 0.6 : 0.8
+        const recovery = currentHarvestSprout.soilCost * failureReturn
         harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${recovery.toFixed(1)})</span>`
       }
     }
@@ -158,8 +159,9 @@ export function initHarvestDialog(
       recoverSoil(sprout.soilCost, baseReward * resultMultiplier, 'Harvested sprout', sprout.title)
       callbacks.onSetStatus(`Sprout harvested! (+${sprout.soilCost.toFixed(1)} soil)`, 'info')
     } else {
-      recoverSoil(sprout.soilCost * 0.5, 0, 'Failed sprout', sprout.title)
-      callbacks.onSetStatus(`Sprout withered. (+${(sprout.soilCost * 0.5).toFixed(1)} soil)`, 'info')
+      const failureReturn = result === 1 ? 0.6 : 0.8
+      recoverSoil(sprout.soilCost * failureReturn, 0, 'Failed sprout', sprout.title)
+      callbacks.onSetStatus(`Sprout withered. (+${(sprout.soilCost * failureReturn).toFixed(1)} soil)`, 'info')
     }
 
     saveState()
