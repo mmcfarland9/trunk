@@ -15,7 +15,7 @@ Growth is slow, deliberate, and intrinsically rewarding. Like cultivating a bons
 
 **Soil** represents your focus/energy budget for active goals.
 
-- **Starting capacity**: 4 (room for ~3-4 simple weekly goals)
+- **Starting capacity**: 10 (room for ~3-5 concurrent goals)
 - **Maximum capacity**: 100 (lifetime ceiling, essentially mythical)
 
 ### Soil Cost (Planting Budget)
@@ -24,7 +24,6 @@ Each sprout costs soil to plant, based on season and environment:
 
 | Season | Fertile | Firm | Barren |
 |--------|---------|------|--------|
-| 1 week | 1 | 2 | 2 |
 | 2 weeks | 2 | 3 | 4 |
 | 1 month | 3 | 5 | 6 |
 | 3 months | 5 | 8 | 10 |
@@ -62,7 +61,6 @@ Scaled so per-week rate is roughly equal, with ~40% bonus for longer commitments
 
 | Season | Base | Per-Week Rate |
 |--------|------|---------------|
-| 1 week | 0.12 | 0.120 |
 | 2 weeks | 0.26 | 0.130 |
 | 1 month | 0.56 | 0.140 |
 | 3 months | 1.95 | 0.150 |
@@ -79,17 +77,17 @@ Challenge is rewarded - harder environments give better return on risk:
 | Firm | 1.5x | 1.75x | 17% bonus |
 | Barren | 2.0x | 2.4x | 20% bonus |
 
-### 3. Result Multiplier (1-5 scale)
+### 3. Result & Harvest Outcomes (1-5 scale)
 
-Compressed spread: showing up matters. Every honest attempt grows you:
+Results 1-2 are failures, 3-5 are successes. Soil returns upon completion (tied up, not spent).
 
-| Result | Multiplier | Meaning |
-|--------|------------|---------|
-| 1 | 0.4 | You showed up - 40% reward |
-| 2 | 0.55 | Partial effort |
-| 3 | 0.7 | Solid, honest work |
-| 4 | 0.85 | Strong execution |
-| 5 | 1.0 | Excellence - full reward |
+| Result | Soil Return | Capacity Mult | Meaning |
+|--------|-------------|---------------|---------|
+| 1 🥀 | 60% | 0 | Withered - you abandoned it |
+| 2 🌱 | 80% | 0 | Sprout - you barely tried |
+| 3 🌿 | 100% | 0.25× | Sapling - solid effort |
+| 4 🌳 | 100% | 0.50× | Tree - strong execution |
+| 5 🌲 | 100% | 1.0× | Oak - excellence |
 
 ### 4. Diminishing Returns Factor (Quadratic)
 
@@ -101,7 +99,7 @@ diminishing = (1 - current_capacity / 100)²
 
 | Current Capacity | Diminishing Factor | Effective Growth |
 |------------------|-------------------|------------------|
-| 4 (start) | 0.92 | 92% of base |
+| 10 (start) | 0.81 | 81% of base |
 | 25 | 0.56 | 56% of base |
 | 50 | 0.25 | 25% of base |
 | 75 | 0.0625 | 6.25% of base |
@@ -110,42 +108,43 @@ diminishing = (1 - current_capacity / 100)²
 
 ---
 
-## Full Rewards Matrix
+## Full Capacity Rewards Matrix
+
+Results 1-2 (failure) give **0 capacity**. Only successful completions (3-5) grow capacity.
+
+Formula: `base_reward × environment_mult × result_mult × diminishing_factor`
 
 ### Fertile Environment (1.1x)
 
-| Season | R=1 | R=2 | R=3 | R=4 | R=5 |
-|--------|-----|-----|-----|-----|-----|
-| 1w | 0.05 | 0.07 | 0.09 | 0.11 | 0.13 |
-| 2w | 0.11 | 0.16 | 0.20 | 0.24 | 0.29 |
-| 1m | 0.25 | 0.34 | 0.43 | 0.52 | 0.62 |
-| 3m | 0.86 | 1.18 | 1.50 | 1.82 | 2.15 |
-| 6m | 1.83 | 2.52 | 3.20 | 3.89 | 4.58 |
-| 1y | 3.89 | 5.35 | 6.81 | 8.27 | 9.72 |
+| Season | R=3 (0.25×) | R=4 (0.50×) | R=5 (1.0×) |
+|--------|-------------|-------------|------------|
+| 2w | 0.07 | 0.14 | 0.29 |
+| 1m | 0.15 | 0.31 | 0.62 |
+| 3m | 0.54 | 1.07 | 2.15 |
+| 6m | 1.14 | 2.29 | 4.58 |
+| 1y | 2.43 | 4.86 | 9.72 |
 
 *Note: These are base values before quadratic diminishing returns.*
 
 ### Firm Environment (1.75x)
 
-| Season | R=1 | R=2 | R=3 | R=4 | R=5 |
-|--------|-----|-----|-----|-----|-----|
-| 1w | 0.08 | 0.12 | 0.15 | 0.18 | 0.21 |
-| 2w | 0.18 | 0.25 | 0.32 | 0.39 | 0.46 |
-| 1m | 0.39 | 0.54 | 0.69 | 0.83 | 0.98 |
-| 3m | 1.37 | 1.88 | 2.39 | 2.90 | 3.41 |
-| 6m | 2.91 | 4.00 | 5.10 | 6.19 | 7.28 |
-| 1y | 6.19 | 8.51 | 10.83 | 13.15 | 15.47 |
+| Season | R=3 (0.25×) | R=4 (0.50×) | R=5 (1.0×) |
+|--------|-------------|-------------|------------|
+| 2w | 0.11 | 0.23 | 0.46 |
+| 1m | 0.25 | 0.49 | 0.98 |
+| 3m | 0.85 | 1.71 | 3.41 |
+| 6m | 1.82 | 3.64 | 7.28 |
+| 1y | 3.87 | 7.74 | 15.47 |
 
 ### Barren Environment (2.4x)
 
-| Season | R=1 | R=2 | R=3 | R=4 | R=5 |
-|--------|-----|-----|-----|-----|-----|
-| 1w | 0.12 | 0.16 | 0.20 | 0.24 | 0.29 |
-| 2w | 0.25 | 0.34 | 0.44 | 0.53 | 0.62 |
-| 1m | 0.54 | 0.74 | 0.94 | 1.14 | 1.34 |
-| 3m | 1.87 | 2.57 | 3.28 | 3.98 | 4.68 |
-| 6m | 3.99 | 5.49 | 6.99 | 8.49 | 9.98 |
-| 1y | 8.49 | 11.67 | 14.85 | 18.03 | 21.22 |
+| Season | R=3 (0.25×) | R=4 (0.50×) | R=5 (1.0×) |
+|--------|-------------|-------------|------------|
+| 2w | 0.16 | 0.31 | 0.62 |
+| 1m | 0.34 | 0.67 | 1.34 |
+| 3m | 1.17 | 2.34 | 4.68 |
+| 6m | 2.50 | 4.99 | 9.98 |
+| 1y | 5.30 | 10.61 | 21.22 |
 
 ---
 
@@ -261,18 +260,18 @@ Journaling is meaningful but supplementary. Goal completion remains the engine.
 
 ### Safety Net: Minimum Floor
 
-Soil can never stay below **1**. This ensures you can always plant a humble 1-week fertile goal and start fresh.
+Soil can never stay below **1**. This ensures you can always plant a humble 2-week fertile goal and start fresh.
 
 **Recovery from empty state**:
 - Floor: 1 soil
 - Sun only: +0.35/week
-- Time to reach starting capacity (4): ~9 weeks
+- Time to reach starting capacity (10): ~26 weeks
 
 ### Recovery Time Examples
 
 | Goal Cost | Example | Recovery Time (full engagement) |
 |-----------|---------|-------------------------------|
-| 1 | 1w fertile | ~5 days |
+| 2 | 2w fertile | ~1.4 weeks |
 | 3 | 1m fertile | ~2 weeks |
 | 5 | 3m fertile | ~3.5 weeks |
 | 8 | 6m fertile | ~6 weeks |
