@@ -27,3 +27,26 @@ dist-ssr
 *.sw?
 
 ramblings.txt.worktrees/
+
+# iOS
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode
+build/
+*.moved-aside
+
+# CocoaPods (if used)
+Pods/
+
+# Swift Package Manager (if used)
+.swiftpm/
