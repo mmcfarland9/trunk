@@ -1,0 +1,69 @@
+{
+  "soil": {
+    "startingCapacity": 10,
+    "maxCapacity": 100,
+    "plantingCosts": {
+      "2w": { "fertile": 2, "firm": 3, "barren": 4 },
+      "1m": { "fertile": 3, "firm": 5, "barren": 6 },
+      "3m": { "fertile": 5, "firm": 8, "barren": 10 },
+      "6m": { "fertile": 8, "firm": 12, "barren": 16 },
+      "1y": { "fertile": 12, "firm": 18, "barren": 24 }
+    },
+    "environmentMultipliers": {
+      "fertile": 1.1,
+      "firm": 1.75,
+      "barren": 2.4
+    },
+    "resultMultipliers": {
+      "1": 0.4,
+      "2": 0.55,
+      "3": 0.7,
+      "4": 0.85,
+      "5": 1.0
+    },
+    "recoveryRates": {
+      "waterUse": 0.05,
+      "sunUse": 0.35
+    }
+  },
+  "water": {
+    "dailyCapacity": 3,
+    "resetIntervalMs": 86400000
+  },
+  "sun": {
+    "weeklyCapacity": 1,
+    "resetIntervalMs": 604800000
+  },
+  "seasons": {
+    "2w": { "label": "2 weeks", "durationMs": 1209600000 },
+    "1m": { "label": "1 month", "durationMs": 2592000000 },
+    "3m": { "label": "3 months", "durationMs": 7776000000 },
+    "6m": { "label": "6 months", "durationMs": 15552000000 },
+    "1y": { "label": "1 year", "durationMs": 31536000000 }
+  },
+  "environments": {
+    "fertile": { "label": "Fertile", "description": "Easy to achieve" },
+    "firm": { "label": "Firm", "description": "Challenging stretch" },
+    "barren": { "label": "Barren", "description": "Very difficult" }
+  },
+  "results": {
+    "1": { "label": "Minimal", "description": "Showed up but little progress" },
+    "2": { "label": "Partial", "description": "Made some progress" },
+    "3": { "label": "Good", "description": "Met most expectations" },
+    "4": { "label": "Strong", "description": "Exceeded expectations" },
+    "5": { "label": "Exceptional", "description": "Fully achieved and then some" }
+  },
+  "tree": {
+    "branchCount": 8,
+    "twigCount": 8
+  },
+  "storage": {
+    "keys": {
+      "nodeData": "trunk-notes-v1",
+      "resources": "trunk-resources-v1",
+      "notifications": "trunk-notifications-v1",
+      "lastExport": "trunk-last-export"
+    },
+    "exportReminderDays": 7
+  }
+}
