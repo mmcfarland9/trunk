@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sprout",
+  "description": "A goal being cultivated on the tree",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Goal description"
+    },
+    "season": {
+      "type": "string",
+      "enum": ["2w", "1m", "3m", "6m", "1y"],
+      "description": "Time commitment duration"
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["fertile", "firm", "barren"],
+      "description": "Difficulty level"
+    },
+    "state": {
+      "type": "string",
+      "enum": ["draft", "active", "completed", "failed"],
+      "description": "Current lifecycle state"
+    },
+    "soilCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Soil capacity spent to plant this sprout"
+    },
+    "result": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Outcome rating (1-5) when harvested"
+    },
+    "leafId": {
+      "type": "string",
+      "description": "ID of leaf (saga) this sprout belongs to"
+    },
+    "plantedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when sprout was planted"
+    },
+    "harvestedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when sprout was harvested"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when sprout was created as draft"
+    },
+    "bloom1": { "type": "string" },
+    "bloom3": { "type": "string" },
+    "bloom5": { "type": "string" },
+    "waterEntries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "note": { "type": "string" }
+        },
+        "required": ["timestamp"]
+      }
+    }
+  },
+  "required": ["id", "title", "season", "environment", "state", "soilCost"]
+}

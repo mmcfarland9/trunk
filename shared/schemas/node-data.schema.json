@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NodeData",
+  "description": "Data for a node (trunk, branch, or twig)",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "User-customized label for this node"
+    },
+    "note": {
+      "type": "string",
+      "description": "User notes for this node"
+    },
+    "sprouts": {
+      "type": "array",
+      "items": { "$ref": "sprout.schema.json" },
+      "description": "Goals cultivated on this node (twigs only)"
+    },
+    "leaves": {
+      "type": "array",
+      "items": { "$ref": "leaf.schema.json" },
+      "description": "Sagas on this node (twigs only)"
+    }
+  },
+  "required": ["label", "note"]
+}

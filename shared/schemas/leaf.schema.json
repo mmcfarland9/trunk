@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Leaf",
+  "description": "A saga (trajectory) of related sprouts",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "User-provided name for the saga"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when leaf was created"
+    }
+  },
+  "required": ["id", "name", "createdAt"]
+}
