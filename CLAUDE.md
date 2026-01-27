@@ -2,9 +2,35 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
-## Build Commands
+## Monorepo Structure
+
+**This is a monorepo with multiple projects:**
+
+- `web/` - Vite + TypeScript web application
+- `app/` - Swift + SwiftUI iOS application (in development)
+- `shared/` - Platform-agnostic constants, schemas, and specifications
+
+**When working on web app:**
+- Change directory to `web/`
+- Run `npm install` and `npm run dev` from `web/`
+- All build commands run from `web/` directory
+
+**When working on iOS app:**
+- Change directory to `app/`
+- Open `Trunk.xcodeproj` in Xcode
+
+**Shared specifications:**
+- Constants: `shared/constants.json`
+- Schemas: `shared/schemas/*.schema.json`
+- Formulas: `shared/formulas.md`
+- Default map: `shared/assets/trunk-map-preset.json`
+
+---
+
+## Build Commands (Web App)
 
 ```bash
+cd web
 npm run dev      # Start Vite development server
 npm run build    # Compile TypeScript and build for production
 npm run preview  # Preview production build locally
