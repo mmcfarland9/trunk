@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex, setIsSidebarHover } from '../state'
+import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex } from '../state'
 import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
 import { updateScopedProgress, updateSidebarSprouts } from './progress'
 import type { NavigationCallbacks } from './navigation'
@@ -14,7 +14,6 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
   let scrollAccumulator = 0
 
   function clearHover(): void {
-    setIsSidebarHover(false) // Reset sidebar hover state
     if (getHoveredBranchIndex() !== null) {
       setHoveredBranchIndex(null)
       updateVisibility(ctx)

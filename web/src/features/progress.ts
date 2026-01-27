@@ -511,7 +511,7 @@ function createStackedLeafCard(
   return card
 }
 
-export function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {
+function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {
   const defaultLabel = branchNode.dataset.defaultLabel || ''
   const stored = nodeState[branchNode.dataset.nodeId || '']
   const storedLabel = stored?.label?.trim() || ''
