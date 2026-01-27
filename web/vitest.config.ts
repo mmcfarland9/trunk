@@ -6,4 +6,9 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/tests/setup.ts'],
   },
+  resolve: {
+    alias: {
+      '@shared': new URL('../shared', import.meta.url).pathname
+    }
+  }
 })
