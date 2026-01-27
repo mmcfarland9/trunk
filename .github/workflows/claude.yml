@@ -1,3 +1,4 @@
+# Monorepo structure: web app lives in ./web/, iOS app in ./app/
 name: Claude Code
 
 on:
