@@ -1,6 +1,6 @@
 import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings, WaterLogEntry } from './types'
 import { STORAGE_KEY } from './constants'
-import presetData from '../assets/trunk-map-preset.json'
+import presetData from '../../shared/assets/trunk-map-preset.json'
 import { safeSetItem, type StorageResult } from './utils/safe-storage'
 
 // --- Schema Versioning & Migration ---
@@ -645,11 +645,6 @@ export function getSproutsByLeaf(sprouts: Sprout[], leafId: string): Sprout[] {
   return sprouts.filter(s => s.leafId === leafId)
 }
 
-// Leaf status is now derived from sprouts, not stored
-// Helper to check if a leaf has active sprouts
-export function isLeafActive(sprouts: Sprout[], leafId: string): boolean {
-  return getSproutsByLeaf(sprouts, leafId).some(s => s.state === 'active')
-}
 
 export function createLeaf(twigId: string, name: string): Leaf {
   if (!nodeState[twigId]) {
@@ -715,9 +710,6 @@ export function addSunEntry(
   saveState()
 }
 
-export function getSunLog(): SunEntry[] {
-  return sunLog
-}
 
 export function wasShoneThisWeek(): boolean {
   if (!sunLog.length) return false
@@ -1011,7 +1003,6 @@ let viewMode: ViewMode = 'overview'
 let activeBranchIndex: number | null = null
 let activeTwigId: string | null = null
 let hoveredBranchIndex: number | null = null
-let sidebarHover = false
 let focusedNode: HTMLButtonElement | null = null
 let activeNode: HTMLButtonElement | null = null
 
@@ -1066,14 +1057,6 @@ export function getHoveredTwigId(): string | null {
 
 export function setHoveredTwigId(id: string | null): void {
   hoveredTwigId = id
-}
-
-export function getIsSidebarHover(): boolean {
-  return sidebarHover
-}
-
-export function setIsSidebarHover(value: boolean): void {
-  sidebarHover = value
 }
 
 export function getFocusedNode(): HTMLButtonElement | null {
