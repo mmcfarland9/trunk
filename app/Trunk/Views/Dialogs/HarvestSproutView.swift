@@ -1,0 +1,192 @@
+//
+//  HarvestSproutView.swift
+//  Trunk
+//
+//  Dialog for harvesting a sprout with result selection.
+//
+
+import SwiftUI
+import SwiftData
+
+struct HarvestSproutView: View {
+    @Bindable var sprout: Sprout
+    @Bindable var progression: ProgressionViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var selectedResult: Int = 3
+
+    private let resultDescriptions: [(Int, String, String)] = [
+        (1, "Minimal", "Showed up but little progress"),
+        (2, "Partial", "Made some progress"),
+        (3, "Good", "Met most expectations"),
+        (4, "Strong", "Exceeded expectations"),
+        (5, "Exceptional", "Fully achieved and then some")
+    ]
+
+    private var reward: Double {
+        ProgressionService.capacityReward(
+            season: sprout.season,
+            environment: sprout.environment,
+            result: selectedResult,
+            currentCapacity: progression.soilCapacity
+        )
+    }
+
+    var body: some View {
+        Form {
+            // Sprout info
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(sprout.title)
+                        .font(.headline)
+
+                    HStack(spacing: 12) {
+                        Label(sprout.season.label, systemImage: "calendar")
+                        Label(sprout.environment.label, systemImage: "leaf")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+            }
+
+            // Bloom reference
+            if !sprout.bloomLow.isEmpty || !sprout.bloomMid.isEmpty || !sprout.bloomHigh.isEmpty {
+                Section("Your Bloom Descriptions") {
+                    if !sprout.bloomLow.isEmpty {
+                        HStack(alignment: .top) {
+                            Text("1/5")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .frame(width: 30)
+                            Text(sprout.bloomLow)
+                                .font(.caption)
+                        }
+                    }
+                    if !sprout.bloomMid.isEmpty {
+                        HStack(alignment: .top) {
+                            Text("3/5")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .frame(width: 30)
+                            Text(sprout.bloomMid)
+                                .font(.caption)
+                        }
+                    }
+                    if !sprout.bloomHigh.isEmpty {
+                        HStack(alignment: .top) {
+                            Text("5/5")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .frame(width: 30)
+                            Text(sprout.bloomHigh)
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+
+            // Result picker
+            Section {
+                ForEach(resultDescriptions, id: \.0) { result, label, description in
+                    Button {
+                        selectedResult = result
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 4) {
+                                    ForEach(0..<5, id: \.self) { i in
+                                        Image(systemName: i < result ? "star.fill" : "star")
+                                            .font(.caption)
+                                            .foregroundStyle(i < result ? .yellow : .secondary)
+                                    }
+                                    Text(label)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                Text(description)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            if selectedResult == result {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            } header: {
+                Text("How did it go?")
+            }
+
+            // Reward summary
+            Section {
+                HStack {
+                    Text("Soil Returned")
+                    Spacer()
+                    Text("+\(sprout.soilCost)")
+                        .foregroundStyle(.brown)
+                }
+
+                HStack {
+                    Text("Capacity Reward")
+                    Spacer()
+                    Text("+\(String(format: "%.2f", reward))")
+                        .foregroundStyle(.green)
+                }
+
+                HStack {
+                    Text("New Capacity")
+                    Spacer()
+                    Text(String(format: "%.1f", progression.soilCapacity + reward))
+                        .fontWeight(.bold)
+                }
+            } header: {
+                Text("Rewards")
+            }
+        }
+        .navigationTitle("Harvest")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button("Harvest") {
+                    harvestSprout()
+                }
+            }
+        }
+    }
+
+    private func harvestSprout() {
+        progression.harvestSprout(sprout, result: selectedResult)
+        sprout.harvest(result: selectedResult)
+        dismiss()
+    }
+}
+
+#Preview {
+    let sprout = Sprout(
+        title: "Learn SwiftUI",
+        season: .threeMonths,
+        environment: .firm,
+        nodeId: "branch-0-twig-0",
+        soilCost: 8,
+        bloomLow: "Completed one tutorial",
+        bloomMid: "Built a small app",
+        bloomHigh: "Published an app to the App Store"
+    )
+    sprout.plant()
+
+    return NavigationStack {
+        HarvestSproutView(sprout: sprout, progression: ProgressionViewModel())
+    }
+    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self], inMemory: true)
+}

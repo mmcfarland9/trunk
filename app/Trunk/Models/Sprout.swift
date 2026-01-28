@@ -51,7 +51,7 @@ enum SproutEnvironment: String, Codable, CaseIterable {
         }
     }
 
-    var description: String {
+    var sproutDescription: String {
         switch self {
         case .fertile: return "Easy to achieve"
         case .firm: return "Challenging stretch"
@@ -69,8 +69,8 @@ enum SproutState: String, Codable {
 }
 
 @Model
-final class Sprout {
-    var id: String
+final class Sprout: Identifiable {
+    var sproutId: String
     var title: String
 
     // Store enums as raw strings for SwiftData compatibility
@@ -94,8 +94,11 @@ final class Sprout {
     @Relationship(deleteRule: .cascade)
     var waterEntries: [WaterEntry] = []
 
+    // Identifiable conformance
+    var id: String { sproutId }
+
     init(
-        id: String = UUID().uuidString,
+        sproutId: String = UUID().uuidString,
         title: String,
         season: Season,
         environment: SproutEnvironment,
@@ -105,7 +108,7 @@ final class Sprout {
         bloomMid: String = "",
         bloomHigh: String = ""
     ) {
-        self.id = id
+        self.sproutId = sproutId
         self.title = title
         self.seasonRaw = season.rawValue
         self.environmentRaw = environment.rawValue
@@ -118,20 +121,17 @@ final class Sprout {
         self.bloomHigh = bloomHigh
     }
 
-    // Computed properties for type-safe enum access
+    // Computed properties for type-safe enum access (read-only to avoid SwiftData issues)
     var season: Season {
-        get { Season(rawValue: seasonRaw) ?? .oneMonth }
-        set { seasonRaw = newValue.rawValue }
+        Season(rawValue: seasonRaw) ?? .oneMonth
     }
 
     var environment: SproutEnvironment {
-        get { SproutEnvironment(rawValue: environmentRaw) ?? .firm }
-        set { environmentRaw = newValue.rawValue }
+        SproutEnvironment(rawValue: environmentRaw) ?? .firm
     }
 
     var state: SproutState {
-        get { SproutState(rawValue: stateRaw) ?? .draft }
-        set { stateRaw = newValue.rawValue }
+        SproutState(rawValue: stateRaw) ?? .draft
     }
 
     var isReady: Bool {
@@ -141,18 +141,18 @@ final class Sprout {
     }
 
     func plant() {
-        state = .active
+        stateRaw = SproutState.active.rawValue
         plantedAt = Date()
     }
 
     func harvest(result: Int) {
         self.result = result
-        self.state = .completed
+        self.stateRaw = SproutState.completed.rawValue
         self.harvestedAt = Date()
     }
 
     func fail() {
-        self.state = .failed
+        self.stateRaw = SproutState.failed.rawValue
         self.harvestedAt = Date()
     }
 }

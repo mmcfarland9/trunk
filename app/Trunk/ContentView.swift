@@ -9,30 +9,10 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var sprouts: [Sprout]
+    @State private var progression = ProgressionViewModel()
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "tree")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.green)
-
-                Text("Trunk")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-
-                Text("Reap what you sow")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                Text("\(sprouts.count) sprouts")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .navigationTitle("Trunk")
-        }
+        OverviewView(progression: progression)
     }
 }
 
