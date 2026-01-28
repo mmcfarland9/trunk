@@ -35,100 +35,196 @@ struct CreateSproutView: View {
     }
 
     var body: some View {
-        Form {
-            // Title
-            Section("What do you want to grow?") {
-                TextField("Title", text: $title)
-            }
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
 
-            // Season
-            Section {
-                Picker("Duration", selection: $season) {
-                    ForEach(Season.allCases, id: \.self) { s in
-                        Text(s.label).tag(s)
+            ScrollView {
+                VStack(alignment: .leading, spacing: TrunkTheme.space5) {
+                    // Title
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("WHAT DO YOU WANT TO GROW?")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        TextField("Enter title...", text: $title)
+                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                            .foregroundStyle(Color.ink)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
                     }
-                }
-            } header: {
-                Text("Season")
-            } footer: {
-                Text("How long will you work on this goal?")
-            }
 
-            // Environment
-            Section {
-                Picker("Difficulty", selection: $environment) {
-                    ForEach(SproutEnvironment.allCases, id: \.self) { e in
-                        VStack(alignment: .leading) {
-                            Text(e.label)
-                            Text(e.sproutDescription)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                    // Season
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("SEASON")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        VStack(spacing: 1) {
+                            ForEach(Season.allCases, id: \.self) { s in
+                                Button {
+                                    season = s
+                                } label: {
+                                    HStack {
+                                        Text(s.label)
+                                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                            .foregroundStyle(season == s ? Color.ink : Color.inkFaint)
+
+                                        Spacer()
+
+                                        if season == s {
+                                            Text("●")
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .foregroundStyle(Color.wood)
+                                        } else {
+                                            Text("○")
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .foregroundStyle(Color.inkFaint)
+                                        }
+                                    }
+                                    .padding(.vertical, TrunkTheme.space2)
+                                    .padding(.horizontal, TrunkTheme.space3)
+                                    .background(Color.paper)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .tag(e)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.border, lineWidth: 1)
+                        )
                     }
-                }
-                .pickerStyle(.inline)
-                .labelsHidden()
-            } header: {
-                Text("Environment")
-            } footer: {
-                Text("Harder environments cost more soil but give greater rewards.")
-            }
 
-            // Bloom descriptions
-            Section {
-                TextField("1/5 - Minimal outcome", text: $bloomLow, axis: .vertical)
-                    .lineLimit(2...4)
-                TextField("3/5 - Good outcome", text: $bloomMid, axis: .vertical)
-                    .lineLimit(2...4)
-                TextField("5/5 - Exceptional outcome", text: $bloomHigh, axis: .vertical)
-                    .lineLimit(2...4)
-            } header: {
-                Text("Bloom Descriptions")
-            } footer: {
-                Text("Define what success looks like at different levels.")
-            }
+                    // Environment
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("ENVIRONMENT")
+                            .monoLabel(size: TrunkTheme.textXs)
 
-            // Cost summary
-            Section {
-                HStack {
-                    Text("Soil Cost")
-                    Spacer()
-                    Text("\(soilCost)")
-                        .fontWeight(.bold)
-                        .foregroundStyle(canAfford ? .brown : .red)
-                }
+                        VStack(spacing: 1) {
+                            ForEach(SproutEnvironment.allCases, id: \.self) { e in
+                                Button {
+                                    environment = e
+                                } label: {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(e.label)
+                                                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                                .foregroundStyle(environment == e ? Color.ink : Color.inkFaint)
 
-                HStack {
-                    Text("Your Soil")
-                    Spacer()
-                    Text("\(progression.soilAvailableInt) / \(progression.soilCapacityInt)")
-                        .foregroundStyle(.secondary)
+                                            Text(e.sproutDescription)
+                                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                                .foregroundStyle(Color.inkFaint)
+                                        }
+
+                                        Spacer()
+
+                                        if environment == e {
+                                            Text("●")
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .foregroundStyle(Color.wood)
+                                        } else {
+                                            Text("○")
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .foregroundStyle(Color.inkFaint)
+                                        }
+                                    }
+                                    .padding(.vertical, TrunkTheme.space2)
+                                    .padding(.horizontal, TrunkTheme.space3)
+                                    .background(Color.paper)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                    }
+
+                    // Bloom descriptions
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("BLOOM DESCRIPTIONS")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        VStack(spacing: TrunkTheme.space2) {
+                            BloomField(label: "1/5", placeholder: "Minimal outcome...", text: $bloomLow)
+                            BloomField(label: "3/5", placeholder: "Good outcome...", text: $bloomMid)
+                            BloomField(label: "5/5", placeholder: "Exceptional outcome...", text: $bloomHigh)
+                        }
+                    }
+
+                    // Cost summary
+                    VStack(spacing: TrunkTheme.space2) {
+                        HStack {
+                            Text("SOIL COST")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+
+                            Spacer()
+
+                            Text("\(soilCost)")
+                                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                                .fontWeight(.medium)
+                                .foregroundStyle(canAfford ? Color.twig : Color(red: 0.6, green: 0.35, blue: 0.3))
+                        }
+
+                        HStack {
+                            Text("YOUR SOIL")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+
+                            Spacer()
+
+                            Text("\(progression.soilAvailableInt) / \(progression.soilCapacityInt)")
+                                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+                        }
+                    }
+                    .padding(TrunkTheme.space3)
+                    .background(Color.paper)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.border, lineWidth: 1)
+                    )
+
+                    // Actions
+                    HStack(spacing: TrunkTheme.space3) {
+                        Button("SAVE DRAFT") {
+                            saveDraft()
+                        }
+                        .buttonStyle(.trunkSecondary)
+                        .disabled(!isValid)
+                        .opacity(isValid ? 1 : 0.5)
+
+                        Button("PLANT NOW") {
+                            plantNow()
+                        }
+                        .buttonStyle(.trunk)
+                        .disabled(!isValid || !canAfford)
+                        .opacity(isValid && canAfford ? 1 : 0.5)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
+                .padding(TrunkTheme.space4)
             }
         }
-        .navigationTitle("New Sprout")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
                     dismiss()
                 }
+                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
             }
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button("Save as Draft") {
-                        saveDraft()
-                    }
-
-                    Button("Plant Now") {
-                        plantNow()
-                    }
-                    .disabled(!canAfford)
-                } label: {
-                    Text("Save")
-                }
-                .disabled(!isValid)
+            ToolbarItem(placement: .principal) {
+                Text("NEW SPROUT")
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
             }
         }
     }
@@ -162,6 +258,32 @@ struct CreateSproutView: View {
         modelContext.insert(sprout)
         progression.plantSprout(sprout)
         dismiss()
+    }
+}
+
+struct BloomField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: TrunkTheme.space2) {
+            Text(label)
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+                .frame(width: 24)
+
+            TextField(placeholder, text: $text, axis: .vertical)
+                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                .foregroundStyle(Color.ink)
+                .lineLimit(2...4)
+        }
+        .padding(TrunkTheme.space2)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 }
 

@@ -215,7 +215,7 @@ struct SproutActionsView: View {
             Button(role: .destructive) {
                 sprout.fail()
             } label: {
-                Label("Abandon Sprout", systemImage: "xmark.circle")
+                Label("Uproot", systemImage: "xmark.circle")
             }
         }
     }
@@ -263,12 +263,12 @@ struct SproutActionsView: View {
     @ViewBuilder
     private var failedSection: some View {
         Section {
-            Text("This sprout was abandoned.")
+            Text("This sprout was uprooted.")
                 .foregroundStyle(.secondary)
 
             if let harvestedAt = sprout.harvestedAt {
                 HStack {
-                    Text("Abandoned")
+                    Text("Uprooted")
                     Spacer()
                     Text(harvestedAt, style: .date)
                         .foregroundStyle(.secondary)

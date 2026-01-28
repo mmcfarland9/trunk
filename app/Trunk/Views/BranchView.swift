@@ -25,38 +25,49 @@ struct BranchView: View {
     @State private var selectedTwig: TwigSelection?
 
     private let branchNames = [
-        "Health", "Career", "Relations", "Finance",
-        "Growth", "Creative", "Home", "Adventure"
+        "CORE", "BRAIN", "VOICE", "HANDS",
+        "HEART", "BREATH", "BACK", "FEET"
     ]
 
     private let twigCount = TrunkConstants.Tree.twigCount
 
     var body: some View {
-        List {
-            Section {
-                ForEach(0..<twigCount, id: \.self) { twigIndex in
-                    let twigId = "branch-\(branchIndex)-twig-\(twigIndex)"
-                    let twigSprouts = sproutsForTwig(twigId)
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
 
-                    Button {
-                        selectedTwig = TwigSelection(id: twigIndex)
-                    } label: {
-                        TwigRow(
-                            twigIndex: twigIndex,
-                            label: labelForTwig(twigId),
-                            activeSproutCount: twigSprouts.filter { $0.state == .active }.count,
-                            draftSproutCount: twigSprouts.filter { $0.state == .draft }.count
-                        )
+            ScrollView {
+                VStack(spacing: TrunkTheme.space2) {
+                    ForEach(0..<twigCount, id: \.self) { twigIndex in
+                        let twigId = "branch-\(branchIndex)-twig-\(twigIndex)"
+                        let twigSprouts = sproutsForTwig(twigId)
+
+                        Button {
+                            selectedTwig = TwigSelection(id: twigIndex)
+                        } label: {
+                            TwigRow(
+                                twigIndex: twigIndex,
+                                label: labelForTwig(twigId, twigIndex: twigIndex),
+                                activeSproutCount: twigSprouts.filter { $0.state == .active }.count,
+                                draftSproutCount: twigSprouts.filter { $0.state == .draft }.count
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
-            } header: {
-                Text("Twigs")
-            } footer: {
-                Text("Tap a twig to view and manage its sprouts.")
+                .padding(TrunkTheme.space4)
             }
         }
-        .navigationTitle(branchNames[branchIndex])
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(branchNames[branchIndex].uppercased())
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
+            }
+        }
         .sheet(item: $selectedTwig) { twig in
             NavigationStack {
                 TwigDetailView(
@@ -72,26 +83,31 @@ struct BranchView: View {
         sprouts.filter { $0.nodeId == twigId }
     }
 
-    private func labelForTwig(_ twigId: String) -> String {
+    private func labelForTwig(_ twigId: String, twigIndex: Int) -> String {
         if let data = nodeData.first(where: { $0.nodeId == twigId }), !data.label.isEmpty {
             return data.label
         }
-        // Default labels based on branch
-        let twigIndex = Int(String(twigId.last ?? "0")) ?? 0
         return defaultTwigLabels[branchIndex]?[twigIndex] ?? "Twig"
     }
 
     private var defaultTwigLabels: [Int: [Int: String]] {
-        // Simplified default labels - in production these would come from preset JSON
         [
-            0: [0: "Movement", 1: "Nutrition", 2: "Sleep", 3: "Mental", 4: "Medical", 5: "Recovery", 6: "Energy", 7: "Habits"],
-            1: [0: "Skills", 1: "Projects", 2: "Network", 3: "Income", 4: "Learning", 5: "Leadership", 6: "Brand", 7: "Goals"],
-            2: [0: "Family", 1: "Friends", 2: "Partner", 3: "Community", 4: "Mentors", 5: "Social", 6: "Boundaries", 7: "Support"],
-            3: [0: "Budget", 1: "Savings", 2: "Investing", 3: "Debt", 4: "Income", 5: "Protection", 6: "Planning", 7: "Giving"],
-            4: [0: "Reading", 1: "Courses", 2: "Practice", 3: "Reflection", 4: "Teaching", 5: "Writing", 6: "Research", 7: "Wisdom"],
-            5: [0: "Art", 1: "Music", 2: "Writing", 3: "Crafts", 4: "Design", 5: "Play", 6: "Expression", 7: "Innovation"],
-            6: [0: "Space", 1: "Systems", 2: "Comfort", 3: "Garden", 4: "Tech", 5: "Meals", 6: "Guests", 7: "Peace"],
-            7: [0: "Travel", 1: "Nature", 2: "Challenge", 3: "Discovery", 4: "Culture", 5: "Spontaneity", 6: "Stories", 7: "Dreams"]
+            // CORE
+            0: [0: "movement", 1: "strength", 2: "sport", 3: "technique", 4: "maintenance", 5: "nutrition", 6: "sleep", 7: "appearance"],
+            // BRAIN
+            1: [0: "reading", 1: "writing", 2: "reasoning", 3: "focus", 4: "memory", 5: "analysis", 6: "dialogue", 7: "exploration"],
+            // VOICE
+            2: [0: "practice", 1: "composition", 2: "interpretation", 3: "performance", 4: "consumption", 5: "curation", 6: "completion", 7: "publication"],
+            // HANDS
+            3: [0: "design", 1: "fabrication", 2: "assembly", 3: "repair", 4: "refinement", 5: "tooling", 6: "tending", 7: "preparation"],
+            // HEART
+            4: [0: "homemaking", 1: "care", 2: "presence", 3: "intimacy", 4: "communication", 5: "ritual", 6: "adventure", 7: "joy"],
+            // BREATH
+            5: [0: "observation", 1: "nature", 2: "flow", 3: "repose", 4: "idleness", 5: "exposure", 6: "abstinence", 7: "reflection"],
+            // BACK
+            6: [0: "connection", 1: "support", 2: "gathering", 3: "membership", 4: "stewardship", 5: "advocacy", 6: "service", 7: "culture"],
+            // FEET
+            7: [0: "work", 1: "development", 2: "positioning", 3: "ventures", 4: "finance", 5: "operations", 6: "planning", 7: "administration"]
         ]
     }
 }
@@ -104,33 +120,43 @@ struct TwigRow: View {
     let activeSproutCount: Int
     let draftSproutCount: Int
 
+    private var hasSprouts: Bool {
+        activeSproutCount > 0 || draftSproutCount > 0
+    }
+
     var body: some View {
-        HStack {
-            // Twig number
-            Text("\(twigIndex + 1)")
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-                .frame(width: 32, height: 32)
-                .background(Color.green)
-                .clipShape(Circle())
+        HStack(spacing: TrunkTheme.space3) {
+            // Left border
+            Rectangle()
+                .fill(hasSprouts ? Color.twig : Color.border)
+                .frame(width: 2)
 
-            // Label
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.body)
+            VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                // Label with optional asterisk indicator
+                HStack(spacing: TrunkTheme.space2) {
+                    if hasSprouts {
+                        Text("*")
+                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                            .foregroundStyle(Color.twig)
+                    }
 
-                if activeSproutCount > 0 || draftSproutCount > 0 {
-                    HStack(spacing: 8) {
+                    Text(label)
+                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                        .foregroundStyle(hasSprouts ? Color.ink : Color.inkFaint)
+                }
+
+                // Sprout counts
+                if hasSprouts {
+                    HStack(spacing: TrunkTheme.space3) {
                         if activeSproutCount > 0 {
-                            Label("\(activeSproutCount) active", systemImage: "leaf.fill")
-                                .font(.caption)
-                                .foregroundStyle(.green)
+                            Text("\(activeSproutCount) active")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.twig)
                         }
                         if draftSproutCount > 0 {
-                            Label("\(draftSproutCount) draft", systemImage: "pencil")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            Text("\(draftSproutCount) draft")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
                         }
                     }
                 }
@@ -138,11 +164,17 @@ struct TwigRow: View {
 
             Spacer()
 
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(">")
+                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, TrunkTheme.space3)
+        .padding(.horizontal, TrunkTheme.space3)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 }
 

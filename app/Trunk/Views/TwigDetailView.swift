@@ -16,12 +16,33 @@ struct TwigDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var allSprouts: [Sprout]
+    @Query private var nodeData: [NodeData]
 
     @State private var showingCreateSprout = false
     @State private var selectedSprout: Sprout?
 
     private var nodeId: String {
         "branch-\(branchIndex)-twig-\(twigIndex)"
+    }
+
+    private var twigLabel: String {
+        if let data = nodeData.first(where: { $0.nodeId == nodeId }), !data.label.isEmpty {
+            return data.label
+        }
+        return defaultTwigLabels[branchIndex]?[twigIndex] ?? "Twig"
+    }
+
+    private var defaultTwigLabels: [Int: [Int: String]] {
+        [
+            0: [0: "movement", 1: "strength", 2: "sport", 3: "technique", 4: "maintenance", 5: "nutrition", 6: "sleep", 7: "appearance"],
+            1: [0: "reading", 1: "writing", 2: "reasoning", 3: "focus", 4: "memory", 5: "analysis", 6: "dialogue", 7: "exploration"],
+            2: [0: "practice", 1: "composition", 2: "interpretation", 3: "performance", 4: "consumption", 5: "curation", 6: "completion", 7: "publication"],
+            3: [0: "design", 1: "fabrication", 2: "assembly", 3: "repair", 4: "refinement", 5: "tooling", 6: "tending", 7: "preparation"],
+            4: [0: "homemaking", 1: "care", 2: "presence", 3: "intimacy", 4: "communication", 5: "ritual", 6: "adventure", 7: "joy"],
+            5: [0: "observation", 1: "nature", 2: "flow", 3: "repose", 4: "idleness", 5: "exposure", 6: "abstinence", 7: "reflection"],
+            6: [0: "connection", 1: "support", 2: "gathering", 3: "membership", 4: "stewardship", 5: "advocacy", 6: "service", 7: "culture"],
+            7: [0: "work", 1: "development", 2: "positioning", 3: "ventures", 4: "finance", 5: "operations", 6: "planning", 7: "administration"]
+        ]
     }
 
     private var sprouts: [Sprout] {
@@ -41,70 +62,78 @@ struct TwigDetailView: View {
     }
 
     var body: some View {
-        List {
-            // Drafts section
-            if !draftSprouts.isEmpty {
-                Section("Drafts") {
-                    ForEach(draftSprouts, id: \.id) { sprout in
-                        SproutRow(sprout: sprout) {
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                    // Drafts section
+                    if !draftSprouts.isEmpty {
+                        SproutSection(title: "DRAFTS", sprouts: draftSprouts) { sprout in
                             selectedSprout = sprout
                         }
                     }
-                    .onDelete { indexSet in
-                        deleteSprouts(at: indexSet, from: draftSprouts)
-                    }
-                }
-            }
 
-            // Growing section
-            if !activeSprouts.isEmpty {
-                Section("Growing") {
-                    ForEach(activeSprouts, id: \.id) { sprout in
-                        SproutRow(sprout: sprout) {
+                    // Growing section
+                    if !activeSprouts.isEmpty {
+                        SproutSection(title: "GROWING", sprouts: activeSprouts) { sprout in
                             selectedSprout = sprout
                         }
                     }
-                }
-            }
 
-            // Harvested section
-            if !completedSprouts.isEmpty {
-                Section("Harvested") {
-                    ForEach(completedSprouts, id: \.id) { sprout in
-                        SproutRow(sprout: sprout) {
+                    // Harvested section
+                    if !completedSprouts.isEmpty {
+                        SproutSection(title: "HARVESTED", sprouts: completedSprouts) { sprout in
                             selectedSprout = sprout
                         }
                     }
-                    .onDelete { indexSet in
-                        deleteSprouts(at: indexSet, from: completedSprouts)
+
+                    // Empty state
+                    if sprouts.isEmpty {
+                        VStack(spacing: TrunkTheme.space3) {
+                            Text("( )")
+                                .font(.system(size: 24, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+
+                            Text("No sprouts yet")
+                                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+
+                            Text("Tap + to plant your first sprout")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, TrunkTheme.space6)
                     }
                 }
-            }
-
-            // Empty state
-            if sprouts.isEmpty {
-                Section {
-                    ContentUnavailableView(
-                        "No Sprouts",
-                        systemImage: "leaf",
-                        description: Text("Tap + to create your first sprout for this twig.")
-                    )
-                }
+                .padding(TrunkTheme.space4)
             }
         }
-        .navigationTitle("Twig \(twigIndex + 1)")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") {
                     dismiss()
                 }
+                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+            }
+            ToolbarItem(placement: .principal) {
+                Text(twigLabel.uppercased())
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingCreateSprout = true
                 } label: {
-                    Image(systemName: "plus")
+                    Text("+")
+                        .font(.system(size: 20, design: .monospaced))
+                        .foregroundStyle(Color.wood)
                 }
             }
         }
@@ -125,73 +154,82 @@ struct TwigDetailView: View {
             }
         }
     }
+}
 
-    private func deleteSprouts(at indexSet: IndexSet, from list: [Sprout]) {
-        for index in indexSet {
-            let sprout = list[index]
-            // Return soil if draft
-            if sprout.state == .draft {
-                progression.returnSoil(sprout.soilCost)
+// MARK: - Sprout Section
+
+struct SproutSection: View {
+    let title: String
+    let sprouts: [Sprout]
+    let onTap: (Sprout) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text(title)
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(spacing: 1) {
+                ForEach(sprouts, id: \.id) { sprout in
+                    Button {
+                        onTap(sprout)
+                    } label: {
+                        SproutRow(sprout: sprout)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            modelContext.delete(sprout)
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
         }
     }
 }
-
 
 // MARK: - Sprout Row
 
 struct SproutRow: View {
     let sprout: Sprout
-    let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack {
-                // State indicator
-                stateIcon
-                    .frame(width: 24)
+        HStack(spacing: TrunkTheme.space3) {
+            // State indicator
+            Rectangle()
+                .fill(borderColor)
+                .frame(width: 2)
 
-                // Title and details
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(sprout.title)
-                        .font(.body)
-                        .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(sprout.title)
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.ink)
+                    .lineLimit(1)
 
-                    HStack(spacing: 8) {
-                        Text(sprout.season.label)
-                        Text("•")
-                        Text(sprout.environment.label)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: TrunkTheme.space2) {
+                    Text(sprout.season.label)
+                    Text("·")
+                    Text(sprout.environment.label)
                 }
-
-                Spacer()
-
-                // Progress or result
-                trailingContent
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
             }
-            .padding(.vertical, 4)
+
+            Spacer()
+
+            // Trailing content
+            trailingContent
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, TrunkTheme.space2)
+        .padding(.horizontal, TrunkTheme.space3)
+        .background(Color.paper)
     }
 
-    @ViewBuilder
-    private var stateIcon: some View {
+    private var borderColor: Color {
         switch sprout.state {
-        case .draft:
-            Image(systemName: "pencil.circle")
-                .foregroundStyle(.secondary)
-        case .active:
-            Image(systemName: "leaf.fill")
-                .foregroundStyle(.green)
-        case .completed:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-        case .failed:
-            Image(systemName: "xmark.circle.fill")
-                .foregroundStyle(.red)
+        case .draft: return Color.inkFaint
+        case .active: return Color.twig
+        case .completed: return Color(red: 0.4, green: 0.6, blue: 0.4)
+        case .failed: return Color(red: 0.6, green: 0.4, blue: 0.35)
         }
     }
 
@@ -200,32 +238,29 @@ struct SproutRow: View {
         switch sprout.state {
         case .draft:
             Text("\(sprout.soilCost) soil")
-                .font(.caption)
-                .foregroundStyle(.brown)
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.twig)
         case .active:
             if sprout.isReady {
-                Label("Ready", systemImage: "sparkles")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+                Text("READY")
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.twig)
             } else if let plantedAt = sprout.plantedAt {
                 let progress = ProgressionService.progress(plantedAt: plantedAt, season: sprout.season)
-                CircularProgressView(progress: progress)
-                    .frame(width: 30, height: 30)
+                Text("\(Int(progress * 100))%")
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
             }
         case .completed:
             if let result = sprout.result {
-                HStack(spacing: 2) {
-                    ForEach(0..<5, id: \.self) { i in
-                        Image(systemName: i < result ? "star.fill" : "star")
-                            .font(.caption2)
-                            .foregroundStyle(i < result ? .yellow : .secondary)
-                    }
-                }
+                Text(String(repeating: "★", count: result) + String(repeating: "☆", count: 5 - result))
+                    .font(.system(size: TrunkTheme.textXs))
+                    .foregroundStyle(Color.trunkSun)
             }
         case .failed:
-            Text("Failed")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text("failed")
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
         }
     }
 }
