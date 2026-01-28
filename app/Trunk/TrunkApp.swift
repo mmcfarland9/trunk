@@ -2,7 +2,7 @@
 //  TrunkApp.swift
 //  Trunk
 //
-//  Created by Michael McFarland on 1/27/26.
+//  Personal growth and goal-tracking app built around gardening metaphors.
 //
 
 import SwiftUI
@@ -12,7 +12,10 @@ import SwiftData
 struct TrunkApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Sprout.self,
+            WaterEntry.self,
+            Leaf.self,
+            NodeData.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
