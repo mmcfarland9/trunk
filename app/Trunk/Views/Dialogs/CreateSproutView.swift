@@ -15,12 +15,22 @@ struct CreateSproutView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    @Query private var allLeaves: [Leaf]
+
     @State private var title = ""
     @State private var season: Season = .oneMonth
     @State private var environment: SproutEnvironment = .firm
     @State private var bloomLow = ""
     @State private var bloomMid = ""
     @State private var bloomHigh = ""
+    @State private var selectedLeafId: String?
+    @State private var showNewLeafAlert = false
+    @State private var newLeafName = ""
+
+    /// Leaves belonging to this twig
+    private var twigLeaves: [Leaf] {
+        allLeaves.filter { $0.nodeId == nodeId }
+    }
 
     private var soilCost: Int {
         ProgressionService.soilCost(season: season, environment: environment)
@@ -143,6 +153,79 @@ struct CreateSproutView: View {
                         )
                     }
 
+                    // Leaf (saga) picker
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("LEAF (SAGA)")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        VStack(spacing: 1) {
+                            // None option
+                            Button {
+                                selectedLeafId = nil
+                            } label: {
+                                HStack {
+                                    Text("None")
+                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                        .foregroundStyle(selectedLeafId == nil ? Color.ink : Color.inkFaint)
+
+                                    Spacer()
+
+                                    Text(selectedLeafId == nil ? "●" : "○")
+                                        .font(.system(size: 10, design: .monospaced))
+                                        .foregroundStyle(selectedLeafId == nil ? Color.wood : Color.inkFaint)
+                                }
+                                .padding(.vertical, TrunkTheme.space2)
+                                .padding(.horizontal, TrunkTheme.space3)
+                                .background(Color.paper)
+                            }
+                            .buttonStyle(.plain)
+
+                            // Existing leaves
+                            ForEach(twigLeaves) { leaf in
+                                Button {
+                                    selectedLeafId = leaf.id
+                                } label: {
+                                    HStack {
+                                        Text(leaf.name)
+                                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                            .foregroundStyle(selectedLeafId == leaf.id ? Color.ink : Color.inkFaint)
+
+                                        Spacer()
+
+                                        Text(selectedLeafId == leaf.id ? "●" : "○")
+                                            .font(.system(size: 10, design: .monospaced))
+                                            .foregroundStyle(selectedLeafId == leaf.id ? Color.wood : Color.inkFaint)
+                                    }
+                                    .padding(.vertical, TrunkTheme.space2)
+                                    .padding(.horizontal, TrunkTheme.space3)
+                                    .background(Color.paper)
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            // New leaf option
+                            Button {
+                                showNewLeafAlert = true
+                            } label: {
+                                HStack {
+                                    Text("+ New leaf...")
+                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                        .foregroundStyle(Color.twig)
+
+                                    Spacer()
+                                }
+                                .padding(.vertical, TrunkTheme.space2)
+                                .padding(.horizontal, TrunkTheme.space3)
+                                .background(Color.paper)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                    }
+
                     // Bloom descriptions
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
                         Text("BLOOM DESCRIPTIONS")
@@ -227,6 +310,27 @@ struct CreateSproutView: View {
                     .foregroundStyle(Color.wood)
             }
         }
+        .alert("New Leaf", isPresented: $showNewLeafAlert) {
+            TextField("Leaf name", text: $newLeafName)
+            Button("Cancel", role: .cancel) {
+                newLeafName = ""
+            }
+            Button("Create") {
+                createNewLeaf()
+            }
+        } message: {
+            Text("Enter a name for this saga")
+        }
+    }
+
+    private func createNewLeaf() {
+        let trimmedName = newLeafName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+
+        let leaf = Leaf(name: trimmedName, nodeId: nodeId)
+        modelContext.insert(leaf)
+        selectedLeafId = leaf.id
+        newLeafName = ""
     }
 
     private func saveDraft() {
@@ -240,6 +344,7 @@ struct CreateSproutView: View {
             bloomMid: bloomMid,
             bloomHigh: bloomHigh
         )
+        sprout.leafId = selectedLeafId
         modelContext.insert(sprout)
         dismiss()
     }
@@ -255,6 +360,7 @@ struct CreateSproutView: View {
             bloomMid: bloomMid,
             bloomHigh: bloomHigh
         )
+        sprout.leafId = selectedLeafId
         modelContext.insert(sprout)
         progression.plantSprout(sprout)
         dismiss()
@@ -291,5 +397,5 @@ struct BloomField: View {
     NavigationStack {
         CreateSproutView(nodeId: "branch-0-twig-0", progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self], inMemory: true)
+    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

@@ -12,11 +12,11 @@ struct ContentView: View {
     @State private var progression = ProgressionViewModel()
 
     var body: some View {
-        OverviewView(progression: progression)
+        MainTabView(progression: progression)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self], inMemory: true)
+        .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

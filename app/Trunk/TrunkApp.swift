@@ -16,6 +16,7 @@ struct TrunkApp: App {
             WaterEntry.self,
             Leaf.self,
             NodeData.self,
+            SunEntry.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

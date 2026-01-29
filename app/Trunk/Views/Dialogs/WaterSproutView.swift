@@ -103,5 +103,5 @@ struct WaterSproutView: View {
     return NavigationStack {
         WaterSproutView(sprout: sprout, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self], inMemory: true)
+    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }
