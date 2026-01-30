@@ -624,7 +624,7 @@ export function getActiveSprouts(sprouts: Sprout[]): Sprout[] {
 }
 
 export function getHistorySprouts(sprouts: Sprout[]): Sprout[] {
-  return sprouts.filter(s => s.state === 'completed' || s.state === 'failed')
+  return sprouts.filter(s => s.state === 'completed')
 }
 
 // --- Leaf Helpers ---

@@ -146,7 +146,7 @@ describe('Import/Export Round-Trip', () => {
     const mixedSprouts = [
       { id: 'valid', title: 'Good', season: '1m', environment: 'fertile', state: 'active' },
       { title: 'No ID' }, // Invalid - no id
-      { id: 'also-valid', title: 'Also Good', season: '2w', environment: 'firm', state: 'draft' },
+      { id: 'also-valid', title: 'Also Good', season: '2w', environment: 'firm', state: 'active' },
     ]
 
     const sanitized = mixedSprouts
@@ -216,18 +216,47 @@ describe('Import/Export Round-Trip', () => {
     })
   })
 
-  it('should preserve all valid state values', () => {
-    const states = ['draft', 'active', 'completed', 'failed'] as const
-    states.forEach(state => {
-      const sprout = {
-        id: `sprout-${state}`,
-        title: 'Test',
-        season: '1m' as const,
-        environment: 'fertile' as const,
-        state,
-      }
-      const sanitized = sanitizeSprout(sprout)
-      expect(sanitized!.state).toBe(state)
+  it('should convert legacy states during import', () => {
+    // Legacy 'draft' should become 'active'
+    const draftSprout = sanitizeSprout({
+      id: 'sprout-draft',
+      title: 'Test',
+      season: '1m',
+      environment: 'fertile',
+      state: 'draft',
     })
+    expect(draftSprout!.state).toBe('active')
+
+    // Legacy 'failed' should become 'completed' (showing up counts!)
+    const failedSprout = sanitizeSprout({
+      id: 'sprout-failed',
+      title: 'Test',
+      season: '1m',
+      environment: 'fertile',
+      state: 'failed',
+      result: 2,
+    })
+    expect(failedSprout!.state).toBe('completed')
+    expect(failedSprout!.result).toBe(2) // Result preserved
+
+    // Current states should pass through unchanged
+    const activeSprout = sanitizeSprout({
+      id: 'sprout-active',
+      title: 'Test',
+      season: '1m',
+      environment: 'fertile',
+      state: 'active',
+    })
+    expect(activeSprout!.state).toBe('active')
+
+    const completedSprout = sanitizeSprout({
+      id: 'sprout-completed',
+      title: 'Test',
+      season: '1m',
+      environment: 'fertile',
+      state: 'completed',
+      result: 5,
+    })
+    expect(completedSprout!.state).toBe('completed')
   })
 })

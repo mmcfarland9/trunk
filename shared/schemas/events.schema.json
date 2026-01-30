@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TrunkEvent",
+  "description": "Immutable event log - the single source of truth for all state",
+  "oneOf": [
+    { "$ref": "#/definitions/SproutPlantedEvent" },
+    { "$ref": "#/definitions/SproutWateredEvent" },
+    { "$ref": "#/definitions/SproutHarvestedEvent" },
+    { "$ref": "#/definitions/SproutUprootedEvent" },
+    { "$ref": "#/definitions/SunShoneEvent" },
+    { "$ref": "#/definitions/LeafCreatedEvent" }
+  ],
+  "definitions": {
+    "SproutPlantedEvent": {
+      "type": "object",
+      "description": "Sprout planted - soil spent, sprout becomes active",
+      "properties": {
+        "type": { "const": "sprout_planted" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sproutId": { "type": "string" },
+        "twigId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 60 },
+        "season": { "type": "string", "enum": ["2w", "1m", "3m", "6m", "1y"] },
+        "environment": { "type": "string", "enum": ["fertile", "firm", "barren"] },
+        "soilCost": { "type": "number", "minimum": 0 },
+        "leafId": { "type": "string" },
+        "bloomWither": { "type": "string", "maxLength": 60 },
+        "bloomBudding": { "type": "string", "maxLength": 60 },
+        "bloomFlourish": { "type": "string", "maxLength": 60 }
+      },
+      "required": ["type", "timestamp", "sproutId", "twigId", "title", "season", "environment", "soilCost"]
+    },
+    "SproutWateredEvent": {
+      "type": "object",
+      "description": "Sprout watered - daily engagement recorded",
+      "properties": {
+        "type": { "const": "sprout_watered" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sproutId": { "type": "string" },
+        "content": { "type": "string" },
+        "prompt": { "type": "string" }
+      },
+      "required": ["type", "timestamp", "sproutId", "content"]
+    },
+    "SproutHarvestedEvent": {
+      "type": "object",
+      "description": "Sprout harvested - completed with result 1-5",
+      "properties": {
+        "type": { "const": "sprout_harvested" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sproutId": { "type": "string" },
+        "result": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "reflection": { "type": "string" },
+        "capacityGained": { "type": "number", "minimum": 0 }
+      },
+      "required": ["type", "timestamp", "sproutId", "result", "capacityGained"]
+    },
+    "SproutUprootedEvent": {
+      "type": "object",
+      "description": "Sprout uprooted - abandoned, partial soil returned",
+      "properties": {
+        "type": { "const": "sprout_uprooted" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sproutId": { "type": "string" },
+        "soilReturned": { "type": "number", "minimum": 0 }
+      },
+      "required": ["type", "timestamp", "sproutId", "soilReturned"]
+    },
+    "SunShoneEvent": {
+      "type": "object",
+      "description": "Sun shone - weekly reflection on a twig",
+      "properties": {
+        "type": { "const": "sun_shone" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "twigId": { "type": "string" },
+        "twigLabel": { "type": "string" },
+        "content": { "type": "string" },
+        "prompt": { "type": "string" }
+      },
+      "required": ["type", "timestamp", "twigId", "twigLabel", "content"]
+    },
+    "LeafCreatedEvent": {
+      "type": "object",
+      "description": "Leaf created - new saga started",
+      "properties": {
+        "type": { "const": "leaf_created" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "leafId": { "type": "string" },
+        "twigId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["type", "timestamp", "leafId", "twigId", "name"]
+    }
+  }
+}

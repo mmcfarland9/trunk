@@ -48,11 +48,11 @@ describe('Sprout State Filtering', () => {
   }
 
   const sprouts: Sprout[] = [
-    { ...baseSprout, id: '1', state: 'draft' },
+    { ...baseSprout, id: '1', state: 'active' },
     { ...baseSprout, id: '2', state: 'active' },
-    { ...baseSprout, id: '3', state: 'active' },
-    { ...baseSprout, id: '4', state: 'completed', result: 4 },
-    { ...baseSprout, id: '5', state: 'failed', result: 2 },
+    { ...baseSprout, id: '3', state: 'completed', result: 4 },
+    { ...baseSprout, id: '4', state: 'completed', result: 2 },
+    { ...baseSprout, id: '5', state: 'completed', result: 5 },
   ]
 
   it('should return only active sprouts', () => {
@@ -61,17 +61,16 @@ describe('Sprout State Filtering', () => {
     expect(active.every(s => s.state === 'active')).toBe(true)
   })
 
-  it('should return only history sprouts (completed + failed)', () => {
+  it('should return only completed sprouts as history', () => {
     const history = getHistorySprouts(sprouts)
-    expect(history.length).toBe(2)
-    expect(history.every(s => s.state === 'completed' || s.state === 'failed')).toBe(true)
+    expect(history.length).toBe(3)
+    expect(history.every(s => s.state === 'completed')).toBe(true)
   })
 
-  it('should not include drafts in active or history', () => {
+  it('should correctly partition active and completed sprouts', () => {
     const active = getActiveSprouts(sprouts)
     const history = getHistorySprouts(sprouts)
-    const allReturned = [...active, ...history]
-    expect(allReturned.some(s => s.state === 'draft')).toBe(false)
+    expect(active.length + history.length).toBe(sprouts.length)
   })
 })
 

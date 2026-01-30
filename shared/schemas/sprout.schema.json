@@ -24,8 +24,8 @@
     },
     "state": {
       "type": "string",
-      "enum": ["draft", "active", "completed", "failed"],
-      "description": "Current lifecycle state"
+      "enum": ["active", "completed"],
+      "description": "Current lifecycle state (active = growing, completed = harvested)"
     },
     "soilCost": {
       "type": "number",

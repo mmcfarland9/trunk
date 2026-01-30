@@ -50,23 +50,26 @@ export function initHarvestDialog(
     season: SproutSeason
   } | null = null
 
+  // Result multipliers for capacity gain (showing up counts!)
+  const RESULT_MULTIPLIERS: Record<number, number> = {
+    1: 0.4,   // You showed up - 40% reward
+    2: 0.55,  // Partial effort
+    3: 0.7,   // Solid work
+    4: 0.85,  // Strong execution
+    5: 1.0,   // Excellence
+  }
+
   function updateResultDisplay(result: number) {
     const { harvestDialogResultEmoji, harvestDialogSave } = ctx.elements
     harvestDialogResultEmoji.textContent = getResultEmoji(result)
 
     // Update harvest button with soil/capacity info
+    // All harvests return full soil + some capacity (no "failed" state)
     if (currentHarvestSprout) {
-      const isSuccess = result >= 3
-      if (isSuccess) {
-        const resultMultiplier = result === 5 ? 1.0 : result === 4 ? 0.5 : 0.25
-        const baseReward = getCapacityReward(currentHarvestSprout.environment, currentHarvestSprout.season)
-        const capGain = baseReward * resultMultiplier
-        harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${currentHarvestSprout.soilCost.toFixed(1)}, +${capGain.toFixed(2)} cap)</span>`
-      } else {
-        const failureReturn = result === 1 ? 0.6 : 0.8
-        const recovery = currentHarvestSprout.soilCost * failureReturn
-        harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${recovery.toFixed(1)})</span>`
-      }
+      const resultMultiplier = RESULT_MULTIPLIERS[result] ?? 0.7
+      const baseReward = getCapacityReward(currentHarvestSprout.environment, currentHarvestSprout.season)
+      const capGain = baseReward * resultMultiplier
+      harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${currentHarvestSprout.soilCost.toFixed(1)}, +${capGain.toFixed(2)} cap)</span>`
     }
   }
 
@@ -145,24 +148,21 @@ export function initHarvestDialog(
     const sprout = data.sprouts.find(s => s.id === sproutId)
     if (!sprout) return
 
-    // 1-2 = failed, 3-5 = success
-    const isSuccess = result >= 3
-    sprout.state = isSuccess ? 'completed' : 'failed'
+    // All harvests are completions - result (1-5) indicates outcome
+    // No "failed" state - showing up counts!
+    sprout.state = 'completed'
     sprout.result = result
     sprout.reflection = reflection || undefined
     sprout.completedAt = new Date().toISOString()
 
-    // Recover soil based on outcome
-    if (isSuccess) {
-      const resultMultiplier = result === 5 ? 1.0 : result === 4 ? 0.5 : 0.25
-      const baseReward = getCapacityReward(sprout.environment, sprout.season)
-      recoverSoil(sprout.soilCost, baseReward * resultMultiplier, 'Harvested sprout', sprout.title)
-      callbacks.onSetStatus(`Sprout harvested! (+${sprout.soilCost.toFixed(1)} soil)`, 'info')
-    } else {
-      const failureReturn = result === 1 ? 0.6 : 0.8
-      recoverSoil(sprout.soilCost * failureReturn, 0, 'Failed sprout', sprout.title)
-      callbacks.onSetStatus(`Sprout withered. (+${(sprout.soilCost * failureReturn).toFixed(1)} soil)`, 'info')
-    }
+    // All harvests return full soil + capacity based on result
+    const resultMultiplier = RESULT_MULTIPLIERS[result] ?? 0.7
+    const baseReward = getCapacityReward(sprout.environment, sprout.season)
+    const capGain = baseReward * resultMultiplier
+    recoverSoil(sprout.soilCost, capGain, 'Harvested sprout', sprout.title)
+
+    const emoji = getResultEmoji(result)
+    callbacks.onSetStatus(`${emoji} Sprout harvested! (+${sprout.soilCost.toFixed(1)} soil, +${capGain.toFixed(2)} cap)`, 'info')
 
     saveState()
     callbacks.onSoilMeterChange()

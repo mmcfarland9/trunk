@@ -289,8 +289,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       </p>
     ` : ''
 
+    // All completed sprouts - result indicates outcome, no "failed" state
     return `
-      <div class="sprout-card sprout-history-card ${s.state === 'failed' ? 'is-failed' : 'is-completed'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}"` : ''}>
+      <div class="sprout-card sprout-history-card is-completed ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}"` : ''}>
         <div class="sprout-card-header">
           <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
           <button type="button" class="sprout-delete-btn" aria-label="Uproot">x</button>
@@ -377,7 +378,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       `
     } else {
       // Cultivated - show most recent completed sprout
-      const completedSprouts = sprouts.filter(s => s.state === 'completed' || s.state === 'failed')
+      const completedSprouts = sprouts.filter(s => s.state === 'completed')
       const topSprout = completedSprouts.sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )[0]

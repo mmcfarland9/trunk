@@ -6,7 +6,9 @@ export type BranchGroup = {
 
 // Sprout types (replacing goal system)
 export type SproutSeason = '2w' | '1m' | '3m' | '6m' | '1y'
-export type SproutState = 'draft' | 'active' | 'completed' | 'failed'
+// Simplified state machine: active → completed (no draft, no failed)
+// "Showing up counts" - all harvests are completions, result (1-5) indicates outcome
+export type SproutState = 'active' | 'completed'
 export type SproutEnvironment = 'fertile' | 'firm' | 'barren'
 
 // Water entry - journal entries when watering a sprout

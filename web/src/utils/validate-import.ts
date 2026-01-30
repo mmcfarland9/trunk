@@ -2,7 +2,9 @@ import type { Sprout, Leaf, SproutSeason, SproutEnvironment, SproutState } from 
 
 const VALID_SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
 const VALID_ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
-const VALID_STATES: SproutState[] = ['draft', 'active', 'completed', 'failed']
+// Accept legacy states for backwards compatibility during import
+// (converted to active/completed during sanitization)
+const LEGACY_STATES = ['draft', 'active', 'completed', 'failed']
 
 export type ValidationResult = {
   valid: boolean
@@ -40,7 +42,7 @@ export function validateSprout(sprout: unknown, index: number): ValidationResult
     errors.push(`Sprout ${index}: invalid environment "${s.environment}"`)
   }
 
-  if (!VALID_STATES.includes(s.state as SproutState)) {
+  if (!LEGACY_STATES.includes(s.state as string)) {
     errors.push(`Sprout ${index}: invalid state "${s.state}"`)
   }
 
@@ -125,9 +127,15 @@ export function sanitizeSprout(raw: unknown): Sprout | null {
     ? (s.environment as SproutEnvironment)
     : 'fertile'
 
-  const state = VALID_STATES.includes(s.state as SproutState)
-    ? (s.state as SproutState)
-    : 'active'
+  // Convert legacy states to new simplified states
+  // 'draft' → 'active' (was planted anyway)
+  // 'failed' → 'completed' (showing up counts!)
+  let state: SproutState = 'active'
+  if (s.state === 'completed' || s.state === 'failed') {
+    state = 'completed'
+  } else if (s.state === 'active' || s.state === 'draft') {
+    state = 'active'
+  }
 
   const sprout: Sprout = {
     id: s.id as string,

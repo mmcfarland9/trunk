@@ -1,8 +1,11 @@
-import type { AppContext, NodeData } from '../types'
-import { nodeState, saveState, hasNodeData, runMigrations, getNotificationSettings, saveNotificationSettings } from '../state'
+import type { AppContext, NodeData, SunEntry } from '../types'
+import { nodeState, saveState, hasNodeData, runMigrations, getNotificationSettings, saveNotificationSettings, sunLog } from '../state'
 import { syncNode } from '../ui/node-ui'
 import { flashStatus, updateStatusMeta } from './status'
 import { sanitizeSprout, sanitizeLeaf } from '../utils/validate-import'
+import { migrateToEvents } from '../events/migrate'
+import { rebuildFromEvents, validateRebuild } from '../events/rebuild'
+import type { TrunkEvent } from '../events/types'
 
 const EXPORT_REMINDER_KEY = 'trunk-last-export'
 const REMINDER_DAYS = 7
@@ -48,9 +51,16 @@ export function checkExportReminder(ctx: AppContext): void {
 
 export function handleExport(ctx: AppContext): void {
   const settings = getNotificationSettings()
+
+  // Generate events from current state - this is the source of truth
+  const events = migrateToEvents(nodeState, sunLog)
+
   const payload = {
-    version: 3,
+    version: 4, // Bump version for event-sourced format
     exportedAt: new Date().toISOString(),
+    // Events are the source of truth for sprout/water/sun state
+    events,
+    // Node data for labels/notes (not derived from events)
     circles: nodeState,
     settings: {
       name: settings.name,
@@ -113,64 +123,112 @@ export async function handleImport(
 
     // Detect and handle old vs new format
     // Old format: { circles: {...} } or direct node data
-    // New format: { version: N, circles: {...} } or { _version: N, nodes: {...} }
+    // New format (v4+): { version: 4, events: [...], circles: {...} }
+    // Legacy format: { version: N, circles: {...} } or { _version: N, nodes: {...} }
     const parsedObj = parsed as Record<string, unknown>
     const version = typeof parsedObj?.version === 'number' ? parsedObj.version : 0
-    let raw = parsedObj?.circles ?? parsedObj?.nodes ?? parsed
 
-    if (!raw || typeof raw !== 'object') {
-      flashStatus(ctx.elements, 'Import failed: No valid node data found in file.', 'error')
-      return
-    }
+    let nextState: Record<string, NodeData> = {}
+    let importedSunLog: SunEntry[] = []
 
-    // Run schema migrations if we have version info
-    if (version > 0 || parsedObj._version) {
-      const migrated = runMigrations({
-        _version: version || (parsedObj._version as number) || 0,
-        nodes: raw as Record<string, NodeData>,
-      })
-      raw = migrated.nodes
-    }
+    // Version 4+ uses event sourcing - events are the source of truth
+    if (version >= 4 && Array.isArray(parsedObj.events) && parsedObj.events.length > 0) {
+      const events = parsedObj.events as TrunkEvent[]
+      const circles = (parsedObj.circles ?? {}) as Record<string, { label?: string; note?: string }>
 
-    const nextState: Record<string, NodeData> = {}
-    Object.entries(raw as Record<string, unknown>).forEach(([key, value]) => {
-      if (!ctx.nodeLookup.has(key)) return
-      if (!value || typeof value !== 'object') return
+      // Rebuild state from events
+      const rebuilt = rebuildFromEvents(events, circles)
 
-      const v = value as Record<string, unknown>
-      const label = typeof v.label === 'string' ? v.label.trim() : ''
-      const noteValue = typeof v.note === 'string' ? v.note.trim() : ''
-      const detailRaw = v.detail
-      const legacyDetail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
-      const note = noteValue || legacyDetail
-
-      // Extract and sanitize sprouts
-      const sprouts = Array.isArray(v.sprouts)
-        ? v.sprouts.map(sanitizeSprout).filter((s): s is NonNullable<typeof s> => s !== null)
-        : undefined
-
-      // Extract and sanitize leaves
-      const leaves = Array.isArray(v.leaves)
-        ? v.leaves.map(sanitizeLeaf).filter((l): l is NonNullable<typeof l> => l !== null)
-        : undefined
-
-      // Skip nodes with no meaningful data
-      const hasData = label || note || (sprouts && sprouts.length > 0) || (leaves && leaves.length > 0)
-      if (!hasData) return
-
-      const defaultLabel = ctx.nodeLookup.get(key)?.dataset.defaultLabel || ''
-      nextState[key] = {
-        label: label || defaultLabel,
-        note,
-        ...(sprouts && sprouts.length > 0 ? { sprouts } : {}),
-        ...(leaves && leaves.length > 0 ? { leaves } : {}),
+      // Validate the rebuild
+      const validation = validateRebuild(events, rebuilt)
+      if (!validation.valid) {
+        console.warn('Event rebuild validation warnings:', validation.errors)
+        // Continue anyway - warnings are informational
       }
-    })
 
+      // Filter to valid nodes only
+      Object.entries(rebuilt.nodes).forEach(([key, value]) => {
+        if (!ctx.nodeLookup.has(key)) return
+        const hasData = value.label || value.note ||
+          (value.sprouts && value.sprouts.length > 0) ||
+          (value.leaves && value.leaves.length > 0)
+        if (!hasData) return
+
+        const defaultLabel = ctx.nodeLookup.get(key)?.dataset.defaultLabel || ''
+        nextState[key] = {
+          ...value,
+          label: value.label || defaultLabel,
+        }
+      })
+
+      importedSunLog = rebuilt.sunLog
+    } else {
+      // Legacy import path (pre-v4)
+      let raw = parsedObj?.circles ?? parsedObj?.nodes ?? parsed
+
+      if (!raw || typeof raw !== 'object') {
+        flashStatus(ctx.elements, 'Import failed: No valid node data found in file.', 'error')
+        return
+      }
+
+      // Run schema migrations if we have version info
+      if (version > 0 || parsedObj._version) {
+        const migrated = runMigrations({
+          _version: version || (parsedObj._version as number) || 0,
+          nodes: raw as Record<string, NodeData>,
+        })
+        raw = migrated.nodes
+      }
+
+      Object.entries(raw as Record<string, unknown>).forEach(([key, value]) => {
+        if (!ctx.nodeLookup.has(key)) return
+        if (!value || typeof value !== 'object') return
+
+        const v = value as Record<string, unknown>
+        const label = typeof v.label === 'string' ? v.label.trim() : ''
+        const noteValue = typeof v.note === 'string' ? v.note.trim() : ''
+        const detailRaw = v.detail
+        const legacyDetail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
+        const note = noteValue || legacyDetail
+
+        // Extract and sanitize sprouts
+        const sprouts = Array.isArray(v.sprouts)
+          ? v.sprouts.map(sanitizeSprout).filter((s): s is NonNullable<typeof s> => s !== null)
+          : undefined
+
+        // Extract and sanitize leaves
+        const leaves = Array.isArray(v.leaves)
+          ? v.leaves.map(sanitizeLeaf).filter((l): l is NonNullable<typeof l> => l !== null)
+          : undefined
+
+        // Skip nodes with no meaningful data
+        const hasData = label || note || (sprouts && sprouts.length > 0) || (leaves && leaves.length > 0)
+        if (!hasData) return
+
+        const defaultLabel = ctx.nodeLookup.get(key)?.dataset.defaultLabel || ''
+        nextState[key] = {
+          label: label || defaultLabel,
+          note,
+          ...(sprouts && sprouts.length > 0 ? { sprouts } : {}),
+          ...(leaves && leaves.length > 0 ? { leaves } : {}),
+        }
+      })
+
+      // Import sun log from legacy format if present
+      if (Array.isArray(parsedObj.sunLog)) {
+        importedSunLog = parsedObj.sunLog as SunEntry[]
+      }
+    }
+
+    // Replace nodeState
     Object.keys(nodeState).forEach((key) => delete nodeState[key])
     Object.entries(nextState).forEach(([key, value]) => {
       nodeState[key] = value
     })
+
+    // Replace sunLog with imported entries
+    sunLog.length = 0
+    importedSunLog.forEach(entry => sunLog.push(entry))
 
     // Import settings (name for trunk)
     if (parsedObj.settings && typeof parsedObj.settings === 'object') {

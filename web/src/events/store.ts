@@ -1,0 +1,199 @@
+/**
+ * Event Store - manages the event log and derived state.
+ *
+ * This is the central state management for the event-sourced system.
+ * - Events are append-only and immutable
+ * - State is derived by replaying events
+ * - Derived state is cached and invalidated on new events
+ */
+
+import type { TrunkEvent } from './types'
+import type { DerivedState } from './derive'
+import {
+  deriveState,
+  deriveWaterAvailable,
+  deriveSunAvailable,
+  wasSproutWateredThisWeek,
+} from './derive'
+import { safeSetItem } from '../utils/safe-storage'
+
+const STORAGE_KEY = 'trunk-events-v1'
+
+// The event log - source of truth
+let events: TrunkEvent[] = []
+
+// Cached derived state (invalidated on event append)
+let cachedState: DerivedState | null = null
+
+// Cached water/sun availability (invalidated on relevant events)
+let cachedWaterAvailable: number | null = null
+let cachedSunAvailable: number | null = null
+
+// Error callbacks
+let onQuotaError: (() => void) | null = null
+let onSaveError: ((error: unknown) => void) | null = null
+
+/**
+ * Load events from localStorage
+ */
+function loadEvents(): TrunkEvent[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed
+      }
+    }
+  } catch (error) {
+    console.warn('Could not load events from storage', error)
+  }
+  return []
+}
+
+/**
+ * Save events to localStorage
+ */
+function saveEvents(): void {
+  const result = safeSetItem(STORAGE_KEY, JSON.stringify(events))
+  if (!result.success) {
+    if (result.isQuotaError) {
+      console.warn('localStorage quota exceeded while saving events')
+      onQuotaError?.()
+    } else {
+      console.warn('Could not save events')
+      onSaveError?.(new Error('Storage unavailable'))
+    }
+  }
+}
+
+/**
+ * Initialize the event store
+ */
+export function initEventStore(): void {
+  events = loadEvents()
+  invalidateCache()
+}
+
+/**
+ * Set error callbacks
+ */
+export function setEventStoreErrorCallbacks(
+  quotaCallback: () => void,
+  errorCallback?: (error: unknown) => void
+): void {
+  onQuotaError = quotaCallback
+  onSaveError = errorCallback ?? null
+}
+
+/**
+ * Invalidate all cached state
+ */
+function invalidateCache(): void {
+  cachedState = null
+  cachedWaterAvailable = null
+  cachedSunAvailable = null
+}
+
+/**
+ * Append an event to the log
+ */
+export function appendEvent(event: TrunkEvent): void {
+  events.push(event)
+  invalidateCache()
+  saveEvents()
+}
+
+/**
+ * Append multiple events at once
+ */
+export function appendEvents(newEvents: TrunkEvent[]): void {
+  events.push(...newEvents)
+  invalidateCache()
+  saveEvents()
+}
+
+/**
+ * Get the full event log (read-only)
+ */
+export function getEvents(): readonly TrunkEvent[] {
+  return events
+}
+
+/**
+ * Get derived state (cached)
+ */
+export function getState(): DerivedState {
+  if (!cachedState) {
+    cachedState = deriveState(events)
+  }
+  return cachedState
+}
+
+/**
+ * Get water available (cached)
+ */
+export function getWaterAvailable(now: Date = new Date()): number {
+  // Simple cache - just check if we have a cached value
+  // In practice, we should invalidate when crossing reset boundary
+  if (cachedWaterAvailable === null) {
+    cachedWaterAvailable = deriveWaterAvailable(events, now)
+  }
+  return cachedWaterAvailable
+}
+
+/**
+ * Get sun available (cached)
+ */
+export function getSunAvailable(now: Date = new Date()): number {
+  if (cachedSunAvailable === null) {
+    cachedSunAvailable = deriveSunAvailable(events, now)
+  }
+  return cachedSunAvailable
+}
+
+/**
+ * Check if sprout was watered this week
+ */
+export function checkSproutWateredThisWeek(sproutId: string, now: Date = new Date()): boolean {
+  return wasSproutWateredThisWeek(events, sproutId, now)
+}
+
+/**
+ * Clear all events (for testing/reset)
+ */
+export function clearEvents(): void {
+  events = []
+  invalidateCache()
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Ignore
+  }
+}
+
+/**
+ * Replace all events (for import)
+ */
+export function replaceEvents(newEvents: TrunkEvent[]): void {
+  events = newEvents
+  invalidateCache()
+  saveEvents()
+}
+
+/**
+ * Get event count
+ */
+export function getEventCount(): number {
+  return events.length
+}
+
+/**
+ * Export events for backup
+ */
+export function exportEvents(): TrunkEvent[] {
+  return [...events]
+}
+
+// Initialize on module load
+initEventStore()
