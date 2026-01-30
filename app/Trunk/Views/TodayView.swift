@@ -87,7 +87,7 @@ struct TodayView: View {
             items.append(ActivityItem(
                 date: entry.timestamp,
                 icon: "☀️",
-                text: "Shined on \(entry.contextLabel)"
+                text: "Shined on \(entry.twigLabel)"
             ))
         }
 

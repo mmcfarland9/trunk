@@ -101,7 +101,7 @@ struct SunLogRow: View {
                 Text("☀️")
                     .font(.system(size: TrunkTheme.textSm))
 
-                Text(entry.contextLabel)
+                Text(entry.twigLabel)
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .foregroundStyle(Color.ink)
 

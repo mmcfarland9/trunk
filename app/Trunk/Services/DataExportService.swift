@@ -24,7 +24,7 @@ struct TrunkEvent: Codable {
     let type: TrunkEventType
     let timestamp: String
 
-    // sprout_planted fields
+    // All optional fields (flat structure for JSON encoding)
     var sproutId: String?
     var twigId: String?
     var title: String?
@@ -35,22 +35,61 @@ struct TrunkEvent: Codable {
     var bloomWither: String?
     var bloomBudding: String?
     var bloomFlourish: String?
-
-    // sprout_watered fields
     var content: String?
     var prompt: String?
-
-    // sprout_harvested fields
     var result: Int?
     var reflection: String?
     var capacityGained: Double?
-
-    // sprout_uprooted fields
     var soilReturned: Int?
-
-    // sun_shone / leaf_created fields
     var twigLabel: String?
     var name: String?
+
+    // MARK: - Factory methods for creating specific event types
+
+    static func leafCreated(timestamp: String, leafId: String, twigId: String, name: String) -> TrunkEvent {
+        TrunkEvent(type: .leafCreated, timestamp: timestamp, twigId: twigId, leafId: leafId, name: name)
+    }
+
+    static func sproutPlanted(
+        timestamp: String,
+        sproutId: String,
+        twigId: String,
+        title: String,
+        season: String,
+        environment: String,
+        soilCost: Int,
+        leafId: String?,
+        bloomWither: String?,
+        bloomBudding: String?,
+        bloomFlourish: String?
+    ) -> TrunkEvent {
+        TrunkEvent(
+            type: .sproutPlanted,
+            timestamp: timestamp,
+            sproutId: sproutId,
+            twigId: twigId,
+            title: title,
+            season: season,
+            environment: environment,
+            soilCost: soilCost,
+            leafId: leafId,
+            bloomWither: bloomWither,
+            bloomBudding: bloomBudding,
+            bloomFlourish: bloomFlourish
+        )
+    }
+
+    static func sproutWatered(timestamp: String, sproutId: String, content: String, prompt: String?) -> TrunkEvent {
+        TrunkEvent(type: .sproutWatered, timestamp: timestamp, sproutId: sproutId, content: content, prompt: prompt)
+    }
+
+    static func sproutHarvested(timestamp: String, sproutId: String, result: Int, reflection: String?, capacityGained: Double) -> TrunkEvent {
+        TrunkEvent(type: .sproutHarvested, timestamp: timestamp, sproutId: sproutId, result: result, reflection: reflection, capacityGained: capacityGained)
+    }
+
+    static func sunShone(timestamp: String, twigId: String, twigLabel: String, content: String, prompt: String?) -> TrunkEvent {
+        TrunkEvent(type: .sunShone, timestamp: timestamp, twigId: twigId, content: content, prompt: prompt, twigLabel: twigLabel)
+    }
 }
 
 struct CircleData: Codable {
@@ -90,11 +129,10 @@ struct DataExportService {
 
         // Leaf creation events
         for leaf in leaves {
-            events.append(TrunkEvent(
-                type: .leafCreated,
+            events.append(.leafCreated(
                 timestamp: isoString(leaf.createdAt),
-                twigId: leaf.nodeId,
                 leafId: leaf.id,
+                twigId: leaf.nodeId,
                 name: leaf.name
             ))
         }
@@ -106,8 +144,7 @@ struct DataExportService {
 
             // Planted event
             let plantedTimestamp = sprout.plantedAt ?? sprout.createdAt
-            events.append(TrunkEvent(
-                type: .sproutPlanted,
+            events.append(.sproutPlanted(
                 timestamp: isoString(plantedTimestamp),
                 sproutId: sprout.sproutId,
                 twigId: sprout.nodeId,
@@ -123,8 +160,7 @@ struct DataExportService {
 
             // Water events
             for entry in sprout.waterEntries {
-                events.append(TrunkEvent(
-                    type: .sproutWatered,
+                events.append(.sproutWatered(
                     timestamp: isoString(entry.timestamp),
                     sproutId: sprout.sproutId,
                     content: entry.content,
@@ -142,8 +178,7 @@ struct DataExportService {
                     currentCapacity: soilCapacity
                 )
 
-                events.append(TrunkEvent(
-                    type: .sproutHarvested,
+                events.append(.sproutHarvested(
                     timestamp: isoString(harvestTimestamp),
                     sproutId: sprout.sproutId,
                     result: result,
@@ -155,8 +190,7 @@ struct DataExportService {
 
         // Sun events
         for entry in sunEntries {
-            events.append(TrunkEvent(
-                type: .sunShone,
+            events.append(.sunShone(
                 timestamp: isoString(entry.timestamp),
                 twigId: entry.twigId,
                 twigLabel: entry.twigLabel,
