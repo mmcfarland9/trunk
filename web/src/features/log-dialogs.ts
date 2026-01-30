@@ -66,12 +66,9 @@ function populateSunLog(elements: SunLogElements): void {
 
   elements.sunLogDialogEntries.innerHTML = entries.map(entry => {
     const branchLabel = getBranchLabelFromTwigId(entry.context.twigId)
-    const locationLabel = branchLabel
+    const context = branchLabel
       ? `${escapeHtml(branchLabel)} : ${escapeHtml(entry.context.twigLabel)}`
       : escapeHtml(entry.context.twigLabel)
-    const context = entry.context.type === 'leaf'
-      ? `${escapeHtml(entry.context.leafTitle || '')} · ${locationLabel}`
-      : locationLabel
     const timestamp = formatSunLogTimestamp(entry.timestamp)
     const promptHtml = entry.prompt
       ? `<p class="sun-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
