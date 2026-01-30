@@ -1,0 +1,25 @@
+appId: mpmcf.Trunk
+name: Smoke Test - Basic Navigation
+---
+
+# Launch the app (don't clear state - it corrupts SwiftData)
+- launchApp:
+    clearState: false
+
+# Wait for app to fully load
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+
+# Navigate to Trunk tab
+- tapOn: "Trunk"
+
+# Verify we see branches
+- assertVisible: "CORE"
+- assertVisible: "BRAIN"
+
+# Navigate to CORE branch
+- tapOn: "CORE"
+
+# Verify we see twigs
+- assertVisible: "movement"
