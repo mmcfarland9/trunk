@@ -22,6 +22,7 @@ extension Color {
     // Semantic colors
     static let trunkWater = Color(red: 0.275, green: 0.510, blue: 0.706)   // steelblue
     static let trunkSun = Color(red: 0.831, green: 0.627, blue: 0.000)     // #d4a000
+    static let trunkDestructive = Color(red: 0.54, green: 0.29, blue: 0.23) // #8a4a3a
 
     // Borders
     static let borderSubtle = Color.ink.opacity(0.08)
@@ -153,7 +154,7 @@ struct TrunkButtonStyle: ButtonStyle {
         case .secondary: return .ink
         case .water: return .trunkWater
         case .sun: return .trunkSun
-        case .destructive: return Color(red: 0.54, green: 0.29, blue: 0.23)
+        case .destructive: return .trunkDestructive
         }
     }
 
@@ -173,7 +174,7 @@ struct TrunkButtonStyle: ButtonStyle {
         case .secondary: return .ink.opacity(0.03)
         case .water: return .trunkWater.opacity(0.08)
         case .sun: return .trunkSun.opacity(0.08)
-        case .destructive: return Color(red: 0.54, green: 0.29, blue: 0.23).opacity(0.08)
+        case .destructive: return .trunkDestructive.opacity(0.08)
         }
     }
 
@@ -183,7 +184,7 @@ struct TrunkButtonStyle: ButtonStyle {
         case .secondary: return .border
         case .water: return .trunkWater
         case .sun: return .trunkSun
-        case .destructive: return Color(red: 0.54, green: 0.29, blue: 0.23)
+        case .destructive: return .trunkDestructive
         }
     }
 }
