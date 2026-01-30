@@ -1,6 +1,6 @@
 import type { AppContext, SunEntry } from '../types'
-import sunPromptsRaw from '../assets/sun-prompts.txt?raw'
-import { nodeState, spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek, getPresetLabel, getTwigLeaves, recoverSoil, getSunRecoveryRate, getNextSunReset, formatResetTime } from '../state'
+import sunPromptsData from '../assets/sun-prompts.json'
+import { spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek, getPresetLabel, recoverSoil, getSunRecoveryRate, getNextSunReset, formatResetTime } from '../state'
 
 export type ShineCallbacks = {
   onSunMeterChange: () => void
@@ -9,35 +9,70 @@ export type ShineCallbacks = {
   onShineComplete: () => void
 }
 
-// Parse sun prompts (skip comments and empty lines)
-const sunPrompts = sunPromptsRaw
-  .split('\n')
-  .map(line => line.trim())
-  .filter(line => line && !line.startsWith('#'))
-
-// Track recently shown sun prompts to avoid quick repeats
-const recentSunPrompts: string[] = []
-const RECENT_SUN_PROMPT_LIMIT = Math.min(10, Math.floor(sunPrompts.length / 3))
-
-function getRandomSunPrompt(): string {
-  const available = sunPrompts.filter(p => !recentSunPrompts.includes(p))
-  const pool = available.length > 0 ? available : sunPrompts
-
-  const prompt = pool[Math.floor(Math.random() * pool.length)]
-
-  recentSunPrompts.push(prompt)
-  if (recentSunPrompts.length > RECENT_SUN_PROMPT_LIMIT) {
-    recentSunPrompts.shift()
-  }
-
-  return prompt
+// Type for the prompts JSON structure
+type SunPrompts = {
+  generic: string[]
+  specific: Record<string, string[]>
 }
 
-// Get all twigs that have data (labels)
+const sunPrompts = sunPromptsData as SunPrompts
+
+// Track recently shown prompts globally to avoid quick repeats
+const recentPrompts: string[] = []
+const RECENT_PROMPT_LIMIT = 15
+
+// Selection weight: 75% generic, 25% specific
+const GENERIC_WEIGHT = 0.75
+
+function getRandomPrompt(twigId: string, twigLabel: string): string {
+  const genericPrompts = sunPrompts.generic
+  const specificPrompts = sunPrompts.specific[twigId] || []
+
+  // Filter out recently shown prompts from each pool
+  const availableGeneric = genericPrompts.filter(p => !recentPrompts.includes(p))
+  const availableSpecific = specificPrompts.filter(p => !recentPrompts.includes(p))
+
+  // Determine which pool to select from
+  let selectedPrompt: string
+  const hasGeneric = availableGeneric.length > 0
+  const hasSpecific = availableSpecific.length > 0
+
+  if (!hasGeneric && !hasSpecific) {
+    // Both pools exhausted, clear recent and try again
+    recentPrompts.length = 0
+    return getRandomPrompt(twigId, twigLabel)
+  }
+
+  if (!hasGeneric) {
+    // Only specific available
+    selectedPrompt = availableSpecific[Math.floor(Math.random() * availableSpecific.length)]
+  } else if (!hasSpecific) {
+    // Only generic available
+    selectedPrompt = availableGeneric[Math.floor(Math.random() * availableGeneric.length)]
+  } else {
+    // Both available - use weighted random
+    const useGeneric = Math.random() < GENERIC_WEIGHT
+    if (useGeneric) {
+      selectedPrompt = availableGeneric[Math.floor(Math.random() * availableGeneric.length)]
+    } else {
+      selectedPrompt = availableSpecific[Math.floor(Math.random() * availableSpecific.length)]
+    }
+  }
+
+  // Track this prompt as recently shown
+  recentPrompts.push(selectedPrompt)
+  if (recentPrompts.length > RECENT_PROMPT_LIMIT) {
+    recentPrompts.shift()
+  }
+
+  // Replace {twig} token with actual label
+  return selectedPrompt.replace(/\{twig\}/g, twigLabel)
+}
+
+// Get all twigs
 function getAllTwigs(): { twigId: string; twigLabel: string }[] {
   const twigs: { twigId: string; twigLabel: string }[] = []
 
-  // Check all branch-X-twig-Y combinations
   for (let b = 0; b < 8; b++) {
     for (let t = 0; t < 8; t++) {
       const twigId = `branch-${b}-twig-${t}`
@@ -51,73 +86,19 @@ function getAllTwigs(): { twigId: string; twigLabel: string }[] {
   return twigs
 }
 
-// Get all leaves across all twigs
-function getAllLeaves(): { twigId: string; twigLabel: string; leafId: string; leafTitle: string }[] {
-  const leaves: { twigId: string; twigLabel: string; leafId: string; leafTitle: string }[] = []
-
-  for (let b = 0; b < 8; b++) {
-    for (let t = 0; t < 8; t++) {
-      const twigId = `branch-${b}-twig-${t}`
-      const twigLabel = getPresetLabel(twigId)
-      if (!twigLabel) continue
-
-      const twigLeaves = getTwigLeaves(twigId)
-      const twigSprouts = nodeState[twigId]?.sprouts || []
-
-      for (const leaf of twigLeaves) {
-        // Get the most recent sprout title as the leaf title
-        const leafSprouts = twigSprouts.filter(s => s.leafId === leaf.id)
-        const mostRecent = leafSprouts.sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )[0]
-
-        if (mostRecent) {
-          leaves.push({
-            twigId,
-            twigLabel,
-            leafId: leaf.id,
-            leafTitle: mostRecent.title || 'Untitled Leaf'
-          })
-        }
-      }
-    }
-  }
-
-  return leaves
-}
-
-// Randomly select a twig or leaf to reflect on
-function selectRandomTarget(): SunEntry['context'] | null {
+// Randomly select a twig to reflect on
+function selectRandomTwig(): SunEntry['context'] | null {
   const twigs = getAllTwigs()
-  const leaves = getAllLeaves()
 
-  // Need at least one twig or leaf to select
-  if (twigs.length === 0 && leaves.length === 0) {
+  if (twigs.length === 0) {
     return null
   }
 
-  // 50% chance of selecting a leaf if leaves exist, otherwise always a twig
-  const selectLeaf = leaves.length > 0 && Math.random() < 0.5
-
-  if (selectLeaf) {
-    const leaf = leaves[Math.floor(Math.random() * leaves.length)]
-    return {
-      type: 'leaf',
-      twigId: leaf.twigId,
-      twigLabel: leaf.twigLabel,
-      leafId: leaf.leafId,
-      leafTitle: leaf.leafTitle
-    }
-  } else if (twigs.length > 0) {
-    const twig = twigs[Math.floor(Math.random() * twigs.length)]
-    return {
-      type: 'twig',
-      twigId: twig.twigId,
-      twigLabel: twig.twigLabel
-    }
+  const twig = twigs[Math.floor(Math.random() * twigs.length)]
+  return {
+    twigId: twig.twigId,
+    twigLabel: twig.twigLabel
   }
-
-  return null
 }
 
 export type ShineApi = {
@@ -173,10 +154,10 @@ export function initShine(
       return
     }
 
-    // Select a random target
-    const target = selectRandomTarget()
+    // Select a random twig
+    const target = selectRandomTwig()
     if (!target) {
-      // No twigs/leaves to shine on
+      // No twigs to shine on
       sunLogShineSection.classList.add('hidden')
       sunLogShineShone.classList.remove('hidden')
       currentContext = null
@@ -186,16 +167,11 @@ export function initShine(
     currentContext = target
 
     // Display what was selected
-    if (target.type === 'leaf') {
-      sunLogShineTitle.textContent = target.leafTitle || 'Untitled Leaf'
-      sunLogShineMeta.textContent = `on ${target.twigLabel}`
-    } else {
-      sunLogShineTitle.textContent = target.twigLabel
-      sunLogShineMeta.textContent = 'Life Facet'
-    }
+    sunLogShineTitle.textContent = target.twigLabel
+    sunLogShineMeta.textContent = 'Life Facet'
 
     sunLogShineJournal.value = ''
-    sunLogShineJournal.placeholder = getRandomSunPrompt()
+    sunLogShineJournal.placeholder = getRandomPrompt(target.twigId, target.twigLabel)
     sunLogShineBtn.disabled = true
 
     sunLogShineSection.classList.remove('hidden')
@@ -223,10 +199,7 @@ export function initShine(
       updateSunMeter()
 
       // Recover soil from shining
-      const shineContext = currentContext.type === 'leaf'
-        ? currentContext.leafTitle || currentContext.twigLabel
-        : currentContext.twigLabel
-      recoverSoil(getSunRecoveryRate(), 0, 'Shone light', shineContext)
+      recoverSoil(getSunRecoveryRate(), 0, 'Shone light', currentContext.twigLabel)
       callbacks.onSoilMeterChange()
 
       // Save sun entry to global log with context
