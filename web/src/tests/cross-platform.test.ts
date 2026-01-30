@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest'
 import { rebuildFromEvents } from '../events/rebuild'
 import { migrateToEvents } from '../events/migrate'
 import type { TrunkEvent } from '../events/types'
-import type { NodeData, SunEntry } from '../types'
+import type { NodeData } from '../types'
 
 describe('Cross-Platform Compatibility', () => {
   /**
