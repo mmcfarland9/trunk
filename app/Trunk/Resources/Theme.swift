@@ -47,6 +47,10 @@ enum TrunkTheme {
     static let textBase: CGFloat = 14
     static let textLg: CGFloat = 16
     static let textXl: CGFloat = 18
+
+    // Letter spacing
+    static let trackingNormal: CGFloat = 0.42   // 0.03em at ~14px
+    static let trackingUppercase: CGFloat = 0.5 // Slightly wider for uppercase
 }
 
 // MARK: - Typography
@@ -106,7 +110,7 @@ struct MonoLabel: ViewModifier {
         content
             .font(.system(size: size, design: .monospaced))
             .textCase(uppercase ? .uppercase : nil)
-            .tracking(uppercase ? 1.5 : 0)
+            .tracking(uppercase ? TrunkTheme.trackingUppercase : TrunkTheme.trackingNormal)
             .foregroundStyle(Color.inkFaint)
     }
 }
@@ -153,7 +157,7 @@ struct TrunkButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: TrunkTheme.textSm, design: .monospaced))
             .textCase(.uppercase)
-            .tracking(1)
+            .tracking(TrunkTheme.trackingUppercase)
             .padding(.horizontal, TrunkTheme.space4)
             .padding(.vertical, TrunkTheme.space2)
             .foregroundStyle(foregroundColor)
