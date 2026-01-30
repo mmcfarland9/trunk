@@ -31,15 +31,6 @@ struct SagaDetailView: View {
                     subtitle: "\(sprout.season.label) · \(sprout.environment.label)",
                     detail: nil
                 ))
-            } else {
-                // Draft created
-                events.append(TimelineEvent(
-                    date: sprout.createdAt,
-                    type: .drafted,
-                    title: sprout.title,
-                    subtitle: "Draft created",
-                    detail: nil
-                ))
             }
 
             // Water entries
@@ -49,18 +40,18 @@ struct SagaDetailView: View {
                     type: .watered,
                     title: sprout.title,
                     subtitle: "Watered",
-                    detail: entry.note.isEmpty ? nil : entry.note
+                    detail: entry.content.isEmpty ? nil : entry.content
                 ))
             }
 
             // Harvest event
-            if let harvestedAt = sprout.harvestedAt {
+            if let harvestedAt = sprout.harvestedAt, sprout.state == .completed {
                 let resultEmoji = resultToEmoji(sprout.result ?? 3)
                 events.append(TimelineEvent(
                     date: harvestedAt,
-                    type: sprout.state == .completed ? .harvested : .failed,
+                    type: .harvested,
                     title: sprout.title,
-                    subtitle: sprout.state == .completed ? "Harvested \(resultEmoji)" : "Uprooted",
+                    subtitle: "Harvested \(resultEmoji)",
                     detail: nil
                 ))
             }
@@ -132,11 +123,9 @@ struct SagaDetailView: View {
 
 struct TimelineEvent {
     enum EventType {
-        case drafted
         case planted
         case watered
         case harvested
-        case failed
     }
 
     let date: Date
@@ -147,21 +136,17 @@ struct TimelineEvent {
 
     var icon: String {
         switch type {
-        case .drafted: return "○"
         case .planted: return "●"
         case .watered: return "💧"
         case .harvested: return "✓"
-        case .failed: return "✗"
         }
     }
 
     var color: Color {
         switch type {
-        case .drafted: return .inkFaint
         case .planted: return .twig
         case .watered: return .trunkWater
         case .harvested: return .twig
-        case .failed: return Color(red: 0.6, green: 0.35, blue: 0.3)
         }
     }
 }

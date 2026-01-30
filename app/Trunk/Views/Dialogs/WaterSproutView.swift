@@ -78,7 +78,7 @@ struct WaterSproutView: View {
 
     private func waterSprout() {
         // Create water entry
-        let entry = WaterEntry(note: note.trimmingCharacters(in: .whitespacesAndNewlines))
+        let entry = WaterEntry(content: note.trimmingCharacters(in: .whitespacesAndNewlines))
         entry.sprout = sprout
         sprout.waterEntries.append(entry)
         modelContext.insert(entry)
@@ -98,7 +98,6 @@ struct WaterSproutView: View {
         nodeId: "branch-0-twig-0",
         soilCost: 8
     )
-    sprout.plant()
 
     return NavigationStack {
         WaterSproutView(sprout: sprout, progression: ProgressionViewModel())

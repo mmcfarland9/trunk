@@ -49,16 +49,12 @@ struct TwigDetailView: View {
         allSprouts.filter { $0.nodeId == nodeId }
     }
 
-    private var draftSprouts: [Sprout] {
-        sprouts.filter { $0.state == .draft }
-    }
-
     private var activeSprouts: [Sprout] {
         sprouts.filter { $0.state == .active }
     }
 
     private var completedSprouts: [Sprout] {
-        sprouts.filter { $0.state == .completed || $0.state == .failed }
+        sprouts.filter { $0.state == .completed }
     }
 
     var body: some View {
@@ -68,13 +64,6 @@ struct TwigDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: TrunkTheme.space4) {
-                    // Drafts section
-                    if !draftSprouts.isEmpty {
-                        SproutSection(title: "DRAFTS", sprouts: draftSprouts) { sprout in
-                            selectedSprout = sprout
-                        }
-                    }
-
                     // Growing section
                     if !activeSprouts.isEmpty {
                         SproutSection(title: "GROWING", sprouts: activeSprouts) { sprout in
@@ -226,20 +215,14 @@ struct SproutRow: View {
 
     private var borderColor: Color {
         switch sprout.state {
-        case .draft: return Color.inkFaint
         case .active: return Color.twig
         case .completed: return Color(red: 0.4, green: 0.6, blue: 0.4)
-        case .failed: return Color(red: 0.6, green: 0.4, blue: 0.35)
         }
     }
 
     @ViewBuilder
     private var trailingContent: some View {
         switch sprout.state {
-        case .draft:
-            Text("\(sprout.soilCost) soil")
-                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                .foregroundStyle(Color.twig)
         case .active:
             if sprout.isReady {
                 Text("READY")
@@ -257,10 +240,6 @@ struct SproutRow: View {
                     .font(.system(size: TrunkTheme.textXs))
                     .foregroundStyle(Color.trunkSun)
             }
-        case .failed:
-            Text("failed")
-                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
         }
     }
 }

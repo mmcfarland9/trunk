@@ -12,14 +12,16 @@ import SwiftData
 final class WaterEntry {
     var id: String
     var timestamp: Date
-    var note: String
+    var content: String
+    var prompt: String?
 
     @Relationship(inverse: \Sprout.waterEntries)
     var sprout: Sprout?
 
-    init(id: String = UUID().uuidString, note: String = "") {
+    init(id: String = UUID().uuidString, content: String = "", prompt: String? = nil) {
         self.id = id
         self.timestamp = Date()
-        self.note = note
+        self.content = content
+        self.prompt = prompt
     }
 }

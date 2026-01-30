@@ -55,20 +55,30 @@
     "createdAt": {
       "type": "string",
       "format": "date-time",
-      "description": "ISO timestamp when sprout was created as draft"
+      "description": "ISO timestamp when sprout was created"
     },
-    "bloom1": { "type": "string" },
-    "bloom3": { "type": "string" },
-    "bloom5": { "type": "string" },
+    "bloomWither": {
+      "type": "string",
+      "description": "Description of 1/5 outcome (withering)"
+    },
+    "bloomBudding": {
+      "type": "string",
+      "description": "Description of 3/5 outcome (budding)"
+    },
+    "bloomFlourish": {
+      "type": "string",
+      "description": "Description of 5/5 outcome (flourishing)"
+    },
     "waterEntries": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "timestamp": { "type": "string", "format": "date-time" },
-          "note": { "type": "string" }
+          "content": { "type": "string" },
+          "prompt": { "type": "string" }
         },
-        "required": ["timestamp"]
+        "required": ["timestamp", "content"]
       }
     }
   },

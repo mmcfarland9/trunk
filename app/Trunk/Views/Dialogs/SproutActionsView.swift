@@ -39,41 +39,37 @@ struct SproutActionsView: View {
 
             // State-specific content
             switch sprout.state {
-            case .draft:
-                draftSection
             case .active:
                 activeSection
             case .completed:
                 completedSection
-            case .failed:
-                failedSection
             }
 
             // Bloom descriptions
-            if !sprout.bloomLow.isEmpty || !sprout.bloomMid.isEmpty || !sprout.bloomHigh.isEmpty {
+            if !sprout.bloomWither.isEmpty || !sprout.bloomBudding.isEmpty || !sprout.bloomFlourish.isEmpty {
                 Section("Bloom Descriptions") {
-                    if !sprout.bloomLow.isEmpty {
+                    if !sprout.bloomWither.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("1/5 Minimal")
+                            Text("1/5 Withering")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(sprout.bloomLow)
+                            Text(sprout.bloomWither)
                         }
                     }
-                    if !sprout.bloomMid.isEmpty {
+                    if !sprout.bloomBudding.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("3/5 Good")
+                            Text("3/5 Budding")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(sprout.bloomMid)
+                            Text(sprout.bloomBudding)
                         }
                     }
-                    if !sprout.bloomHigh.isEmpty {
+                    if !sprout.bloomFlourish.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("5/5 Exceptional")
+                            Text("5/5 Flourishing")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(sprout.bloomHigh)
+                            Text(sprout.bloomFlourish)
                         }
                     }
                 }
@@ -87,8 +83,8 @@ struct SproutActionsView: View {
                             Text(entry.timestamp, style: .date)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            if !entry.note.isEmpty {
-                                Text(entry.note)
+                            if !entry.content.isEmpty {
+                                Text(entry.content)
                                     .font(.subheadline)
                             }
                         }
@@ -115,45 +111,6 @@ struct SproutActionsView: View {
         .sheet(isPresented: $showingHarvestSheet) {
             NavigationStack {
                 HarvestSproutView(sprout: sprout, progression: progression)
-            }
-        }
-    }
-
-    // MARK: - Draft State
-
-    @ViewBuilder
-    private var draftSection: some View {
-        Section {
-            HStack {
-                Text("Soil Cost")
-                Spacer()
-                Text("\(sprout.soilCost)")
-                    .fontWeight(.bold)
-                    .foregroundStyle(.brown)
-            }
-
-            Button {
-                progression.plantSprout(sprout)
-            } label: {
-                Label("Plant Sprout", systemImage: "leaf.arrow.triangle.circlepath")
-            }
-            .disabled(!progression.canAfford(cost: sprout.soilCost))
-
-        } header: {
-            Text("Actions")
-        } footer: {
-            if !progression.canAfford(cost: sprout.soilCost) {
-                Text("Not enough soil. You have \(progression.soilAvailableInt) available.")
-                    .foregroundStyle(.red)
-            }
-        }
-
-        Section {
-            Button(role: .destructive) {
-                modelContext.delete(sprout)
-                dismiss()
-            } label: {
-                Label("Delete Draft", systemImage: "trash")
             }
         }
     }
@@ -249,34 +206,6 @@ struct SproutActionsView: View {
                         Text(harvestedAt, style: .date)
                             .foregroundStyle(.secondary)
                     }
-                }
-            }
-        }
-
-        Section {
-            Button(role: .destructive) {
-                modelContext.delete(sprout)
-                dismiss()
-            } label: {
-                Label("Delete Sprout", systemImage: "trash")
-            }
-        }
-    }
-
-    // MARK: - Failed State
-
-    @ViewBuilder
-    private var failedSection: some View {
-        Section {
-            Text("This sprout was uprooted.")
-                .foregroundStyle(.secondary)
-
-            if let harvestedAt = sprout.harvestedAt {
-                HStack {
-                    Text("Uprooted")
-                    Spacer()
-                    Text(harvestedAt, style: .date)
-                        .foregroundStyle(.secondary)
                 }
             }
         }

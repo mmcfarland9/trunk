@@ -51,35 +51,35 @@ struct HarvestSproutView: View {
             }
 
             // Bloom reference
-            if !sprout.bloomLow.isEmpty || !sprout.bloomMid.isEmpty || !sprout.bloomHigh.isEmpty {
+            if !sprout.bloomWither.isEmpty || !sprout.bloomBudding.isEmpty || !sprout.bloomFlourish.isEmpty {
                 Section("Your Bloom Descriptions") {
-                    if !sprout.bloomLow.isEmpty {
+                    if !sprout.bloomWither.isEmpty {
                         HStack(alignment: .top) {
                             Text("1/5")
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .frame(width: 30)
-                            Text(sprout.bloomLow)
+                            Text(sprout.bloomWither)
                                 .font(.caption)
                         }
                     }
-                    if !sprout.bloomMid.isEmpty {
+                    if !sprout.bloomBudding.isEmpty {
                         HStack(alignment: .top) {
                             Text("3/5")
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .frame(width: 30)
-                            Text(sprout.bloomMid)
+                            Text(sprout.bloomBudding)
                                 .font(.caption)
                         }
                     }
-                    if !sprout.bloomHigh.isEmpty {
+                    if !sprout.bloomFlourish.isEmpty {
                         HStack(alignment: .top) {
                             Text("5/5")
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .frame(width: 30)
-                            Text(sprout.bloomHigh)
+                            Text(sprout.bloomFlourish)
                                 .font(.caption)
                         }
                     }
@@ -179,11 +179,10 @@ struct HarvestSproutView: View {
         environment: .firm,
         nodeId: "branch-0-twig-0",
         soilCost: 8,
-        bloomLow: "Completed one tutorial",
-        bloomMid: "Built a small app",
-        bloomHigh: "Published an app to the App Store"
+        bloomWither: "Completed one tutorial",
+        bloomBudding: "Built a small app",
+        bloomFlourish: "Published an app to the App Store"
     )
-    sprout.plant()
 
     return NavigationStack {
         HarvestSproutView(sprout: sprout, progression: ProgressionViewModel())

@@ -20,9 +20,9 @@ struct CreateSproutView: View {
     @State private var title = ""
     @State private var season: Season = .oneMonth
     @State private var environment: SproutEnvironment = .firm
-    @State private var bloomLow = ""
-    @State private var bloomMid = ""
-    @State private var bloomHigh = ""
+    @State private var bloomWither = ""
+    @State private var bloomBudding = ""
+    @State private var bloomFlourish = ""
     @State private var selectedLeafId: String?
     @State private var showNewLeafAlert = false
     @State private var newLeafName = ""
@@ -206,9 +206,9 @@ struct CreateSproutView: View {
                         LabelWithHint(label: "BLOOM", hint: "(outcomes)")
 
                         VStack(spacing: TrunkTheme.space2) {
-                            BloomField(emoji: "🥀", placeholder: "What does withering look like?", text: $bloomLow)
-                            BloomField(emoji: "🌱", placeholder: "What does budding look like?", text: $bloomMid)
-                            BloomField(emoji: "🌲", placeholder: "What does flourishing look like?", text: $bloomHigh)
+                            BloomField(emoji: "🥀", placeholder: "What does withering look like?", text: $bloomWither)
+                            BloomField(emoji: "🌱", placeholder: "What does budding look like?", text: $bloomBudding)
+                            BloomField(emoji: "🌲", placeholder: "What does flourishing look like?", text: $bloomFlourish)
                         }
                     }
 
@@ -247,21 +247,12 @@ struct CreateSproutView: View {
                     )
 
                     // Actions
-                    HStack(spacing: TrunkTheme.space3) {
-                        Button("SAVE DRAFT") {
-                            saveDraft()
-                        }
-                        .buttonStyle(.trunkSecondary)
-                        .disabled(!isValid)
-                        .opacity(isValid ? 1 : 0.5)
-
-                        Button("PLANT NOW") {
-                            plantNow()
-                        }
-                        .buttonStyle(.trunk)
-                        .disabled(!isValid || !canAfford)
-                        .opacity(isValid && canAfford ? 1 : 0.5)
+                    Button("PLANT") {
+                        plantSprout()
                     }
+                    .buttonStyle(.trunk)
+                    .disabled(!isValid || !canAfford)
+                    .opacity(isValid && canAfford ? 1 : 0.5)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding(TrunkTheme.space4)
@@ -307,32 +298,16 @@ struct CreateSproutView: View {
         newLeafName = ""
     }
 
-    private func saveDraft() {
+    private func plantSprout() {
         let sprout = Sprout(
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             season: season,
             environment: environment,
             nodeId: nodeId,
             soilCost: soilCost,
-            bloomLow: bloomLow,
-            bloomMid: bloomMid,
-            bloomHigh: bloomHigh
-        )
-        sprout.leafId = selectedLeafId
-        modelContext.insert(sprout)
-        dismiss()
-    }
-
-    private func plantNow() {
-        let sprout = Sprout(
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-            season: season,
-            environment: environment,
-            nodeId: nodeId,
-            soilCost: soilCost,
-            bloomLow: bloomLow,
-            bloomMid: bloomMid,
-            bloomHigh: bloomHigh
+            bloomWither: bloomWither,
+            bloomBudding: bloomBudding,
+            bloomFlourish: bloomFlourish
         )
         sprout.leafId = selectedLeafId
         modelContext.insert(sprout)

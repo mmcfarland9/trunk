@@ -48,8 +48,7 @@ struct BranchView: View {
                             TwigRow(
                                 twigIndex: twigIndex,
                                 label: labelForTwig(twigId, twigIndex: twigIndex),
-                                activeSproutCount: twigSprouts.filter { $0.state == .active }.count,
-                                draftSproutCount: twigSprouts.filter { $0.state == .draft }.count
+                                activeSproutCount: twigSprouts.filter { $0.state == .active }.count
                             )
                         }
                         .buttonStyle(.plain)
@@ -118,10 +117,9 @@ struct TwigRow: View {
     let twigIndex: Int
     let label: String
     let activeSproutCount: Int
-    let draftSproutCount: Int
 
     private var hasSprouts: Bool {
-        activeSproutCount > 0 || draftSproutCount > 0
+        activeSproutCount > 0
     }
 
     var body: some View {
@@ -147,18 +145,9 @@ struct TwigRow: View {
 
                 // Sprout counts
                 if hasSprouts {
-                    HStack(spacing: TrunkTheme.space3) {
-                        if activeSproutCount > 0 {
-                            Text("\(activeSproutCount) active")
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.twig)
-                        }
-                        if draftSproutCount > 0 {
-                            Text("\(draftSproutCount) draft")
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                        }
-                    }
+                    Text("\(activeSproutCount) active")
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.twig)
                 }
             }
 

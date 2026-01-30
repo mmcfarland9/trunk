@@ -157,14 +157,12 @@ struct ShineView: View {
     }
 
     private func performShine(twig: TwigContext) {
-        // Create SunEntry (twig-only, no leaf context)
+        // Create SunEntry (twig-only)
         let entry = SunEntry(
             content: reflection.trimmingCharacters(in: .whitespacesAndNewlines),
             prompt: selectedPrompt,
-            contextType: "twig",
-            contextNodeId: twig.nodeId,
-            contextLeafId: nil,
-            contextLabel: twig.label
+            twigId: twig.nodeId,
+            twigLabel: twig.label
         )
         modelContext.insert(entry)
 

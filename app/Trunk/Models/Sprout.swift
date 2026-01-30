@@ -71,10 +71,8 @@ enum SproutEnvironment: String, Codable, CaseIterable {
 
 /// State of a sprout in its lifecycle
 enum SproutState: String, Codable {
-    case draft
     case active
     case completed
-    case failed
 }
 
 @Model
@@ -96,9 +94,9 @@ final class Sprout: Identifiable {
     var plantedAt: Date?
     var harvestedAt: Date?
 
-    var bloomLow: String
-    var bloomMid: String
-    var bloomHigh: String
+    var bloomWither: String
+    var bloomBudding: String
+    var bloomFlourish: String
 
     @Relationship(deleteRule: .cascade)
     var waterEntries: [WaterEntry] = []
@@ -113,21 +111,22 @@ final class Sprout: Identifiable {
         environment: SproutEnvironment,
         nodeId: String,
         soilCost: Int,
-        bloomLow: String = "",
-        bloomMid: String = "",
-        bloomHigh: String = ""
+        bloomWither: String = "",
+        bloomBudding: String = "",
+        bloomFlourish: String = ""
     ) {
         self.sproutId = sproutId
         self.title = title
         self.seasonRaw = season.rawValue
         self.environmentRaw = environment.rawValue
-        self.stateRaw = SproutState.draft.rawValue
+        self.stateRaw = SproutState.active.rawValue
         self.soilCost = soilCost
         self.nodeId = nodeId
         self.createdAt = Date()
-        self.bloomLow = bloomLow
-        self.bloomMid = bloomMid
-        self.bloomHigh = bloomHigh
+        self.plantedAt = Date()  // Immediately planted
+        self.bloomWither = bloomWither
+        self.bloomBudding = bloomBudding
+        self.bloomFlourish = bloomFlourish
     }
 
     // Computed properties for type-safe enum access (read-only to avoid SwiftData issues)
@@ -140,7 +139,7 @@ final class Sprout: Identifiable {
     }
 
     var state: SproutState {
-        SproutState(rawValue: stateRaw) ?? .draft
+        SproutState(rawValue: stateRaw) ?? .active
     }
 
     var isReady: Bool {
@@ -149,19 +148,9 @@ final class Sprout: Identifiable {
         return Int(elapsed) >= season.durationMs
     }
 
-    func plant() {
-        stateRaw = SproutState.active.rawValue
-        plantedAt = Date()
-    }
-
     func harvest(result: Int) {
         self.result = result
         self.stateRaw = SproutState.completed.rawValue
-        self.harvestedAt = Date()
-    }
-
-    func fail() {
-        self.stateRaw = SproutState.failed.rawValue
         self.harvestedAt = Date()
     }
 }

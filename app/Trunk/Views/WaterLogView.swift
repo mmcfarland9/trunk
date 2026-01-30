@@ -127,8 +127,8 @@ struct WaterLogRow: View {
                     .foregroundStyle(Color.inkFaint)
             }
 
-            if !entry.note.isEmpty {
-                Text(entry.note)
+            if !entry.content.isEmpty {
+                Text(entry.content)
                     .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                     .foregroundStyle(Color.inkLight)
                     .lineLimit(3)

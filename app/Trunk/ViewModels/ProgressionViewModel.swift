@@ -76,7 +76,7 @@ final class ProgressionViewModel {
         resourceState.save()
     }
 
-    /// Return soil when uprooting a draft sprout
+    /// Return soil when uprooting a sprout
     func returnSoil(_ amount: Int) {
         resourceState.soilAvailable = min(
             resourceState.soilCapacity,
@@ -137,9 +137,9 @@ final class ProgressionViewModel {
     }
 
     /// Plant a sprout (deduct soil cost)
+    /// Note: Sprout is already in active state from creation
     func plantSprout(_ sprout: Sprout) {
         spendSoil(sprout.soilCost)
-        sprout.plant()
     }
 
     /// Refresh resource state (check for resets)

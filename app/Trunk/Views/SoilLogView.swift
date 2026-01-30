@@ -45,16 +45,6 @@ struct SoilLogView: View {
                     context: sprout.title
                 ))
             }
-
-            // Failed = partial soil recovery (estimate 70%)
-            if let harvestedAt = sprout.harvestedAt, sprout.state == .failed {
-                txns.append(SoilTransaction(
-                    date: harvestedAt,
-                    amount: Double(sprout.soilCost) * 0.7,
-                    reason: "Uprooted",
-                    context: sprout.title
-                ))
-            }
         }
 
         // Sun entries = soil recovery
@@ -63,7 +53,7 @@ struct SoilLogView: View {
                 date: entry.timestamp,
                 amount: ProgressionService.sunRecovery,
                 reason: "Shined",
-                context: entry.contextLabel
+                context: entry.twigLabel
             ))
         }
 
