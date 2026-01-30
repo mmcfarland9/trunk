@@ -25,9 +25,9 @@ extension Color {
     static let trunkDestructive = Color(red: 0.54, green: 0.29, blue: 0.23) // #8a4a3a
 
     // Borders
-    static let borderSubtle = Color.ink.opacity(0.08)
-    static let border = Color.ink.opacity(0.15)
-    static let borderStrong = Color.ink.opacity(0.25)
+    static let borderSubtle = Color.wood.opacity(0.08)
+    static let border = Color.wood.opacity(0.15)
+    static let borderStrong = Color.wood.opacity(0.25)
 }
 
 // MARK: - Theme
