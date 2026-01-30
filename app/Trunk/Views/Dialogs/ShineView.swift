@@ -14,11 +14,8 @@ struct ShineView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @Query private var sprouts: [Sprout]
-    @Query private var leaves: [Leaf]
-
     @State private var reflection = ""
-    @State private var selectedContext: ShineContext?
+    @State private var selectedTwig: TwigContext?
     @State private var selectedPrompt: String = ""
     @FocusState private var isReflectionFocused: Bool
 
@@ -27,17 +24,17 @@ struct ShineView: View {
             Color.parchment
                 .ignoresSafeArea()
 
-            if let context = selectedContext {
+            if let twig = selectedTwig {
                 ScrollView {
                     VStack(alignment: .leading, spacing: TrunkTheme.space5) {
-                        // Context display
+                        // Twig display
                         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                            Text(context.label.uppercased())
+                            Text(twig.label.uppercased())
                                 .font(.system(size: TrunkTheme.textLg, design: .monospaced))
                                 .fontWeight(.medium)
                                 .foregroundStyle(Color.ink)
 
-                            Text(context.subtitle)
+                            Text(twig.branchName)
                                 .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                                 .foregroundStyle(Color.inkFaint)
                         }
@@ -94,7 +91,7 @@ struct ShineView: View {
 
                         // Action button
                         Button("SHINE") {
-                            performShine(context: context)
+                            performShine(twig: twig)
                         }
                         .buttonStyle(.trunkSun)
                         .disabled(reflection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -104,18 +101,9 @@ struct ShineView: View {
                     .padding(TrunkTheme.space4)
                 }
             } else {
-                // No valid context found
-                VStack(spacing: TrunkTheme.space4) {
-                    Text("Nothing to reflect on yet")
-                        .font(.system(size: TrunkTheme.textLg, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-
-                    Text("Plant some sprouts or create leaves to start reflecting.")
-                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(TrunkTheme.space4)
+                // Loading state - should select immediately
+                ProgressView()
+                    .padding(TrunkTheme.space4)
             }
         }
         .navigationTitle("")
@@ -136,82 +124,47 @@ struct ShineView: View {
             }
         }
         .onAppear {
-            selectRandomContext()
-            selectedPrompt = SunPrompts.randomPrompt()
+            selectRandomTwig()
             isReflectionFocused = true
         }
     }
 
-    private func selectRandomContext() {
-        var candidates: [ShineContext] = []
+    /// Select a random twig from all 64 twigs (equal odds)
+    private func selectRandomTwig() {
+        let branchNames = ["Core", "Brain", "Voice", "Hands", "Heart", "Breath", "Back", "Feet"]
 
-        // Add twigs that have sprouts
-        let twigIds = Set(sprouts.map { $0.nodeId })
-        for twigId in twigIds {
-            if let context = makeContextFromTwigId(twigId) {
-                candidates.append(context)
+        // Generate all 64 twig candidates
+        var candidates: [TwigContext] = []
+        for branchIndex in 0..<8 {
+            for twigIndex in 0..<8 {
+                let twigLabel = defaultTwigLabels[branchIndex]?[twigIndex] ?? "Twig"
+                let branchName = branchNames[branchIndex]
+                let nodeId = "branch-\(branchIndex)-twig-\(twigIndex)"
+
+                candidates.append(TwigContext(
+                    nodeId: nodeId,
+                    label: twigLabel,
+                    branchName: branchName
+                ))
             }
         }
 
-        // Add leaves
-        for leaf in leaves {
-            candidates.append(ShineContext(
-                type: .leaf,
-                nodeId: nil,
-                leafId: leaf.id,
-                label: leaf.name,
-                subtitle: contextSubtitle(for: leaf.nodeId)
-            ))
+        // Select random twig and generate prompt with twig label
+        if let twig = candidates.randomElement() {
+            selectedTwig = twig
+            selectedPrompt = SunPrompts.randomPrompt(twigLabel: twig.label)
         }
-
-        selectedContext = candidates.randomElement()
     }
 
-    private func makeContextFromTwigId(_ twigId: String) -> ShineContext? {
-        let parts = twigId.split(separator: "-")
-        guard parts.count >= 4,
-              let branchIndex = Int(parts[1]),
-              let twigIndex = Int(parts[3]) else {
-            return nil
-        }
-
-        let twigLabel = defaultTwigLabels[branchIndex]?[twigIndex] ?? "Twig"
-        let branchNames = ["Core", "Brain", "Voice", "Hands", "Heart", "Breath", "Back", "Feet"]
-        let branchName = branchIndex < branchNames.count ? branchNames[branchIndex] : "Branch"
-
-        return ShineContext(
-            type: .twig,
-            nodeId: twigId,
-            leafId: nil,
-            label: twigLabel,
-            subtitle: branchName
-        )
-    }
-
-    private func contextSubtitle(for nodeId: String) -> String {
-        let parts = nodeId.split(separator: "-")
-        guard parts.count >= 4,
-              let branchIndex = Int(parts[1]),
-              let twigIndex = Int(parts[3]) else {
-            return ""
-        }
-
-        let branchNames = ["Core", "Brain", "Voice", "Hands", "Heart", "Breath", "Back", "Feet"]
-        let branchName = branchIndex < branchNames.count ? branchNames[branchIndex] : "Branch"
-        let twigLabel = defaultTwigLabels[branchIndex]?[twigIndex] ?? "Twig"
-
-        return "\(branchName) / \(twigLabel)"
-    }
-
-    private func performShine(context: ShineContext) {
-        // Create SunEntry
+    private func performShine(twig: TwigContext) {
+        // Create SunEntry (twig-only, no leaf context)
         let entry = SunEntry(
             content: reflection.trimmingCharacters(in: .whitespacesAndNewlines),
             prompt: selectedPrompt,
-            contextType: context.type == .twig ? "twig" : "leaf",
-            contextNodeId: context.nodeId,
-            contextLeafId: context.leafId,
-            contextLabel: context.label
+            contextType: "twig",
+            contextNodeId: twig.nodeId,
+            contextLeafId: nil,
+            contextLabel: twig.label
         )
         modelContext.insert(entry)
 
@@ -235,19 +188,13 @@ struct ShineView: View {
     }
 }
 
-// MARK: - ShineContext
+// MARK: - TwigContext
 
-struct ShineContext {
-    enum ContextType {
-        case twig
-        case leaf
-    }
-
-    let type: ContextType
-    let nodeId: String?
-    let leafId: String?
+/// Simple context for a selected twig (one of 64 life facets)
+struct TwigContext {
+    let nodeId: String
     let label: String
-    let subtitle: String
+    let branchName: String
 }
 
 #Preview {

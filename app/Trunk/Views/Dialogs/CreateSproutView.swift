@@ -41,7 +41,7 @@ struct CreateSproutView: View {
     }
 
     private var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && selectedLeafId != nil
     }
 
     var body: some View {
@@ -51,12 +51,62 @@ struct CreateSproutView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: TrunkTheme.space5) {
-                    // Title
+                    // Leaf (saga) picker - required, comes first
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                        Text("WHAT DO YOU WANT TO GROW?")
-                            .monoLabel(size: TrunkTheme.textXs)
+                        LabelWithHint(label: "LEAF", hint: "(saga)")
 
-                        TextField("Enter title...", text: $title)
+                        VStack(spacing: 1) {
+                            // Existing leaves
+                            ForEach(twigLeaves) { leaf in
+                                Button {
+                                    selectedLeafId = leaf.id
+                                } label: {
+                                    HStack {
+                                        Text(leaf.name)
+                                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                            .foregroundStyle(selectedLeafId == leaf.id ? Color.ink : Color.inkFaint)
+
+                                        Spacer()
+
+                                        Text(selectedLeafId == leaf.id ? "●" : "○")
+                                            .font(.system(size: 10, design: .monospaced))
+                                            .foregroundStyle(selectedLeafId == leaf.id ? Color.wood : Color.inkFaint)
+                                    }
+                                    .padding(.vertical, TrunkTheme.space2)
+                                    .padding(.horizontal, TrunkTheme.space3)
+                                    .background(Color.paper)
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            // New leaf option
+                            Button {
+                                showNewLeafAlert = true
+                            } label: {
+                                HStack {
+                                    Text("+ Create new leaf")
+                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                        .foregroundStyle(Color.twig)
+
+                                    Spacer()
+                                }
+                                .padding(.vertical, TrunkTheme.space2)
+                                .padding(.horizontal, TrunkTheme.space3)
+                                .background(Color.paper)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                    }
+
+                    // Sprout title
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        LabelWithHint(label: "SPROUT", hint: "(task)")
+
+                        TextField("Describe this sprout.", text: $title)
                             .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                             .foregroundStyle(Color.ink)
                             .padding(TrunkTheme.space3)
@@ -69,8 +119,7 @@ struct CreateSproutView: View {
 
                     // Season
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                        Text("SEASON")
-                            .monoLabel(size: TrunkTheme.textXs)
+                        LabelWithHint(label: "SEASON", hint: "(period)")
 
                         VStack(spacing: 1) {
                             ForEach(Season.allCases, id: \.self) { s in
@@ -109,8 +158,7 @@ struct CreateSproutView: View {
 
                     // Environment
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                        Text("ENVIRONMENT")
-                            .monoLabel(size: TrunkTheme.textXs)
+                        LabelWithHint(label: "ENVIRONMENT", hint: "(difficulty)")
 
                         VStack(spacing: 1) {
                             ForEach(SproutEnvironment.allCases, id: \.self) { e in
@@ -123,7 +171,7 @@ struct CreateSproutView: View {
                                                 .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                                                 .foregroundStyle(environment == e ? Color.ink : Color.inkFaint)
 
-                                            Text(e.sproutDescription)
+                                            Text(e.formHint)
                                                 .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                                                 .foregroundStyle(Color.inkFaint)
                                         }
@@ -153,88 +201,14 @@ struct CreateSproutView: View {
                         )
                     }
 
-                    // Leaf (saga) picker
-                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                        Text("LEAF (SAGA)")
-                            .monoLabel(size: TrunkTheme.textXs)
-
-                        VStack(spacing: 1) {
-                            // None option
-                            Button {
-                                selectedLeafId = nil
-                            } label: {
-                                HStack {
-                                    Text("None")
-                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                        .foregroundStyle(selectedLeafId == nil ? Color.ink : Color.inkFaint)
-
-                                    Spacer()
-
-                                    Text(selectedLeafId == nil ? "●" : "○")
-                                        .font(.system(size: 10, design: .monospaced))
-                                        .foregroundStyle(selectedLeafId == nil ? Color.wood : Color.inkFaint)
-                                }
-                                .padding(.vertical, TrunkTheme.space2)
-                                .padding(.horizontal, TrunkTheme.space3)
-                                .background(Color.paper)
-                            }
-                            .buttonStyle(.plain)
-
-                            // Existing leaves
-                            ForEach(twigLeaves) { leaf in
-                                Button {
-                                    selectedLeafId = leaf.id
-                                } label: {
-                                    HStack {
-                                        Text(leaf.name)
-                                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                            .foregroundStyle(selectedLeafId == leaf.id ? Color.ink : Color.inkFaint)
-
-                                        Spacer()
-
-                                        Text(selectedLeafId == leaf.id ? "●" : "○")
-                                            .font(.system(size: 10, design: .monospaced))
-                                            .foregroundStyle(selectedLeafId == leaf.id ? Color.wood : Color.inkFaint)
-                                    }
-                                    .padding(.vertical, TrunkTheme.space2)
-                                    .padding(.horizontal, TrunkTheme.space3)
-                                    .background(Color.paper)
-                                }
-                                .buttonStyle(.plain)
-                            }
-
-                            // New leaf option
-                            Button {
-                                showNewLeafAlert = true
-                            } label: {
-                                HStack {
-                                    Text("+ New leaf...")
-                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                        .foregroundStyle(Color.twig)
-
-                                    Spacer()
-                                }
-                                .padding(.vertical, TrunkTheme.space2)
-                                .padding(.horizontal, TrunkTheme.space3)
-                                .background(Color.paper)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.border, lineWidth: 1)
-                        )
-                    }
-
                     // Bloom descriptions
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                        Text("BLOOM DESCRIPTIONS")
-                            .monoLabel(size: TrunkTheme.textXs)
+                        LabelWithHint(label: "BLOOM", hint: "(outcomes)")
 
                         VStack(spacing: TrunkTheme.space2) {
-                            BloomField(label: "1/5", placeholder: "Minimal outcome...", text: $bloomLow)
-                            BloomField(label: "3/5", placeholder: "Good outcome...", text: $bloomMid)
-                            BloomField(label: "5/5", placeholder: "Exceptional outcome...", text: $bloomHigh)
+                            BloomField(emoji: "🥀", placeholder: "What does withering look like?", text: $bloomLow)
+                            BloomField(emoji: "🌱", placeholder: "What does budding look like?", text: $bloomMid)
+                            BloomField(emoji: "🌲", placeholder: "What does flourishing look like?", text: $bloomHigh)
                         }
                     }
 
@@ -367,16 +341,34 @@ struct CreateSproutView: View {
     }
 }
 
-struct BloomField: View {
+struct LabelWithHint: View {
     let label: String
+    let hint: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .textCase(.uppercase)
+                .tracking(TrunkTheme.trackingUppercase)
+                .foregroundStyle(Color.inkFaint)
+
+            Text(hint)
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint.opacity(0.7))
+        }
+    }
+}
+
+struct BloomField: View {
+    let emoji: String
     let placeholder: String
     @Binding var text: String
 
     var body: some View {
         HStack(alignment: .top, spacing: TrunkTheme.space2) {
-            Text(label)
-                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
+            Text(emoji)
+                .font(.system(size: TrunkTheme.textBase))
                 .frame(width: 24)
 
             TextField(placeholder, text: $text, axis: .vertical)

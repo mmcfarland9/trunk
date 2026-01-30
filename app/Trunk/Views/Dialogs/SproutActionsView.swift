@@ -213,7 +213,12 @@ struct SproutActionsView: View {
 
         Section {
             Button(role: .destructive) {
-                sprout.fail()
+                // Return 25% of soil cost (matches web behavior)
+                let soilReturn = Int(Double(sprout.soilCost) * 0.25)
+                progression.returnSoil(soilReturn)
+                // Delete the sprout (web removes entirely, not just marks failed)
+                modelContext.delete(sprout)
+                dismiss()
             } label: {
                 Label("Uproot", systemImage: "xmark.circle")
             }

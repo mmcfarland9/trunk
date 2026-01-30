@@ -58,6 +58,15 @@ enum SproutEnvironment: String, Codable, CaseIterable {
         case .barren: return "Very difficult"
         }
     }
+
+    /// Hint text matching web app exactly
+    var formHint: String {
+        switch self {
+        case .fertile: return "[Comfortable terrain · no soil bonus]"
+        case .firm: return "[New obstacles · +1 soil capacity]"
+        case .barren: return "[Hostile conditions · +2 soil capacity]"
+        }
+    }
 }
 
 /// State of a sprout in its lifecycle

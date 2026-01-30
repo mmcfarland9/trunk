@@ -2,7 +2,7 @@
 //  MainTabView.swift
 //  Trunk
 //
-//  Root tab view container with Today, Tree, Sagas, and Settings tabs.
+//  Root tab view container with Today, Tree, and Settings tabs.
 //
 
 import SwiftUI
@@ -12,6 +12,7 @@ struct MainTabView: View {
     @Bindable var progression: ProgressionViewModel
 
     @Query private var sprouts: [Sprout]
+    @State private var selectedTab = 0
 
     private var readyToHarvestCount: Int {
         sprouts.filter { $0.state == .active && $0.isReady }.count
@@ -22,28 +23,23 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 TodayView(progression: progression)
             }
             .tabItem {
                 Label("Today", systemImage: "sun.horizon")
             }
+            .tag(0)
             .badge(hasPendingActions ? "!" : nil)
 
             NavigationStack {
                 OverviewView(progression: progression)
             }
             .tabItem {
-                Label("Tree", systemImage: "tree")
+                Label("Trunk", systemImage: "tree")
             }
-
-            NavigationStack {
-                SagasView(progression: progression)
-            }
-            .tabItem {
-                Label("Sagas", systemImage: "book.pages")
-            }
+            .tag(1)
 
             NavigationStack {
                 SettingsView(progression: progression)
@@ -51,8 +47,12 @@ struct MainTabView: View {
             .tabItem {
                 Label("Settings", systemImage: "gearshape")
             }
+            .tag(2)
         }
         .tint(Color.wood)
+        .transaction { transaction in
+            transaction.animation = nil
+        }
     }
 }
 

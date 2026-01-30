@@ -11,8 +11,6 @@ import SwiftData
 struct SettingsView: View {
     @Bindable var progression: ProgressionViewModel
 
-    @AppStorage("trunk-user-name") private var userName: String = ""
-
     var body: some View {
         ZStack {
             Color.parchment
@@ -20,9 +18,6 @@ struct SettingsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: TrunkTheme.space5) {
-                    // Profile section
-                    profileSection
-
                     // History section
                     historySection
 
@@ -31,11 +26,6 @@ struct SettingsView: View {
 
                     // About section
                     aboutSection
-
-                    // Debug section (development only)
-                    #if DEBUG
-                    debugSection
-                    #endif
                 }
                 .padding(TrunkTheme.space4)
             }
@@ -53,35 +43,6 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
-
-    private var profileSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("PROFILE")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Name")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-
-                    Spacer()
-
-                    TextField("Your name", text: $userName)
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.inkLight)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 150)
-                }
-                .padding(TrunkTheme.space3)
-            }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
-        }
-    }
 
     private var historySection: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -181,27 +142,6 @@ struct SettingsView: View {
         }
     }
 
-    #if DEBUG
-    private var debugSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("DEBUG")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            VStack(spacing: 1) {
-                Button {
-                    progression.resetToDefaults()
-                } label: {
-                    SettingsRow(icon: "⟲", title: "Reset Resources", subtitle: "Reset soil, water, sun to defaults")
-                }
-            }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
-        }
-    }
-    #endif
 }
 
 // MARK: - Settings Row
