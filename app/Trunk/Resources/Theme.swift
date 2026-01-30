@@ -139,7 +139,7 @@ struct TrunkButtonStyle: ButtonStyle {
             .padding(.horizontal, TrunkTheme.space4)
             .padding(.vertical, TrunkTheme.space2)
             .foregroundStyle(foregroundColor)
-            .background(backgroundColor)
+            .background(configuration.isPressed ? pressedBackgroundColor : backgroundColor)
             .overlay(
                 Rectangle()
                     .stroke(borderColor, lineWidth: 1)
@@ -149,21 +149,31 @@ struct TrunkButtonStyle: ButtonStyle {
 
     private var foregroundColor: Color {
         switch variant {
-        case .primary: return .paper
+        case .primary: return .wood
         case .secondary: return .ink
-        case .water: return .paper
-        case .sun: return .ink
-        case .destructive: return .paper
+        case .water: return .trunkWater
+        case .sun: return .trunkSun
+        case .destructive: return Color(red: 0.54, green: 0.29, blue: 0.23)
         }
     }
 
     private var backgroundColor: Color {
         switch variant {
-        case .primary: return .wood
+        case .primary: return .clear
         case .secondary: return .clear
-        case .water: return .trunkWater
-        case .sun: return .trunkSun
-        case .destructive: return Color(red: 0.54, green: 0.29, blue: 0.23)
+        case .water: return .clear
+        case .sun: return .clear
+        case .destructive: return .clear
+        }
+    }
+
+    private var pressedBackgroundColor: Color {
+        switch variant {
+        case .primary: return .wood.opacity(0.08)
+        case .secondary: return .ink.opacity(0.03)
+        case .water: return .trunkWater.opacity(0.08)
+        case .sun: return .trunkSun.opacity(0.08)
+        case .destructive: return Color(red: 0.54, green: 0.29, blue: 0.23).opacity(0.08)
         }
     }
 
