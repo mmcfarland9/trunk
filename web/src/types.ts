@@ -26,18 +26,15 @@ export type WaterLogEntry = {
 }
 
 // Sun entry - global philosophical reflection log
-// Randomly selects a twig or leaf to reflect on
+// Randomly selects a twig to reflect on
 export type SunEntry = {
   timestamp: string
   content: string
   prompt?: string
-  // Context: what was randomly selected for reflection
+  // Context: which twig was randomly selected
   context: {
-    type: 'twig' | 'leaf'
     twigId: string
     twigLabel: string
-    leafId?: string
-    leafTitle?: string // derived from most recent sprout title
   }
 }
 
