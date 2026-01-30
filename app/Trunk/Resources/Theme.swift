@@ -49,6 +49,14 @@ enum TrunkTheme {
     static let textXl: CGFloat = 18
 }
 
+// MARK: - Typography
+
+enum TrunkFontWeight {
+    case regular    // Body text, descriptions
+    case medium     // Labels, secondary emphasis
+    case semibold   // Headings, primary emphasis
+}
+
 // MARK: - View Modifiers
 
 struct ParchmentBackground: ViewModifier {
@@ -120,6 +128,15 @@ extension View {
 
     func monoLabel(size: CGFloat = TrunkTheme.textSm, uppercase: Bool = true) -> some View {
         modifier(MonoLabel(size: size, uppercase: uppercase))
+    }
+
+    func trunkFont(size: CGFloat, weight: TrunkFontWeight = .regular) -> some View {
+        let fontWeight: Font.Weight = switch weight {
+        case .regular: .regular
+        case .medium: .medium
+        case .semibold: .semibold
+        }
+        return self.font(.system(size: size, weight: fontWeight, design: .monospaced))
     }
 }
 
