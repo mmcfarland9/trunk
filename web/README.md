@@ -39,13 +39,14 @@ web/
 ├── src/
 │   ├── main.ts              # Entry point
 │   ├── constants.ts         # Web-specific constants
-│   ├── state.ts             # Global state management
+│   ├── state.ts             # Legacy state management
 │   ├── types.ts             # TypeScript types
+│   ├── events/              # Event-sourced state (new architecture)
 │   ├── features/            # Feature modules
 │   ├── ui/                  # UI components
 │   ├── utils/               # Utility functions
 │   └── tests/               # Test files
-├── assets/                  # Static assets
+├── e2e/                     # Playwright E2E tests
 ├── index.html               # HTML entry point
 ├── package.json             # Dependencies
 ├── tsconfig.json            # TypeScript config

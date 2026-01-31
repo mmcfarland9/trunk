@@ -25,18 +25,29 @@ This file provides guidance to Claude Code when working with this repository.
 - Formulas: `shared/formulas.md`
 - Default map: `shared/assets/trunk-map-preset.json`
 
+**Related documentation:**
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — System diagrams, event sourcing, module relationships
+- [ONBOARDING.md](docs/ONBOARDING.md) — Quick start, common tasks, gotchas
+- [DATA_MODEL.md](docs/DATA_MODEL.md) — Entity relationships, storage keys, constants
+- [INTERFACES.md](docs/INTERFACES.md) — Module APIs, extension points
+
 ---
 
 ## Build Commands (Web App)
 
 ```bash
 cd web
-npm run dev      # Start Vite development server
-npm run build    # Compile TypeScript and build for production
-npm run preview  # Preview production build locally
+npm run dev           # Start Vite development server
+npm run build         # Compile TypeScript and build for production
+npm run preview       # Preview production build locally
+npm test              # Run unit tests (Vitest)
+npm run test:watch    # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+npm run test:e2e      # Run E2E tests (Playwright)
+npm run test:mutation # Run mutation tests (Stryker)
 ```
 
-No test or lint commands configured. TypeScript strict mode handles type checking.
+TypeScript strict mode handles type checking (`noUnusedLocals`, `noUnusedParameters`).
 
 ---
 
@@ -93,9 +104,9 @@ A **leaf** is a named trajectory of related sprouts—a continuing story. Each l
 
 | Resource | Represents | Capacity | Restores | Used For |
 |----------|------------|----------|----------|----------|
-| **Soil** | Focus/energy budget | Grows over lifetime (10→100) | Goal completion, journaling | Planting sprouts |
-| **Water** | Daily attention | 3/day | Midnight reset | Watering active sprouts |
-| **Sun** | Weekly reflection | 1/week | Weekly reset | Shining on any twig |
+| **Soil** | Focus/energy budget | Grows over lifetime (10→120) | Goal completion, journaling | Planting sprouts |
+| **Water** | Daily attention | 3/day | 6:00 AM local | Watering active sprouts |
+| **Sun** | Weekly reflection | 1/week | 6:00 AM Monday | Shining on any twig |
 
 **Key insight**: Water requires active sprouts. Sun works on any twig, so you can always reflect even with no active goals.
 
@@ -143,7 +154,7 @@ Visual keyboard hints appear in the sidebar when shortcuts are available for the
 ### Soil Economy
 
 **Starting capacity**: 10 (enough for a few concurrent goals)
-**Maximum capacity**: 100 (approached after ~20 years of consistent effort)
+**Maximum capacity**: 120 (mythical ceiling after ~50 years; realistic limit ~100)
 
 **Planting costs** (soil spent):
 
@@ -159,13 +170,13 @@ Visual keyboard hints appear in the sidebar when shortcuts are available for the
 
 - **Environment multipliers**: Fertile 1.1x, Firm 1.75x, Barren 2.4x (risk rewarded)
 - **Result multipliers**: 1→0.4, 2→0.55, 3→0.7, 4→0.85, 5→1.0 (showing up counts)
-- **Diminishing returns**: Quadratic `(1 - capacity/100)²` — growth slows dramatically near max
+- **Diminishing returns**: `(1 - capacity/120)^1.5` — growth slows dramatically near max
 
 **Recovery rates**:
 - Water: +0.05 soil per use (3/day max = ~1.05/week)
 - Sun: +0.35 soil per use (1/week)
 
-See `docs/progression-system.md` for full formulas and projection tables.
+See `shared/formulas.md` for full formulas (both platforms must implement identically).
 
 ---
 
@@ -177,10 +188,13 @@ All data persists to localStorage:
 
 | Key | Contents |
 |-----|----------|
-| `trunk-notes-v1` | Node data (labels, notes, sprouts, leaves), sun log, soil log |
-| `trunk-resources-v1` | Soil/water/sun state, capacities, reset times |
+| `trunk-events-v1` | Event log (event-sourced actions: plant, water, harvest, etc.) |
+| `trunk-notes-v1` | Legacy node data (labels, notes, sprouts, leaves), sun log, soil log |
+| `trunk-resources-v1` | Legacy resource state (being deprecated, resources now derived) |
 | `trunk-notifications-v1` | Email notification preferences |
 | `trunk-last-export` | Timestamp of last JSON export |
+
+**Note**: The system is transitioning to event sourcing. New actions append to `trunk-events-v1`, and state is derived from the event log rather than stored directly.
 
 ### Key Types (src/types.ts)
 
@@ -223,7 +237,7 @@ type Leaf = {
 
 ### Preset Labels
 
-Default twig labels come from `assets/trunk-map-preset.json`. Each twig has a default label that shows if the user hasn't customized it.
+Default twig labels come from `shared/assets/trunk-map-preset.json`. Each twig has a default label that shows if the user hasn't customized it.
 
 ---
 
@@ -234,11 +248,15 @@ src/
 ├── main.ts              # Entry point, wires everything together
 ├── types.ts             # All TypeScript type definitions
 ├── constants.ts         # BRANCH_COUNT, TWIG_COUNT, STORAGE_KEY, etc.
+├── state.ts             # Legacy state: nodeState, migrations, persistence
 │
-├── state/               # Global state management
-│   ├── index.ts         # Re-exports everything
-│   ├── node-state.ts    # nodeState object, persistence, migrations
-│   └── view-state.ts    # View mode, focused node, hover state
+├── events/              # Event-sourced state (new architecture)
+│   ├── index.ts         # Public API exports
+│   ├── types.ts         # Event type definitions
+│   ├── store.ts         # Event persistence (localStorage)
+│   ├── derive.ts        # State derivation from events
+│   ├── migrate.ts       # Migration from legacy state to events
+│   └── rebuild.ts       # Rebuild state from event log
 │
 ├── features/            # Feature modules (business logic)
 │   ├── navigation.ts    # View switching, zoom transitions
@@ -247,7 +265,9 @@ src/
 │   ├── hover-branch.ts  # Branch/twig hover detection
 │   ├── import-export.ts # JSON backup/restore
 │   ├── water-dialog.ts  # Water journaling modal
-│   └── shine-dialog.ts  # Sun reflection modal
+│   ├── harvest-dialog.ts # Harvest sprout modal
+│   ├── shine-dialog.ts  # Sun reflection modal
+│   └── log-dialogs.ts   # History view modals (water can, sun ledge, soil bag)
 │
 ├── ui/                  # UI construction and rendering
 │   ├── dom-builder.ts   # Builds entire DOM tree, exports elements
@@ -257,20 +277,28 @@ src/
 │   ├── twig-view.ts     # Twig detail panel (sprout management)
 │   └── leaf-view.ts     # Leaf saga panel
 │
+├── utils/               # Utility functions
+│   ├── debounce.ts      # Debounce helper
+│   ├── escape-html.ts   # XSS prevention
+│   ├── safe-storage.ts  # localStorage wrapper with error handling
+│   ├── sprout-labels.ts # Season/environment label helpers
+│   └── validate-import.ts # Import validation
+│
+├── tests/               # Unit and integration tests
+│   ├── setup.ts         # Test utilities
+│   └── *.test.ts        # Test files (20+)
+│
 └── styles/              # Modular CSS
     ├── index.css        # Imports all other CSS
-    ├── variables.css    # CSS custom properties (colors, spacing)
-    ├── base.css         # Reset, foundational styles
+    ├── base.css         # Reset, CSS variables, foundational styles
     ├── layout.css       # App shell grid/flexbox
     ├── buttons.css      # Button component styles
-    ├── canvas.css       # Tree canvas, zoom states
+    ├── cards.css        # Card component styles
     ├── nodes.css        # Trunk/branch/twig node styles
     ├── editor.css       # Editor modal
-    ├── panel.css        # Side panel
+    ├── sidebar.css      # Side panel styles
     ├── dialogs.css      # All dialog modals
-    ├── meters.css       # Soil/water/sun meter displays
-    ├── utilities.css    # Utility classes
-    └── responsive.css   # Breakpoints (960px, 720px, 520px)
+    └── twig-view.css    # Twig detail panel styles
 ```
 
 ### Key File Responsibilities
@@ -278,7 +306,9 @@ src/
 | File | Purpose |
 |------|---------|
 | `main.ts` | Initializes app, wires up all event listeners, coordinates features |
-| `state/index.ts` | All state: nodeState, resources, logs, getters/setters, persistence |
+| `state.ts` | Legacy state management: nodeState, migrations, persistence |
+| `events/store.ts` | Event log: append, get, export events |
+| `events/derive.ts` | Derives current state by replaying events |
 | `dom-builder.ts` | Constructs entire DOM, returns `elements` object and `branchGroups` |
 | `twig-view.ts` | Complex panel for sprout CRUD: create, edit, plant, harvest, uproot |
 | `leaf-view.ts` | Leaf saga view: chronological history of related sprouts |
@@ -289,13 +319,15 @@ src/
 
 ## State Management
 
-### nodeState
+Trunk uses a **dual state system** during transition to event sourcing:
 
-The `nodeState` object holds all node data, keyed by node ID:
+### Legacy State (`state.ts`)
+
+The `nodeState` object holds node data (labels, notes), keyed by node ID:
 
 ```typescript
 const nodeState: Record<string, NodeData> = {
-  'trunk': { label: 'My Life', note: '...', sprouts: [...] },
+  'trunk': { label: 'My Life', note: '...' },
   'branch-0': { label: 'Health', note: '...' },
   'branch-0-twig-0': { label: 'Movement', note: '...', sprouts: [...], leaves: [...] },
   // ...
@@ -304,22 +336,30 @@ const nodeState: Record<string, NodeData> = {
 
 Changes auto-persist to localStorage via `saveState()`.
 
-### Resource State
+### Event-Sourced State (`events/`)
 
-Separate from nodeState, managed in `state/index.ts`:
+The new architecture stores actions as immutable events. State is derived by replaying the log:
 
 ```typescript
-// Soil: available budget and lifetime capacity
-getSoilAvailable() / getSoilCapacity() / spendSoil() / earnSoilCapacity()
+// Append events (never modify)
+appendEvent({ type: 'sprout-planted', sproutId, twigId, ... })
+appendEvent({ type: 'sprout-watered', sproutId, note, ... })
+appendEvent({ type: 'sprout-harvested', sproutId, result, ... })
 
-// Water: daily uses (resets at midnight)
-getWaterAvailable() / getWaterCapacity() / useWater()
-
-// Sun: weekly uses
-getSunAvailable() / useSun()
+// Derive current state
+const state = deriveState(getEvents())
+// state.soilCapacity, state.soilAvailable, state.sprouts, state.leaves
 ```
 
-### View State
+**Anti-cheat benefit**: Resources are derived from logs, not stored counters:
+
+```typescript
+// Water/sun availability derived from action timestamps
+getWaterAvailable()  // = capacity - countWaterEntriesSince(6amToday)
+getSunAvailable()    // = capacity - countSunEntriesSince(6amMonday)
+```
+
+### View State (in-memory)
 
 ```typescript
 getViewMode()           // 'overview' | 'branch' | 'twig' | 'leaf'
@@ -329,14 +369,14 @@ getHoveredBranchIndex() // Which branch is being hovered (overview only)
 getFocusedNode()        // Currently focused DOM element for sidebar display
 ```
 
-### Logs (for state reconstruction)
+### Logs (legacy, in nodeState)
 
 ```typescript
 sunLog: SunEntry[]   // All sun reflections with timestamps
 soilLog: SoilEntry[] // All soil gains/losses with reasons
 ```
 
-These logs have no caps—full history is preserved for accurate state reconstruction from exports.
+Full history is preserved for accurate state reconstruction from exports.
 
 ---
 
@@ -435,6 +475,12 @@ Use Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test
 
 ---
 
-## Future Reference
+## Additional Documentation
 
-Archived feature designs are documented in `docs/future-ideas-archive.md`, including an elaborate Flowerdex/genetics collection system that was planned but not implemented.
+| Document | Purpose |
+|----------|---------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, event sourcing, cross-platform parity |
+| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, debugging tips |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Entity relationships, storage keys, constants reference |
+| [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs, extension points, test fixtures |
+| [docs/future-ideas-archive.md](docs/future-ideas-archive.md) | Archived feature designs (Flowerdex, etc.) |
