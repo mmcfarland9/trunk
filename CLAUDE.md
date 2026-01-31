@@ -7,7 +7,7 @@ This file provides guidance to Claude Code when working with this repository.
 **This is a monorepo with multiple projects:**
 
 - `web/` - Vite + TypeScript web application
-- `app/` - Swift + SwiftUI iOS application (in development)
+- `ios/` - Swift + SwiftUI iOS application (in development)
 - `shared/` - Platform-agnostic constants, schemas, and specifications
 
 **When working on web app:**
@@ -16,7 +16,7 @@ This file provides guidance to Claude Code when working with this repository.
 - All build commands run from `web/` directory
 
 **When working on iOS app:**
-- Change directory to `app/`
+- Change directory to `ios/`
 - Open `Trunk.xcodeproj` in Xcode
 
 **Shared specifications:**

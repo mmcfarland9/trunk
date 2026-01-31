@@ -11,7 +11,7 @@ npm run dev    # http://localhost:5173
 
 ### iOS App
 ```bash
-cd app
+cd ios
 open Trunk.xcodeproj  # Build with Cmd+R in Xcode
 ```
 
@@ -32,7 +32,7 @@ npm run test:e2e      # E2E tests (Playwright)
 | `web/src/events/` | Event sourcing (state management) |
 | `web/src/features/` | Business logic modules |
 | `web/src/ui/` | DOM rendering |
-| `app/Trunk/` | iOS source |
+| `ios/Trunk/` | iOS source |
 | `shared/constants.json` | All magic numbers |
 | `shared/formulas.md` | Progression math |
 | `CLAUDE.md` | Detailed codebase guide |
@@ -60,7 +60,7 @@ npm run test:e2e      # E2E tests (Playwright)
 1. Update math in `shared/formulas.md` (source of truth)
 2. Update `shared/constants.json` if values change
 3. Update `web/src/events/derive.ts` (web implementation)
-4. Update `app/Trunk/Services/ProgressionService.swift` (iOS)
+4. Update `ios/Trunk/Services/ProgressionService.swift` (iOS)
 5. Run cross-platform parity tests
 
 ### Adding a Dialog/Modal

@@ -44,7 +44,7 @@ Once a platform reaches 1.0.0:
 
 1. Update `MARKETING_VERSION` in Xcode (both Debug and Release)
 2. Increment `CURRENT_PROJECT_VERSION` (build number: 1, 2, 3...)
-3. Update `app/CHANGELOG.md` with changes
+3. Update `ios/CHANGELOG.md` with changes
 4. Commit: `git commit -m "chore(ios): bump version to X.Y.Z"`
 5. Tag: `git tag -a ios-vX.Y.Z -m "iOS app version X.Y.Z"`
 6. Push: `git push && git push --tags`
@@ -63,7 +63,7 @@ Example: Version 0.2.0 might have builds 5, 6, 7 during development.
 
 Each platform maintains its own changelog:
 - `web/CHANGELOG.md`
-- `app/CHANGELOG.md`
+- `ios/CHANGELOG.md`
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 

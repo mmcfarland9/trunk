@@ -1,0 +1,15 @@
+{
+  "name": "trunk-monorepo",
+  "private": true,
+  "description": "Personal growth and goal-tracking application",
+  "scripts": {
+    "dev": "npm run dev --prefix web",
+    "build": "npm run build --prefix web",
+    "preview": "npm run preview --prefix web",
+    "test": "npm test --prefix web",
+    "test:watch": "npm run test:watch --prefix web",
+    "test:coverage": "npm run test:coverage --prefix web",
+    "test:e2e": "npm run test:e2e --prefix web",
+    "test:mutation": "npm run test:mutation --prefix web"
+  }
+}

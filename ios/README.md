@@ -7,7 +7,7 @@ Native iOS application for Trunk personal growth tracking.
 ## Planned Structure
 
 ```
-app/
+ios/
 ├── Trunk.xcodeproj/         # Xcode project
 ├── Trunk/                   # App source code
 │   ├── TrunkApp.swift       # App entry point

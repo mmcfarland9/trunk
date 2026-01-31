@@ -208,7 +208,7 @@ export function getMyDerivedValue(): number {
 
 ---
 
-## iOS ProgressionService (app/Trunk/Services/ProgressionService.swift)
+## iOS ProgressionService (ios/Trunk/Services/ProgressionService.swift)
 
 ```swift
 class ProgressionService {

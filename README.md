@@ -9,7 +9,7 @@ A personal growth and goal-tracking application built around gardening metaphors
 ```
 trunk/
 ├── web/           # Web application (Vite + TypeScript)
-├── app/           # iOS application (Swift + SwiftUI)
+├── ios/           # iOS application (Swift + SwiftUI)
 ├── shared/        # Shared constants, schemas, and specifications
 └── docs/          # Documentation and planning
 ```
@@ -41,13 +41,13 @@ npm test
 
 See [web/README.md](./web/README.md) for details.
 
-### iOS App (`./app`)
+### iOS App (`./ios`)
 
 Native iOS application built with Swift and SwiftUI.
 
 **Status:** In development
 
-See [app/README.md](./app/README.md) for details.
+See [ios/README.md](./ios/README.md) for details.
 
 ### Shared Specs (`./shared`)
 
