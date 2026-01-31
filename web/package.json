@@ -14,10 +14,10 @@
     "test:mutation": "stryker run"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.1",
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.58.0",
     "@stryker-mutator/core": "^8.7.1",
     "@stryker-mutator/vitest-runner": "^8.7.1",
-    "@playwright/test": "^1.58.0",
     "@types/jsdom": "^27.0.0",
     "jsdom": "^27.4.0",
     "typescript": "~5.9.3",
