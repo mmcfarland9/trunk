@@ -28,10 +28,9 @@ dist-ssr
 
 ramblings.txt.worktrees/
 
-# iOS
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/project.xcworkspace/xcuserdata/
+# iOS - Xcode user data
+**/xcuserdata/
+**/*.xcworkspace/xcuserdata/
 DerivedData/
 *.pbxuser
 *.mode1v3
