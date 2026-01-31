@@ -11,6 +11,7 @@ import {
   formatResetTime,
   getDebugDate,
   advanceClockByDays,
+  setDebugDate,
   resetResources,
 } from '../state'
 
@@ -86,14 +87,18 @@ describe('Weekly Reset Time (getWeekResetTime)', () => {
   })
 
   it('should change after advancing clock past Sunday', () => {
-    const reset1 = getWeekResetTime()
+    // Set to a known Wednesday at noon to avoid edge cases
+    // Wednesday Jan 22, 2025 at 12:00 PM
+    setDebugDate(new Date(2025, 0, 22, 12, 0, 0))
+
+    const reset1 = getWeekResetTime() // Should be Sunday Jan 19, 2025 at 6am
 
     // Advance by 8 days to ensure we pass a Sunday
-    advanceClockByDays(8)
+    advanceClockByDays(8) // Now Thursday Jan 30, 2025 at noon
 
-    const reset2 = getWeekResetTime()
+    const reset2 = getWeekResetTime() // Should be Sunday Jan 26, 2025 at 6am
 
-    // New reset should be 7 days after previous
+    // New reset should be 7 days after previous (Jan 19 → Jan 26)
     const dayDiff = Math.round((reset2.getTime() - reset1.getTime()) / (24 * 60 * 60 * 1000))
     expect(dayDiff).toBe(7)
   })

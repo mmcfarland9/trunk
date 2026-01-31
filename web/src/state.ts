@@ -609,6 +609,10 @@ export function advanceClockByDays(days: number): void {
   clockOffset += days * 24 * 60 * 60 * 1000
 }
 
+export function setDebugDate(date: Date): void {
+  clockOffset = date.getTime() - Date.now()
+}
+
 // --- Sprout Helpers ---
 
 export function generateSproutId(): string {
