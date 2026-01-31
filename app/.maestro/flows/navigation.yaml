@@ -1,0 +1,54 @@
+appId: mpmcf.Trunk
+name: Navigation - Tab Bar and Tree Navigation
+---
+
+# Launch the app
+- launchApp:
+    clearState: false
+
+# Wait for app to load
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+
+# Verify Today tab is visible and selected
+- assertVisible: "Today"
+
+# Navigate to Log tab
+- tapOn: "Log"
+- extendedWaitUntil:
+    visible: "Activity Log"
+    timeout: 5000
+
+# Navigate back to Today
+- tapOn: "Today"
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 5000
+
+# Navigate to Trunk tab
+- tapOn: "Trunk"
+- assertVisible: "CORE"
+- assertVisible: "BRAIN"
+
+# Navigate through branches
+- tapOn: "CORE"
+- assertVisible: "movement"
+- assertVisible: "nutrition"
+
+# Go back to trunk overview
+- tapOn:
+    text: "Trunk"
+    index: 0
+
+# Navigate to a different branch
+- tapOn: "BRAIN"
+- assertVisible: "learning"
+
+# Navigate to twig
+- tapOn: "learning"
+
+# Go back
+- tapOn:
+    text: "BRAIN"
+    optional: true

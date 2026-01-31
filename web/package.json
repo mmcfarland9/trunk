@@ -8,9 +8,15 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:mutation": "stryker run"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@stryker-mutator/core": "^8.7.1",
+    "@stryker-mutator/vitest-runner": "^8.7.1",
     "@playwright/test": "^1.58.0",
     "@types/jsdom": "^27.0.0",
     "jsdom": "^27.4.0",

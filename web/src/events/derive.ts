@@ -75,11 +75,16 @@ export function deriveState(events: TrunkEvent[]): DerivedState {
   const leaves = new Map<string, DerivedLeaf>()
   const sunEntries: SunEntry[] = []
 
-  for (const event of events) {
+  // Sort events by timestamp to ensure correct ordering
+  const sortedEvents = [...events].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  )
+
+  for (const event of sortedEvents) {
     switch (event.type) {
       case 'sprout_planted': {
-        // Spend soil
-        soilAvailable -= event.soilCost
+        // Spend soil (clamped to 0 minimum)
+        soilAvailable = Math.max(0, soilAvailable - event.soilCost)
 
         // Create sprout
         sprouts.set(event.sproutId, {

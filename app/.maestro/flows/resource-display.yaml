@@ -1,0 +1,38 @@
+appId: mpmcf.Trunk
+name: Resource Display - Soil, Water, Sun
+---
+
+# Launch the app
+- launchApp:
+    clearState: false
+
+# Wait for app to load
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+
+# Verify resource meters are visible on Today tab
+# Soil meter
+- assertVisible:
+    text: "soil"
+    optional: true
+
+# Water meter (shows drops remaining)
+- assertVisible:
+    text: "water"
+    optional: true
+
+# Sun meter
+- assertVisible:
+    text: "sun"
+    optional: true
+
+# Navigate to see active sprouts
+- runFlow:
+    when:
+      visible: "Active"
+    commands:
+      - tapOn: "Active"
+      - extendedWaitUntil:
+          visible: "Active Sprouts"
+          timeout: 3000

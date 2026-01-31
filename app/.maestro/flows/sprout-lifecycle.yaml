@@ -1,0 +1,55 @@
+appId: mpmcf.Trunk
+name: Sprout Lifecycle - Create, Water, Harvest
+---
+
+# Launch the app
+- launchApp:
+    clearState: false
+
+# Wait for app to load
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+
+# Navigate to Trunk tab
+- tapOn: "Trunk"
+
+# Navigate to a branch
+- tapOn: "CORE"
+
+# Navigate to a twig
+- tapOn: "movement"
+
+# Tap to create a new sprout
+- tapOn:
+    text: "New"
+    optional: true
+
+# If create button visible, continue with sprout creation
+- runFlow:
+    when:
+      visible: "Create Sprout"
+    commands:
+      # Fill in sprout details
+      - tapOn: "Title"
+      - inputText: "E2E Test Sprout"
+
+      # Select leaf or create new one
+      - tapOn: "Select Leaf"
+      - tapOn:
+          text: "New Leaf"
+          optional: true
+      - inputText: "E2E Test Saga"
+      - tapOn: "Done"
+
+      # Select season
+      - tapOn: "2 weeks"
+
+      # Select environment
+      - tapOn: "Fertile"
+
+      # Plant the sprout
+      - tapOn: "Plant"
+
+      # Verify sprout appears
+      - assertVisible: "E2E Test Sprout"

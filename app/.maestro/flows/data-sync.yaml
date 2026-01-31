@@ -1,0 +1,41 @@
+appId: mpmcf.Trunk
+name: Data Sync - Export and Import
+---
+
+# Launch the app
+- launchApp:
+    clearState: false
+
+# Wait for app to load
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+
+# Look for settings or export button
+# This might be in different places depending on UI
+- runFlow:
+    when:
+      visible: "Settings"
+    commands:
+      - tapOn: "Settings"
+      - extendedWaitUntil:
+          visible: "Export"
+          timeout: 3000
+      - assertVisible: "Export"
+      - assertVisible: "Import"
+      # Go back
+      - tapOn:
+          text: "Done"
+          optional: true
+
+# Alternative: Look for export in menu
+- runFlow:
+    when:
+      visible:
+        id: "menu-button"
+    commands:
+      - tapOn:
+          id: "menu-button"
+      - assertVisible:
+          text: "Export"
+          optional: true

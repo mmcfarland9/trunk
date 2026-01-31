@@ -1,7 +1,7 @@
 {
   "soil": {
     "startingCapacity": 10,
-    "maxCapacity": 100,
+    "maxCapacity": 120,
     "plantingCosts": {
       "2w": { "fertile": 2, "firm": 3, "barren": 4 },
       "1m": { "fertile": 3, "firm": 5, "barren": 6 },

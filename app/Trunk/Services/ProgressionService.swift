@@ -12,7 +12,7 @@ import Foundation
 enum TrunkConstants {
     enum Soil {
         static let startingCapacity: Double = 10
-        static let maxCapacity: Double = 100
+        static let maxCapacity: Double = 120
 
         /// Planting costs by season and environment
         static let plantingCosts: [String: [String: Int]] = [

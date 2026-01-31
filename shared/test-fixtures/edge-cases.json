@@ -1,0 +1,83 @@
+{
+  "_version": 4,
+  "_exportedAt": "2026-01-30T12:00:00Z",
+  "events": [
+    {
+      "type": "leaf_created",
+      "timestamp": "2026-01-01T00:00:00Z",
+      "leafId": "leaf-edge-1",
+      "twigId": "branch-0-twig-0",
+      "name": "Test with special chars: <>&\""
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T05:59:59Z",
+      "sproutId": "sprout-edge-1",
+      "twigId": "branch-0-twig-0",
+      "leafId": "leaf-edge-1",
+      "title": "Planted just before 6am reset",
+      "season": "2w",
+      "environment": "fertile",
+      "soilCost": 2
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T06:00:00Z",
+      "sproutId": "sprout-edge-2",
+      "twigId": "branch-0-twig-0",
+      "leafId": "leaf-edge-1",
+      "title": "Planted exactly at 6am reset",
+      "season": "1y",
+      "environment": "barren",
+      "soilCost": 24
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-01T06:00:01Z",
+      "sproutId": "sprout-edge-1",
+      "content": "Watered right after reset",
+      "prompt": "Quick prompt"
+    },
+    {
+      "type": "sprout_harvested",
+      "timestamp": "2026-01-15T12:00:00Z",
+      "sproutId": "sprout-edge-1",
+      "result": 1,
+      "capacityGained": 0.088,
+      "reflection": "Minimum result harvest"
+    },
+    {
+      "type": "sprout_uprooted",
+      "timestamp": "2026-01-02T10:00:00Z",
+      "sproutId": "sprout-edge-3",
+      "soilReturned": 12
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2025-12-27T10:00:00Z",
+      "sproutId": "sprout-edge-3",
+      "twigId": "branch-7-twig-7",
+      "leafId": "leaf-edge-1",
+      "title": "Sprout that gets uprooted",
+      "season": "1y",
+      "environment": "barren",
+      "soilCost": 24
+    },
+    {
+      "type": "sun_shone",
+      "timestamp": "2026-01-05T05:59:59Z",
+      "twigId": "branch-0-twig-0",
+      "twigLabel": "Test",
+      "content": "Sun just before Sunday reset",
+      "prompt": "Prompt"
+    },
+    {
+      "type": "sun_shone",
+      "timestamp": "2026-01-05T06:00:00Z",
+      "twigId": "branch-0-twig-0",
+      "twigLabel": "Test",
+      "content": "Sun at Sunday reset boundary",
+      "prompt": "Prompt"
+    }
+  ]
+}

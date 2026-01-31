@@ -1,0 +1,56 @@
+{
+  "_version": 1,
+  "nodes": {
+    "trunk": {
+      "label": "My Life",
+      "note": ""
+    },
+    "branch-0": {
+      "label": "Health",
+      "note": "Physical and mental well-being"
+    },
+    "branch-0-twig-0": {
+      "label": "Movement",
+      "note": "",
+      "sprouts": [
+        {
+          "id": "legacy-sprout-1",
+          "title": "Legacy goal with 1w season",
+          "season": "1w",
+          "environment": "fertile",
+          "state": "active",
+          "soilCost": 1,
+          "createdAt": "2026-01-01T10:00:00Z",
+          "activatedAt": "2026-01-01T10:00:00Z"
+        }
+      ],
+      "leaves": [
+        {
+          "id": "legacy-leaf-1",
+          "name": "Legacy Saga",
+          "createdAt": "2026-01-01T09:00:00Z"
+        }
+      ]
+    }
+  },
+  "sunLog": [
+    {
+      "timestamp": "2026-01-05T10:00:00Z",
+      "content": "Legacy sun entry",
+      "prompt": "Prompt",
+      "context": {
+        "type": "twig",
+        "twigId": "branch-0-twig-0",
+        "label": "Movement"
+      }
+    }
+  ],
+  "soilLog": [
+    {
+      "timestamp": "2026-01-01T10:00:00Z",
+      "delta": -1,
+      "reason": "plant",
+      "context": "Legacy sprout"
+    }
+  ]
+}

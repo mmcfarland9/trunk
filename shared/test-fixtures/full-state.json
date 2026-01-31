@@ -1,0 +1,109 @@
+{
+  "_version": 4,
+  "_exportedAt": "2026-01-30T12:00:00Z",
+  "events": [
+    {
+      "type": "leaf_created",
+      "timestamp": "2026-01-01T10:00:00Z",
+      "leafId": "leaf-fixture-1",
+      "twigId": "branch-0-twig-0",
+      "name": "Fitness Journey"
+    },
+    {
+      "type": "leaf_created",
+      "timestamp": "2026-01-01T10:05:00Z",
+      "leafId": "leaf-fixture-2",
+      "twigId": "branch-1-twig-0",
+      "name": "Learning Piano"
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T11:00:00Z",
+      "sproutId": "sprout-fixture-1",
+      "twigId": "branch-0-twig-0",
+      "leafId": "leaf-fixture-1",
+      "title": "Run 5K without stopping",
+      "season": "1m",
+      "environment": "firm",
+      "soilCost": 5,
+      "bloomWither": "Ran at least once",
+      "bloomBudding": "Ran 2.5K",
+      "bloomFlourish": "Ran 5K without stopping"
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T11:30:00Z",
+      "sproutId": "sprout-fixture-2",
+      "twigId": "branch-0-twig-0",
+      "leafId": "leaf-fixture-1",
+      "title": "Daily stretching routine",
+      "season": "2w",
+      "environment": "fertile",
+      "soilCost": 2
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T12:00:00Z",
+      "sproutId": "sprout-fixture-3",
+      "twigId": "branch-1-twig-0",
+      "leafId": "leaf-fixture-2",
+      "title": "Learn first scale",
+      "season": "2w",
+      "environment": "fertile",
+      "soilCost": 2
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-02T09:00:00Z",
+      "sproutId": "sprout-fixture-1",
+      "content": "Did a slow 1K jog today. Feeling good.",
+      "prompt": "How did your training go today?"
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-03T08:30:00Z",
+      "sproutId": "sprout-fixture-1",
+      "content": "Pushed to 1.5K. Legs are sore but motivated.",
+      "prompt": "What progress did you make?"
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-03T09:00:00Z",
+      "sproutId": "sprout-fixture-2",
+      "content": "10 minute morning stretch completed.",
+      "prompt": "How are you feeling after today?"
+    },
+    {
+      "type": "sun_shone",
+      "timestamp": "2026-01-05T10:00:00Z",
+      "twigId": "branch-0-twig-0",
+      "twigLabel": "Movement",
+      "content": "Feeling much more mobile this week. The combination of running and stretching is working.",
+      "prompt": "How has your {twig} practice evolved this week?"
+    },
+    {
+      "type": "sun_shone",
+      "timestamp": "2026-01-05T10:15:00Z",
+      "twigId": "branch-1-twig-0",
+      "twigLabel": "Learning",
+      "content": "Piano practice is fun. Starting to get the hang of the C major scale.",
+      "prompt": "What surprised you about {twig} this week?"
+    },
+    {
+      "type": "sprout_harvested",
+      "timestamp": "2026-01-15T12:00:00Z",
+      "sproutId": "sprout-fixture-2",
+      "result": 4,
+      "capacityGained": 0.85,
+      "reflection": "Stretched every day except one. Feeling more flexible."
+    },
+    {
+      "type": "sprout_harvested",
+      "timestamp": "2026-01-15T12:30:00Z",
+      "sproutId": "sprout-fixture-3",
+      "result": 5,
+      "capacityGained": 1.1,
+      "reflection": "Can play C major scale smoothly now. On to the next challenge!"
+    }
+  ]
+}

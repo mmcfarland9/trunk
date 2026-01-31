@@ -23,6 +23,8 @@ struct TrunkApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
+            print("ModelContainer error details: \(error)")
+            print("Error localized: \(error.localizedDescription)")
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()

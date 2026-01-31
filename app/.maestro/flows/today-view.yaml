@@ -1,0 +1,48 @@
+appId: mpmcf.Trunk
+name: Today View - Active Sprouts and Actions
+---
+
+# Launch the app
+- launchApp:
+    clearState: false
+
+# Wait for app to load
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+
+# Today tab should be default
+- assertVisible: "Today"
+
+# Check for sections that might be present
+- runFlow:
+    when:
+      visible: "Active Sprouts"
+    commands:
+      - assertVisible: "Active Sprouts"
+
+# Check for water button on active sprouts
+- runFlow:
+    when:
+      visible: "Water"
+    commands:
+      - tapOn: "Water"
+      # Wait for water dialog
+      - extendedWaitUntil:
+          visible: "Reflection"
+          timeout: 3000
+      # Cancel the dialog
+      - tapOn:
+          text: "Cancel"
+          optional: true
+
+# Check for shine button
+- runFlow:
+    when:
+      visible: "Shine"
+    commands:
+      - assertVisible: "Shine"
+
+# Scroll to see more content if present
+- scroll:
+    direction: DOWN
