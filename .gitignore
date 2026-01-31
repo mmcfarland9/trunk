@@ -50,3 +50,6 @@ Pods/
 
 # Swift Package Manager (if used)
 .swiftpm/
+
+# Test artifacts
+web/test-results/
