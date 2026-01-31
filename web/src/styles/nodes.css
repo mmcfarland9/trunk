@@ -113,7 +113,7 @@
 .canvas.is-zooming .branch-group.is-active .twig { transition: opacity 480ms ease-out, transform 200ms ease-out; transition-delay: var(--twig-delay, 0ms); }
 
 /* Trunk */
-.node.trunk { left: 50%; top: 50%; z-index: 5; color: var(--wood); transition: color 320ms ease; line-height: 1; }
+.node.trunk { left: 50%; top: 50%; z-index: 5; color: var(--wood); transition: color 320ms ease, opacity 350ms ease, left 320ms ease, top 320ms ease; line-height: 1; }
 .node.trunk .trunk-title { text-transform: uppercase; letter-spacing: 0.15em; font-family: var(--font-display); font-size: calc(var(--char) * 1.2); }
 .node.trunk.is-minimized { left: var(--minimized-x, 50%); top: var(--minimized-y, 50%); opacity: 0.7; }
 .node.trunk.is-minimized .trunk-title { font-size: 0; }

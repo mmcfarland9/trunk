@@ -111,15 +111,22 @@
 .canvas.is-zoomed { --camera-scale: 1.02; }
 .canvas.is-twig-zoomed { --camera-scale: 1.12; overflow: hidden; }
 .canvas.is-twig-zoomed .branch-group,
-.canvas.is-twig-zoomed .node.trunk { opacity: 0; pointer-events: none; }
-.canvas.is-twig-zoomed + .guide-layer { opacity: 0; }
+.canvas.is-twig-zoomed .node.trunk {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 350ms ease-out;
+}
+.canvas.is-twig-zoomed + .guide-layer {
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
 .canvas.is-previewing { cursor: pointer; }
 .guide-layer { position: absolute; pointer-events: none; z-index: 10; transition: opacity 200ms ease; }
 .ascii-line { position: absolute; transform: translate(-50%, -50%); font-family: var(--font-ascii); font-size: var(--char); line-height: 1; color: var(--ink-faint); pointer-events: none; user-select: none; }
 .ascii-line.trunk { color: var(--wood); opacity: 0.6; }
 .ascii-line.branch { color: var(--ink-faint); opacity: 0.5; }
 .ascii-line.twig { color: var(--twig); opacity: 0.4; }
-.branch-group { position: absolute; width: 0; height: 0; z-index: 1; transition: left 280ms ease, top 280ms ease, opacity 200ms ease; will-change: left, top, opacity; }
+.branch-group { position: absolute; width: 0; height: 0; z-index: 1; transition: left 280ms ease, top 280ms ease, opacity 350ms ease; will-change: left, top, opacity; }
 .branch-group.is-active { z-index: 3; }
 .branch-group.is-preview { z-index: 2; }
 .canvas.is-zooming .branch-group { transition-duration: 480ms; transition-timing-function: ease-in-out; }
