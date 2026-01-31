@@ -243,11 +243,16 @@ export function enterTwigView(
 
   ctx.editor.close()
   updateVisibility(ctx)
-  callbacks.onPositionNodes()
   callbacks.onUpdateStats()
 
   // Open the twig view
   ctx.twigView?.open(twigNode)
+
+  // Delay repositioning until after branches fade out (350ms transition)
+  // This prevents the "jump" before fade effect
+  window.setTimeout(() => {
+    callbacks.onPositionNodes()
+  }, 350)
 
   setFocusedNode(twigNode, ctx, (t) => updateFocus(t, ctx))
 }
