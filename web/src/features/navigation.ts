@@ -50,8 +50,9 @@ export function updateVisibility(ctx: AppContext): void {
   canvas.classList.toggle('is-previewing', isPreview)
   trunk.classList.toggle('is-minimized', isBranch || isTwig)
 
-  if (isBranch && activeBranchIndex !== null) {
+  if ((isBranch || isTwig) && activeBranchIndex !== null) {
     // Position trunk asterisk farther away from the active branch
+    // Keep position in twig view too so it fades from current spot
     const angle = (Math.PI / 4) * activeBranchIndex - Math.PI / 2
     const offset = 18 // percentage offset from center
     const offsetX = 50 - Math.cos(angle) * offset
