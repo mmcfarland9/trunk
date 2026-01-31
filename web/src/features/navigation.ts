@@ -26,28 +26,6 @@ export type NavigationCallbacks = {
   onUpdateStats: () => void
 }
 
-function setTwigZoomOrigin(ctx: AppContext, twigNode: HTMLElement): void {
-  if (zoomOriginTimeoutId) {
-    window.clearTimeout(zoomOriginTimeoutId)
-    zoomOriginTimeoutId = 0
-  }
-
-  const canvas = ctx.elements.canvas
-  const canvasRect = canvas.getBoundingClientRect()
-  const twigRect = twigNode.getBoundingClientRect()
-  if (!canvasRect.width || !canvasRect.height) return
-
-  const centerX = twigRect.left + twigRect.width / 2
-  const centerY = twigRect.top + twigRect.height / 2
-  const originX = ((centerX - canvasRect.left) / canvasRect.width) * 100
-  const originY = ((centerY - canvasRect.top) / canvasRect.height) * 100
-  const clampedX = Math.min(100, Math.max(0, originX))
-  const clampedY = Math.min(100, Math.max(0, originY))
-
-  canvas.style.setProperty('--zoom-origin-x', `${clampedX}%`)
-  canvas.style.setProperty('--zoom-origin-y', `${clampedY}%`)
-}
-
 function resetTwigZoomOrigin(ctx: AppContext): void {
   if (zoomOriginTimeoutId) {
     window.clearTimeout(zoomOriginTimeoutId)
@@ -226,7 +204,8 @@ export function enterTwigView(
   const twigId = twigNode.dataset.nodeId
   if (!twigId) return
 
-  setTwigZoomOrigin(ctx, twigNode)
+  // Don't change zoom origin - keep canvas stable during transition
+  // The branches fade out anyway, so no need to zoom toward the twig
   const previousMode = getViewMode()
   setViewModeState('twig', branchIndex, twigId)
 

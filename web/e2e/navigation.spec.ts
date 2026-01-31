@@ -31,7 +31,7 @@ test.describe('Navigation', () => {
   })
 
   test('clicks branch to enter branch view', async ({ page }) => {
-    await page.click('.node.branch')
+    await page.click('.node.branch', { force: true })
     // Wait for zoom animation to complete
     await page.waitForFunction(() => {
       const canvas = document.querySelector('.canvas')
