@@ -18,12 +18,18 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
 
   test('creating a sprout goes directly to ACTIVE, not draft', async ({ page }) => {
     // Click on a branch to zoom in
-    await page.click('.node.branch')
-    await page.waitForTimeout(300) // Wait for animation
+    await page.click('.node.branch', { force: true })
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector('.canvas')
+      return canvas && canvas.classList.contains('is-zoomed')
+    })
 
-    // Click on a twig to open twig view
-    await page.click('.node.twig')
-    await page.waitForSelector('.twig-view')
+    // Click on a twig to open twig view (use JS click to bypass viewport check)
+    await page.evaluate(() => {
+      const twig = document.querySelector('.branch-group.is-active .node.twig') as HTMLElement
+      twig?.click()
+    })
+    await page.waitForSelector('.twig-view:not(.hidden)')
 
     // Take screenshot of empty twig view
     await page.screenshot({ path: 'e2e/screenshots/01-empty-twig-view.png' })
@@ -68,7 +74,7 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     // Find the sprout in state and verify its state is 'active'
     const nodes = state?.nodes || state
     let foundSprout = null
-    for (const [nodeId, nodeData] of Object.entries(nodes)) {
+    for (const [, nodeData] of Object.entries(nodes)) {
       const nd = nodeData as any
       if (nd.sprouts) {
         foundSprout = nd.sprouts.find((s: any) => s.title === 'Test Sprout')
@@ -122,10 +128,16 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await page.waitForSelector('.node.trunk')
 
     // Navigate to the twig
-    await page.click('.node.branch')
-    await page.waitForTimeout(300)
-    await page.click('.node.twig')
-    await page.waitForSelector('.twig-view')
+    await page.click('.node.branch', { force: true })
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector('.canvas')
+      return canvas && canvas.classList.contains('is-zoomed')
+    })
+    await page.evaluate(() => {
+      const twig = document.querySelector('.branch-group.is-active .node.twig') as HTMLElement
+      twig?.click()
+    })
+    await page.waitForSelector('.twig-view:not(.hidden)')
 
     // Screenshot showing ready to harvest
     await page.screenshot({ path: 'e2e/screenshots/04-ready-to-harvest.png' })
@@ -220,10 +232,16 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await page.waitForSelector('.node.trunk')
 
     // Navigate to the twig
-    await page.click('.node.branch')
-    await page.waitForTimeout(300)
-    await page.click('.node.twig')
-    await page.waitForSelector('.twig-view')
+    await page.click('.node.branch', { force: true })
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector('.canvas')
+      return canvas && canvas.classList.contains('is-zoomed')
+    })
+    await page.evaluate(() => {
+      const twig = document.querySelector('.branch-group.is-active .node.twig') as HTMLElement
+      twig?.click()
+    })
+    await page.waitForSelector('.twig-view:not(.hidden)')
 
     // Click harvest button
     await page.click('.sprout-harvest-btn')
