@@ -2,7 +2,7 @@
  * Tests for sprout and leaf helper functions.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   generateSproutId,
   generateLeafId,
@@ -42,17 +42,14 @@ describe('ID Generation', () => {
     })
 
     it('includes random component', () => {
-      const id1 = generateSproutId()
-      const id2 = generateSproutId()
+      const id = generateSproutId()
 
-      // Even with same timestamp, random part should differ
-      const random1 = id1.split('-')[2]
-      const random2 = id2.split('-')[2]
+      // Extract random part and verify it exists
+      const random = id.split('-')[2]
 
-      // They could theoretically be the same, but it's extremely unlikely
-      // Just check they're both present and have expected length
-      expect(random1).toBeDefined()
-      expect(random1.length).toBeGreaterThan(0)
+      // Check random component is present and has expected length
+      expect(random).toBeDefined()
+      expect(random.length).toBeGreaterThan(0)
     })
   })
 

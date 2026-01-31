@@ -15,7 +15,7 @@
  * Run: npm test
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { deriveState, getActiveSprouts, toSprout } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
@@ -44,10 +44,11 @@ describe('Regression Tests', () => {
       const sprout = toSprout(sprouts[0])
 
       // endDate should be a valid date, not NaN
-      expect(new Date(sprout.endDate).getTime()).not.toBeNaN()
+      expect(sprout.endDate).toBeDefined()
+      expect(new Date(sprout.endDate!).getTime()).not.toBeNaN()
       // Should be 2 weeks after plant date, normalized to 9am CST (15:00 UTC)
       const expectedEnd = new Date('2026-01-29T15:00:00.000Z')
-      expect(new Date(sprout.endDate).getTime()).toBe(expectedEnd.getTime())
+      expect(new Date(sprout.endDate!).getTime()).toBe(expectedEnd.getTime())
     })
 
     it('BUG-002: harvested sprouts should not appear in active sprouts', () => {

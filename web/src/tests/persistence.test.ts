@@ -32,7 +32,7 @@ describe('State Persistence', () => {
     })
 
     it('falls back to preset when localStorage is empty', async () => {
-      const { nodeState, getPresetLabel } = await import('../state')
+      const { getPresetLabel } = await import('../state')
 
       // Should have preset labels loaded
       const trunkLabel = getPresetLabel('trunk')
@@ -103,7 +103,7 @@ describe('State Persistence', () => {
         timestamp: new Date().toISOString(),
         content: 'Test reflection',
         prompt: 'Test prompt',
-        context: { type: 'twig', twigId: 'branch-0-twig-0', label: 'Test' }
+        context: { twigId: 'branch-0-twig-0', twigLabel: 'Test' }
       })
 
       saveState()
@@ -115,7 +115,7 @@ describe('State Persistence', () => {
     })
 
     it('includes soilLog', async () => {
-      const { soilLog, saveState, addSoilEntry } = await import('../state')
+      const { saveState, addSoilEntry } = await import('../state')
 
       addSoilEntry(5, 'test', 'Test context')
 

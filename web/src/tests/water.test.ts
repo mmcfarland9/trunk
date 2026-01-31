@@ -6,12 +6,11 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import {
   getTodayResetTime,
   getNextWaterReset,
-  getWaterAvailable,
   getWaterCapacity,
   wasWateredThisWeek,
   getWeekResetTime,
 } from '../state'
-import type { Sprout, WaterEntry } from '../types'
+import type { Sprout } from '../types'
 
 describe('Water Reset Time', () => {
   beforeEach(() => {
@@ -164,7 +163,7 @@ describe('wasWateredThisWeek', () => {
     const now = new Date(2024, 0, 17, 10, 0, 0) // Wednesday
     vi.setSystemTime(now)
 
-    const weekReset = getWeekResetTime() // Sunday 6am
+    getWeekResetTime() // Sunday 6am
 
     const sprout: Sprout = {
       id: 'test-1',
