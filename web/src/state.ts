@@ -1,3 +1,61 @@
+/**
+ * STATE.TS - IMMUTABILITY AUDIT
+ *
+ * This file contains legacy state management that will be migrated to event sourcing
+ * in Phase 4 of the Elegance Refactor. The following mutation patterns are documented
+ * for tracking purposes.
+ *
+ * === PRODUCTION CODE MUTATIONS (Require Phase 4 migration) ===
+ *
+ * Line ~643: nodeState[twigId].leaves.push(leaf)
+ *   - Function: createLeaf()
+ *   - Fix: Replace with appendEvent({ type: 'leaf-created', ... })
+ *
+ * Line ~666: sprout.waterEntries.push({...})
+ *   - Function: addWaterEntry()
+ *   - Fix: Replace with appendEvent({ type: 'sprout-watered', ... })
+ *
+ * Line ~684: sunLog.push({...})
+ *   - Function: addSunEntry()
+ *   - Fix: Replace with appendEvent({ type: 'sun-shone', ... })
+ *
+ * Line ~895: soilLog.push({...})
+ *   - Function: addSoilEntry()
+ *   - Fix: Replace with appendEvent({ type: 'soil-changed', ... })
+ *
+ * Line ~973: delete nodeState[nodeId]
+ *   - Function: deleteNodeData()
+ *   - Fix: Replace with appendEvent({ type: 'node-deleted', ... })
+ *
+ * Lines ~375, ~385, ~391, ~399: soilState.* mutations
+ *   - Functions: spendSoil(), recoverSoil(), recoverPartialSoil()
+ *   - Fix: Derive soil state from events instead of stored counters
+ *
+ * === ACCEPTABLE MUTATIONS (Debug/Migration/Local) ===
+ *
+ * Line ~71: delete leaf.status
+ *   - Context: Schema migration v1->v2 (one-time data transform)
+ *
+ * Line ~473: entries.push({...})
+ *   - Context: Building local return array in getAllWaterEntries()
+ *
+ * Lines ~551, ~554: sunLog.length = 0, soilLog.length = 0
+ *   - Context: resetResources() debug function
+ *
+ * Line ~963: delete nodeState[key]
+ *   - Context: clearState() debug function
+ *
+ * === PHASE 4 MIGRATION PLAN ===
+ *
+ * 1. All write operations become event appends (immutable log)
+ * 2. Current state derived by replaying events (see events/derive.ts)
+ * 3. nodeState, sunLog, soilLog become derived read-only views
+ * 4. Resource counters (soil, water, sun) derived from event timestamps
+ *
+ * See: docs/ARCHITECTURE.md for event sourcing design
+ * See: events/store.ts for existing event infrastructure
+ */
+
 import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings, WaterLogEntry } from './types'
 import { STORAGE_KEY } from './constants'
 import presetData from '../../shared/assets/trunk-map-preset.json'
