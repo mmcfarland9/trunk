@@ -93,6 +93,10 @@ function drawGuideLines(ctx: AppContext): void {
   guideLayer.replaceChildren()
 
   const viewMode = getViewMode(), activeBranchIndex = getActiveBranchIndex(), hoveredBranchIndex = getHoveredBranchIndex()
+
+  // Don't draw guide lines in twig view - everything is fading out
+  if (viewMode === 'twig') return
+
   const frag = document.createDocumentFragment()
 
   // Debug hover zone visualization
