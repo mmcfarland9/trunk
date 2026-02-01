@@ -1,54 +1,57 @@
 /**
- * STATE - Node State Management
+ * STATE - Node State Management (Legacy + Event Sourcing)
  *
- * This file contains legacy state management that is being migrated to event sourcing
- * in Phase 4 of the Elegance Refactor.
+ * === EVENT SOURCING MIGRATION COMPLETE ===
  *
- * === COMPLETED MIGRATIONS (Tasks 4.1-4.2) ===
+ * As of Phase 4 (Elegance Refactor), all state-changing operations emit events.
+ * Events are the authoritative source of truth; this legacy state module is
+ * maintained for backward compatibility during the transition period.
  *
- * Sprout operations now emit events in addition to updating legacy state:
- * - sprout_planted: emitted in twig-view.ts when planting
- * - sprout_watered: emitted in water-dialog.ts when watering
- * - sprout_harvested: emitted in harvest-dialog.ts when harvesting
- * - sprout_uprooted: emitted in twig-view.ts when uprooting
+ * === EVENT TYPES (Source of Truth) ===
  *
- * Leaf operations now emit events:
- * - leaf_created: emitted in createLeaf() when creating new leaf
+ * All operations now emit immutable events to the event log:
  *
- * Legacy nodeState is still updated for backward compatibility.
- * Events are the source of truth; nodeState can be derived from events.
+ * | Event              | Emitted By          | Captures                    |
+ * |--------------------|--------------------|-----------------------------|
+ * | sprout_planted     | twig-view.ts       | Soil spent, sprout data     |
+ * | sprout_watered     | water-dialog.ts    | Daily journaling entry      |
+ * | sprout_harvested   | harvest-dialog.ts  | Result, capacity gained     |
+ * | sprout_uprooted    | twig-view.ts       | Soil returned               |
+ * | leaf_created       | createLeaf()       | Saga name, twig association |
+ * | sun_shone          | addSunEntry()      | Weekly reflection content   |
  *
- * === COMPLETED MIGRATION (Task 4.3) ===
+ * === DUAL-WRITE MODE ===
  *
- * Sun operations now emit events:
- * - sun_shone: emitted in addSunEntry() when shining
+ * Current architecture writes to both:
+ * 1. Event log (events/store.ts) - Source of truth
+ * 2. Legacy state (this file) - Backward compatibility
  *
- * === REMAINING MIGRATIONS (Task 4.4) ===
+ * State can be fully reconstructed from events via deriveState().
  *
- * Line ~370: soilLog.push({...})
- *   - Function: addSoilEntry()
- *   - Fix: Events already capture soil changes; remove soilLog
+ * === FUTURE CLEANUP (Separate PR) ===
  *
- * Line ~390: delete nodeState[nodeId]
- *   - Function: deleteNodeData()
- *   - Fix: Not needed for event-sourced state
+ * Once events are validated in production, legacy state can be removed:
+ * - nodeState mutations → derive from events
+ * - sunLog/soilLog → derive from events
+ * - Simplify this module to read-only helpers
  *
- * === ACCEPTABLE MUTATIONS (Debug/Migration/Local) ===
+ * === ACCEPTABLE MUTATIONS ===
  *
- * Line ~90: delete leaf.status
- *   - Context: Schema migration v1->v2 (one-time data transform)
+ * The following mutations are intentional and not candidates for removal:
  *
- * Line ~135: entries.push({...})
- *   - Context: Building local return array in getAllWaterEntries()
+ * Schema migrations (one-time data transforms):
+ *   - migrations.ts: transforming legacy data formats
  *
- * Lines ~250, ~255: sunLog.length = 0, soilLog.length = 0
- *   - Context: Called from resetResources() debug function
+ * Local array building (functional patterns):
+ *   - getAllWaterEntries(): building return array from iteration
  *
- * Line ~380: delete nodeState[key]
- *   - Context: clearState() debug function
+ * Debug/development functions:
+ *   - clearState(): reset for testing
+ *   - resetResources(): debug panel reset
  *
  * See: docs/ARCHITECTURE.md for event sourcing design
- * See: events/store.ts for event infrastructure
+ * See: events/types.ts for event type definitions
+ * See: events/store.ts for event persistence
  */
 
 import type { NodeData, Sprout, SproutState, SunEntry, SoilEntry, Leaf, NotificationSettings, WaterLogEntry } from '../types'
