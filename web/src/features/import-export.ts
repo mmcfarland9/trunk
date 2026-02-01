@@ -6,9 +6,10 @@ import { sanitizeSprout, sanitizeLeaf } from '../utils/validate-import'
 import { migrateToEvents } from '../events/migrate'
 import { rebuildFromEvents, validateRebuild } from '../events/rebuild'
 import type { TrunkEvent } from '../events/types'
+import sharedConstants from '../../../shared/constants.json'
 
-const EXPORT_REMINDER_KEY = 'trunk-last-export'
-const REMINDER_DAYS = 7
+const EXPORT_REMINDER_KEY = sharedConstants.storage.keys.lastExport
+const REMINDER_DAYS = sharedConstants.storage.exportReminderDays
 
 export type ImportExportCallbacks = {
   onUpdateStats: () => void

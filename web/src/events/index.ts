@@ -14,7 +14,6 @@ export type {
   SproutUprootedEvent,
   SunShoneEvent,
   LeafCreatedEvent,
-  EventType,
 } from './types'
 
 // Derivation

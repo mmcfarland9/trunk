@@ -92,8 +92,3 @@ export type TrunkEvent =
   | SproutUprootedEvent
   | SunShoneEvent
   | LeafCreatedEvent
-
-/**
- * Event type discriminator
- */
-export type EventType = TrunkEvent['type']

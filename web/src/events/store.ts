@@ -16,8 +16,9 @@ import {
   wasSproutWateredThisWeek,
 } from './derive'
 import { safeSetItem } from '../utils/safe-storage'
+import sharedConstants from '../../../shared/constants.json'
 
-const STORAGE_KEY = 'trunk-events-v1'
+const STORAGE_KEY = sharedConstants.storage.keys.events
 
 // The event log - source of truth
 let events: TrunkEvent[] = []

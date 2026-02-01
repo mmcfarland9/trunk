@@ -1,26 +1,13 @@
 /**
  * Shared label and emoji utilities for sprouts.
- * Used by twig-view.ts and leaf-view.ts.
+ * Uses shared constants for all labels.
  */
 
 import type { SproutSeason, SproutEnvironment } from '../types'
+import sharedConstants from '../../../shared/constants.json'
 
 export const SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
 export const ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
-
-const SEASON_LABELS: Record<SproutSeason, string> = {
-  '2w': '2 weeks',
-  '1m': '1 month',
-  '3m': '3 months',
-  '6m': '6 months',
-  '1y': '1 year',
-}
-
-const ENVIRONMENT_LABELS: Record<SproutEnvironment, string> = {
-  fertile: 'Fertile',
-  firm: 'Firm',
-  barren: 'Barren',
-}
 
 // Result emoji scale: 1=withered, 2=sprout, 3=sapling, 4=tree, 5=oak
 const RESULT_EMOJIS: Record<number, string> = {
@@ -32,11 +19,15 @@ const RESULT_EMOJIS: Record<number, string> = {
 }
 
 export function getSeasonLabel(season: SproutSeason): string {
-  return SEASON_LABELS[season]
+  return sharedConstants.seasons[season].label
 }
 
 export function getEnvironmentLabel(env: SproutEnvironment): string {
-  return ENVIRONMENT_LABELS[env]
+  return sharedConstants.environments[env].label
+}
+
+export function getEnvironmentFormHint(env: SproutEnvironment): string {
+  return sharedConstants.environments[env].formHint
 }
 
 export function getResultEmoji(result: number): string {
