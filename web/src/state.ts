@@ -1,6 +1,20 @@
 import type { NodeData, ViewMode, Sprout, SproutState, SproutSeason, SproutEnvironment, SoilState, WaterState, SunState, SunEntry, SoilEntry, Leaf, NotificationSettings, WaterLogEntry } from './types'
 import { STORAGE_KEY } from './constants'
 import presetData from '../../shared/assets/trunk-map-preset.json'
+import {
+  SOIL_STARTING_CAPACITY,
+  SOIL_MAX_CAPACITY,
+  SOIL_WATER_RECOVERY,
+  SOIL_SUN_RECOVERY,
+  PLANTING_COSTS,
+  ENVIRONMENT_MULTIPLIERS,
+  RESULT_MULTIPLIERS,
+  SEASONS,
+  WATER_DAILY_CAPACITY,
+  WATER_RESET_HOUR,
+  SUN_WEEKLY_CAPACITY,
+  STORAGE_KEYS,
+} from './generated/constants'
 import { safeSetItem, type StorageResult } from './utils/safe-storage'
 
 // --- Schema Versioning & Migration ---
@@ -104,7 +118,7 @@ export function runMigrations(raw: Record<string, unknown>): StoredState {
 // --- Resource System (Unified) ---
 // All resources (soil, water, sun) stored together for simpler backup/migration.
 
-const RESOURCES_STORAGE_KEY = 'trunk-resources-v1'
+const RESOURCES_STORAGE_KEY = STORAGE_KEYS.resources
 
 // Legacy keys (for migration from old separate storage)
 const LEGACY_SOIL_KEY = 'trunk-soil-v1'
@@ -121,69 +135,30 @@ const LEGACY_SUN_KEY = 'trunk-sun-v1'
 // Realistic ceiling after ~50 years of effort is ~100 capacity.
 // See shared/formulas.md for full math and examples.
 
-const DEFAULT_SOIL_CAPACITY = 10  // Room for ~5 concurrent 2-week sprouts
-const MAX_SOIL_CAPACITY = 120    // Lifetime ceiling - mythical to achieve
+// Soil capacity (from generated constants)
+const DEFAULT_SOIL_CAPACITY = SOIL_STARTING_CAPACITY
+const MAX_SOIL_CAPACITY = SOIL_MAX_CAPACITY
 
-// Recovery rates (slow, bonsai-style)
+// Recovery rates (from generated constants)
 // Water: Quick daily engagement with active sprouts
 // Sun: Thoughtful weekly reflection on life facets (twigs)
-const SOIL_RECOVERY_PER_WATER = 0.05  // 3x/day = 0.15/day = ~1.05/week
-const SOIL_RECOVERY_PER_SUN = 0.35    // 1x/week - meaningful but supplementary
+const SOIL_RECOVERY_PER_WATER = SOIL_WATER_RECOVERY
+const SOIL_RECOVERY_PER_SUN = SOIL_SUN_RECOVERY
 
-// Base costs by season (longer goals require building up capacity)
-const SEASON_BASE_COST: Record<SproutSeason, number> = {
-  '2w': 2,   // Minimum commitment
-  '1m': 3,
-  '3m': 5,   // Requires ~5 capacity (need to grow first)
-  '6m': 8,   // Serious commitment
-  '1y': 12,  // Major life goal
-}
-
-// Environment multipliers (harder = costs more)
-// - Fertile: "I know how to do this" - comfort zone, support, experience
-// - Firm: "This will take effort" - stretching, obstacles, learning required
-// - Barren: "This is genuinely hard" - new skill, no safety net, real risk
-const ENVIRONMENT_COST_MULT: Record<SproutEnvironment, number> = {
-  fertile: 1,    // Normal cost
-  firm: 1.5,     // 50% more expensive
-  barren: 2,     // Double cost (but double reward)
-}
+// Planting costs directly from generated constants (no derived multipliers needed)
+const plantingCosts = PLANTING_COSTS
 
 // === CAPACITY REWARD SYSTEM ===
 // Formula: base × environment × result × diminishing
 // All factors multiply together for final reward.
 
-// Base rewards by season - scaled so per-week rate is roughly equal
-// with slight bonus for longer commitments (~40% better from 1w→1y)
-const SEASON_BASE_REWARD: Record<SproutSeason, number> = {
-  '2w': 0.26,   // ~0.13/week
-  '1m': 0.56,   // ~0.14/week
-  '3m': 1.95,   // ~0.15/week
-  '6m': 4.16,   // ~0.16/week
-  '1y': 8.84,   // ~0.17/week
-}
-
-// Environment reward multiplier (harder = better return on risk)
-const ENVIRONMENT_REWARD_MULT: Record<SproutEnvironment, number> = {
-  fertile: 1.1,   // Safe path - 10% bonus
-  firm: 1.75,     // Some friction - 17% bonus
-  barren: 2.4,    // Real challenge - 20% bonus
-}
-
-// Result multiplier (1-5 scale from sprout completion)
-// Compressed spread: showing up matters, every attempt grows you
-const RESULT_REWARD_MULT: Record<number, number> = {
-  1: 0.4,   // You showed up - 40% reward
-  2: 0.55,  // Partial effort
-  3: 0.7,   // Solid, honest work
-  4: 0.85,  // Strong execution
-  5: 1.0,   // Excellence - full reward
-}
+// Direct references to generated constants (no redundant mapping)
+const seasons = SEASONS
+const environmentMultipliers = ENVIRONMENT_MULTIPLIERS
+const resultMultipliers = RESULT_MULTIPLIERS
 
 export function calculateSoilCost(season: SproutSeason, environment: SproutEnvironment): number {
-  const base = SEASON_BASE_COST[season]
-  const multiplier = ENVIRONMENT_COST_MULT[environment]
-  return Math.ceil(base * multiplier)
+  return plantingCosts[season][environment]
 }
 
 // Calculate capacity reward with diminishing returns
@@ -194,9 +169,9 @@ export function calculateCapacityReward(
   result: number,
   currentCapacity: number
 ): number {
-  const base = SEASON_BASE_REWARD[season]
-  const envMult = ENVIRONMENT_REWARD_MULT[environment]
-  const resultMult = RESULT_REWARD_MULT[result] ?? RESULT_REWARD_MULT[3] // Default to 0.7
+  const base = seasons[season].baseReward
+  const envMult = environmentMultipliers[environment]
+  const resultMult = resultMultipliers[result as keyof typeof resultMultipliers] ?? resultMultipliers[3]
 
   // Diminishing returns (exponent 1.5) - growth slows as you approach max
   // More generous early, still meaningful late-game slowdown
@@ -207,7 +182,7 @@ export function calculateCapacityReward(
 
 // Legacy function for backwards compatibility - returns base reward without diminishing
 export function getCapacityReward(environment: SproutEnvironment, season: SproutSeason): number {
-  return SEASON_BASE_REWARD[season] * ENVIRONMENT_REWARD_MULT[environment]
+  return seasons[season].baseReward * environmentMultipliers[environment]
 }
 
 export function getMaxSoilCapacity(): number {
@@ -226,12 +201,13 @@ export function getSunRecoveryRate(): number {
 
 // --- Unified Resource State ---
 
-const DEFAULT_WATER_CAPACITY = 3
-const DEFAULT_SUN_CAPACITY = 1  // Weekly, so just 1
+// Water and sun capacity (from generated constants)
+const DEFAULT_WATER_CAPACITY = WATER_DAILY_CAPACITY
+const DEFAULT_SUN_CAPACITY = SUN_WEEKLY_CAPACITY
 
 // --- Reset Time System ---
 // Both water (daily) and sun (weekly) reset at 6:00 AM
-const RESET_HOUR = 6 // 6:00 AM local time
+const RESET_HOUR = WATER_RESET_HOUR // 6:00 AM local time
 
 // Get the most recent daily reset time (6am today or yesterday if before 6am)
 export function getTodayResetTime(): Date {
@@ -439,13 +415,13 @@ let waterCountCache: { resetTime: number; count: number } | null = null
 let waterEntriesCache: WaterLogEntry[] | null = null
 
 // Invalidate water caches (called when water entry is added)
-export function invalidateWaterCountCache(): void {
+function invalidateWaterCountCache(): void {
   waterCountCache = null
   waterEntriesCache = null
 }
 
 // Count water entries since today's reset time (6am)
-export function getWaterUsedToday(): number {
+function getWaterUsedToday(): number {
   const resetTime = getTodayResetTime()
   const resetMs = resetTime.getTime()
 
@@ -534,7 +510,7 @@ export function wasWateredThisWeek(sprout: Sprout): boolean {
 // No stored counter - timestamps are the truth.
 
 // Count sun entries since this week's reset time (Sunday 6am)
-export function getSunUsedThisWeek(): number {
+function getSunUsedThisWeek(): number {
   const resetTime = getWeekResetTime()
   return sunLog.filter(entry => new Date(entry.timestamp) >= resetTime).length
 }
@@ -1091,7 +1067,7 @@ export function isTwigView(): boolean {
 // Stored separately from main state for cleaner separation
 // Backend integration comes later - this is just local storage for now
 
-const SETTINGS_STORAGE_KEY = 'trunk-settings-v1'
+const SETTINGS_STORAGE_KEY = STORAGE_KEYS.settings
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   name: '',

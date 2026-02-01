@@ -1,14 +1,16 @@
-// Tree structure
-export const BRANCH_COUNT = 8
-export const TWIG_COUNT = 8
+// Re-export generated constants
+export {
+  BRANCH_COUNT,
+  TWIG_COUNT,
+  STORAGE_KEYS,
+} from './generated/constants'
 
-// Storage
-export const STORAGE_KEY = 'trunk-notes-v1'
+// Storage key alias for backward compatibility
+import { STORAGE_KEYS as _STORAGE_KEYS } from './generated/constants'
+export const STORAGE_KEY = _STORAGE_KEYS.nodeData
 
-// Status messages
+// UI-specific constants (not from shared)
 export const STATUS_DEFAULT_MESSAGE = 'Saves locally.'
-
-// Animation timing (ms)
 export const ZOOM_TRANSITION_DURATION = 420
 export const EDITOR_OPEN_DELAY = 220
 export const GUIDE_ANIMATION_DURATION = 520
