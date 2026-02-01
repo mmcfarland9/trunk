@@ -1,7 +1,8 @@
 import type { AppContext } from '../types'
 import wateringPromptsRaw from '../assets/watering-prompts.txt?raw'
-import { nodeState, spendWater, canAffordWater, recoverSoil, addWaterEntry, getSoilRecoveryRate, wasWateredThisWeek } from '../state'
+import { nodeState, spendWater, canAffordWater, recoverSoil, addWaterEntry, getSoilRecoveryRate, wasWateredThisWeek, getDebugDate } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
+import { appendEvent } from '../events'
 
 export type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
@@ -114,6 +115,17 @@ export function initWaterDialog(
 
       // Save water entry to sprout data
       const prompt = waterDialogJournal.placeholder
+
+      // Emit sprout_watered event
+      appendEvent({
+        type: 'sprout_watered',
+        timestamp: getDebugDate().toISOString(),
+        sproutId: currentWateringSprout.id,
+        content: entry,
+        prompt,
+      })
+
+      // Also update legacy nodeState for backward compatibility
       addWaterEntry(currentWateringSprout.twigId, currentWateringSprout.id, entry, prompt)
       callbacks.onSetStatus(`Sprout watered! (+${getSoilRecoveryRate()} soil)`, 'info')
     }

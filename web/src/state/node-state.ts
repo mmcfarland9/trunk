@@ -1,31 +1,37 @@
 /**
  * STATE - Node State Management
  *
- * This file contains legacy state management that will be migrated to event sourcing
- * in Phase 4 of the Elegance Refactor. The following mutation patterns are documented
- * for tracking purposes.
+ * This file contains legacy state management that is being migrated to event sourcing
+ * in Phase 4 of the Elegance Refactor.
  *
- * === PRODUCTION CODE MUTATIONS (Require Phase 4 migration) ===
+ * === COMPLETED MIGRATIONS (Task 4.1) ===
+ *
+ * Sprout operations now emit events in addition to updating legacy state:
+ * - sprout_planted: emitted in twig-view.ts when planting
+ * - sprout_watered: emitted in water-dialog.ts when watering
+ * - sprout_harvested: emitted in harvest-dialog.ts when harvesting
+ * - sprout_uprooted: emitted in twig-view.ts when uprooting
+ *
+ * Legacy nodeState is still updated for backward compatibility.
+ * Events are the source of truth; nodeState can be derived from events.
+ *
+ * === REMAINING MIGRATIONS (Tasks 4.2-4.4) ===
  *
  * Line ~180: nodeState[twigId].leaves.push(leaf)
  *   - Function: createLeaf()
- *   - Fix: Replace with appendEvent({ type: 'leaf-created', ... })
- *
- * Line ~205: sprout.waterEntries.push({...})
- *   - Function: addWaterEntry()
- *   - Fix: Replace with appendEvent({ type: 'sprout-watered', ... })
+ *   - Fix: Replace with appendEvent({ type: 'leaf_created', ... })
  *
  * Line ~225: sunLog.push({...})
  *   - Function: addSunEntry()
- *   - Fix: Replace with appendEvent({ type: 'sun-shone', ... })
+ *   - Fix: Replace with appendEvent({ type: 'sun_shone', ... })
  *
  * Line ~370: soilLog.push({...})
  *   - Function: addSoilEntry()
- *   - Fix: Replace with appendEvent({ type: 'soil-changed', ... })
+ *   - Fix: Events already capture soil changes; remove soilLog
  *
  * Line ~390: delete nodeState[nodeId]
  *   - Function: deleteNodeData()
- *   - Fix: Replace with appendEvent({ type: 'node-deleted', ... })
+ *   - Fix: Not needed for event-sourced state
  *
  * === ACCEPTABLE MUTATIONS (Debug/Migration/Local) ===
  *
@@ -41,15 +47,8 @@
  * Line ~380: delete nodeState[key]
  *   - Context: clearState() debug function
  *
- * === PHASE 4 MIGRATION PLAN ===
- *
- * 1. All write operations become event appends (immutable log)
- * 2. Current state derived by replaying events (see events/derive.ts)
- * 3. nodeState, sunLog, soilLog become derived read-only views
- * 4. Resource counters (soil, water, sun) derived from event timestamps
- *
  * See: docs/ARCHITECTURE.md for event sourcing design
- * See: events/store.ts for existing event infrastructure
+ * See: events/store.ts for event infrastructure
  */
 
 import type { NodeData, Sprout, SproutState, SunEntry, SoilEntry, Leaf, NotificationSettings, WaterLogEntry } from '../types'

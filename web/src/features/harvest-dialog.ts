@@ -1,23 +1,14 @@
 import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
-import { nodeState, saveState, recoverSoil, getCapacityReward } from '../state'
+import { nodeState, saveState, recoverSoil, getCapacityReward, calculateCapacityReward, getSoilCapacity, getDebugDate } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
+import { getResultEmoji } from '../utils/sprout-labels'
+import sharedConstants from '../../../shared/constants.json'
+import { appendEvent } from '../events'
 
 export type HarvestDialogCallbacks = {
   onSoilMeterChange: () => void
   onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
   onHarvestComplete: () => void
-}
-
-// Result emoji scale: 1=withered, 2=sprout, 3=sapling, 4=tree, 5=oak
-function getResultEmoji(result: number): string {
-  const emojis: Record<number, string> = {
-    1: '🥀', // withered
-    2: '🌱', // sprout
-    3: '🌿', // sapling
-    4: '🌳', // tree
-    5: '🌲', // strong oak/evergreen
-  }
-  return emojis[result] || '🌿'
 }
 
 export type HarvestDialogApi = {
@@ -50,15 +41,6 @@ export function initHarvestDialog(
     season: SproutSeason
   } | null = null
 
-  // Result multipliers for capacity gain (showing up counts!)
-  const RESULT_MULTIPLIERS: Record<number, number> = {
-    1: 0.4,   // You showed up - 40% reward
-    2: 0.55,  // Partial effort
-    3: 0.7,   // Solid work
-    4: 0.85,  // Strong execution
-    5: 1.0,   // Excellence
-  }
-
   function updateResultDisplay(result: number) {
     const { harvestDialogResultEmoji, harvestDialogSave } = ctx.elements
     harvestDialogResultEmoji.textContent = getResultEmoji(result)
@@ -66,7 +48,7 @@ export function initHarvestDialog(
     // Update harvest button with soil/capacity info
     // All harvests return full soil + some capacity (no "failed" state)
     if (currentHarvestSprout) {
-      const resultMultiplier = RESULT_MULTIPLIERS[result] ?? 0.7
+      const resultMultiplier = sharedConstants.soil.resultMultipliers[String(result) as keyof typeof sharedConstants.soil.resultMultipliers] ?? 0.7
       const baseReward = getCapacityReward(currentHarvestSprout.environment, currentHarvestSprout.season)
       const capGain = baseReward * resultMultiplier
       harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${currentHarvestSprout.soilCost.toFixed(1)}, +${capGain.toFixed(2)} cap)</span>`
@@ -137,7 +119,7 @@ export function initHarvestDialog(
     if (!currentHarvestSprout) return
 
     // Extract values early to avoid non-null assertion issues
-    const { id: sproutId, twigId } = currentHarvestSprout
+    const { id: sproutId, twigId, season, environment } = currentHarvestSprout
     const result = parseInt(harvestDialogSlider.value, 10)
     const reflection = harvestDialogReflection.value.trim()
 
@@ -148,15 +130,33 @@ export function initHarvestDialog(
     const sprout = data.sprouts.find(s => s.id === sproutId)
     if (!sprout) return
 
+    const timestamp = getDebugDate().toISOString()
+
+    // Calculate capacity gained with diminishing returns
+    const currentCapacity = getSoilCapacity()
+    const capacityGained = calculateCapacityReward(season, environment, result, currentCapacity)
+
+    // Emit sprout_harvested event
+    appendEvent({
+      type: 'sprout_harvested',
+      timestamp,
+      sproutId,
+      result,
+      reflection: reflection || undefined,
+      capacityGained,
+    })
+
     // All harvests are completions - result (1-5) indicates outcome
     // No "failed" state - showing up counts!
+    // Update legacy nodeState for backward compatibility
     sprout.state = 'completed'
     sprout.result = result
     sprout.reflection = reflection || undefined
-    sprout.completedAt = new Date().toISOString()
+    sprout.completedAt = timestamp
+    sprout.harvestedAt = timestamp
 
     // All harvests return full soil + capacity based on result
-    const resultMultiplier = RESULT_MULTIPLIERS[result] ?? 0.7
+    const resultMultiplier = sharedConstants.soil.resultMultipliers[String(result) as keyof typeof sharedConstants.soil.resultMultipliers] ?? 0.7
     const baseReward = getCapacityReward(sprout.environment, sprout.season)
     const capGain = baseReward * resultMultiplier
     recoverSoil(sprout.soilCost, capGain, 'Harvested sprout', sprout.title)

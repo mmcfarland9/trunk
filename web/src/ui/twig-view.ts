@@ -6,6 +6,7 @@ import {
   ENVIRONMENTS,
   getSeasonLabel,
   getEnvironmentLabel,
+  getEnvironmentFormHint,
   getResultEmoji,
 } from '../utils/sprout-labels'
 import {
@@ -15,6 +16,7 @@ import {
   getActiveSprouts,
   getHistorySprouts,
   getDebugNow,
+  getDebugDate,
   calculateSoilCost,
   getSoilAvailable,
   canAffordSoil,
@@ -28,6 +30,7 @@ import {
   getSoilRecoveryRate,
   wasWateredThisWeek,
 } from '../state'
+import { appendEvent } from '../events'
 
 export type TwigViewCallbacks = {
   onClose: () => void
@@ -119,9 +122,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
             ${ENVIRONMENTS.map(e => `<button type="button" class="sprout-env-btn" data-env="${e}">${getEnvironmentLabel(e)}</button>`).join('')}
           </div>
           <div class="env-hint-area">
-            <span class="env-hint" data-for="fertile">[Comfortable terrain · no soil bonus]</span>
-            <span class="env-hint" data-for="firm">[New obstacles · +1 soil capacity]</span>
-            <span class="env-hint" data-for="barren">[Hostile conditions · +2 soil capacity]</span>
+            ${ENVIRONMENTS.map(e => `<span class="env-hint" data-for="${e}">${getEnvironmentFormHint(e)}</span>`).join('')}
           </div>
           <label class="sprout-field-label">Bloom <span class="field-hint">(outcomes)</span></label>
           <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
@@ -498,11 +499,21 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         if (sprout.state === 'active') {
           // Uproot returns 25% of soil cost - always log even if amount is 0
           const soilReturn = sprout.soilCost * 0.25
+
+          // Emit sprout_uprooted event
+          appendEvent({
+            type: 'sprout_uprooted',
+            timestamp: getDebugDate().toISOString(),
+            sproutId: sprout.id,
+            soilReturned: soilReturn,
+          })
+
           addSoilEntry(soilReturn, 'Uprooted sprout', sprout.title)
           recoverPartialSoil(sprout.soilCost, 0.25)
           callbacks.onSoilChange?.()
         }
 
+        // Update legacy nodeState
         const remaining = sprouts.filter(s => s.id !== id)
         setSprouts(remaining)
         renderSprouts()
@@ -745,19 +756,40 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     }
     // If leafChoice is "", sprout is standalone (no leafId)
 
-    const now = new Date()
+    const now = getDebugDate()
     const bloomWither = witherInput.value.trim() || undefined
     const bloomBudding = buddingInput.value.trim() || undefined
     const bloomFlourish = flourishInput.value.trim() || undefined
+    const sproutId = generateSproutId()
+    const timestamp = now.toISOString()
+
+    // Emit sprout_planted event
+    appendEvent({
+      type: 'sprout_planted',
+      timestamp,
+      sproutId,
+      twigId: nodeId,
+      title,
+      season: selectedSeason,
+      environment: selectedEnvironment,
+      soilCost: cost,
+      leafId,
+      bloomWither,
+      bloomBudding,
+      bloomFlourish,
+    })
+
+    // Also update legacy nodeState for backward compatibility
     const newSprout: Sprout = {
-      id: generateSproutId(),
+      id: sproutId,
       title,
       season: selectedSeason,
       environment: selectedEnvironment,
       state: 'active',
       soilCost: cost,
-      createdAt: now.toISOString(),
-      activatedAt: now.toISOString(),
+      createdAt: timestamp,
+      activatedAt: timestamp,
+      plantedAt: timestamp,
       endDate: getEndDate(selectedSeason, now).toISOString(),
       bloomWither,
       bloomBudding,
@@ -766,8 +798,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     }
 
     const sprouts = getSprouts()
-    sprouts.push(newSprout)
-    setSprouts(sprouts)
+    setSprouts([...sprouts, newSprout])
     resetForm()
     renderSprouts()
     callbacks.onSoilChange?.()
