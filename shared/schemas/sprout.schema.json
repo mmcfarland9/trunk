@@ -24,8 +24,8 @@
     },
     "state": {
       "type": "string",
-      "enum": ["active", "completed"],
-      "description": "Current lifecycle state (active = growing, completed = harvested)"
+      "enum": ["active", "completed", "uprooted"],
+      "description": "Lifecycle state: active (growing), completed (harvested), uprooted (abandoned)"
     },
     "soilCost": {
       "type": "number",
