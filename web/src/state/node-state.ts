@@ -4,7 +4,7 @@
  * This file contains legacy state management that is being migrated to event sourcing
  * in Phase 4 of the Elegance Refactor.
  *
- * === COMPLETED MIGRATIONS (Task 4.1) ===
+ * === COMPLETED MIGRATIONS (Tasks 4.1-4.2) ===
  *
  * Sprout operations now emit events in addition to updating legacy state:
  * - sprout_planted: emitted in twig-view.ts when planting
@@ -12,14 +12,13 @@
  * - sprout_harvested: emitted in harvest-dialog.ts when harvesting
  * - sprout_uprooted: emitted in twig-view.ts when uprooting
  *
+ * Leaf operations now emit events:
+ * - leaf_created: emitted in createLeaf() when creating new leaf
+ *
  * Legacy nodeState is still updated for backward compatibility.
  * Events are the source of truth; nodeState can be derived from events.
  *
- * === REMAINING MIGRATIONS (Tasks 4.2-4.4) ===
- *
- * Line ~180: nodeState[twigId].leaves.push(leaf)
- *   - Function: createLeaf()
- *   - Fix: Replace with appendEvent({ type: 'leaf_created', ... })
+ * === REMAINING MIGRATIONS (Tasks 4.3-4.4) ===
  *
  * Line ~225: sunLog.push({...})
  *   - Function: addSunEntry()
@@ -68,6 +67,7 @@ import {
   setResetCallbacks,
   setResourceQuotaErrorCallback,
 } from './resources'
+import { appendEvent } from '../events'
 
 // --- Node Data Normalization ---
 
@@ -373,12 +373,23 @@ export function createLeaf(twigId: string, name: string): Leaf {
     nodeState[twigId].leaves = []
   }
 
+  const timestamp = getDebugDate().toISOString()
   const leaf: Leaf = {
     id: generateLeafId(),
     name,
-    createdAt: new Date().toISOString(),
+    createdAt: timestamp,
   }
 
+  // Emit event (source of truth)
+  appendEvent({
+    type: 'leaf_created',
+    timestamp,
+    leafId: leaf.id,
+    twigId,
+    name: leaf.name,
+  })
+
+  // Update legacy state for backward compatibility
   nodeState[twigId].leaves.push(leaf)
   saveState()
   return leaf
