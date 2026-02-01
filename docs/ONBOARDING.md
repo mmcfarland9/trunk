@@ -134,3 +134,5 @@ function doSomething(ctx: AppContext) {
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — System overview and diagrams
 - [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships and storage
 - [INTERFACES.md](./INTERFACES.md) — Module APIs and extension points
+- [CONTRIB.md](./CONTRIB.md) — Contributing guide and scripts reference
+- [RUNBOOK.md](./RUNBOOK.md) — Deployment and operations

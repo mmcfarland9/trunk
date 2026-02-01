@@ -483,4 +483,6 @@ Use Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test
 | [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, debugging tips |
 | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Entity relationships, storage keys, constants reference |
 | [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs, extension points, test fixtures |
+| [docs/CONTRIB.md](docs/CONTRIB.md) | Contributing guide, scripts reference, testing |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deployment, common issues, rollback procedures |
 | [docs/future-ideas-archive.md](docs/future-ideas-archive.md) | Archived feature designs (Flowerdex, etc.) |
