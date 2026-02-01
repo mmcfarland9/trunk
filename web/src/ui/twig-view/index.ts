@@ -4,3 +4,4 @@
  */
 
 export { buildSproutForm, type SproutFormElements } from './sprout-form'
+export { buildSproutCard, type SproutCardOptions } from './sprout-card'
