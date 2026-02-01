@@ -17,23 +17,11 @@ enum Season: String, Codable, CaseIterable {
     case oneYear = "1y"
 
     var label: String {
-        switch self {
-        case .twoWeeks: return "2 weeks"
-        case .oneMonth: return "1 month"
-        case .threeMonths: return "3 months"
-        case .sixMonths: return "6 months"
-        case .oneYear: return "1 year"
-        }
+        SharedConstants.Seasons.labels[rawValue] ?? rawValue
     }
 
     var durationMs: Int {
-        switch self {
-        case .twoWeeks: return 1_209_600_000
-        case .oneMonth: return 2_592_000_000
-        case .threeMonths: return 7_776_000_000
-        case .sixMonths: return 15_552_000_000
-        case .oneYear: return 31_536_000_000
-        }
+        SharedConstants.Seasons.durations[rawValue] ?? 0
     }
 }
 
@@ -44,28 +32,16 @@ enum SproutEnvironment: String, Codable, CaseIterable {
     case barren
 
     var label: String {
-        switch self {
-        case .fertile: return "Fertile"
-        case .firm: return "Firm"
-        case .barren: return "Barren"
-        }
+        SharedConstants.Environments.labels[rawValue] ?? rawValue.capitalized
     }
 
     var sproutDescription: String {
-        switch self {
-        case .fertile: return "Easy to achieve"
-        case .firm: return "Challenging stretch"
-        case .barren: return "Very difficult"
-        }
+        SharedConstants.Environments.descriptions[rawValue] ?? ""
     }
 
     /// Hint text matching web app exactly
     var formHint: String {
-        switch self {
-        case .fertile: return "[Comfortable terrain · no soil bonus]"
-        case .firm: return "[New obstacles · +1 soil capacity]"
-        case .barren: return "[Hostile conditions · +2 soil capacity]"
-        }
+        SharedConstants.Environments.formHints[rawValue] ?? ""
     }
 }
 

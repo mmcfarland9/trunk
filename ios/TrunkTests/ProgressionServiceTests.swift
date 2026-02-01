@@ -106,31 +106,32 @@ struct SoilCostTests {
 struct CapacityRewardTests {
 
     // MARK: - Base Rewards
+    // Base rewards from shared/constants.json: 2w=0.26, 1m=0.56, 3m=1.95, 6m=4.16, 1y=8.84
 
-    @Test("Base reward for 2w season is 1.0")
+    @Test("Base reward for 2w season is 0.26")
     func capacityReward_baseReward_twoWeeks() {
         // At capacity 0, diminishing factor is 1.0
         // fertile multiplier is 1.1, result 5 multiplier is 1.0
-        // So: 1.0 * 1.1 * 1.0 * 1.0 = 1.1
+        // So: 0.26 * 1.1 * 1.0 * 1.0 = 0.286
         let reward = ProgressionService.capacityReward(
             season: .twoWeeks,
             environment: .fertile,
             result: 5,
             currentCapacity: 0
         )
-        #expect(abs(reward - 1.1) < 0.01)
+        #expect(abs(reward - 0.286) < 0.01)
     }
 
-    @Test("Base reward for 1y season is 8.0")
+    @Test("Base reward for 1y season is 8.84")
     func capacityReward_baseReward_oneYear() {
-        // At capacity 0: 8.0 * 1.1 * 1.0 * 1.0 = 8.8
+        // At capacity 0: 8.84 * 1.1 * 1.0 * 1.0 = 9.724
         let reward = ProgressionService.capacityReward(
             season: .oneYear,
             environment: .fertile,
             result: 5,
             currentCapacity: 0
         )
-        #expect(abs(reward - 8.8) < 0.01)
+        #expect(abs(reward - 9.724) < 0.01)
     }
 
     // MARK: - Environment Multipliers
@@ -143,8 +144,8 @@ struct CapacityRewardTests {
             result: 5,
             currentCapacity: 0
         )
-        // 1.0 base * 1.1 env * 1.0 result * 1.0 diminishing = 1.1
-        #expect(abs(reward - 1.1) < 0.01)
+        // 0.26 base * 1.1 env * 1.0 result * 1.0 diminishing = 0.286
+        #expect(abs(reward - 0.286) < 0.01)
     }
 
     @Test("Firm environment applies 1.75x multiplier")
@@ -155,8 +156,8 @@ struct CapacityRewardTests {
             result: 5,
             currentCapacity: 0
         )
-        // 1.0 base * 1.75 env * 1.0 result * 1.0 diminishing = 1.75
-        #expect(abs(reward - 1.75) < 0.01)
+        // 0.26 base * 1.75 env * 1.0 result * 1.0 diminishing = 0.455
+        #expect(abs(reward - 0.455) < 0.01)
     }
 
     @Test("Barren environment applies 2.4x multiplier")
@@ -167,8 +168,8 @@ struct CapacityRewardTests {
             result: 5,
             currentCapacity: 0
         )
-        // 1.0 base * 2.4 env * 1.0 result * 1.0 diminishing = 2.4
-        #expect(abs(reward - 2.4) < 0.01)
+        // 0.26 base * 2.4 env * 1.0 result * 1.0 diminishing = 0.624
+        #expect(abs(reward - 0.624) < 0.01)
     }
 
     // MARK: - Result Multipliers
@@ -181,8 +182,8 @@ struct CapacityRewardTests {
             result: 1,
             currentCapacity: 0
         )
-        // 1.0 base * 1.1 env * 0.4 result * 1.0 diminishing = 0.44
-        #expect(abs(reward - 0.44) < 0.01)
+        // 0.26 base * 1.1 env * 0.4 result * 1.0 diminishing = 0.1144
+        #expect(abs(reward - 0.1144) < 0.01)
     }
 
     @Test("Result 3 applies 0.7x multiplier")
@@ -193,8 +194,8 @@ struct CapacityRewardTests {
             result: 3,
             currentCapacity: 0
         )
-        // 1.0 base * 1.1 env * 0.7 result * 1.0 diminishing = 0.77
-        #expect(abs(reward - 0.77) < 0.01)
+        // 0.26 base * 1.1 env * 0.7 result * 1.0 diminishing = 0.2002
+        #expect(abs(reward - 0.2002) < 0.01)
     }
 
     @Test("Result 5 applies 1.0x multiplier")
@@ -205,8 +206,8 @@ struct CapacityRewardTests {
             result: 5,
             currentCapacity: 0
         )
-        // 1.0 base * 1.1 env * 1.0 result * 1.0 diminishing = 1.1
-        #expect(abs(reward - 1.1) < 0.01)
+        // 0.26 base * 1.1 env * 1.0 result * 1.0 diminishing = 0.286
+        #expect(abs(reward - 0.286) < 0.01)
     }
 
     // MARK: - Diminishing Returns
@@ -231,7 +232,7 @@ struct CapacityRewardTests {
         #expect(abs(factor - 0.073) < 0.01)
     }
 
-    @Test("Full formula: 1y/barren/result5/cap0 = 19.2")
+    @Test("Full formula: 1y/barren/result5/cap0 = 21.216")
     func capacityReward_fullFormula() {
         let reward = ProgressionService.capacityReward(
             season: .oneYear,
@@ -239,8 +240,8 @@ struct CapacityRewardTests {
             result: 5,
             currentCapacity: 0
         )
-        // 8.0 base * 2.4 env * 1.0 result * 1.0 diminishing = 19.2
-        #expect(abs(reward - 19.2) < 0.01)
+        // 8.84 base * 2.4 env * 1.0 result * 1.0 diminishing = 21.216
+        #expect(abs(reward - 21.216) < 0.1)
     }
 }
 

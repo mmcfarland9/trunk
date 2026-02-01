@@ -28,23 +28,25 @@
   },
   "water": {
     "dailyCapacity": 3,
+    "resetHour": 6,
     "resetIntervalMs": 86400000
   },
   "sun": {
     "weeklyCapacity": 1,
+    "resetHour": 6,
     "resetIntervalMs": 604800000
   },
   "seasons": {
-    "2w": { "label": "2 weeks", "durationMs": 1209600000 },
-    "1m": { "label": "1 month", "durationMs": 2592000000 },
-    "3m": { "label": "3 months", "durationMs": 7776000000 },
-    "6m": { "label": "6 months", "durationMs": 15552000000 },
-    "1y": { "label": "1 year", "durationMs": 31536000000 }
+    "2w": { "label": "2 weeks", "durationMs": 1209600000, "baseReward": 0.26 },
+    "1m": { "label": "1 month", "durationMs": 2592000000, "baseReward": 0.56 },
+    "3m": { "label": "3 months", "durationMs": 7776000000, "baseReward": 1.95 },
+    "6m": { "label": "6 months", "durationMs": 15552000000, "baseReward": 4.16 },
+    "1y": { "label": "1 year", "durationMs": 31536000000, "baseReward": 8.84 }
   },
   "environments": {
-    "fertile": { "label": "Fertile", "description": "Easy to achieve" },
-    "firm": { "label": "Firm", "description": "Challenging stretch" },
-    "barren": { "label": "Barren", "description": "Very difficult" }
+    "fertile": { "label": "Fertile", "description": "Easy to achieve", "formHint": "[Comfortable terrain · no soil bonus]" },
+    "firm": { "label": "Firm", "description": "Challenging stretch", "formHint": "[New obstacles · +1 soil capacity]" },
+    "barren": { "label": "Barren", "description": "Very difficult", "formHint": "[Hostile conditions · +2 soil capacity]" }
   },
   "results": {
     "1": { "label": "Minimal", "description": "Showed up but little progress" },
@@ -55,13 +57,57 @@
   },
   "tree": {
     "branchCount": 8,
-    "twigCount": 8
+    "twigCount": 8,
+    "branches": [
+      {
+        "name": "CORE",
+        "description": "fitness & vitality",
+        "twigs": ["movement", "strength", "sport", "technique", "maintenance", "nutrition", "sleep", "appearance"]
+      },
+      {
+        "name": "BRAIN",
+        "description": "knowledge & curiosity",
+        "twigs": ["reading", "writing", "reasoning", "focus", "memory", "analysis", "dialogue", "exploration"]
+      },
+      {
+        "name": "VOICE",
+        "description": "expression & creativity",
+        "twigs": ["practice", "composition", "interpretation", "performance", "consumption", "curation", "completion", "publication"]
+      },
+      {
+        "name": "HANDS",
+        "description": "making & craft",
+        "twigs": ["design", "fabrication", "assembly", "repair", "refinement", "tooling", "tending", "preparation"]
+      },
+      {
+        "name": "HEART",
+        "description": "love & family",
+        "twigs": ["homemaking", "care", "presence", "intimacy", "communication", "ritual", "adventure", "joy"]
+      },
+      {
+        "name": "BREATH",
+        "description": "regulation & renewal",
+        "twigs": ["observation", "nature", "flow", "repose", "idleness", "exposure", "abstinence", "reflection"]
+      },
+      {
+        "name": "BACK",
+        "description": "belonging & community",
+        "twigs": ["connection", "support", "gathering", "membership", "stewardship", "advocacy", "service", "culture"]
+      },
+      {
+        "name": "FEET",
+        "description": "stability & direction",
+        "twigs": ["work", "development", "positioning", "ventures", "finance", "operations", "planning", "administration"]
+      }
+    ]
   },
   "storage": {
     "keys": {
       "nodeData": "trunk-notes-v1",
       "resources": "trunk-resources-v1",
       "notifications": "trunk-notifications-v1",
+      "settings": "trunk-settings-v1",
+      "events": "trunk-events-v1",
       "lastExport": "trunk-last-export"
     },
     "exportReminderDays": 7

@@ -7,67 +7,10 @@
 
 import Foundation
 
-// MARK: - Constants (from shared/constants.json)
-
-enum TrunkConstants {
-    enum Soil {
-        static let startingCapacity: Double = 10
-        static let maxCapacity: Double = 120
-
-        /// Planting costs by season and environment
-        static let plantingCosts: [String: [String: Int]] = [
-            "2w": ["fertile": 2, "firm": 3, "barren": 4],
-            "1m": ["fertile": 3, "firm": 5, "barren": 6],
-            "3m": ["fertile": 5, "firm": 8, "barren": 10],
-            "6m": ["fertile": 8, "firm": 12, "barren": 16],
-            "1y": ["fertile": 12, "firm": 18, "barren": 24]
-        ]
-
-        /// Base rewards by season (for capacity reward calculation)
-        static let baseRewards: [String: Double] = [
-            "2w": 1.0,
-            "1m": 2.0,
-            "3m": 3.0,
-            "6m": 5.0,
-            "1y": 8.0
-        ]
-
-        /// Environment multipliers for rewards
-        static let environmentMultipliers: [String: Double] = [
-            "fertile": 1.1,
-            "firm": 1.75,
-            "barren": 2.4
-        ]
-
-        /// Result multipliers (1-5 scale)
-        static let resultMultipliers: [Int: Double] = [
-            1: 0.4,
-            2: 0.55,
-            3: 0.7,
-            4: 0.85,
-            5: 1.0
-        ]
-
-        /// Recovery rates
-        static let waterRecovery: Double = 0.05
-        static let sunRecovery: Double = 0.35
-    }
-
-    enum Water {
-        static let dailyCapacity: Int = 3
-        static let resetHour: Int = 6 // 6 AM local time
-    }
-
-    enum Sun {
-        static let weeklyCapacity: Int = 1
-        static let resetHour: Int = 6 // 6 AM Monday local time
-    }
-
-    enum Tree {
-        static let branchCount: Int = 8
-        static let twigCount: Int = 8
-    }
-}
+// MARK: - Constants
+// Now uses SharedConstants (auto-generated from shared/constants.json)
+// Legacy alias for backward compatibility
+typealias TrunkConstants = SharedConstants
 
 // MARK: - ProgressionService
 
@@ -103,7 +46,7 @@ struct ProgressionService {
         result: Int,
         currentCapacity: Double
     ) -> Double {
-        let baseReward = TrunkConstants.Soil.baseRewards[season.rawValue] ?? 2.0
+        let baseReward = SharedConstants.Seasons.baseRewards[season.rawValue] ?? 2.0
         let envMultiplier = TrunkConstants.Soil.environmentMultipliers[environment.rawValue] ?? 1.0
         let resultMultiplier = TrunkConstants.Soil.resultMultipliers[result] ?? 0.7
         let diminishingFactor = diminishingReturns(currentCapacity: currentCapacity)

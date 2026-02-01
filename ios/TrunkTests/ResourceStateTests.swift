@@ -102,11 +102,11 @@ struct TrunkConstantsTests {
 
     @Test("Base rewards are defined for all seasons")
     func baseRewards_allSeasons() {
-        #expect(TrunkConstants.Soil.baseRewards["2w"] != nil)
-        #expect(TrunkConstants.Soil.baseRewards["1m"] != nil)
-        #expect(TrunkConstants.Soil.baseRewards["3m"] != nil)
-        #expect(TrunkConstants.Soil.baseRewards["6m"] != nil)
-        #expect(TrunkConstants.Soil.baseRewards["1y"] != nil)
+        #expect(SharedConstants.Seasons.baseRewards["2w"] != nil)
+        #expect(SharedConstants.Seasons.baseRewards["1m"] != nil)
+        #expect(SharedConstants.Seasons.baseRewards["3m"] != nil)
+        #expect(SharedConstants.Seasons.baseRewards["6m"] != nil)
+        #expect(SharedConstants.Seasons.baseRewards["1y"] != nil)
     }
 
     @Test("Environment multipliers are defined")
