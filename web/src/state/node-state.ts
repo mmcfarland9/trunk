@@ -18,11 +18,12 @@
  * Legacy nodeState is still updated for backward compatibility.
  * Events are the source of truth; nodeState can be derived from events.
  *
- * === REMAINING MIGRATIONS (Tasks 4.3-4.4) ===
+ * === COMPLETED MIGRATION (Task 4.3) ===
  *
- * Line ~225: sunLog.push({...})
- *   - Function: addSunEntry()
- *   - Fix: Replace with appendEvent({ type: 'sun_shone', ... })
+ * Sun operations now emit events:
+ * - sun_shone: emitted in addSunEntry() when shining
+ *
+ * === REMAINING MIGRATIONS (Task 4.4) ===
  *
  * Line ~370: soilLog.push({...})
  *   - Function: addSoilEntry()
@@ -511,8 +512,21 @@ export function addSunEntry(
   prompt: string | undefined,
   context: SunEntry['context']
 ): void {
+  const timestamp = getDebugDate().toISOString()
+
+  // Emit event (source of truth)
+  appendEvent({
+    type: 'sun_shone',
+    timestamp,
+    twigId: context.twigId,
+    twigLabel: context.twigLabel,
+    content,
+    prompt,
+  })
+
+  // Update legacy state for backward compatibility
   sunLog.push({
-    timestamp: getDebugDate().toISOString(),
+    timestamp,
     content,
     prompt,
     context,
