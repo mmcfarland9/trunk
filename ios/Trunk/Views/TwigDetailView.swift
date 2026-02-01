@@ -29,20 +29,7 @@ struct TwigDetailView: View {
         if let data = nodeData.first(where: { $0.nodeId == nodeId }), !data.label.isEmpty {
             return data.label
         }
-        return defaultTwigLabels[branchIndex]?[twigIndex] ?? "Twig"
-    }
-
-    private var defaultTwigLabels: [Int: [Int: String]] {
-        [
-            0: [0: "movement", 1: "strength", 2: "sport", 3: "technique", 4: "maintenance", 5: "nutrition", 6: "sleep", 7: "appearance"],
-            1: [0: "reading", 1: "writing", 2: "reasoning", 3: "focus", 4: "memory", 5: "analysis", 6: "dialogue", 7: "exploration"],
-            2: [0: "practice", 1: "composition", 2: "interpretation", 3: "performance", 4: "consumption", 5: "curation", 6: "completion", 7: "publication"],
-            3: [0: "design", 1: "fabrication", 2: "assembly", 3: "repair", 4: "refinement", 5: "tooling", 6: "tending", 7: "preparation"],
-            4: [0: "homemaking", 1: "care", 2: "presence", 3: "intimacy", 4: "communication", 5: "ritual", 6: "adventure", 7: "joy"],
-            5: [0: "observation", 1: "nature", 2: "flow", 3: "repose", 4: "idleness", 5: "exposure", 6: "abstinence", 7: "reflection"],
-            6: [0: "connection", 1: "support", 2: "gathering", 3: "membership", 4: "stewardship", 5: "advocacy", 6: "service", 7: "culture"],
-            7: [0: "work", 1: "development", 2: "positioning", 3: "ventures", 4: "finance", 5: "operations", 6: "planning", 7: "administration"]
-        ]
+        return SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
     }
 
     private var sprouts: [Sprout] {

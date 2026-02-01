@@ -16,13 +16,13 @@ struct HarvestSproutView: View {
 
     @State private var selectedResult: Int = 3
 
-    private let resultDescriptions: [(Int, String, String)] = [
-        (1, "Minimal", "Showed up but little progress"),
-        (2, "Partial", "Made some progress"),
-        (3, "Good", "Met most expectations"),
-        (4, "Strong", "Exceeded expectations"),
-        (5, "Exceptional", "Fully achieved and then some")
-    ]
+    private var resultDescriptions: [(Int, String, String)] {
+        (1...5).map { result in
+            (result,
+             SharedConstants.Results.labels[result] ?? "Result \(result)",
+             SharedConstants.Results.descriptions[result] ?? "")
+        }
+    }
 
     private var reward: Double {
         ProgressionService.capacityReward(

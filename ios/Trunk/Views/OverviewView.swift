@@ -284,11 +284,6 @@ struct BranchNode: View {
     let hasActiveSprouts: Bool
     let activeSproutCount: Int
 
-    private let branchNames = [
-        "CORE", "BRAIN", "VOICE", "HANDS",
-        "HEART", "BREATH", "BACK", "FEET"
-    ]
-
     var body: some View {
         VStack(spacing: 2) {
             // ASCII-style box
@@ -297,7 +292,7 @@ struct BranchNode: View {
                     .font(.system(size: 9, design: .monospaced))
                     .foregroundStyle(Color.inkFaint.opacity(0.5))
 
-                Text(branchNames[index])
+                Text(SharedConstants.Tree.branchName(index))
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(hasActiveSprouts ? Color.wood : Color.inkFaint)
 

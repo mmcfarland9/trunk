@@ -455,22 +455,9 @@ struct TodayView: View {
             return leaf.nodeId
         }
 
-        let branchNames = ["Core", "Brain", "Voice", "Hands", "Heart", "Breath", "Back", "Feet"]
-        let branchName = branchIndex < branchNames.count ? branchNames[branchIndex] : "Branch"
-
-        let twigLabels: [Int: [Int: String]] = [
-            0: [0: "Movement", 1: "Strength", 2: "Sport", 3: "Technique", 4: "Maintenance", 5: "Nutrition", 6: "Sleep", 7: "Appearance"],
-            1: [0: "Reading", 1: "Writing", 2: "Reasoning", 3: "Focus", 4: "Memory", 5: "Analysis", 6: "Dialogue", 7: "Exploration"],
-            2: [0: "Practice", 1: "Composition", 2: "Interpretation", 3: "Performance", 4: "Consumption", 5: "Curation", 6: "Completion", 7: "Publication"],
-            3: [0: "Design", 1: "Fabrication", 2: "Assembly", 3: "Repair", 4: "Refinement", 5: "Tooling", 6: "Tending", 7: "Preparation"],
-            4: [0: "Homemaking", 1: "Care", 2: "Presence", 3: "Intimacy", 4: "Communication", 5: "Ritual", 6: "Adventure", 7: "Joy"],
-            5: [0: "Observation", 1: "Nature", 2: "Flow", 3: "Repose", 4: "Idleness", 5: "Exposure", 6: "Abstinence", 7: "Reflection"],
-            6: [0: "Connection", 1: "Support", 2: "Gathering", 3: "Membership", 4: "Stewardship", 5: "Advocacy", 6: "Service", 7: "Culture"],
-            7: [0: "Work", 1: "Development", 2: "Positioning", 3: "Ventures", 4: "Finance", 5: "Operations", 6: "Planning", 7: "Administration"]
-        ]
-
-        let twigLabel = twigLabels[branchIndex]?[twigIndex] ?? "Twig"
-        return "\(branchName) / \(twigLabel)"
+        let branchName = SharedConstants.Tree.branchName(branchIndex)
+        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
+        return "\(branchName) / \(twigLabel.capitalized)"
     }
 }
 
