@@ -44,15 +44,15 @@ reward = baseReward × envMultiplier × resultMultiplier × diminishingFactor
 - `diminishingFactor` = `max(0, (1 - currentCapacity / maxCapacity)^1.5)`
 
 **Diminishing Returns:**
-The `^1.5` exponent provides more generous early growth while still slowing significantly as you approach max capacity (100).
+The `^1.5` exponent provides more generous early growth while still slowing significantly as you approach max capacity (120).
 
 **Example:**
 - 6-month sprout, barren environment, result=5, current capacity=50:
   - `baseReward = 5.0`
   - `envMultiplier = 2.4`
   - `resultMultiplier = 1.0`
-  - `diminishingFactor = (1 - 50/100)^1.5 = 0.5^1.5 ≈ 0.3536`
-  - `reward = 5.0 × 2.4 × 1.0 × 0.3536 ≈ 4.24`
+  - `diminishingFactor = (1 - 50/120)^1.5 ≈ 0.4456`
+  - `reward = 5.0 × 2.4 × 1.0 × 0.4456 ≈ 5.35`
 
 **Implementation note:** Do NOT round - keep decimal precision for soil capacity.
 
@@ -97,19 +97,19 @@ Both water and sun reset at **6:00 AM local time**.
 ## Progression Curve
 
 Starting capacity: 10
-Maximum capacity: 100
+Maximum capacity: 120
 
-**Early game (0-30 capacity):**
-- Diminishing factor ≈ 0.7-1.0
+**Early game (10-36 capacity):**
+- Diminishing factor ≈ 0.59-0.93
 - Near-full rewards
 - Rapid growth
 
-**Mid game (30-70 capacity):**
-- Diminishing factor ≈ 0.3-0.7
+**Mid game (36-84 capacity):**
+- Diminishing factor ≈ 0.16-0.59
 - Moderate growth slowdown
 
-**Late game (70-100 capacity):**
-- Diminishing factor ≈ 0.0-0.3
+**Late game (84-120 capacity):**
+- Diminishing factor ≈ 0.0-0.16
 - Significant slowdown
 - Approaching max capacity asymptotically
 
