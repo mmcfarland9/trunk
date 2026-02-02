@@ -71,7 +71,6 @@ describe('App Smoke Tests', () => {
         'progress.ts',
         'status.ts',
         'hover-branch.ts',
-        'import-export.ts',
       ]
 
       for (const file of modules) {

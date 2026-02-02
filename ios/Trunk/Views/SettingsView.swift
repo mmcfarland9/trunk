@@ -136,7 +136,7 @@ struct SettingsView: View {
                     .foregroundStyle(Color.inkFaint)
             }
 
-            Text("Pull down on Today tab to sync")
+            Text("Syncs automatically")
                 .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                 .foregroundStyle(Color.inkFaint)
         }

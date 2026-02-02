@@ -35,6 +35,13 @@ struct ContentView: View {
             let pulled = try await SyncService.shared.pullEvents(modelContext: modelContext)
             if pulled > 0 {
                 print("Synced \(pulled) events from cloud")
+                progression.refresh()
+            }
+
+            // Start realtime subscription for instant sync
+            SyncService.shared.subscribeToRealtime(modelContext: modelContext) { _ in
+                // Refresh UI when events arrive from other devices
+                progression.refresh()
             }
         } catch {
             print("Sync failed: \(error)")

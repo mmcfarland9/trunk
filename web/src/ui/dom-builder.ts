@@ -46,35 +46,7 @@ export function buildApp(
   settingsButton.className = 'action-button'
   settingsButton.textContent = 'Settings'
 
-  const importButton = document.createElement('button')
-  importButton.type = 'button'
-  importButton.className = 'action-button'
-  importButton.textContent = 'Import'
-  importButton.dataset.action = 'import'
-
-  const exportButton = document.createElement('button')
-  exportButton.type = 'button'
-  exportButton.className = 'action-button'
-  exportButton.textContent = 'Export'
-
-  const syncButton = document.createElement('button')
-  syncButton.type = 'button'
-  syncButton.className = 'action-button sync-button hidden'
-  syncButton.textContent = 'Sync'
-
-  const importInput = document.createElement('input')
-  importInput.type = 'file'
-  importInput.accept = 'application/json'
-  importInput.className = 'visually-hidden'
-
-  importButton.addEventListener('click', () => importInput.click())
-
-  actions.append(
-    settingsButton,
-    importButton,
-    exportButton,
-    syncButton
-  )
+  actions.append(settingsButton)
 
   // Global Soil meter
   const soilMeter = document.createElement('div')
@@ -147,7 +119,7 @@ export function buildApp(
   meterGroup.className = 'meter-group'
   meterGroup.append(soilMeter, waterMeter, sunMeter)
 
-  header.append(actions, meterGroup, logo, importInput)
+  header.append(actions, meterGroup, logo)
 
   // Body
   const body = document.createElement('div')
@@ -595,7 +567,6 @@ export function buildApp(
     cultivatedSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="cultivated"]')!,
     statusMessage: sidePanel.querySelector<HTMLParagraphElement>('.status-message')!,
     statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,
-    importInput,
     debugPanel,
     debugCheckbox,
     debugClockBtn,
@@ -663,8 +634,6 @@ export function buildApp(
 
   // Wire up button handlers (will be connected to features in main.ts)
   settingsButton.dataset.action = 'settings'
-  exportButton.dataset.action = 'export'
-  syncButton.dataset.action = 'sync'
   return {
     elements,
     branchGroups,
@@ -703,14 +672,8 @@ function getBloomDelay(twigIndex: number): number {
 
 export function getActionButtons(shell: HTMLDivElement): {
   settingsButton: HTMLButtonElement
-  importButton: HTMLButtonElement
-  exportButton: HTMLButtonElement
-  syncButton: HTMLButtonElement
 } {
   return {
     settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
-    importButton: shell.querySelector<HTMLButtonElement>('[data-action="import"]')!,
-    exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
-    syncButton: shell.querySelector<HTMLButtonElement>('[data-action="sync"]')!,
   }
 }

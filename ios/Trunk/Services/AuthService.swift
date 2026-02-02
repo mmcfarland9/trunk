@@ -73,6 +73,8 @@ final class AuthService {
 
     func signOut() async throws {
         guard let client = SupabaseClientProvider.shared else { return }
+        // Unsubscribe from realtime before signing out
+        SyncService.shared.unsubscribeFromRealtime()
         try await client.auth.signOut()
     }
 }

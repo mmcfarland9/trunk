@@ -4,8 +4,13 @@ import { getEvents, appendEvents } from '../events/store'
 import type { TrunkEvent } from '../events/types'
 import type { SyncEvent } from './sync-types'
 import { localToSyncPayload, syncToLocalEvent } from './sync-types'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 const LAST_SYNC_KEY = 'trunk-last-sync'
+
+// Track the current realtime subscription
+let realtimeChannel: RealtimeChannel | null = null
+let onRealtimeEvent: ((event: TrunkEvent) => void) | null = null
 
 /**
  * Pull events from Supabase since last sync
@@ -132,4 +137,65 @@ export function hasPendingSync(): boolean {
 
   const events = getEvents()
   return events.some(e => e.timestamp > lastSync)
+}
+
+/**
+ * Subscribe to realtime events from other devices
+ */
+export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void {
+  if (!supabase) return
+
+  const { user } = getAuthState()
+  if (!user) return
+
+  // Store callback for later use
+  onRealtimeEvent = onEvent
+
+  // Unsubscribe from any existing channel
+  unsubscribeFromRealtime()
+
+  // Subscribe to INSERT events on the events table for this user
+  realtimeChannel = supabase
+    .channel('events-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'events',
+        filter: `user_id=eq.${user.id}`,
+      },
+      (payload) => {
+        const syncEvent = payload.new as SyncEvent
+        const localEvent = syncToLocalEvent(syncEvent)
+
+        // Check if we already have this event (we pushed it ourselves)
+        const existingEvents = getEvents()
+        const alreadyExists = existingEvents.some(e => e.timestamp === localEvent.timestamp)
+
+        if (!alreadyExists) {
+          // New event from another device - apply it
+          appendEvents([localEvent])
+          onRealtimeEvent?.(localEvent)
+          console.log('Realtime: received event from another device', localEvent.type)
+        }
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('Realtime: connected')
+      }
+    })
+}
+
+/**
+ * Unsubscribe from realtime events
+ */
+export function unsubscribeFromRealtime(): void {
+  if (realtimeChannel) {
+    supabase?.removeChannel(realtimeChannel)
+    realtimeChannel = null
+    console.log('Realtime: disconnected')
+  }
+  onRealtimeEvent = null
 }

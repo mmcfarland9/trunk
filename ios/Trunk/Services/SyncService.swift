@@ -8,12 +8,15 @@
 import Foundation
 import SwiftData
 import Supabase
+import Realtime
 
 @MainActor
 final class SyncService {
     static let shared = SyncService()
 
     private let lastSyncKey = "trunk-last-sync"
+    private var realtimeChannel: RealtimeChannelV2?
+    private var onRealtimeEvent: ((SyncEvent) -> Void)?
 
     private init() {}
 
@@ -237,6 +240,54 @@ final class SyncService {
 
         let leaf = Leaf(id: leafId, name: name, nodeId: nodeId)
         context.insert(leaf)
+    }
+
+    // MARK: - Realtime
+
+    /// Subscribe to realtime events from other devices
+    func subscribeToRealtime(modelContext: ModelContext, onEvent: @escaping (SyncEvent) -> Void) {
+        guard let client = SupabaseClientProvider.shared else { return }
+        guard let userId = AuthService.shared.user?.id else { return }
+
+        onRealtimeEvent = onEvent
+
+        // Unsubscribe from existing channel
+        unsubscribeFromRealtime()
+
+        Task {
+            let channel = client.realtimeV2.channel("events-realtime")
+
+            let insertions = channel.postgresChange(InsertAction.self, schema: "public", table: "events", filter: "user_id=eq.\(userId.uuidString)")
+
+            await channel.subscribe()
+
+            for await insertion in insertions {
+                do {
+                    let event = try insertion.decodeRecord(as: SyncEvent.self, decoder: JSONDecoder())
+
+                    // Apply the event to local models
+                    try applyEvent(event, to: modelContext)
+                    try modelContext.save()
+
+                    onRealtimeEvent?(event)
+                    print("Realtime: received event from another device - \(event.type)")
+                } catch {
+                    print("Realtime: failed to decode event - \(error)")
+                }
+            }
+        }
+    }
+
+    /// Unsubscribe from realtime events
+    func unsubscribeFromRealtime() {
+        if let channel = realtimeChannel {
+            Task {
+                await channel.unsubscribe()
+            }
+            realtimeChannel = nil
+            print("Realtime: disconnected")
+        }
+        onRealtimeEvent = nil
     }
 
     // MARK: - Helpers

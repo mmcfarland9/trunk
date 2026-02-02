@@ -2,7 +2,7 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
-import { pullEvents, uploadAllLocalEvents, pushEvent } from './services/sync-service'
+import { pullEvents, uploadAllLocalEvents, pushEvent, subscribeToRealtime, unsubscribeFromRealtime } from './services/sync-service'
 import { setEventSyncCallback } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
@@ -14,7 +14,6 @@ import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
 import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
 import { setupHoverBranch, setupHoverTwig } from './features/hover-branch'
-import { handleExport, handleImport, checkExportReminder } from './features/import-export'
 import {
   setViewMode,
   returnToOverview,
@@ -62,17 +61,6 @@ async function startWithAuth() {
       }
       app!.classList.remove('hidden')
 
-      // Show sync button when authenticated, hide import/export
-      if (isSupabaseConfigured() && state.user) {
-        syncButton.classList.remove('hidden')
-        importButton.classList.add('hidden')
-        exportButton.classList.add('hidden')
-      } else {
-        syncButton.classList.add('hidden')
-        importButton.classList.remove('hidden')
-        exportButton.classList.remove('hidden')
-      }
-
       // Sync on first auth
       if (isSupabaseConfigured() && state.user && !hasSynced) {
         hasSynced = true
@@ -103,11 +91,18 @@ async function startWithAuth() {
             }
           })
         })
+
+        // Subscribe to realtime for instant cross-device sync
+        subscribeToRealtime(() => {
+          // Refresh UI when new events arrive from other devices
+          window.location.reload()
+        })
       }
 
-      // Disable sync callback when logged out
+      // Disable sync callback and realtime when logged out
       if (!state.user) {
         setEventSyncCallback(null)
+        unsubscribeFromRealtime()
       }
     }
   })
@@ -124,10 +119,6 @@ const navCallbacks = {
   },
 }
 
-const importExportCallbacks = {
-  onUpdateStats: navCallbacks.onUpdateStats,
-  onSetViewMode: (mode: 'overview') => setViewMode(mode, ctx, navCallbacks),
-}
 
 function handleNodeClick(
   element: HTMLButtonElement,
@@ -308,47 +299,7 @@ const leafView = buildLeafView(mapPanel, {
 ctx.twigView = twigView
 ctx.leafView = leafView
 
-const { importButton, exportButton, settingsButton, syncButton } = getActionButtons(domResult.elements.shell)
-exportButton.addEventListener('click', () => handleExport(ctx))
-
-// Sync button - manual sync for cross-device synchronization
-syncButton.addEventListener('click', async () => {
-  if (!isSupabaseConfigured()) return
-
-  syncButton.disabled = true
-  syncButton.textContent = 'Syncing...'
-
-  try {
-    // First push any local events
-    const { uploaded, error: uploadError } = await uploadAllLocalEvents()
-    if (uploadError) {
-      console.warn('Sync upload failed:', uploadError)
-      setStatus(ctx.elements, 'Sync failed: ' + uploadError, 'error')
-      return
-    }
-
-    // Then pull any new events from cloud
-    const { pulled, error: pullError } = await pullEvents()
-    if (pullError) {
-      console.warn('Sync pull failed:', pullError)
-      setStatus(ctx.elements, 'Sync failed: ' + pullError, 'error')
-      return
-    }
-
-    if (uploaded > 0 || pulled > 0) {
-      setStatus(ctx.elements, `Synced: ${uploaded} up, ${pulled} down`, 'info')
-      if (pulled > 0) {
-        // Refresh UI with new data
-        window.location.reload()
-      }
-    } else {
-      setStatus(ctx.elements, 'Already in sync', 'info')
-    }
-  } finally {
-    syncButton.disabled = false
-    syncButton.textContent = 'Sync'
-  }
-})
+const { settingsButton } = getActionButtons(domResult.elements.shell)
 
 // Settings dialog
 function populateSettingsForm(): void {
@@ -440,7 +391,6 @@ domResult.elements.settingsSaveBtn.addEventListener('click', () => {
   setStatus(ctx.elements, 'Settings saved', 'info')
 })
 
-domResult.elements.importInput.addEventListener('change', () => handleImport(ctx, importExportCallbacks))
 
 domResult.elements.debugCheckbox.addEventListener('change', (e) => {
   setDebugHoverZone((e.target as HTMLInputElement).checked)
@@ -573,8 +523,6 @@ startWind(ctx)
 setupHoverBranch(ctx, navCallbacks)
 setupHoverTwig(ctx)
 
-// Check for export reminder after a short delay (don't compete with initial status)
-setTimeout(() => checkExportReminder(ctx), 2000)
 
 // Global keyboard navigation
 document.addEventListener('keydown', (e) => {

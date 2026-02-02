@@ -169,7 +169,6 @@ export type AppElements = {
   cultivatedSproutsList: HTMLDivElement
   statusMessage: HTMLParagraphElement
   statusMeta: HTMLParagraphElement
-  importInput: HTMLInputElement
   debugPanel: HTMLDivElement
   debugCheckbox: HTMLInputElement
   debugClockBtn: HTMLButtonElement
