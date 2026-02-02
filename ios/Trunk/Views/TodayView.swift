@@ -131,6 +131,11 @@ struct TodayView: View {
                 }
                 .padding(TrunkTheme.space4)
             }
+            .refreshable {
+                guard AuthService.shared.isAuthenticated else { return }
+                _ = try? await SyncService.shared.pullEvents(modelContext: modelContext)
+                progression.refresh()
+            }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)

@@ -26,7 +26,6 @@ struct SettingsView: View {
     @State private var importPayload: ExportPayload?
     @State private var alertMessage = ""
     @State private var showingAlert = false
-    @State private var isSyncing = false
 
     var body: some View {
         ZStack {
@@ -102,40 +101,6 @@ struct SettingsView: View {
 
             VStack(spacing: 1) {
                 Button {
-                    Task { await performSync() }
-                } label: {
-                    HStack {
-                        Text("☁️")
-                            .font(.system(size: TrunkTheme.textBase))
-                            .frame(width: 24)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Sync Now")
-                                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                                .foregroundStyle(Color.ink)
-
-                            Text("Pull and push events")
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                        }
-
-                        Spacer()
-
-                        if isSyncing {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            Text(">")
-                                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                        }
-                    }
-                    .padding(TrunkTheme.space3)
-                    .contentShape(Rectangle())
-                }
-                .disabled(isSyncing)
-
-                Button {
                     Task {
                         try? await AuthService.shared.signOut()
                     }
@@ -170,6 +135,10 @@ struct SettingsView: View {
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
             }
+
+            Text("Pull down on Today tab to sync")
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
         }
     }
 
@@ -295,30 +264,6 @@ struct SettingsView: View {
                     .stroke(Color.border, lineWidth: 1)
             )
         }
-    }
-
-    // MARK: - Sync
-
-    private func performSync() async {
-        isSyncing = true
-
-        do {
-            // Pull first
-            let pulled = try await SyncService.shared.pullEvents(modelContext: modelContext)
-
-            // Show result
-            if pulled > 0 {
-                alertMessage = "Synced \(pulled) events from cloud"
-            } else {
-                alertMessage = "Already up to date"
-            }
-            showingAlert = true
-        } catch {
-            alertMessage = "Sync failed: \(error.localizedDescription)"
-            showingAlert = true
-        }
-
-        isSyncing = false
     }
 
     // MARK: - Export
