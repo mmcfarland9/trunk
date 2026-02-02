@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import Auth
 
 struct SettingsView: View {
     @Bindable var progression: ProgressionViewModel
@@ -25,6 +26,7 @@ struct SettingsView: View {
     @State private var importPayload: ExportPayload?
     @State private var alertMessage = ""
     @State private var showingAlert = false
+    @State private var isSyncing = false
 
     var body: some View {
         ZStack {
@@ -36,8 +38,13 @@ struct SettingsView: View {
                     // History section
                     historySection
 
-                    // Data section
-                    dataSection
+                    // Cloud sync section (when authenticated)
+                    if AuthService.shared.isAuthenticated {
+                        cloudSyncSection
+                    } else {
+                        // Data section (import/export when not authenticated)
+                        dataSection
+                    }
 
                     // About section
                     aboutSection
@@ -87,6 +94,84 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
+
+    private var cloudSyncSection: some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("CLOUD SYNC")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(spacing: 1) {
+                Button {
+                    Task { await performSync() }
+                } label: {
+                    HStack {
+                        Text("☁️")
+                            .font(.system(size: TrunkTheme.textBase))
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Sync Now")
+                                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                                .foregroundStyle(Color.ink)
+
+                            Text("Pull and push events")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+                        }
+
+                        Spacer()
+
+                        if isSyncing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Text(">")
+                                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+                        }
+                    }
+                    .padding(TrunkTheme.space3)
+                    .contentShape(Rectangle())
+                }
+                .disabled(isSyncing)
+
+                Button {
+                    Task {
+                        try? await AuthService.shared.signOut()
+                    }
+                } label: {
+                    HStack {
+                        Text("🚪")
+                            .font(.system(size: TrunkTheme.textBase))
+                            .frame(width: 24)
+
+                        Text("Sign Out")
+                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                            .foregroundStyle(Color.ink)
+
+                        Spacer()
+
+                        Text(">")
+                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
+                    .padding(TrunkTheme.space3)
+                    .contentShape(Rectangle())
+                }
+            }
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
+
+            if let email = AuthService.shared.user?.email {
+                Text("Signed in as \(email)")
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+            }
+        }
+    }
 
     private var historySection: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -210,6 +295,30 @@ struct SettingsView: View {
                     .stroke(Color.border, lineWidth: 1)
             )
         }
+    }
+
+    // MARK: - Sync
+
+    private func performSync() async {
+        isSyncing = true
+
+        do {
+            // Pull first
+            let pulled = try await SyncService.shared.pullEvents(modelContext: modelContext)
+
+            // Show result
+            if pulled > 0 {
+                alertMessage = "Synced \(pulled) events from cloud"
+            } else {
+                alertMessage = "Already up to date"
+            }
+            showingAlert = true
+        } catch {
+            alertMessage = "Sync failed: \(error.localizedDescription)"
+            showingAlert = true
+        }
+
+        isSyncing = false
     }
 
     // MARK: - Export
