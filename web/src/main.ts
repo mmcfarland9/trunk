@@ -1,4 +1,7 @@
 import './styles/index.css'
+import { initAuth, subscribeToAuth } from './services/auth-service'
+import { createLoginView, destroyLoginView } from './ui/login-view'
+import { isSupabaseConfigured } from './lib/supabase'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
 import type { NotificationSettings } from './types'
@@ -29,6 +32,36 @@ const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) {
   throw new Error('Root container "#app" not found.')
 }
+
+// Auth gating - show login if Supabase is configured and user not authenticated
+let loginView: HTMLElement | null = null
+
+async function startWithAuth() {
+  await initAuth()
+
+  subscribeToAuth((state) => {
+    if (state.loading) return
+
+    if (isSupabaseConfigured() && !state.user) {
+      // Show login, hide app
+      if (!loginView) {
+        loginView = createLoginView()
+        document.body.prepend(loginView)
+      }
+      app!.classList.add('hidden')
+    } else {
+      // Hide login, show app
+      if (loginView) {
+        loginView.remove()
+        loginView = null
+        destroyLoginView()
+      }
+      app!.classList.remove('hidden')
+    }
+  })
+}
+
+startWithAuth()
 
 const navCallbacks = {
   onPositionNodes: () => positionNodes(ctx),

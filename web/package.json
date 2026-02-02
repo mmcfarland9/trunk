@@ -27,5 +27,8 @@
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.93.3"
   }
 }
