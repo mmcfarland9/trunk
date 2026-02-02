@@ -62,6 +62,17 @@ async function startWithAuth() {
       }
       app!.classList.remove('hidden')
 
+      // Show sync button when authenticated, hide import/export
+      if (isSupabaseConfigured() && state.user) {
+        syncButton.classList.remove('hidden')
+        importButton.classList.add('hidden')
+        exportButton.classList.add('hidden')
+      } else {
+        syncButton.classList.add('hidden')
+        importButton.classList.remove('hidden')
+        exportButton.classList.remove('hidden')
+      }
+
       // Sync on first auth
       if (isSupabaseConfigured() && state.user && !hasSynced) {
         hasSynced = true
@@ -297,8 +308,47 @@ const leafView = buildLeafView(mapPanel, {
 ctx.twigView = twigView
 ctx.leafView = leafView
 
-const { exportButton, settingsButton } = getActionButtons(domResult.elements.shell)
+const { importButton, exportButton, settingsButton, syncButton } = getActionButtons(domResult.elements.shell)
 exportButton.addEventListener('click', () => handleExport(ctx))
+
+// Sync button - manual sync for cross-device synchronization
+syncButton.addEventListener('click', async () => {
+  if (!isSupabaseConfigured()) return
+
+  syncButton.disabled = true
+  syncButton.textContent = 'Syncing...'
+
+  try {
+    // First push any local events
+    const { uploaded, error: uploadError } = await uploadAllLocalEvents()
+    if (uploadError) {
+      console.warn('Sync upload failed:', uploadError)
+      setStatus(ctx.elements, 'Sync failed: ' + uploadError, 'error')
+      return
+    }
+
+    // Then pull any new events from cloud
+    const { pulled, error: pullError } = await pullEvents()
+    if (pullError) {
+      console.warn('Sync pull failed:', pullError)
+      setStatus(ctx.elements, 'Sync failed: ' + pullError, 'error')
+      return
+    }
+
+    if (uploaded > 0 || pulled > 0) {
+      setStatus(ctx.elements, `Synced: ${uploaded} up, ${pulled} down`, 'info')
+      if (pulled > 0) {
+        // Refresh UI with new data
+        window.location.reload()
+      }
+    } else {
+      setStatus(ctx.elements, 'Already in sync', 'info')
+    }
+  } finally {
+    syncButton.disabled = false
+    syncButton.textContent = 'Sync'
+  }
+})
 
 // Settings dialog
 function populateSettingsForm(): void {

@@ -50,11 +50,17 @@ export function buildApp(
   importButton.type = 'button'
   importButton.className = 'action-button'
   importButton.textContent = 'Import'
+  importButton.dataset.action = 'import'
 
   const exportButton = document.createElement('button')
   exportButton.type = 'button'
   exportButton.className = 'action-button'
   exportButton.textContent = 'Export'
+
+  const syncButton = document.createElement('button')
+  syncButton.type = 'button'
+  syncButton.className = 'action-button sync-button hidden'
+  syncButton.textContent = 'Sync'
 
   const importInput = document.createElement('input')
   importInput.type = 'file'
@@ -66,7 +72,8 @@ export function buildApp(
   actions.append(
     settingsButton,
     importButton,
-    exportButton
+    exportButton,
+    syncButton
   )
 
   // Global Soil meter
@@ -657,6 +664,7 @@ export function buildApp(
   // Wire up button handlers (will be connected to features in main.ts)
   settingsButton.dataset.action = 'settings'
   exportButton.dataset.action = 'export'
+  syncButton.dataset.action = 'sync'
   return {
     elements,
     branchGroups,
@@ -695,10 +703,14 @@ function getBloomDelay(twigIndex: number): number {
 
 export function getActionButtons(shell: HTMLDivElement): {
   settingsButton: HTMLButtonElement
+  importButton: HTMLButtonElement
   exportButton: HTMLButtonElement
+  syncButton: HTMLButtonElement
 } {
   return {
     settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
+    importButton: shell.querySelector<HTMLButtonElement>('[data-action="import"]')!,
     exportButton: shell.querySelector<HTMLButtonElement>('[data-action="export"]')!,
+    syncButton: shell.querySelector<HTMLButtonElement>('[data-action="sync"]')!,
   }
 }
