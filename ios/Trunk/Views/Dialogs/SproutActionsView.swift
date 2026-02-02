@@ -173,6 +173,15 @@ struct SproutActionsView: View {
                 // Return 25% of soil cost (matches web behavior)
                 let soilReturn = Int(Double(sprout.soilCost) * 0.25)
                 progression.returnSoil(soilReturn)
+
+                // Push to cloud before deleting
+                let sproutId = sprout.sproutId
+                Task {
+                    try? await SyncService.shared.pushEvent(type: "sprout_uprooted", payload: [
+                        "sproutId": sproutId
+                    ])
+                }
+
                 // Delete the sprout (web removes entirely, not just marks failed)
                 modelContext.delete(sprout)
                 dismiss()

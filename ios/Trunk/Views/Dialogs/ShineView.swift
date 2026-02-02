@@ -167,6 +167,16 @@ struct ShineView: View {
         // Use sun resource (decrements sun, adds soil recovery)
         progression.useSun()
 
+        // Push to cloud
+        Task {
+            try? await SyncService.shared.pushEvent(type: "sun_shone", payload: [
+                "twigId": entry.twigId,
+                "twigLabel": entry.twigLabel,
+                "note": entry.content,
+                "timestamp": ISO8601DateFormatter().string(from: entry.timestamp)
+            ])
+        }
+
         dismiss()
     }
 

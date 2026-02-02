@@ -168,6 +168,15 @@ struct HarvestSproutView: View {
     private func harvestSprout() {
         progression.harvestSprout(sprout, result: selectedResult)
         sprout.harvest(result: selectedResult)
+
+        // Push to cloud
+        Task {
+            try? await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
+                "sproutId": sprout.sproutId,
+                "result": selectedResult
+            ])
+        }
+
         dismiss()
     }
 }

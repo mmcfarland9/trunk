@@ -86,6 +86,15 @@ struct WaterSproutView: View {
         // Use water resource
         progression.useWater()
 
+        // Push to cloud
+        Task {
+            try? await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
+                "sproutId": sprout.sproutId,
+                "note": entry.content,
+                "timestamp": ISO8601DateFormatter().string(from: entry.timestamp)
+            ])
+        }
+
         dismiss()
     }
 }

@@ -296,6 +296,15 @@ struct CreateSproutView: View {
         modelContext.insert(leaf)
         selectedLeafId = leaf.id
         newLeafName = ""
+
+        // Push to cloud
+        Task {
+            try? await SyncService.shared.pushEvent(type: "leaf_created", payload: [
+                "leafId": leaf.id,
+                "name": leaf.name,
+                "twigId": leaf.nodeId
+            ])
+        }
     }
 
     private func plantSprout() {
@@ -312,6 +321,20 @@ struct CreateSproutView: View {
         sprout.leafId = selectedLeafId
         modelContext.insert(sprout)
         progression.plantSprout(sprout)
+
+        // Push to cloud
+        Task {
+            try? await SyncService.shared.pushEvent(type: "sprout_planted", payload: [
+                "sproutId": sprout.sproutId,
+                "title": sprout.title,
+                "twigId": sprout.nodeId,
+                "season": sprout.seasonRaw,
+                "environment": sprout.environmentRaw,
+                "soilCost": sprout.soilCost,
+                "leafId": sprout.leafId as Any
+            ])
+        }
+
         dismiss()
     }
 }
