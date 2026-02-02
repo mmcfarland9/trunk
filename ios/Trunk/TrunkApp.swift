@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct TrunkApp: App {
+    @State private var authService = AuthService.shared
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Sprout.self,
@@ -29,9 +31,16 @@ struct TrunkApp: App {
         }
     }()
 
+    init() {
+        Task {
+            await AuthService.shared.initialize()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(authService)
         }
         .modelContainer(sharedModelContainer)
     }
