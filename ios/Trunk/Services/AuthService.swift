@@ -7,14 +7,15 @@
 
 import Foundation
 import Supabase
+import Auth
 
 @MainActor
 @Observable
 final class AuthService {
     static let shared = AuthService()
 
-    private(set) var user: User?
-    private(set) var session: Session?
+    private(set) var user: Auth.User?
+    private(set) var session: Auth.Session?
     private(set) var isLoading = true
 
     var isAuthenticated: Bool {

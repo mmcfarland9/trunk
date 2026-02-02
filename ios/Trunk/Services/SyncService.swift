@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import Supabase
 
 @MainActor
 final class SyncService {
@@ -28,16 +29,23 @@ final class SyncService {
 
         let lastSync = UserDefaults.standard.string(forKey: lastSyncKey)
 
-        var query = client
-            .from("events")
-            .select()
-            .order("created_at")
-
+        let events: [SyncEvent]
         if let lastSync {
-            query = query.gt("created_at", value: lastSync)
+            events = try await client
+                .from("events")
+                .select()
+                .gt("created_at", value: lastSync)
+                .order("created_at")
+                .execute()
+                .value
+        } else {
+            events = try await client
+                .from("events")
+                .select()
+                .order("created_at")
+                .execute()
+                .value
         }
-
-        let events: [SyncEvent] = try await query.execute().value
 
         guard !events.isEmpty else { return 0 }
 
@@ -87,22 +95,16 @@ final class SyncService {
     private func applyEvent(_ event: SyncEvent, to context: ModelContext) throws {
         switch event.type {
         case "sprout_planted":
-            // Create sprout from payload
             try applySproutPlanted(event.payload, to: context)
         case "sprout_watered":
-            // Add water entry
             try applySproutWatered(event.payload, to: context)
         case "sprout_harvested":
-            // Update sprout result
             try applySproutHarvested(event.payload, to: context)
         case "sprout_uprooted":
-            // Mark sprout as uprooted
             try applySproutUprooted(event.payload, to: context)
         case "sun_shone":
-            // Add sun entry
             try applySunShone(event.payload, to: context)
         case "leaf_created":
-            // Create leaf
             try applyLeafCreated(event.payload, to: context)
         default:
             print("Unknown event type: \(event.type)")
@@ -112,30 +114,42 @@ final class SyncService {
     // MARK: - Event Application
 
     private func applySproutPlanted(_ payload: [String: AnyCodable], to context: ModelContext) throws {
-        guard let id = (payload["sproutId"]?.value as? String).flatMap({ UUID(uuidString: $0) }),
+        guard let sproutId = payload["sproutId"]?.value as? String,
               let title = payload["title"]?.value as? String,
-              let twigId = payload["twigId"]?.value as? String,
-              let season = payload["season"]?.value as? String,
-              let environment = payload["environment"]?.value as? String,
-              let soilCost = payload["soilCost"]?.value as? Double else {
+              let nodeId = payload["twigId"]?.value as? String,
+              let seasonRaw = payload["season"]?.value as? String,
+              let environmentRaw = payload["environment"]?.value as? String else {
+            return
+        }
+
+        // Get soil cost (could be Int or Double from JSON)
+        let soilCost: Int
+        if let intCost = payload["soilCost"]?.value as? Int {
+            soilCost = intCost
+        } else if let doubleCost = payload["soilCost"]?.value as? Double {
+            soilCost = Int(doubleCost)
+        } else {
             return
         }
 
         // Check if sprout already exists
-        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.id == id })
+        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.sproutId == sproutId })
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else { return }
 
+        let season = Season(rawValue: seasonRaw) ?? .oneMonth
+        let environment = SproutEnvironment(rawValue: environmentRaw) ?? .firm
+
         let sprout = Sprout(
-            id: id,
+            sproutId: sproutId,
             title: title,
-            twigId: twigId,
-            season: Sprout.Season(rawValue: season) ?? .oneMonth,
-            environment: Sprout.Environment(rawValue: environment) ?? .firm,
+            season: season,
+            environment: environment,
+            nodeId: nodeId,
             soilCost: soilCost
         )
 
-        if let leafId = (payload["leafId"]?.value as? String).flatMap({ UUID(uuidString: $0) }) {
+        if let leafId = payload["leafId"]?.value as? String {
             sprout.leafId = leafId
         }
 
@@ -143,17 +157,16 @@ final class SyncService {
     }
 
     private func applySproutWatered(_ payload: [String: AnyCodable], to context: ModelContext) throws {
-        guard let sproutIdStr = payload["sproutId"]?.value as? String,
-              let sproutId = UUID(uuidString: sproutIdStr),
-              let note = payload["note"]?.value as? String,
+        guard let sproutId = payload["sproutId"]?.value as? String,
+              let content = payload["note"]?.value as? String,
               let timestamp = payload["timestamp"]?.value as? String else {
             return
         }
 
-        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.id == sproutId })
+        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.sproutId == sproutId })
         guard let sprout = try context.fetch(descriptor).first else { return }
 
-        let entry = WaterEntry(note: note)
+        let entry = WaterEntry(content: content)
         if let date = ISO8601DateFormatter().date(from: timestamp) {
             entry.timestamp = date
         }
@@ -162,39 +175,48 @@ final class SyncService {
     }
 
     private func applySproutHarvested(_ payload: [String: AnyCodable], to context: ModelContext) throws {
-        guard let sproutIdStr = payload["sproutId"]?.value as? String,
-              let sproutId = UUID(uuidString: sproutIdStr),
-              let result = payload["result"]?.value as? Int else {
+        guard let sproutId = payload["sproutId"]?.value as? String else {
             return
         }
 
-        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.id == sproutId })
+        // Get result (could be Int or Double from JSON)
+        let result: Int
+        if let intResult = payload["result"]?.value as? Int {
+            result = intResult
+        } else if let doubleResult = payload["result"]?.value as? Double {
+            result = Int(doubleResult)
+        } else {
+            return
+        }
+
+        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.sproutId == sproutId })
         guard let sprout = try context.fetch(descriptor).first else { return }
 
-        sprout.result = result
-        sprout.state = .completed
+        sprout.harvest(result: result)
     }
 
     private func applySproutUprooted(_ payload: [String: AnyCodable], to context: ModelContext) throws {
-        guard let sproutIdStr = payload["sproutId"]?.value as? String,
-              let sproutId = UUID(uuidString: sproutIdStr) else {
+        guard let sproutId = payload["sproutId"]?.value as? String else {
             return
         }
 
-        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.id == sproutId })
+        let descriptor = FetchDescriptor<Sprout>(predicate: #Predicate { $0.sproutId == sproutId })
         guard let sprout = try context.fetch(descriptor).first else { return }
 
-        sprout.state = .failed
+        // Delete the uprooted sprout
+        context.delete(sprout)
     }
 
     private func applySunShone(_ payload: [String: AnyCodable], to context: ModelContext) throws {
         guard let twigId = payload["twigId"]?.value as? String,
-              let note = payload["note"]?.value as? String,
+              let content = payload["note"]?.value as? String,
               let timestamp = payload["timestamp"]?.value as? String else {
             return
         }
 
-        let entry = SunEntry(twigId: twigId, note: note)
+        let twigLabel = payload["twigLabel"]?.value as? String ?? ""
+
+        let entry = SunEntry(content: content, twigId: twigId, twigLabel: twigLabel)
         if let date = ISO8601DateFormatter().date(from: timestamp) {
             entry.timestamp = date
         }
@@ -202,19 +224,18 @@ final class SyncService {
     }
 
     private func applyLeafCreated(_ payload: [String: AnyCodable], to context: ModelContext) throws {
-        guard let idStr = payload["leafId"]?.value as? String,
-              let id = UUID(uuidString: idStr),
+        guard let leafId = payload["leafId"]?.value as? String,
               let name = payload["name"]?.value as? String,
-              let twigId = payload["twigId"]?.value as? String else {
+              let nodeId = payload["twigId"]?.value as? String else {
             return
         }
 
         // Check if leaf already exists
-        let descriptor = FetchDescriptor<Leaf>(predicate: #Predicate { $0.id == id })
+        let descriptor = FetchDescriptor<Leaf>(predicate: #Predicate { $0.id == leafId })
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else { return }
 
-        let leaf = Leaf(id: id, name: name, twigId: twigId)
+        let leaf = Leaf(id: leafId, name: name, nodeId: nodeId)
         context.insert(leaf)
     }
 

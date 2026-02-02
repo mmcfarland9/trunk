@@ -9,7 +9,7 @@ import Foundation
 import Supabase
 
 enum SupabaseClientProvider {
-    static let shared: SupabaseClient? = {
+    static let shared: Supabase.SupabaseClient? = {
         guard !Secrets.supabaseURL.contains("xxxxx"),
               !Secrets.supabaseAnonKey.contains("...") else {
             print("Supabase not configured. Cloud sync disabled.")
@@ -21,7 +21,7 @@ enum SupabaseClientProvider {
             return nil
         }
 
-        return SupabaseClient(
+        return Supabase.SupabaseClient(
             supabaseURL: url,
             supabaseKey: Secrets.supabaseAnonKey
         )
