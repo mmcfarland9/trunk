@@ -34,6 +34,9 @@ let cachedSunAvailable: number | null = null
 let onQuotaError: (() => void) | null = null
 let onSaveError: ((error: unknown) => void) | null = null
 
+// Sync callback - called when events are appended
+let onEventAppended: ((event: TrunkEvent) => void) | null = null
+
 /**
  * Load events from localStorage
  */
@@ -88,6 +91,13 @@ export function setEventStoreErrorCallbacks(
 }
 
 /**
+ * Set sync callback - called when events are appended
+ */
+export function setEventSyncCallback(callback: ((event: TrunkEvent) => void) | null): void {
+  onEventAppended = callback
+}
+
+/**
  * Invalidate all cached state
  */
 function invalidateCache(): void {
@@ -103,6 +113,8 @@ export function appendEvent(event: TrunkEvent): void {
   events.push(event)
   invalidateCache()
   saveEvents()
+  // Sync to cloud if callback is set
+  onEventAppended?.(event)
 }
 
 /**
@@ -112,6 +124,10 @@ export function appendEvents(newEvents: TrunkEvent[]): void {
   events.push(...newEvents)
   invalidateCache()
   saveEvents()
+  // Sync each to cloud if callback is set
+  if (onEventAppended) {
+    newEvents.forEach(e => onEventAppended?.(e))
+  }
 }
 
 /**

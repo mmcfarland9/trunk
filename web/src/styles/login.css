@@ -4,8 +4,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
-  z-index: 1000;
+  background: #f5f0e8;
+  z-index: 9999;
 }
 
 .login-card {

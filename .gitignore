@@ -52,3 +52,6 @@ Pods/
 
 # Test artifacts
 web/test-results/
+
+# MCP config (contains tokens)
+.mcp.json

@@ -2,7 +2,8 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
-import { pullEvents, uploadAllLocalEvents } from './services/sync-service'
+import { pullEvents, uploadAllLocalEvents, pushEvent } from './services/sync-service'
+import { setEventSyncCallback } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
 import type { NotificationSettings } from './types'
@@ -82,6 +83,20 @@ async function startWithAuth() {
         } else if (uploaded > 0) {
           console.log(`Uploaded ${uploaded} events to cloud`)
         }
+
+        // Enable real-time sync: push events as they're created
+        setEventSyncCallback((event) => {
+          pushEvent(event).then(({ error: pushError }) => {
+            if (pushError) {
+              console.warn('Failed to sync event:', pushError)
+            }
+          })
+        })
+      }
+
+      // Disable sync callback when logged out
+      if (!state.user) {
+        setEventSyncCallback(null)
       }
     }
   })
