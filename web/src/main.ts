@@ -2,6 +2,7 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
+import { pullEvents, uploadAllLocalEvents } from './services/sync-service'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
 import type { NotificationSettings } from './types'
@@ -35,11 +36,12 @@ if (!app) {
 
 // Auth gating - show login if Supabase is configured and user not authenticated
 let loginView: HTMLElement | null = null
+let hasSynced = false
 
 async function startWithAuth() {
   await initAuth()
 
-  subscribeToAuth((state) => {
+  subscribeToAuth(async (state) => {
     if (state.loading) return
 
     if (isSupabaseConfigured() && !state.user) {
@@ -49,6 +51,7 @@ async function startWithAuth() {
         document.body.prepend(loginView)
       }
       app!.classList.add('hidden')
+      hasSynced = false
     } else {
       // Hide login, show app
       if (loginView) {
@@ -57,6 +60,29 @@ async function startWithAuth() {
         destroyLoginView()
       }
       app!.classList.remove('hidden')
+
+      // Sync on first auth
+      if (isSupabaseConfigured() && state.user && !hasSynced) {
+        hasSynced = true
+        // Pull latest events from cloud
+        const { pulled, error } = await pullEvents()
+        if (error) {
+          console.warn('Sync pull failed:', error)
+        } else if (pulled > 0) {
+          console.log(`Synced ${pulled} events from cloud`)
+          // Refresh UI with new data
+          window.location.reload()
+        }
+
+        // If we have local events and this is a first-time user, offer to upload
+        // For now, just try to upload any unsynced events
+        const { uploaded, error: uploadError } = await uploadAllLocalEvents()
+        if (uploadError) {
+          console.warn('Sync upload failed:', uploadError)
+        } else if (uploaded > 0) {
+          console.log(`Uploaded ${uploaded} events to cloud`)
+        }
+      }
     }
   })
 }
