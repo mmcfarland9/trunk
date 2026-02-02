@@ -10,13 +10,13 @@ Add cloud-based data synchronization between the Trunk iOS and web apps, enablin
 
 ## Goals
 
-- **Full control & ownership** - Self-hosted on Vercel, you own all data
+- **Full control & ownership** - Supabase is open source, can self-host if needed
 - **Production-ready** - Multi-tenant from the start, scalable for eventual public use
-- **Simple & robust** - No over-engineering, leverage existing event-sourced architecture
+- **Simple & robust** - Leverage Supabase's built-in auth and APIs, minimal custom code
 
 ## Non-Goals
 
-- Real-time sync (WebSockets)
+- Real-time sync (WebSockets) - may add later, Supabase supports it
 - Social login
 - Offline-first conflict resolution complexity
 
@@ -25,32 +25,50 @@ Add cloud-based data synchronization between the Trunk iOS and web apps, enablin
 ## Architecture
 
 ```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                              SUPABASE                                      │
+│                                                                            │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐   │
+│  │      Auth       │  │    Postgres     │  │      REST API           │   │
+│  │  (magic links)  │  │  users, events  │  │  (auto-generated)       │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────────────┘   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+          ▲                      ▲                        ▲
+          │                      │                        │
+          └──────────────────────┼────────────────────────┘
+                                 │ HTTPS
+                 ┌───────────────┴───────────────┐
+                 │                               │
+        ┌────────┴────────┐           ┌─────────┴────────┐
+        │    iOS App      │           │    Web App       │
+        │  Supabase SDK   │           │  Supabase SDK    │
+        │   (SwiftData    │           │   (localStorage  │
+        │    as cache)    │           │    as cache)     │
+        └─────────────────┘           └──────────────────┘
+
+
 ┌─────────────────────────────────────────────────────────────────┐
 │                         VERCEL                                  │
-│  ┌─────────────────────┐    ┌─────────────────────────────┐    │
-│  │   Web App (Vite)    │    │     API Routes (Edge)       │    │
-│  │   trunk.michael...  │───▶│  /api/auth/*  /api/sync/*   │    │
-│  └─────────────────────┘    └──────────────┬──────────────┘    │
-│                                            │                    │
-│                              ┌─────────────▼──────────────┐    │
-│                              │     Neon Postgres          │    │
-│                              │  users, events, sessions   │    │
-│                              └────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              Web App (Vite) - Static Hosting            │   │
+│  │                  trunk.michaelmcfarland.com             │   │
+│  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
-                                            ▲
-                                            │ HTTPS
-                 ┌──────────────────────────┴───────────────┐
-                 │                                          │
-        ┌────────┴────────┐                      ┌──────────┴───────┐
-        │    iOS App      │                      │   Web Browser    │
-        │   (SwiftData)   │                      │  (localStorage)  │
-        │   local cache   │                      │   local cache    │
-        └─────────────────┘                      └──────────────────┘
 ```
+
+### What Supabase Provides
+
+| Feature | What We Get | Custom Code Needed |
+|---------|-------------|-------------------|
+| **Auth** | Magic link email, session management, JWT tokens | None - just config |
+| **Database** | Postgres with row-level security | Just schema + policies |
+| **REST API** | Auto-generated CRUD for all tables | None |
+| **SDKs** | JavaScript + Swift clients | Just import and use |
 
 ### Data Flow
 
-- **Cloud (Neon Postgres):** Single source of truth for all user data
+- **Supabase Postgres:** Single source of truth for all user data
 - **Device local storage:** Cache for offline use and instant UI responsiveness
 - **Sync model:** Pull on app open, push immediately on action
 
@@ -59,27 +77,11 @@ Add cloud-based data synchronization between the Trunk iOS and web apps, enablin
 ## Database Schema
 
 ```sql
--- Users table
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    last_seen_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Sessions table (for refresh tokens)
-CREATE TABLE sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash TEXT NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Events table (append-only event log per user)
+-- Note: Supabase Auth handles users table automatically
 CREATE TABLE events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     type TEXT NOT NULL,
     payload JSONB NOT NULL,
     client_id UUID NOT NULL,
@@ -88,10 +90,19 @@ CREATE TABLE events (
     UNIQUE(user_id, client_id)  -- Prevents duplicate events
 );
 
--- Indexes
+-- Indexes for fast queries
 CREATE INDEX idx_events_user_created ON events(user_id, created_at);
-CREATE INDEX idx_sessions_user ON sessions(user_id);
+
+-- Row Level Security (multi-tenancy in one line)
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own events"
+ON events FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 ```
+
+That's it. No users table (Supabase Auth handles it), no sessions table (Supabase handles it), no custom API routes.
 
 ### Event Types
 
@@ -109,135 +120,131 @@ Matches existing `shared/schemas/events.schema.json`:
 
 ---
 
-## API Endpoints
+## Authentication
 
-### Authentication
+### Configuration (Supabase Dashboard)
 
+1. Enable "Email" provider
+2. Enable "Confirm email" (magic link)
+3. Set email template for magic link
+4. Configure OTP settings:
+   - OTP expiry: 10 minutes
+   - OTP length: 6 digits
+
+### Flow (6-Digit Code)
+
+Supabase supports OTP (one-time password) via email out of the box:
+
+```typescript
+// Request code
+const { error } = await supabase.auth.signInWithOtp({
+  email: 'user@example.com',
+  options: {
+    shouldCreateUser: true,
+  }
+})
+
+// Verify code
+const { data, error } = await supabase.auth.verifyOtp({
+  email: 'user@example.com',
+  token: '847291',
+  type: 'email'
+})
+// data.session contains access_token, refresh_token
 ```
-POST /api/auth/request-code
-     Body: { email: string }
-     Response: { success: true }
-     Action: Sends 6-digit code to email, valid for 10 minutes
 
-POST /api/auth/verify-code
-     Body: { email: string, code: string }
-     Response: { accessToken: string, refreshToken: string, user: User }
-     Action: Validates code, creates session, returns tokens
+### Session Management
 
-POST /api/auth/refresh
-     Body: { refreshToken: string }
-     Response: { accessToken: string, refreshToken: string }
-     Action: Rotates refresh token, issues new access token
-```
+| Setting | Value |
+|---------|-------|
+| JWT expiry | 1 hour (access token) |
+| Refresh token | Indefinite, rotates on use |
+| Inactivity expiry | 60 days (configurable) |
 
-### Sync
-
-```
-GET  /api/sync/events?since={ISO timestamp}
-     Headers: Authorization: Bearer {accessToken}
-     Response: { events: Event[], latestTimestamp: string }
-     Action: Returns all user's events after timestamp (omit `since` for all)
-
-POST /api/sync/events
-     Headers: Authorization: Bearer {accessToken}
-     Body: { events: Event[] }
-     Response: { accepted: string[], duplicates: string[] }
-     Action: Stores new events, deduplicates by client_id
-
-GET  /api/sync/status
-     Headers: Authorization: Bearer {accessToken}
-     Response: { latestTimestamp: string, eventCount: number }
-     Action: Quick sync check without fetching events
-```
+Supabase SDKs handle token refresh automatically.
 
 ---
 
-## Authentication Flow
-
-### 6-Digit Code Login
-
-```
-┌─────────────┐                    ┌─────────────┐                    ┌─────────────┐
-│   Device    │                    │   Server    │                    │   Email     │
-└──────┬──────┘                    └──────┬──────┘                    └──────┬──────┘
-       │                                  │                                  │
-       │  POST /auth/request-code         │                                  │
-       │  { email: "you@..." }            │                                  │
-       │─────────────────────────────────▶│                                  │
-       │                                  │  Send code: 847291               │
-       │                                  │─────────────────────────────────▶│
-       │         { success: true }        │                                  │
-       │◀─────────────────────────────────│                                  │
-       │                                  │                                  │
-       │  POST /auth/verify-code          │                                  │
-       │  { email, code: "847291" }       │                                  │
-       │─────────────────────────────────▶│                                  │
-       │                                  │                                  │
-       │  { accessToken, refreshToken }   │                                  │
-       │◀─────────────────────────────────│                                  │
-       │                                  │                                  │
-       │  Store tokens locally            │                                  │
-       │  (Keychain / secure storage)     │                                  │
-```
-
-### Token Configuration
-
-| Token | Lifetime | Storage |
-|-------|----------|---------|
-| Access token | 15 minutes | Memory / secure storage |
-| Refresh token | Indefinite (rotates on use) | Keychain (iOS) / secure storage (web) |
-| Inactivity expiry | 60 days without app use | Server-side enforcement |
-
-### Security Measures
-
-- Codes expire after 10 minutes
-- Max 5 code attempts before 15-minute lockout
-- Refresh tokens are one-time-use (rotation prevents theft)
-- Tokens hashed with bcrypt before storage
-
----
-
-## Sync Logic
+## Sync Implementation
 
 ### Pull (App Opens)
 
 ```typescript
+// Web (TypeScript)
 async function pullEvents() {
-  const lastSync = getLastSyncTimestamp()
-  const response = await fetch(`/api/sync/events?since=${lastSync}`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  })
-  const { events } = await response.json()
+  const lastSync = localStorage.getItem('lastSyncTimestamp')
 
-  // Append to local event log
-  appendLocalEvents(events)
+  let query = supabase
+    .from('events')
+    .select('*')
+    .order('created_at', { ascending: true })
 
-  // Re-derive state from full log
-  const state = deriveState(getAllLocalEvents())
-  updateUI(state)
+  if (lastSync) {
+    query = query.gt('created_at', lastSync)
+  }
 
-  setLastSyncTimestamp(response.latestTimestamp)
+  const { data: events, error } = await query
+
+  if (events?.length) {
+    // Append to local event log
+    appendLocalEvents(events)
+
+    // Re-derive state
+    const state = deriveState(getAllLocalEvents())
+    updateUI(state)
+
+    // Update sync timestamp
+    const latest = events[events.length - 1].created_at
+    localStorage.setItem('lastSyncTimestamp', latest)
+  }
+}
+```
+
+```swift
+// iOS (Swift)
+func pullEvents() async throws {
+    let lastSync = UserDefaults.standard.string(forKey: "lastSyncTimestamp")
+
+    var query = supabase
+        .from("events")
+        .select()
+        .order("created_at")
+
+    if let lastSync {
+        query = query.gt("created_at", value: lastSync)
+    }
+
+    let events: [TrunkEvent] = try await query.execute().value
+
+    // Merge into local SwiftData cache
+    // Re-derive state
+    // Update lastSyncTimestamp
 }
 ```
 
 ### Push (After Action)
 
 ```typescript
+// Web (TypeScript)
 async function pushEvent(event: TrunkEvent) {
+  const user = await supabase.auth.getUser()
+
   // Save locally first (instant UI)
-  appendLocalEvent({ ...event, synced: false })
+  appendLocalEvent(event)
   updateUI(deriveState(getAllLocalEvents()))
 
-  // Push to server
-  try {
-    await fetch('/api/sync/events', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({ events: [event] })
+  // Push to Supabase
+  const { error } = await supabase
+    .from('events')
+    .insert({
+      user_id: user.data.user.id,
+      type: event.type,
+      payload: event.payload,
+      client_id: event.clientId,
+      client_timestamp: event.timestamp
     })
-    markEventSynced(event.client_id)
-  } catch (error) {
-    // Queue for retry on next app open
+
+  if (error && error.code !== '23505') { // 23505 = duplicate (already synced)
     queueForRetry(event)
   }
 }
@@ -245,139 +252,173 @@ async function pushEvent(event: TrunkEvent) {
 
 ### Conflict Handling
 
-Events are append-only facts - they merge naturally:
+Same as before - events are append-only, they merge naturally:
 
 | Scenario | Resolution |
 |----------|------------|
-| Same event pushed twice (network retry) | `client_id` deduplication rejects duplicate |
+| Same event pushed twice | `client_id` UNIQUE constraint rejects duplicate |
 | Same sprout watered from two devices | Both events stored; `deriveState()` enforces daily cap |
 | Same sprout harvested twice | `deriveState()` checks `if already completed, skip` |
 
 ---
 
-## Implementation Stack
+## Project Structure Changes
 
-### Backend
-
-| Component | Technology |
-|-----------|------------|
-| Database | Neon Postgres (via Vercel Marketplace) |
-| API Routes | Vercel Edge Functions |
-| Email | Resend (3,000 free emails/month) |
-| Auth tokens | JWT (access) + bcrypt-hashed refresh tokens |
-
-### Web App Changes
+### Web App
 
 ```
 web/
-├── api/                          # NEW: API routes
-│   ├── auth/
-│   │   ├── request-code.ts
-│   │   ├── verify-code.ts
-│   │   └── refresh.ts
-│   └── sync/
-│       ├── events.ts
-│       └── status.ts
 ├── src/
-│   ├── services/                 # NEW: Client services
-│   │   ├── auth-service.ts
-│   │   └── sync-service.ts
-│   ├── components/               # NEW: Auth UI
-│   │   └── login-modal.ts
+│   ├── lib/
+│   │   └── supabase.ts           # NEW: Supabase client init
+│   ├── services/
+│   │   ├── auth-service.ts       # NEW: Login/logout wrapper
+│   │   └── sync-service.ts       # NEW: Pull/push logic
+│   ├── ui/
+│   │   └── login-view.ts         # NEW: Login UI
 │   └── ...existing code
+├── .env.local                     # NEW: Supabase URL + anon key
+└── ...existing files
 ```
 
-### iOS App Changes
+### iOS App
 
 ```
 ios/Trunk/
 ├── Services/
-│   ├── AuthService.swift         # NEW: Login flow
-│   └── SyncService.swift         # NEW: Push/pull logic
+│   ├── SupabaseClient.swift      # NEW: Supabase client init
+│   ├── AuthService.swift         # NEW: Login/logout
+│   └── SyncService.swift         # NEW: Pull/push
 ├── Views/
-│   └── LoginView.swift           # NEW: Auth UI
-├── Keychain/
-│   └── TokenStorage.swift        # NEW: Secure token storage
+│   └── LoginView.swift           # NEW: Login UI
 └── ...existing code
+```
+
+### New Dependencies
+
+**Web:**
+```json
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.x"
+  }
+}
+```
+
+**iOS (Swift Package Manager):**
+```
+https://github.com/supabase/supabase-swift
 ```
 
 ---
 
 ## Migration Path
 
-### Phase 1: Add Auth (No Sync Yet)
+### Phase 1: Set Up Supabase
 
-1. Set up Neon Postgres database
-2. Implement auth API routes
-3. Add login UI to both apps
-4. Existing local data stays untouched
-5. Apps work exactly as before
+1. Create Supabase project
+2. Run schema SQL (one table, one policy)
+3. Configure auth (enable email OTP)
+4. Get project URL + anon key
 
-### Phase 2: Initial Upload
+### Phase 2: Add Auth to Apps
 
-1. After login, prompt: "Upload your existing data to the cloud?"
-2. Push all local events to server (one-time migration)
-3. Server becomes source of truth
-4. Local storage becomes cache
+1. Add Supabase SDK to both apps
+2. Create login UI (email input + code input)
+3. Gate app behind auth check
+4. Existing local data still works (no sync yet)
 
-### Phase 3: Ongoing Sync
+### Phase 3: Add Sync
 
-1. All new actions push to server
-2. App open pulls latest
-3. Remove local-only codepath
+1. Implement pull on app open
+2. Implement push on action
+3. Test with fresh account
 
-### Your Migration
+### Phase 4: Migrate Your Data
 
-1. Deploy auth + sync backend
-2. Log in on web → upload localStorage events
-3. Log in on iOS → data appears (pulled from cloud)
-4. Both devices now share the same data
+1. Log in on web
+2. One-time upload: push all localStorage events to Supabase
+3. Log in on iOS → data appears
+4. Done
+
+---
+
+## Environment Variables
+
+### Web (.env.local)
+
+```bash
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### iOS (Config.xcconfig or Info.plist)
+
+```
+SUPABASE_URL = https://xxxxx.supabase.co
+SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
 
 ---
 
 ## Cost Estimate
 
-| Service | Free Tier | Your Usage | Cost |
-|---------|-----------|------------|------|
-| Neon Postgres | 0.5 GB, 191 compute hrs | ~2 MB, minimal compute | $0 |
-| Vercel Functions | 100 GB-hrs/month | Minimal | $0 |
-| Resend | 3,000 emails/month | ~10 emails/month | $0 |
+| Resource | Free Tier | Your Usage | Cost |
+|----------|-----------|------------|------|
+| Database | 500 MB | ~5 MB | $0 |
+| Auth | 50,000 MAU | ~10 users | $0 |
+| API requests | Unlimited | Minimal | $0 |
+| Edge functions | 500K/month | Not using | $0 |
 
-**Total: $0/month** until you have hundreds of active users.
+**Total: $0/month** until you have thousands of users.
 
 ---
 
-## Security Considerations
+## Security
 
-- All API routes require valid access token (except auth endpoints)
-- User data isolated by `user_id` in all queries
-- Refresh tokens hashed before storage
-- HTTPS enforced by Vercel
-- No secrets in client code (tokens are user-specific, not app secrets)
-- Rate limiting on auth endpoints prevents brute force
+- **Row Level Security (RLS):** Users can only read/write their own events - enforced at database level
+- **Anon key is safe to expose:** It only allows operations permitted by RLS policies
+- **Auth tokens:** Handled entirely by Supabase SDK, stored securely
+- **HTTPS:** Enforced by Supabase
+
+---
+
+## What We Deleted (vs. Vercel + Neon design)
+
+| Removed | Why |
+|---------|-----|
+| Custom auth endpoints | Supabase Auth handles it |
+| Sessions table | Supabase Auth handles it |
+| Users table | Supabase Auth handles it |
+| JWT signing code | Supabase SDK handles it |
+| Refresh token rotation | Supabase SDK handles it |
+| Email sending (Resend) | Supabase sends emails |
+| 6 API routes | Supabase auto-generates REST |
+
+**Lines of backend code: ~0** (just SQL schema + RLS policy)
 
 ---
 
 ## Future Enhancements (Not in Scope)
 
-- **Snapshots:** Periodic state checkpoints for faster initial sync
-- **Real-time:** WebSocket updates for multi-device simultaneous use
-- **Sharing:** Share tree views with others (read-only)
-- **Admin dashboard:** User management, usage stats
+- **Real-time sync:** Supabase Realtime can push changes to other devices instantly
+- **Offline queue:** More robust offline support with background sync
+- **Admin dashboard:** Supabase has a built-in table viewer
+- **Self-hosting:** Can migrate to self-hosted Supabase if needed
 
 ---
 
-## Open Questions
+## Summary
 
-None - design approved for implementation.
+Supabase gives us:
+- **Auth** with magic links / OTP codes
+- **Postgres** database with row-level security
+- **Auto-generated REST API**
+- **SDKs** for web and iOS
 
----
+We write:
+- One SQL table + one RLS policy
+- Thin sync service (~100 lines per platform)
+- Login UI
 
-## Appendix: Environment Variables
-
-```bash
-# Vercel Environment Variables
-POSTGRES_URL=           # From Neon dashboard
-RESEND_API_KEY=         # From Resend dashboard
-JWT_SECRET=             # Generate: openssl rand -base64 32
-```
+That's it.
