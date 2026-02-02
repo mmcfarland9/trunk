@@ -55,3 +55,6 @@ web/test-results/
 
 # MCP config (contains tokens)
 .mcp.json
+
+# iOS Secrets (contains Supabase keys)
+ios/Trunk/Config/Secrets.swift
