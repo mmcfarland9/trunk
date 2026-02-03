@@ -255,25 +255,29 @@ final class SyncService {
         unsubscribeFromRealtime()
 
         Task {
-            let channel = client.realtimeV2.channel("events-realtime")
+            do {
+                let channel = client.realtimeV2.channel("events-realtime")
 
-            let insertions = channel.postgresChange(InsertAction.self, schema: "public", table: "events", filter: "user_id=eq.\(userId.uuidString)")
+                let insertions = channel.postgresChange(InsertAction.self, table: "events", filter: .eq("user_id", value: userId.uuidString))
 
-            await channel.subscribe()
+                try await channel.subscribe()
 
-            for await insertion in insertions {
-                do {
-                    let event = try insertion.decodeRecord(as: SyncEvent.self, decoder: JSONDecoder())
+                for await insertion in insertions {
+                    do {
+                        let event = try insertion.decodeRecord(as: SyncEvent.self, decoder: JSONDecoder())
 
-                    // Apply the event to local models
-                    try applyEvent(event, to: modelContext)
-                    try modelContext.save()
+                        // Apply the event to local models
+                        try applyEvent(event, to: modelContext)
+                        try modelContext.save()
 
-                    onRealtimeEvent?(event)
-                    print("Realtime: received event from another device - \(event.type)")
-                } catch {
-                    print("Realtime: failed to decode event - \(error)")
+                        onRealtimeEvent?(event)
+                        print("Realtime: received event from another device - \(event.type)")
+                    } catch {
+                        print("Realtime: failed to decode event - \(error)")
+                    }
                 }
+            } catch {
+                print("Realtime: failed to subscribe - \(error)")
             }
         }
     }

@@ -7,6 +7,7 @@
 
 import Foundation
 import Supabase
+import Auth
 
 enum SupabaseClientProvider {
     static let shared: Supabase.SupabaseClient? = {
@@ -23,7 +24,12 @@ enum SupabaseClientProvider {
 
         return Supabase.SupabaseClient(
             supabaseURL: url,
-            supabaseKey: Secrets.supabaseAnonKey
+            supabaseKey: Secrets.supabaseAnonKey,
+            options: SupabaseClientOptions(
+                auth: .init(
+                    emitLocalSessionAsInitialSession: true
+                )
+            )
         )
     }()
 

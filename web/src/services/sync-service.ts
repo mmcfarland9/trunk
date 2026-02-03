@@ -1,10 +1,13 @@
 import { supabase } from '../lib/supabase'
 import { getAuthState } from './auth-service'
 import { getEvents, appendEvents } from '../events/store'
+import { rebuildFromEvents } from '../events/rebuild'
 import type { TrunkEvent } from '../events/types'
 import type { SyncEvent } from './sync-types'
 import { localToSyncPayload, syncToLocalEvent } from './sync-types'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { STORAGE_KEY } from '../constants'
+import { CURRENT_SCHEMA_VERSION } from '../state/migrations'
 
 const LAST_SYNC_KEY = 'trunk-last-sync'
 
@@ -198,4 +201,53 @@ export function unsubscribeFromRealtime(): void {
     console.log('Realtime: disconnected')
   }
   onRealtimeEvent = null
+}
+
+/**
+ * Rebuild nodeState from all events in the store.
+ * This syncs the event-sourced data into the legacy localStorage format
+ * so the UI can display it properly.
+ */
+export function rebuildNodeStateFromEvents(): void {
+  const events = getEvents()
+  if (events.length === 0) return
+
+  // Rebuild state from events (copy to mutable array)
+  const { nodes, sunLog } = rebuildFromEvents([...events])
+
+  // Load existing state to preserve labels/notes not in events
+  let existingNodes: Record<string, unknown> = {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      existingNodes = parsed?.nodes || {}
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  // Merge: events provide sprouts/leaves, preserve existing labels/notes
+  const mergedNodes: Record<string, unknown> = { ...existingNodes }
+
+  for (const [nodeId, nodeData] of Object.entries(nodes)) {
+    const existing = (existingNodes[nodeId] || {}) as Record<string, unknown>
+    mergedNodes[nodeId] = {
+      label: existing.label || nodeData.label || '',
+      note: existing.note || nodeData.note || '',
+      ...(nodeData.sprouts && nodeData.sprouts.length > 0 ? { sprouts: nodeData.sprouts } : {}),
+      ...(nodeData.leaves && nodeData.leaves.length > 0 ? { leaves: nodeData.leaves } : {}),
+    }
+  }
+
+  // Save merged state to localStorage
+  const data = JSON.stringify({
+    _version: CURRENT_SCHEMA_VERSION,
+    nodes: mergedNodes,
+    sunLog,
+    soilLog: [], // soilLog will be derived from events too
+  })
+
+  localStorage.setItem(STORAGE_KEY, data)
+  console.log('Rebuilt nodeState from events:', Object.keys(nodes).length, 'twigs with data')
 }

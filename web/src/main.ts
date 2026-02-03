@@ -2,7 +2,7 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
-import { pullEvents, uploadAllLocalEvents, pushEvent, subscribeToRealtime, unsubscribeFromRealtime } from './services/sync-service'
+import { pullEvents, uploadAllLocalEvents, pushEvent, subscribeToRealtime, unsubscribeFromRealtime, rebuildNodeStateFromEvents } from './services/sync-service'
 import { setEventSyncCallback } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, setStorageErrorCallbacks } from './state'
@@ -67,6 +67,8 @@ async function startWithAuth() {
           console.warn('Sync pull failed:', error)
         } else if (pulled > 0) {
           console.log(`Synced ${pulled} events from cloud`)
+          // Rebuild nodeState from events so UI can display the data
+          rebuildNodeStateFromEvents()
           // Refresh UI with new data
           window.location.reload()
         }
@@ -91,6 +93,8 @@ async function startWithAuth() {
 
         // Subscribe to realtime for instant cross-device sync
         subscribeToRealtime(() => {
+          // Rebuild nodeState from events when new events arrive
+          rebuildNodeStateFromEvents()
           // Refresh UI when new events arrive from other devices
           window.location.reload()
         })
