@@ -14,6 +14,7 @@ struct OverviewView: View {
     @Bindable var progression: ProgressionViewModel
 
     @State private var sproutToWater: Sprout?
+    @State private var navigateToBranch: Int? = nil
 
     var body: some View {
         NavigationStack {
@@ -28,9 +29,15 @@ struct OverviewView: View {
                         .padding(.horizontal, TrunkTheme.space4)
                         .padding(.top, TrunkTheme.space2)
 
-                    // Tree visualization
-                    TreeView(sprouts: sprouts, progression: progression)
-                        .frame(maxHeight: .infinity)
+                    // Interactive tree canvas with zoom gestures
+                    TreeCanvasView(
+                        sprouts: sprouts,
+                        progression: progression,
+                        onNavigateToBranch: { branchIndex in
+                            navigateToBranch = branchIndex
+                        }
+                    )
+                    .frame(maxHeight: .infinity)
 
                     // Active sprouts section
                     ActiveSproutsSection(
@@ -62,6 +69,9 @@ struct OverviewView: View {
                     WaterSproutView(sprout: sprout, progression: progression)
                 }
                 .presentationDetents([.medium])
+            }
+            .navigationDestination(item: $navigateToBranch) { branchIndex in
+                BranchView(branchIndex: branchIndex, progression: progression)
             }
         }
     }
