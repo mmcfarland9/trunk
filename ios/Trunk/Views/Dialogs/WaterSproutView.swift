@@ -16,7 +16,12 @@ struct WaterSproutView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var note = ""
+    @State private var isWatering = false
     @FocusState private var isNoteFocused: Bool
+
+    private var hasNote: Bool {
+        !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         Form {
@@ -65,10 +70,16 @@ struct WaterSproutView: View {
                 }
             }
             ToolbarItem(placement: .primaryAction) {
-                Button("Water") {
+                Button {
                     waterSprout()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("💧")
+                        Text("Water")
+                    }
                 }
-                .disabled(!progression.canWater)
+                .disabled(!progression.canWater || isWatering)
+                .pulse(hasNote && progression.canWater && !isWatering)
             }
         }
         .onAppear {
@@ -77,6 +88,9 @@ struct WaterSproutView: View {
     }
 
     private func waterSprout() {
+        isWatering = true
+        HapticManager.tap()
+
         // Create water entry
         let entry = WaterEntry(content: note.trimmingCharacters(in: .whitespacesAndNewlines))
         entry.sprout = sprout
@@ -95,7 +109,11 @@ struct WaterSproutView: View {
             ])
         }
 
-        dismiss()
+        // Success feedback and dismiss with slight delay for visual feedback
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            HapticManager.success()
+            dismiss()
+        }
     }
 }
 
