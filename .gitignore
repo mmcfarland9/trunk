@@ -58,3 +58,6 @@ web/test-results/
 
 # iOS Secrets (contains Supabase keys)
 ios/Trunk/Config/Secrets.swift
+
+# 
+.nvmrc
