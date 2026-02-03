@@ -12,6 +12,7 @@ struct TodayView: View {
     @Bindable var progression: ProgressionViewModel
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(AuthService.self) private var authService
     @Query private var sprouts: [Sprout]
     @Query(sort: \SunEntry.timestamp, order: .reverse) private var sunEntries: [SunEntry]
     @Query(sort: \Leaf.createdAt, order: .reverse) private var leaves: [Leaf]
@@ -103,6 +104,13 @@ struct TodayView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                    // Greeting header
+                    GreetingHeader(
+                        userName: authService.userFullName,
+                        activeSproutCount: activeSprouts.count,
+                        readyToHarvestCount: readyToHarvest.count
+                    )
+
                     // Resource meters
                     resourceMeters
 
@@ -476,5 +484,6 @@ struct ActivityItem {
     NavigationStack {
         TodayView(progression: ProgressionViewModel())
     }
+    .environment(AuthService())
     .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }
