@@ -6,7 +6,7 @@ import { pullEvents, uploadAllLocalEvents, pushEvent, subscribeToRealtime, unsub
 import { setEventSyncCallback } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, setStorageErrorCallbacks } from './state'
-import { updateFocus, setFocusedNode } from './ui/node-ui'
+import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
 import { buildApp } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
@@ -21,12 +21,10 @@ import {
   returnToBranchView,
 } from './features/navigation'
 import { updateStats, initSidebarSprouts } from './features/progress'
-import { setStatus, updateStatusMeta } from './features/status'
 import { initWaterDialog } from './features/water-dialog'
 import { initHarvestDialog } from './features/harvest-dialog'
 import { initShine } from './features/shine-dialog'
-import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from './features/log-dialogs'
-import { STATUS_DEFAULT_MESSAGE } from './constants'
+import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog, initAccountDialog } from './features/log-dialogs'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) {
@@ -103,6 +101,18 @@ async function startWithAuth() {
         setEventSyncCallback(null)
         unsubscribeFromRealtime()
       }
+
+      // Update profile badge based on auth state
+      if (state.user) {
+        domResult.elements.profileBadge.classList.remove('hidden')
+        domResult.elements.profileEmail.textContent = state.user.email || ''
+        // Update trunk label with user's full_name from profile
+        syncNode(domResult.elements.trunk)
+        updateFocus(null, ctx)
+      } else {
+        domResult.elements.profileBadge.classList.add('hidden')
+        domResult.elements.profileEmail.textContent = ''
+      }
     }
   })
 }
@@ -114,7 +124,6 @@ const navCallbacks = {
   onUpdateStats: () => {
     updateStats(ctx)
     positionNodes(ctx)
-    updateStatusMeta(ctx.elements, true)
   },
 }
 
@@ -193,11 +202,11 @@ const ctx: AppContext = {
 setStorageErrorCallbacks(
   () => {
     // Quota error - prompt user to export data
-    setStatus(ctx.elements, 'Storage full! Please export your data to prevent data loss.', 'error')
+    console.error('Storage full! Please export your data to prevent data loss.')
   },
   () => {
     // General storage error
-    setStatus(ctx.elements, 'Unable to save. Export your data as backup.', 'warning')
+    console.warn('Unable to save. Export your data as backup.')
   }
 )
 
@@ -205,7 +214,6 @@ setStorageErrorCallbacks(
 const waterDialogApi = initWaterDialog(ctx, {
   onWaterMeterChange: updateWaterMeter,
   onSoilMeterChange: updateSoilMeter,
-  onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
   onWaterComplete: () => {
     navCallbacks.onUpdateStats()
     ctx.twigView?.refresh()
@@ -214,7 +222,6 @@ const waterDialogApi = initWaterDialog(ctx, {
 
 const harvestDialogApi = initHarvestDialog(ctx, {
   onSoilMeterChange: updateSoilMeter,
-  onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
   onHarvestComplete: navCallbacks.onUpdateStats,
 })
 
@@ -224,7 +231,6 @@ let sunLogPopulate: (() => void) | null = null
 const shineApi = initShine(ctx, {
   onSunMeterChange: () => shineApi.updateSunMeter(),
   onSoilMeterChange: updateSoilMeter,
-  onSetStatus: (msg, type) => setStatus(ctx.elements, msg, type),
   onShineComplete: () => sunLogPopulate?.(),
 })
 
@@ -236,6 +242,7 @@ sunLogPopulate = sunLogApi.populate
 
 const soilBagApi = initSoilBagDialog(domResult.elements)
 const waterCanApi = initWaterCanDialog(domResult.elements)
+const accountApi = initAccountDialog(domResult.elements)
 
 const mapPanel = domResult.elements.canvas.parentElement as HTMLElement
 const twigView = buildTwigView(mapPanel, {
@@ -341,7 +348,6 @@ domResult.elements.debugSoilResetBtn.addEventListener('click', () => {
   domResult.elements.debugClockOffset.textContent = '+0d'
   // Refresh sidebar sprouts (water state may have changed)
   updateStats(ctx)
-  setStatus(ctx.elements, 'All resources and logs reset', 'info')
 })
 
 domResult.elements.debugClearSproutsBtn.addEventListener('click', () => {
@@ -354,7 +360,6 @@ domResult.elements.debugClearSproutsBtn.addEventListener('click', () => {
   })
   saveState()
   updateStats(ctx)
-  setStatus(ctx.elements, 'Cleared all sprouts and leaves', 'info')
 })
 
 domResult.elements.backToTrunkButton.addEventListener('click', () => {
@@ -407,10 +412,8 @@ initSidebarSprouts(
 )
 
 setViewMode('overview', ctx, navCallbacks)
-setStatus(ctx.elements, STATUS_DEFAULT_MESSAGE, 'info')
 updateStats(ctx)
 updateFocus(null, ctx)
-updateStatusMeta(ctx.elements)
 updateSoilMeter()
 updateWaterMeter()
 shineApi.updateSunMeter()
@@ -434,6 +437,11 @@ setupHoverTwig(ctx)
 
 // Global keyboard navigation
 document.addEventListener('keydown', (e) => {
+  // Skip if user is typing in an input field (except for Escape)
+  const isTyping = e.target instanceof HTMLInputElement ||
+                   e.target instanceof HTMLTextAreaElement ||
+                   e.target instanceof HTMLSelectElement
+
   // Handle Escape: close dialogs first, then zoom back
   if (e.key === 'Escape') {
     // Priority 1: Close any open dialog
@@ -462,6 +470,11 @@ document.addEventListener('keydown', (e) => {
       waterCanApi.close()
       return
     }
+    if (accountApi.isOpen()) {
+      e.preventDefault()
+      accountApi.close()
+      return
+    }
 
     // Priority 2: Let twig/leaf views handle their own escape (they have internal handlers)
     if (ctx.twigView?.isOpen() || ctx.leafView?.isOpen()) {
@@ -475,6 +488,9 @@ document.addEventListener('keydown', (e) => {
     }
     return
   }
+
+  // Don't handle other keys if user is typing
+  if (isTyping) return
 
   // Don't handle other keys if twig view is open
   if (ctx.twigView?.isOpen()) return

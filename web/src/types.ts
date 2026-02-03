@@ -167,8 +167,8 @@ export type AppElements = {
   activeSproutsList: HTMLDivElement
   cultivatedSproutsToggle: HTMLButtonElement
   cultivatedSproutsList: HTMLDivElement
-  statusMessage: HTMLParagraphElement
-  statusMeta: HTMLParagraphElement
+  profileBadge: HTMLDivElement
+  profileEmail: HTMLSpanElement
   debugPanel: HTMLDivElement
   debugCheckbox: HTMLInputElement
   debugClockBtn: HTMLButtonElement
@@ -232,6 +232,19 @@ export type AppElements = {
   soilBagDialogEmpty: HTMLParagraphElement
   soilBagDialogEntries: HTMLDivElement
   soilMeter: HTMLDivElement
+  accountDialog: HTMLDivElement
+  accountDialogClose: HTMLButtonElement
+  accountDialogEmail: HTMLParagraphElement
+  accountDialogNameInput: HTMLInputElement
+  accountDialogPhoneInput: HTMLInputElement
+  accountDialogTimezoneSelect: HTMLSelectElement
+  accountDialogChannelInputs: NodeListOf<HTMLInputElement>
+  accountDialogFrequencyInputs: NodeListOf<HTMLInputElement>
+  accountDialogTimeInputs: NodeListOf<HTMLInputElement>
+  accountDialogHarvestCheckbox: HTMLInputElement
+  accountDialogShineCheckbox: HTMLInputElement
+  accountDialogSignOut: HTMLButtonElement
+  accountDialogSave: HTMLButtonElement
 }
 
 export type AppContext = {

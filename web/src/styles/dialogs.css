@@ -1428,3 +1428,211 @@
 .soil-meter:hover {
   opacity: 0.8;
 }
+
+/* === Account Dialog === */
+.account-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fade-in 150ms ease;
+}
+
+.account-dialog.hidden {
+  display: none;
+}
+
+.account-dialog-box {
+  width: min(420px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: scale-in 200ms ease;
+}
+
+.account-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.account-dialog-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+.account-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.account-dialog-close:hover {
+  color: var(--ink);
+}
+
+.account-dialog-body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.account-label {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
+
+.account-email {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.account-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  transition: border-color 150ms ease;
+}
+
+.account-input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.account-input::placeholder {
+  color: var(--ink-faint);
+}
+
+select.account-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
+  padding-right: var(--space-5);
+}
+
+.account-section-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--space-2) 0;
+}
+
+.account-notifications-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.account-notifications-section.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.account-coming-soon {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-left: var(--space-2);
+}
+
+.account-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.account-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+.account-radio input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.account-radio:has(input:checked) {
+  color: var(--ink);
+}
+
+.account-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.account-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+.account-checkbox input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.account-checkbox:has(input:checked) {
+  color: var(--ink);
+}
+
+.account-notify-options {
+  transition: opacity 150ms ease;
+}
+
+.account-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+}

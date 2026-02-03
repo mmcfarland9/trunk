@@ -41,12 +41,20 @@ export function buildApp(
   logo.src = ampersandImage
   logo.alt = 'Trunk mark'
 
-  // Settings button hidden for now - not doing much yet
-  // const settingsButton = document.createElement('button')
-  // settingsButton.type = 'button'
-  // settingsButton.className = 'action-button'
-  // settingsButton.textContent = 'Settings'
-  // actions.append(settingsButton)
+  // Profile badge (shown when authenticated)
+  const profileBadge = document.createElement('div')
+  profileBadge.className = 'profile-badge hidden'
+
+  const profileIcon = document.createElement('span')
+  profileIcon.className = 'profile-icon'
+  profileIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5z"/></svg>'
+
+  const profileEmail = document.createElement('span')
+  profileEmail.className = 'profile-email'
+  profileEmail.textContent = ''
+
+  profileBadge.append(profileIcon, profileEmail)
+  actions.append(profileBadge)
 
   // Global Soil meter
   const soilMeter = document.createElement('div')
@@ -308,10 +316,6 @@ export function buildApp(
       </button>
       <div class="sprouts-list" data-section="cultivated"></div>
     </section>
-    <section class="panel-section">
-      <p class="status-message" role="status" aria-live="polite"></p>
-      <p class="status-meta" aria-live="polite"></p>
-    </section>
     <section class="panel-section keyboard-hints">
       <p class="keyboard-hint hint-escape" title="Press Escape to go back"><kbd>Esc</kbd> Back</p>
       <p class="keyboard-hint hint-arrows" title="Arrow keys to cycle branches"><kbd>←</kbd><kbd>→</kbd> Cycle</p>
@@ -543,7 +547,82 @@ export function buildApp(
     </div>
   `
 
-  shell.append(header, body, sproutsDialog, waterDialog, harvestDialog, settingsDialog, waterCanDialog, sunLogDialog, soilBagDialog)
+  // Account dialog - user profile and sign out
+  const accountDialog = document.createElement('div')
+  accountDialog.className = 'account-dialog hidden'
+  accountDialog.innerHTML = `
+    <div class="account-dialog-box" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title">
+      <div class="account-dialog-header">
+        <h2 id="account-dialog-title" class="account-dialog-title">Account</h2>
+        <button type="button" class="account-dialog-close" aria-label="Close dialog">×</button>
+      </div>
+      <div class="account-dialog-body">
+        <div class="account-field">
+          <label class="account-label">Email</label>
+          <p class="account-email"></p>
+        </div>
+        <div class="account-field">
+          <label class="account-label" for="account-name">Full Name</label>
+          <input type="text" id="account-name" class="account-input account-name-input" placeholder="Your name" />
+        </div>
+        <div class="account-field">
+          <label class="account-label" for="account-phone">Phone</label>
+          <input type="tel" id="account-phone" class="account-input account-phone-input" placeholder="555 123 4567" />
+        </div>
+        <div class="account-field">
+          <label class="account-label" for="account-timezone">Time Zone</label>
+          <select id="account-timezone" class="account-input account-timezone-select"></select>
+        </div>
+
+        <div class="account-section-divider"></div>
+
+        <div class="account-notifications-section is-disabled">
+          <div class="account-field">
+            <label class="account-label">Notifications <span class="account-coming-soon">Coming soon</span></label>
+          </div>
+          <div class="account-field">
+            <label class="account-label">Notify Me Via</label>
+            <div class="account-radio-group account-channel-group">
+              <label class="account-radio"><input type="radio" name="notify-channel" value="email" disabled /><span>Email</span></label>
+              <label class="account-radio"><input type="radio" name="notify-channel" value="sms" disabled /><span>Text</span></label>
+              <label class="account-radio"><input type="radio" name="notify-channel" value="none" disabled /><span>Off</span></label>
+            </div>
+          </div>
+          <div class="account-field account-notify-options">
+            <label class="account-label">Check-in Reminders</label>
+            <div class="account-radio-group account-frequency-group">
+              <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" disabled /><span>Daily</span></label>
+              <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" disabled /><span>Every 3 days</span></label>
+              <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" disabled /><span>Weekly</span></label>
+              <label class="account-radio"><input type="radio" name="notify-frequency" value="off" disabled /><span>Off</span></label>
+            </div>
+          </div>
+          <div class="account-field account-notify-options">
+            <label class="account-label">Preferred Time</label>
+            <div class="account-radio-group account-time-group">
+              <label class="account-radio"><input type="radio" name="notify-time" value="morning" disabled /><span>Morning</span></label>
+              <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" disabled /><span>Afternoon</span></label>
+              <label class="account-radio"><input type="radio" name="notify-time" value="evening" disabled /><span>Evening</span></label>
+            </div>
+          </div>
+          <div class="account-field account-notify-options">
+            <label class="account-label">Event Notifications</label>
+            <div class="account-checkbox-group">
+              <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" disabled /><span>Sprout ready to harvest</span></label>
+              <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" disabled /><span>Shine available</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-actions">
+          <button type="button" class="action-btn action-btn-passive action-btn-neutral account-sign-out-btn">Sign Out</button>
+          <button type="button" class="action-btn action-btn-progress action-btn-twig account-save-btn">Save</button>
+        </div>
+      </div>
+    </div>
+  `
+
+  shell.append(header, body, sproutsDialog, waterDialog, harvestDialog, settingsDialog, waterCanDialog, sunLogDialog, soilBagDialog, accountDialog)
   appRoot.append(shell)
 
   const elements: AppElements = {
@@ -565,8 +644,8 @@ export function buildApp(
     activeSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="active"]')!,
     cultivatedSproutsToggle: sidePanel.querySelector<HTMLButtonElement>('.sprouts-toggle[data-section="cultivated"]')!,
     cultivatedSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="cultivated"]')!,
-    statusMessage: sidePanel.querySelector<HTMLParagraphElement>('.status-message')!,
-    statusMeta: sidePanel.querySelector<HTMLParagraphElement>('.status-meta')!,
+    profileBadge,
+    profileEmail,
     debugPanel,
     debugCheckbox,
     debugClockBtn,
@@ -630,6 +709,19 @@ export function buildApp(
     soilBagDialogEmpty: soilBagDialog.querySelector<HTMLParagraphElement>('.soil-bag-empty')!,
     soilBagDialogEntries: soilBagDialog.querySelector<HTMLDivElement>('.soil-bag-entries')!,
     soilMeter,
+    accountDialog,
+    accountDialogClose: accountDialog.querySelector<HTMLButtonElement>('.account-dialog-close')!,
+    accountDialogEmail: accountDialog.querySelector<HTMLParagraphElement>('.account-email')!,
+    accountDialogNameInput: accountDialog.querySelector<HTMLInputElement>('.account-name-input')!,
+    accountDialogPhoneInput: accountDialog.querySelector<HTMLInputElement>('.account-phone-input')!,
+    accountDialogTimezoneSelect: accountDialog.querySelector<HTMLSelectElement>('.account-timezone-select')!,
+    accountDialogChannelInputs: accountDialog.querySelectorAll<HTMLInputElement>('input[name="notify-channel"]'),
+    accountDialogFrequencyInputs: accountDialog.querySelectorAll<HTMLInputElement>('input[name="notify-frequency"]'),
+    accountDialogTimeInputs: accountDialog.querySelectorAll<HTMLInputElement>('input[name="notify-time"]'),
+    accountDialogHarvestCheckbox: accountDialog.querySelector<HTMLInputElement>('.account-notify-harvest')!,
+    accountDialogShineCheckbox: accountDialog.querySelector<HTMLInputElement>('.account-notify-shine')!,
+    accountDialogSignOut: accountDialog.querySelector<HTMLButtonElement>('.account-sign-out-btn')!,
+    accountDialogSave: accountDialog.querySelector<HTMLButtonElement>('.account-save-btn')!,
   }
 
   return {

@@ -7,7 +7,6 @@ import { appendEvent } from '../events'
 
 export type HarvestDialogCallbacks = {
   onSoilMeterChange: () => void
-  onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
   onHarvestComplete: () => void
 }
 
@@ -160,9 +159,6 @@ export function initHarvestDialog(
     const baseReward = getCapacityReward(sprout.environment, sprout.season)
     const capGain = baseReward * resultMultiplier
     recoverSoil(sprout.soilCost, capGain, 'Harvested sprout', sprout.title)
-
-    const emoji = getResultEmoji(result)
-    callbacks.onSetStatus(`${emoji} Sprout harvested! (+${sprout.soilCost.toFixed(1)} soil, +${capGain.toFixed(2)} cap)`, 'info')
 
     saveState()
     callbacks.onSoilMeterChange()

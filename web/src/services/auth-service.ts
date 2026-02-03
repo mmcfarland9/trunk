@@ -7,6 +7,23 @@ export type AuthState = {
   loading: boolean
 }
 
+export type NotificationChannel = 'email' | 'sms' | 'none'
+
+export type NotificationPreferences = {
+  channel: NotificationChannel
+  check_in_frequency: 'daily' | 'every3days' | 'weekly' | 'off'
+  preferred_time: 'morning' | 'afternoon' | 'evening'
+  notify_harvest_ready: boolean
+  notify_shine_available: boolean
+}
+
+export type UserProfile = {
+  full_name?: string
+  phone?: string
+  timezone?: string
+  notifications?: NotificationPreferences
+}
+
 let authState: AuthState = {
   user: null,
   session: null,
@@ -93,4 +110,30 @@ export async function signOut(): Promise<void> {
 
 export function isAuthenticated(): boolean {
   return authState.user !== null
+}
+
+export function getUserProfile(): UserProfile {
+  const metadata = authState.user?.user_metadata ?? {}
+  return {
+    full_name: metadata.full_name ?? '',
+    phone: metadata.phone ?? '',
+    timezone: metadata.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    notifications: {
+      channel: metadata.notifications?.channel ?? 'email',
+      check_in_frequency: metadata.notifications?.check_in_frequency ?? 'weekly',
+      preferred_time: metadata.notifications?.preferred_time ?? 'morning',
+      notify_harvest_ready: metadata.notifications?.notify_harvest_ready ?? true,
+      notify_shine_available: metadata.notifications?.notify_shine_available ?? true,
+    },
+  }
+}
+
+export async function updateProfile(profile: UserProfile): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Supabase not configured' }
+
+  const { error } = await supabase.auth.updateUser({
+    data: profile,
+  })
+
+  return { error: error?.message ?? null }
 }

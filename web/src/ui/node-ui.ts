@@ -1,5 +1,6 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote, getNotificationSettings } from '../state'
+import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
+import { getUserProfile } from '../services/auth-service'
 
 export function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
@@ -145,12 +146,10 @@ export function syncNode(element: HTMLButtonElement): void {
   const nodeId = element.dataset.nodeId
   if (!nodeId) return
 
-  // Trunk uses name from settings as its label
+  // Trunk visual node - CSS handles the asterisk display
   if (nodeId === 'trunk') {
-    const settings = getNotificationSettings()
-    const label = settings.name || 'Trunk'
-    setNodeLabel(element, label)
-    element.dataset.filled = settings.name ? 'true' : 'false'
+    setNodeLabel(element, '')
+    element.dataset.filled = 'true'
     return
   }
 
@@ -215,14 +214,14 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   const isTwig = target.classList.contains('twig')
   const isTrunk = target.classList.contains('trunk')
 
-  // Trunk uses name from settings
+  // Trunk uses full_name from user profile
   let label: string
   let note: string
   let hasLabel: boolean
 
   if (isTrunk) {
-    const settings = getNotificationSettings()
-    label = settings.name || ''
+    const profile = getUserProfile()
+    label = profile.full_name || ''
     note = 'a unified framework\nfor mind, body & spirit'
     hasLabel = Boolean(label)
   } else {
@@ -236,7 +235,8 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   }
 
   const placeholder = getNodePlaceholder(target)
-  const displayLabel = hasLabel ? label : isTwig ? 'Add title...' : placeholder
+  // Trunk shows non-breaking space when no full_name is set (preserves line height)
+  const displayLabel = hasLabel ? label : isTwig ? 'Add title...' : isTrunk ? '\u00A0' : placeholder
 
   // Show hierarchy type label in meta
   if (isTrunk) {

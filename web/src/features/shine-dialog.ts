@@ -5,7 +5,6 @@ import { spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek,
 export type ShineCallbacks = {
   onSunMeterChange: () => void
   onSoilMeterChange: () => void
-  onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
   onShineComplete: () => void
 }
 
@@ -166,9 +165,11 @@ export function initShine(
 
     currentContext = target
 
-    // Display what was selected
+    // Display what was selected - show twig label and branch name
+    const branchId = target.twigId.replace(/-twig-\d+$/, '')
+    const branchLabel = getPresetLabel(branchId)
     sunLogShineTitle.textContent = target.twigLabel
-    sunLogShineMeta.textContent = 'Life Facet'
+    sunLogShineMeta.textContent = branchLabel || ''
 
     sunLogShineJournal.value = ''
     sunLogShineJournal.placeholder = getRandomPrompt(target.twigId, target.twigLabel)
@@ -190,7 +191,6 @@ export function initShine(
     }
 
     if (!canAffordSun()) {
-      callbacks.onSetStatus('No sun left this week!', 'warning')
       return
     }
 
@@ -205,7 +205,6 @@ export function initShine(
       // Save sun entry to global log with context
       const prompt = sunLogShineJournal.placeholder
       addSunEntry(entry, prompt, currentContext)
-      callbacks.onSetStatus('Light radiated!', 'info')
 
       // Refresh the shine section (will show "shone" state) and log
       populateSunLogShine()

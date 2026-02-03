@@ -11,6 +11,7 @@ import {
   getPresetLabel,
   nodeState,
 } from '../state'
+import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
 
 // --- Timestamp Formatters ---
 
@@ -248,6 +249,191 @@ export function initWaterCanDialog(
 
   return {
     isOpen: () => !elements.waterCanDialog.classList.contains('hidden'),
+    close: closeDialog,
+  }
+}
+
+// --- Account Dialog ---
+
+type AccountElements = Pick<
+  AppElements,
+  | 'accountDialog'
+  | 'accountDialogClose'
+  | 'accountDialogEmail'
+  | 'accountDialogNameInput'
+  | 'accountDialogPhoneInput'
+  | 'accountDialogTimezoneSelect'
+  | 'accountDialogChannelInputs'
+  | 'accountDialogFrequencyInputs'
+  | 'accountDialogTimeInputs'
+  | 'accountDialogHarvestCheckbox'
+  | 'accountDialogShineCheckbox'
+  | 'accountDialogSignOut'
+  | 'accountDialogSave'
+  | 'profileBadge'
+>
+
+// Common timezones for the dropdown
+const COMMON_TIMEZONES = [
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'America/Toronto',
+  'America/Vancouver',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Moscow',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Singapore',
+  'Asia/Dubai',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Pacific/Auckland',
+]
+
+function formatTimezone(tz: string): string {
+  try {
+    const now = new Date()
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      timeZoneName: 'short',
+    })
+    const parts = formatter.formatToParts(now)
+    const tzAbbr = parts.find(p => p.type === 'timeZoneName')?.value || ''
+    const city = tz.split('/').pop()?.replace(/_/g, ' ') || tz
+    return `${city} (${tzAbbr})`
+  } catch {
+    return tz
+  }
+}
+
+function updateNotifyOptionsVisibility(elements: AccountElements, channel: string): void {
+  const notifyOptions = elements.accountDialog.querySelectorAll('.account-notify-options')
+  const isOff = channel === 'none'
+  notifyOptions.forEach(el => {
+    (el as HTMLElement).style.opacity = isOff ? '0.4' : '1'
+    ;(el as HTMLElement).style.pointerEvents = isOff ? 'none' : 'auto'
+  })
+}
+
+function populateTimezoneSelect(select: HTMLSelectElement, currentTz: string): void {
+  select.innerHTML = ''
+
+  // Ensure current timezone is in the list
+  const timezones = COMMON_TIMEZONES.includes(currentTz)
+    ? COMMON_TIMEZONES
+    : [currentTz, ...COMMON_TIMEZONES]
+
+  for (const tz of timezones) {
+    const option = document.createElement('option')
+    option.value = tz
+    option.textContent = formatTimezone(tz)
+    option.selected = tz === currentTz
+    select.appendChild(option)
+  }
+}
+
+function populateAccountDialog(elements: AccountElements): void {
+  const { user } = getAuthState()
+  const profile = getUserProfile()
+
+  elements.accountDialogEmail.textContent = user?.email || ''
+  elements.accountDialogNameInput.value = profile.full_name || ''
+  elements.accountDialogPhoneInput.value = profile.phone || ''
+  populateTimezoneSelect(elements.accountDialogTimezoneSelect, profile.timezone || 'America/New_York')
+
+  // Notification preferences
+  const notif = profile.notifications!
+  elements.accountDialogChannelInputs.forEach(input => {
+    input.checked = input.value === notif.channel
+  })
+  elements.accountDialogFrequencyInputs.forEach(input => {
+    input.checked = input.value === notif.check_in_frequency
+  })
+  elements.accountDialogTimeInputs.forEach(input => {
+    input.checked = input.value === notif.preferred_time
+  })
+  elements.accountDialogHarvestCheckbox.checked = notif.notify_harvest_ready
+  elements.accountDialogShineCheckbox.checked = notif.notify_shine_available
+
+  // Update visibility of notification options based on channel
+  updateNotifyOptionsVisibility(elements, notif.channel)
+}
+
+export function initAccountDialog(
+  elements: AccountElements
+): { isOpen: () => boolean; close: () => void } {
+  const openDialog = () => {
+    populateAccountDialog(elements)
+    elements.accountDialog.classList.remove('hidden')
+  }
+
+  const closeDialog = () => {
+    elements.accountDialog.classList.add('hidden')
+  }
+
+  elements.profileBadge.addEventListener('click', openDialog)
+  elements.accountDialogClose.addEventListener('click', closeDialog)
+  elements.accountDialog.addEventListener('click', (e) => {
+    if (e.target === elements.accountDialog) closeDialog()
+  })
+
+  // Update notify options visibility when channel changes
+  elements.accountDialogChannelInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      updateNotifyOptionsVisibility(elements, input.value)
+    })
+  })
+
+  elements.accountDialogSignOut.addEventListener('click', async () => {
+    closeDialog()
+    await signOut()
+  })
+
+  elements.accountDialogSave.addEventListener('click', async () => {
+    // Get selected radio values
+    const getSelectedRadio = (inputs: NodeListOf<HTMLInputElement>): string => {
+      for (const input of inputs) {
+        if (input.checked) return input.value
+      }
+      return ''
+    }
+
+    const profile = {
+      full_name: elements.accountDialogNameInput.value.trim(),
+      phone: elements.accountDialogPhoneInput.value.trim(),
+      timezone: elements.accountDialogTimezoneSelect.value,
+      notifications: {
+        channel: getSelectedRadio(elements.accountDialogChannelInputs) as 'email' | 'sms' | 'none',
+        check_in_frequency: getSelectedRadio(elements.accountDialogFrequencyInputs) as 'daily' | 'every3days' | 'weekly' | 'off',
+        preferred_time: getSelectedRadio(elements.accountDialogTimeInputs) as 'morning' | 'afternoon' | 'evening',
+        notify_harvest_ready: elements.accountDialogHarvestCheckbox.checked,
+        notify_shine_available: elements.accountDialogShineCheckbox.checked,
+      },
+    }
+
+    elements.accountDialogSave.disabled = true
+    elements.accountDialogSave.textContent = 'Saving...'
+
+    const { error } = await updateProfile(profile)
+
+    elements.accountDialogSave.disabled = false
+    elements.accountDialogSave.textContent = 'Save'
+
+    if (error) {
+      console.error('Failed to save profile:', error)
+    } else {
+      closeDialog()
+    }
+  })
+
+  return {
+    isOpen: () => !elements.accountDialog.classList.contains('hidden'),
     close: closeDialog,
   }
 }

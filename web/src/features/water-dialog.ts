@@ -7,7 +7,6 @@ import { appendEvent } from '../events'
 export type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
   onSoilMeterChange: () => void
-  onSetStatus: (message: string, type: 'info' | 'warning' | 'error') => void
   onWaterComplete: () => void
 }
 
@@ -68,7 +67,6 @@ export function initWaterDialog(
   function openWaterDialog(sprout: { id: string; title: string; twigId: string; twigLabel: string; season: string }) {
     // Check if already watered this week
     if (wasSproutWateredThisWeek(sprout.twigId, sprout.id)) {
-      callbacks.onSetStatus('Already watered this week!', 'warning')
       return
     }
 
@@ -100,7 +98,6 @@ export function initWaterDialog(
     }
 
     if (!canAffordWater()) {
-      callbacks.onSetStatus('No water left today!', 'warning')
       closeWaterDialog()
       return
     }
@@ -127,7 +124,6 @@ export function initWaterDialog(
 
       // Also update legacy nodeState for backward compatibility
       addWaterEntry(currentWateringSprout.twigId, currentWateringSprout.id, entry, prompt)
-      callbacks.onSetStatus(`Sprout watered! (+${getSoilRecoveryRate()} soil)`, 'info')
     }
 
     closeWaterDialog()
