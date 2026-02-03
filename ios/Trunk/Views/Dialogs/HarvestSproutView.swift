@@ -207,14 +207,17 @@ struct HarvestSproutView: View {
         isHarvesting = true
         HapticManager.tap()
 
-        progression.harvestSprout(sprout, result: selectedResult)
-        sprout.harvest(result: selectedResult)
+        // Calculate capacity gained (same formula as web - pre-calculated at harvest time)
+        let capacityGained = reward
+        let timestamp = ISO8601DateFormatter().string(from: Date())
 
-        // Push to cloud
+        // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
                 "sproutId": sprout.sproutId,
-                "result": selectedResult
+                "result": selectedResult,
+                "capacityGained": capacityGained,
+                "timestamp": timestamp
             ])
         }
 

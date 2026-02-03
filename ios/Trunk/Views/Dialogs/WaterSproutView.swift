@@ -91,21 +91,15 @@ struct WaterSproutView: View {
         isWatering = true
         HapticManager.tap()
 
-        // Create water entry
-        let entry = WaterEntry(content: note.trimmingCharacters(in: .whitespacesAndNewlines))
-        entry.sprout = sprout
-        sprout.waterEntries.append(entry)
-        modelContext.insert(entry)
+        let content = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let timestamp = ISO8601DateFormatter().string(from: Date())
 
-        // Use water resource
-        progression.useWater()
-
-        // Push to cloud
+        // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
                 "sproutId": sprout.sproutId,
-                "note": entry.content,
-                "timestamp": ISO8601DateFormatter().string(from: entry.timestamp)
+                "note": content,
+                "timestamp": timestamp
             ])
         }
 

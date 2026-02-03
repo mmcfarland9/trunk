@@ -169,25 +169,17 @@ struct ShineView: View {
         isShining = true
         HapticManager.tap()
 
-        // Create SunEntry (twig-only)
-        let entry = SunEntry(
-            content: reflection.trimmingCharacters(in: .whitespacesAndNewlines),
-            prompt: selectedPrompt,
-            twigId: twig.nodeId,
-            twigLabel: twig.label
-        )
-        modelContext.insert(entry)
+        let content = reflection.trimmingCharacters(in: .whitespacesAndNewlines)
+        let timestamp = ISO8601DateFormatter().string(from: Date())
 
-        // Use sun resource (decrements sun, adds soil recovery)
-        progression.useSun()
-
-        // Push to cloud
+        // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "sun_shone", payload: [
-                "twigId": entry.twigId,
-                "twigLabel": entry.twigLabel,
-                "note": entry.content,
-                "timestamp": ISO8601DateFormatter().string(from: entry.timestamp)
+                "twigId": twig.nodeId,
+                "twigLabel": twig.label,
+                "note": content,
+                "prompt": selectedPrompt,
+                "timestamp": timestamp
             ])
         }
 

@@ -292,49 +292,41 @@ struct CreateSproutView: View {
         let trimmedName = newLeafName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
 
-        let leaf = Leaf(name: trimmedName, nodeId: nodeId)
-        modelContext.insert(leaf)
-        selectedLeafId = leaf.id
+        let leafId = UUID().uuidString
+        selectedLeafId = leafId
         newLeafName = ""
 
-        // Push to cloud
+        // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "leaf_created", payload: [
-                "leafId": leaf.id,
-                "name": leaf.name,
-                "twigId": leaf.nodeId
+                "leafId": leafId,
+                "name": trimmedName,
+                "twigId": nodeId
             ])
         }
     }
 
     private func plantSprout() {
-        let sprout = Sprout(
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-            season: season,
-            environment: environment,
-            nodeId: nodeId,
-            soilCost: soilCost,
-            bloomWither: bloomWither,
-            bloomBudding: bloomBudding,
-            bloomFlourish: bloomFlourish
-        )
-        sprout.leafId = selectedLeafId
-        modelContext.insert(sprout)
-        progression.plantSprout(sprout)
+        let sproutId = UUID().uuidString
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Push to cloud
+        // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "sprout_planted", payload: [
-                "sproutId": sprout.sproutId,
-                "title": sprout.title,
-                "twigId": sprout.nodeId,
-                "season": sprout.seasonRaw,
-                "environment": sprout.environmentRaw,
-                "soilCost": sprout.soilCost,
-                "leafId": sprout.leafId as Any
+                "sproutId": sproutId,
+                "title": trimmedTitle,
+                "twigId": nodeId,
+                "season": season.rawValue,
+                "environment": environment.rawValue,
+                "soilCost": soilCost,
+                "leafId": selectedLeafId as Any,
+                "bloomWither": bloomWither,
+                "bloomBudding": bloomBudding,
+                "bloomFlourish": bloomFlourish
             ])
         }
 
+        HapticManager.success()
         dismiss()
     }
 }
