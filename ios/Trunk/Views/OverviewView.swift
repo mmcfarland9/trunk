@@ -6,15 +6,25 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct OverviewView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var sprouts: [Sprout]
     @Bindable var progression: ProgressionViewModel
 
-    @State private var sproutToWater: Sprout?
+    @State private var sproutToWater: DerivedSprout?
     @State private var navigateToBranch: Int? = nil
+
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var sprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
+    }
+
+    private var activeSprouts: [DerivedSprout] {
+        getActiveSprouts(from: state)
+    }
 
     var body: some View {
         NavigationStack {
@@ -74,10 +84,6 @@ struct OverviewView: View {
                 BranchView(branchIndex: branchIndex, progression: progression)
             }
         }
-    }
-
-    private var activeSprouts: [Sprout] {
-        sprouts.filter { $0.state == .active }
     }
 }
 
@@ -190,9 +196,9 @@ struct SoilMeter: View {
 // MARK: - Active Sprouts Section
 
 struct ActiveSproutsSection: View {
-    let sprouts: [Sprout]
+    let sprouts: [DerivedSprout]
     let progression: ProgressionViewModel
-    let onWater: (Sprout) -> Void
+    let onWater: (DerivedSprout) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -230,16 +236,12 @@ struct ActiveSproutsSection: View {
 }
 
 struct ActiveSproutRow: View {
-    let sprout: Sprout
+    let sprout: DerivedSprout
     let progression: ProgressionViewModel
-    let onWater: (Sprout) -> Void
+    let onWater: (DerivedSprout) -> Void
 
     private var wasWateredThisWeek: Bool {
-        guard let lastWater = sprout.waterEntries.max(by: { $0.timestamp < $1.timestamp }) else {
-            return false
-        }
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        return lastWater.timestamp > weekAgo
+        EventStore.shared.checkSproutWateredThisWeek(sproutId: sprout.id)
     }
 
     var body: some View {
@@ -262,12 +264,12 @@ struct ActiveSproutRow: View {
 
             Spacer()
 
-            if sprout.isReady {
+            if isSproutReady(sprout) {
                 Text("READY")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.twig)
-            } else if let plantedAt = sprout.plantedAt {
-                let progress = ProgressionService.progress(plantedAt: plantedAt, season: sprout.season)
+            } else {
+                let progress = ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)
                 Text("\(Int(progress * 100))%")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
@@ -317,5 +319,4 @@ struct CircularProgressView: View {
 
 #Preview {
     OverviewView(progression: ProgressionViewModel())
-        .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

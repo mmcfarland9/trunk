@@ -6,13 +6,22 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct SagasView: View {
     @Bindable var progression: ProgressionViewModel
 
-    @Query(sort: \Leaf.createdAt, order: .reverse) private var leaves: [Leaf]
-    @Query private var sprouts: [Sprout]
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var leaves: [DerivedLeaf] {
+        Array(state.leaves.values).sorted { $0.createdAt > $1.createdAt }
+    }
+
+    private var sprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
+    }
 
     var body: some View {
         ZStack {
@@ -24,7 +33,7 @@ struct SagasView: View {
             } else {
                 ScrollView {
                     VStack(spacing: TrunkTheme.space2) {
-                        ForEach(leaves) { leaf in
+                        ForEach(leaves, id: \.id) { leaf in
                             NavigationLink {
                                 SagaDetailView(leaf: leaf, progression: progression)
                             } label: {
@@ -68,17 +77,17 @@ struct SagasView: View {
         }
     }
 
-    private func sproutsForLeaf(_ leaf: Leaf) -> [Sprout] {
+    private func sproutsForLeaf(_ leaf: DerivedLeaf) -> [DerivedSprout] {
         sprouts.filter { $0.leafId == leaf.id }
     }
 
-    private func contextLabel(for leaf: Leaf) -> String {
-        // Parse nodeId like "branch-0-twig-3" to get branch and twig names
-        let parts = leaf.nodeId.split(separator: "-")
+    private func contextLabel(for leaf: DerivedLeaf) -> String {
+        // Parse twigId like "branch-0-twig-3" to get branch and twig names
+        let parts = leaf.twigId.split(separator: "-")
         guard parts.count >= 4,
               let branchIndex = Int(parts[1]),
               let twigIndex = Int(parts[3]) else {
-            return leaf.nodeId
+            return leaf.twigId
         }
 
         let branchName = SharedConstants.Tree.branchName(branchIndex)
@@ -91,7 +100,7 @@ struct SagasView: View {
 // MARK: - Saga Row
 
 struct SagaRow: View {
-    let leaf: Leaf
+    let leaf: DerivedLeaf
     let sproutCount: Int
     let activeCount: Int
     let contextLabel: String
@@ -142,5 +151,4 @@ struct SagaRow: View {
     NavigationStack {
         SagasView(progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

@@ -6,32 +6,45 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct TodayView: View {
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(AuthService.self) private var authService
-    @Query private var sprouts: [Sprout]
-    @Query(sort: \SunEntry.timestamp, order: .reverse) private var sunEntries: [SunEntry]
-    @Query(sort: \Leaf.createdAt, order: .reverse) private var leaves: [Leaf]
 
-    @State private var selectedSproutForWater: Sprout?
-    @State private var selectedSproutForHarvest: Sprout?
+    @State private var selectedSproutForWater: DerivedSprout?
+    @State private var selectedSproutForHarvest: DerivedSprout?
     @State private var showShineSheet = false
+
+    // MARK: - Derived State from EventStore
+
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var sprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
+    }
+
+    private var sunEntries: [DerivedSunEntry] {
+        state.sunEntries.sorted { $0.timestamp > $1.timestamp }
+    }
+
+    private var leaves: [DerivedLeaf] {
+        Array(state.leaves.values).sorted { $0.createdAt > $1.createdAt }
+    }
 
     // MARK: - Computed Properties
 
-    private var activeSprouts: [Sprout] {
-        sprouts.filter { $0.state == .active }
+    private var activeSprouts: [DerivedSprout] {
+        getActiveSprouts(from: state)
     }
 
-    private var readyToHarvest: [Sprout] {
-        activeSprouts.filter { $0.isReady }
+    private var readyToHarvest: [DerivedSprout] {
+        activeSprouts.filter { isSproutReady($0) }
     }
 
-    private var waterable: [Sprout] {
+    private var waterable: [DerivedSprout] {
         activeSprouts.sorted { sprout1, sprout2 in
             // Sort by: not watered this week first, then by title
             let watered1 = wasWateredThisWeek(sprout1)
@@ -44,7 +57,7 @@ struct TodayView: View {
     }
 
     /// Leafs that have at least one active sprout
-    private var activeLeafs: [Leaf] {
+    private var activeLeafs: [DerivedLeaf] {
         leaves.filter { leaf in
             sprouts.contains { $0.leafId == leaf.id && $0.state == .active }
         }
@@ -64,13 +77,11 @@ struct TodayView: View {
             }
 
             // Planted
-            if let plantedAt = sprout.plantedAt {
-                items.append(ActivityItem(
-                    date: plantedAt,
-                    icon: "🌱",
-                    text: "Planted \"\(sprout.title)\""
-                ))
-            }
+            items.append(ActivityItem(
+                date: sprout.plantedAt,
+                icon: "🌱",
+                text: "Planted \"\(sprout.title)\""
+            ))
 
             // Harvested
             if let harvestedAt = sprout.harvestedAt, sprout.state == .completed {
@@ -240,7 +251,7 @@ struct TodayView: View {
             Text("READY TO HARVEST (\(readyToHarvest.count))")
                 .monoLabel(size: TrunkTheme.textXs)
 
-            ForEach(readyToHarvest) { sprout in
+            ForEach(readyToHarvest, id: \.id) { sprout in
                 Button {
                     HapticManager.tap()
                     selectedSproutForHarvest = sprout
@@ -313,7 +324,7 @@ struct TodayView: View {
             Text("WATER YOUR SPROUTS (\(activeSprouts.count))")
                 .monoLabel(size: TrunkTheme.textXs)
 
-            ForEach(waterable) { sprout in
+            ForEach(waterable, id: \.id) { sprout in
                 let wateredThisWeek = wasWateredThisWeek(sprout)
 
                 Button {
@@ -352,7 +363,7 @@ struct TodayView: View {
             Text("ACTIVE LEAFS (\(activeLeafs.count))")
                 .monoLabel(size: TrunkTheme.textXs)
 
-            ForEach(activeLeafs) { leaf in
+            ForEach(activeLeafs, id: \.id) { leaf in
                 NavigationLink {
                     SagaDetailView(leaf: leaf, progression: progression)
                 } label: {
@@ -425,11 +436,8 @@ struct TodayView: View {
 
     // MARK: - Helpers
 
-    private func wasWateredThisWeek(_ sprout: Sprout) -> Bool {
-        let calendar = Calendar.current
-        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
-
-        return sprout.waterEntries.contains { $0.timestamp >= weekStart }
+    private func wasWateredThisWeek(_ sprout: DerivedSprout) -> Bool {
+        EventStore.shared.checkSproutWateredThisWeek(sproutId: sprout.id)
     }
 
     private func relativeTime(_ date: Date) -> String {
@@ -460,17 +468,17 @@ struct TodayView: View {
         }
     }
 
-    private func sproutsForLeaf(_ leaf: Leaf) -> [Sprout] {
+    private func sproutsForLeaf(_ leaf: DerivedLeaf) -> [DerivedSprout] {
         sprouts.filter { $0.leafId == leaf.id }
     }
 
-    private func contextLabel(for leaf: Leaf) -> String {
-        // Parse nodeId like "branch-0-twig-3" to get branch and twig names
-        let parts = leaf.nodeId.split(separator: "-")
+    private func contextLabel(for leaf: DerivedLeaf) -> String {
+        // Parse twigId like "branch-0-twig-3" to get branch and twig names
+        let parts = leaf.twigId.split(separator: "-")
         guard parts.count >= 4,
               let branchIndex = Int(parts[1]),
               let twigIndex = Int(parts[3]) else {
-            return leaf.nodeId
+            return leaf.twigId
         }
 
         let branchName = SharedConstants.Tree.branchName(branchIndex)
@@ -492,5 +500,4 @@ struct ActivityItem {
         TodayView(progression: ProgressionViewModel())
     }
     .environment(AuthService.shared)
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

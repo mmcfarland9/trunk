@@ -6,10 +6,9 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct HarvestSproutView: View {
-    @Bindable var sprout: Sprout
+    let sprout: DerivedSprout
     @Bindable var progression: ProgressionViewModel
 
     @Environment(\.dismiss) private var dismiss
@@ -45,6 +44,13 @@ struct HarvestSproutView: View {
         )
     }
 
+    // Helper to check if bloom descriptions exist
+    private var hasBloomDescriptions: Bool {
+        (sprout.bloomWither != nil && !sprout.bloomWither!.isEmpty) ||
+        (sprout.bloomBudding != nil && !sprout.bloomBudding!.isEmpty) ||
+        (sprout.bloomFlourish != nil && !sprout.bloomFlourish!.isEmpty)
+    }
+
     var body: some View {
         Form {
             // Sprout info
@@ -63,35 +69,35 @@ struct HarvestSproutView: View {
             }
 
             // Bloom reference
-            if !sprout.bloomWither.isEmpty || !sprout.bloomBudding.isEmpty || !sprout.bloomFlourish.isEmpty {
+            if hasBloomDescriptions {
                 Section("Your Bloom Descriptions") {
-                    if !sprout.bloomWither.isEmpty {
+                    if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
                         HStack(alignment: .top) {
                             Text("1/5")
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .frame(width: 30)
-                            Text(sprout.bloomWither)
+                            Text(bloomWither)
                                 .font(.caption)
                         }
                     }
-                    if !sprout.bloomBudding.isEmpty {
+                    if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
                         HStack(alignment: .top) {
                             Text("3/5")
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .frame(width: 30)
-                            Text(sprout.bloomBudding)
+                            Text(bloomBudding)
                                 .font(.caption)
                         }
                     }
-                    if !sprout.bloomFlourish.isEmpty {
+                    if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
                         HStack(alignment: .top) {
                             Text("5/5")
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .frame(width: 30)
-                            Text(sprout.bloomFlourish)
+                            Text(bloomFlourish)
                                 .font(.caption)
                         }
                     }
@@ -214,7 +220,7 @@ struct HarvestSproutView: View {
         // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
-                "sproutId": sprout.sproutId,
+                "sproutId": sprout.id,
                 "result": selectedResult,
                 "capacityGained": capacityGained,
                 "timestamp": timestamp
@@ -235,19 +241,26 @@ struct HarvestSproutView: View {
 }
 
 #Preview {
-    let sprout = Sprout(
+    let sprout = DerivedSprout(
+        id: "preview-sprout",
+        twigId: "branch-0-twig-0",
         title: "Learn SwiftUI",
         season: .threeMonths,
         environment: .firm,
-        nodeId: "branch-0-twig-0",
         soilCost: 8,
+        leafId: nil,
         bloomWither: "Completed one tutorial",
         bloomBudding: "Built a small app",
-        bloomFlourish: "Published an app to the App Store"
+        bloomFlourish: "Published an app to the App Store",
+        state: .active,
+        plantedAt: Date().addingTimeInterval(-86400 * 90), // 90 days ago
+        harvestedAt: nil,
+        result: nil,
+        reflection: nil,
+        waterEntries: []
     )
 
     return NavigationStack {
         HarvestSproutView(sprout: sprout, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

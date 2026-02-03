@@ -6,13 +6,19 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct WaterLogView: View {
-    @Query(sort: \Sprout.createdAt) private var sprouts: [Sprout]
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
 
-    private var allWaterEntries: [(entry: WaterEntry, sproutTitle: String)] {
-        var entries: [(WaterEntry, String)] = []
+    private var sprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
+    }
+
+    private var allWaterEntries: [(entry: DerivedWaterEntry, sproutTitle: String)] {
+        var entries: [(DerivedWaterEntry, String)] = []
         for sprout in sprouts {
             for entry in sprout.waterEntries {
                 entries.append((entry, sprout.title))
@@ -21,7 +27,7 @@ struct WaterLogView: View {
         return entries.sorted { $0.0.timestamp > $1.0.timestamp }
     }
 
-    private var groupedEntries: [(String, [(entry: WaterEntry, sproutTitle: String)])] {
+    private var groupedEntries: [(String, [(entry: DerivedWaterEntry, sproutTitle: String)])] {
         let grouped = Dictionary(grouping: allWaterEntries) { entry in
             dateGroupKey(entry.entry.timestamp)
         }
@@ -101,7 +107,7 @@ struct WaterLogView: View {
 // MARK: - Water Log Row
 
 struct WaterLogRow: View {
-    let entry: WaterEntry
+    let entry: DerivedWaterEntry
     let sproutTitle: String
 
     private var formattedTime: String {
@@ -147,5 +153,4 @@ struct WaterLogRow: View {
     NavigationStack {
         WaterLogView()
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

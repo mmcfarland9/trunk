@@ -14,9 +14,6 @@ struct SettingsView: View {
     @Bindable var progression: ProgressionViewModel
 
     @Environment(\.modelContext) private var modelContext
-    @Query private var sprouts: [Sprout]
-    @Query private var leaves: [Leaf]
-    @Query private var sunEntries: [SunEntry]
     @Query private var nodeData: [NodeData]
 
     @State private var showingExportSheet = false
@@ -26,6 +23,19 @@ struct SettingsView: View {
     @State private var importPayload: ExportPayload?
     @State private var alertMessage = ""
     @State private var showingAlert = false
+
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var sproutCount: Int {
+        state.sprouts.count
+    }
+
+    private var leafCount: Int {
+        state.leaves.count
+    }
 
     var body: some View {
         ZStack {
@@ -239,7 +249,7 @@ struct SettingsView: View {
 
                     Spacer()
 
-                    Text("\(sprouts.count)")
+                    Text("\(sproutCount)")
                         .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                         .foregroundStyle(Color.inkFaint)
                 }
@@ -252,7 +262,7 @@ struct SettingsView: View {
 
                     Spacer()
 
-                    Text("\(leaves.count)")
+                    Text("\(leafCount)")
                         .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                         .foregroundStyle(Color.inkFaint)
                 }
@@ -269,32 +279,10 @@ struct SettingsView: View {
     // MARK: - Export
 
     private func exportData() {
-        let payload = DataExportService.generateExport(
-            sprouts: sprouts,
-            leaves: leaves,
-            sunEntries: sunEntries,
-            nodeData: nodeData,
-            soilCapacity: progression.soilCapacity
-        )
-
-        do {
-            let jsonData = try DataExportService.exportToJSON(payload)
-
-            // Create temp file for sharing
-            let timestamp = ISO8601DateFormatter().string(from: Date())
-                .replacingOccurrences(of: ":", with: "")
-                .replacingOccurrences(of: "-", with: "")
-            let filename = "trunk\(timestamp).json"
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-
-            try jsonData.write(to: tempURL)
-            exportURL = tempURL
-            showingExportSheet = true
-
-        } catch {
-            alertMessage = "Export failed: \(error.localizedDescription)"
-            showingAlert = true
-        }
+        // TODO: For cloud-synced users, export should come from EventStore.shared.events
+        // For now, this is a stub - import/export will be updated in a future task
+        alertMessage = "Export from events not yet implemented. Please use cloud sync."
+        showingAlert = true
     }
 
     // MARK: - Import
@@ -340,47 +328,70 @@ struct SettingsView: View {
     private func performImport() {
         guard let payload = importPayload else { return }
 
-        // Delete existing data
-        for sprout in sprouts {
-            modelContext.delete(sprout)
+        // Convert TrunkEvents to SyncEvent format and populate EventStore
+        var syncEvents: [SyncEvent] = []
+        for event in payload.events {
+            if let syncEvent = convertTrunkEventToSyncEvent(event) {
+                syncEvents.append(syncEvent)
+            }
         }
-        for leaf in leaves {
-            modelContext.delete(leaf)
-        }
-        for entry in sunEntries {
-            modelContext.delete(entry)
-        }
+
+        // Replace events in EventStore
+        EventStore.shared.setEvents(syncEvents)
+
+        // Clear node data
         for node in nodeData {
             modelContext.delete(node)
         }
 
-        // Rebuild from events
-        let result = DataExportService.rebuildFromEvents(
-            payload.events,
-            circles: payload.circles,
-            context: modelContext
-        )
-
-        // Insert new data
-        for sprout in result.sprouts {
-            modelContext.insert(sprout)
-        }
-        for leaf in result.leaves {
-            modelContext.insert(leaf)
-        }
-        for entry in result.sunEntries {
-            modelContext.insert(entry)
-        }
-        for node in result.nodeData {
+        // Re-import circles (node data) from payload
+        for (nodeId, nodeInfo) in payload.circles {
+            let node = NodeData(nodeId: nodeId, label: nodeInfo.label ?? "")
+            node.note = nodeInfo.note ?? ""
             modelContext.insert(node)
         }
 
-        // Save
         try? modelContext.save()
 
         importPayload = nil
-        alertMessage = "Imported \(result.sprouts.count) sprouts, \(result.leaves.count) leaves, and \(result.sunEntries.count) sun entries."
+        alertMessage = "Imported \(syncEvents.count) events from backup."
         showingAlert = true
+    }
+
+    /// Convert a TrunkEvent to SyncEvent format
+    private func convertTrunkEventToSyncEvent(_ event: TrunkEvent) -> SyncEvent? {
+        var payload: [String: AnyCodable] = [:]
+
+        // Copy all non-nil fields to payload
+        if let sproutId = event.sproutId { payload["sproutId"] = AnyCodable(sproutId) }
+        if let twigId = event.twigId { payload["twigId"] = AnyCodable(twigId) }
+        if let title = event.title { payload["title"] = AnyCodable(title) }
+        if let season = event.season { payload["season"] = AnyCodable(season) }
+        if let environment = event.environment { payload["environment"] = AnyCodable(environment) }
+        if let soilCost = event.soilCost { payload["soilCost"] = AnyCodable(soilCost) }
+        if let leafId = event.leafId { payload["leafId"] = AnyCodable(leafId) }
+        if let bloomWither = event.bloomWither { payload["bloomWither"] = AnyCodable(bloomWither) }
+        if let bloomBudding = event.bloomBudding { payload["bloomBudding"] = AnyCodable(bloomBudding) }
+        if let bloomFlourish = event.bloomFlourish { payload["bloomFlourish"] = AnyCodable(bloomFlourish) }
+        if let content = event.content { payload["note"] = AnyCodable(content) }
+        if let prompt = event.prompt { payload["prompt"] = AnyCodable(prompt) }
+        if let result = event.result { payload["result"] = AnyCodable(result) }
+        if let reflection = event.reflection { payload["reflection"] = AnyCodable(reflection) }
+        if let capacityGained = event.capacityGained { payload["capacityGained"] = AnyCodable(capacityGained) }
+        if let soilReturned = event.soilReturned { payload["soilReturned"] = AnyCodable(soilReturned) }
+        if let twigLabel = event.twigLabel { payload["twigLabel"] = AnyCodable(twigLabel) }
+        if let name = event.name { payload["name"] = AnyCodable(name) }
+
+        // Generate dummy UUID for imported events (they don't have real server IDs)
+        return SyncEvent(
+            id: UUID(),
+            userId: UUID(), // Dummy user ID for imported events
+            type: event.type.rawValue,
+            payload: payload,
+            clientId: "import",
+            clientTimestamp: event.timestamp,
+            createdAt: event.timestamp
+        )
     }
 }
 
@@ -436,5 +447,5 @@ struct SettingsRow: View {
     NavigationStack {
         SettingsView(progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
+    .modelContainer(for: [NodeData.self], inMemory: true)
 }

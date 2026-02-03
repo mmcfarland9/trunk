@@ -13,13 +13,11 @@ struct TwigDetailView: View {
     let twigIndex: Int
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query private var allSprouts: [Sprout]
     @Query private var nodeData: [NodeData]
 
     @State private var showingCreateSprout = false
-    @State private var selectedSprout: Sprout?
+    @State private var selectedSprout: DerivedSprout?
 
     private var nodeId: String {
         "branch-\(branchIndex)-twig-\(twigIndex)"
@@ -32,15 +30,20 @@ struct TwigDetailView: View {
         return SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
     }
 
-    private var sprouts: [Sprout] {
-        allSprouts.filter { $0.nodeId == nodeId }
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
     }
 
-    private var activeSprouts: [Sprout] {
+    private var sprouts: [DerivedSprout] {
+        getSproutsForTwig(from: state, twigId: nodeId)
+    }
+
+    private var activeSprouts: [DerivedSprout] {
         sprouts.filter { $0.state == .active }
     }
 
-    private var completedSprouts: [Sprout] {
+    private var completedSprouts: [DerivedSprout] {
         sprouts.filter { $0.state == .completed }
     }
 
@@ -136,8 +139,8 @@ struct TwigDetailView: View {
 
 struct SproutSection: View {
     let title: String
-    let sprouts: [Sprout]
-    let onTap: (Sprout) -> Void
+    let sprouts: [DerivedSprout]
+    let onTap: (DerivedSprout) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -166,7 +169,7 @@ struct SproutSection: View {
 // MARK: - Sprout Row
 
 struct SproutRow: View {
-    let sprout: Sprout
+    let sprout: DerivedSprout
 
     var body: some View {
         HStack(spacing: TrunkTheme.space3) {
@@ -211,12 +214,12 @@ struct SproutRow: View {
     private var trailingContent: some View {
         switch sprout.state {
         case .active:
-            if sprout.isReady {
+            if isSproutReady(sprout) {
                 Text("READY")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.twig)
-            } else if let plantedAt = sprout.plantedAt {
-                let progress = ProgressionService.progress(plantedAt: plantedAt, season: sprout.season)
+            } else {
+                let progress = ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)
                 Text("\(Int(progress * 100))%")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
@@ -235,5 +238,5 @@ struct SproutRow: View {
     NavigationStack {
         TwigDetailView(branchIndex: 0, twigIndex: 0, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
+    .modelContainer(for: [NodeData.self], inMemory: true)
 }

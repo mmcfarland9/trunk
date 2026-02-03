@@ -11,14 +11,15 @@ import Foundation
 // MARK: - Derived State Types
 
 /// A water entry derived from events
-struct DerivedWaterEntry {
+struct DerivedWaterEntry: Identifiable {
+    var id: Date { timestamp }
     let timestamp: Date
     let content: String
     let prompt: String?
 }
 
 /// A sprout derived from events
-struct DerivedSprout {
+struct DerivedSprout: Identifiable {
     let id: String
     let twigId: String
     let title: String
@@ -38,7 +39,7 @@ struct DerivedSprout {
 }
 
 /// A leaf (saga) derived from events
-struct DerivedLeaf {
+struct DerivedLeaf: Identifiable {
     let id: String
     let twigId: String
     let name: String
@@ -46,7 +47,8 @@ struct DerivedLeaf {
 }
 
 /// A sun entry derived from events
-struct DerivedSunEntry {
+struct DerivedSunEntry: Identifiable {
+    var id: Date { timestamp }
     let timestamp: Date
     let content: String
     let prompt: String?

@@ -18,13 +18,20 @@ struct BranchView: View {
     let branchIndex: Int
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
-    @Query private var sprouts: [Sprout]
     @Query private var nodeData: [NodeData]
 
     @State private var selectedTwig: TwigSelection?
 
     private let twigCount = SharedConstants.Tree.twigCount
+
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var sprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
+    }
 
     var body: some View {
         ZStack {
@@ -73,8 +80,8 @@ struct BranchView: View {
         }
     }
 
-    private func sproutsForTwig(_ twigId: String) -> [Sprout] {
-        sprouts.filter { $0.nodeId == twigId }
+    private func sproutsForTwig(_ twigId: String) -> [DerivedSprout] {
+        getSproutsForTwig(from: state, twigId: twigId)
     }
 
     private func labelForTwig(_ twigId: String, twigIndex: Int) -> String {
@@ -145,5 +152,5 @@ struct TwigRow: View {
     NavigationStack {
         BranchView(branchIndex: 0, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
+    .modelContainer(for: [NodeData.self], inMemory: true)
 }

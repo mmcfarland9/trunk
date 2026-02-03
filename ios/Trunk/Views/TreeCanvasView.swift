@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 /// Zoom levels for the tree canvas
 enum ZoomLevel: Equatable {
@@ -15,7 +14,7 @@ enum ZoomLevel: Equatable {
 }
 
 struct TreeCanvasView: View {
-    let sprouts: [Sprout]
+    let sprouts: [DerivedSprout]
     @Bindable var progression: ProgressionViewModel
 
     // Navigation callback when zooming to a branch
@@ -245,9 +244,9 @@ struct TreeCanvasView: View {
         )
     }
 
-    private func sproutsForBranch(_ branchIndex: Int) -> [Sprout] {
+    private func sproutsForBranch(_ branchIndex: Int) -> [DerivedSprout] {
         sprouts.filter { sprout in
-            sprout.nodeId.hasPrefix("branch-\(branchIndex)")
+            sprout.twigId.hasPrefix("branch-\(branchIndex)")
         }
     }
 }
@@ -307,11 +306,11 @@ struct InteractiveBranchNode: View {
 
 struct FloatingInfoPanel: View {
     let branchIndex: Int
-    let sprouts: [Sprout]
+    let sprouts: [DerivedSprout]
     let onNavigate: () -> Void
     let onDismiss: () -> Void
 
-    private var activeSprouts: [Sprout] {
+    private var activeSprouts: [DerivedSprout] {
         sprouts.filter { $0.state == .active }
     }
 
@@ -372,5 +371,4 @@ struct FloatingInfoPanel: View {
 
 #Preview {
     TreeCanvasView(sprouts: [], progression: ProgressionViewModel())
-        .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

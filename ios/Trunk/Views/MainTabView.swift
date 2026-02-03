@@ -6,16 +6,19 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct MainTabView: View {
     @Bindable var progression: ProgressionViewModel
 
-    @Query private var sprouts: [Sprout]
     @State private var selectedTab = 0
 
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
     private var readyToHarvestCount: Int {
-        sprouts.filter { $0.state == .active && $0.isReady }.count
+        getActiveSprouts(from: state).filter { isSproutReady($0) }.count
     }
 
     private var hasPendingActions: Bool {
@@ -58,5 +61,4 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView(progression: ProgressionViewModel())
-        .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

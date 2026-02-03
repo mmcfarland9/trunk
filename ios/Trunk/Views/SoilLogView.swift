@@ -6,25 +6,32 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct SoilLogView: View {
-    @Query private var sprouts: [Sprout]
-    @Query private var sunEntries: [SunEntry]
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var sprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
+    }
+
+    private var sunEntries: [DerivedSunEntry] {
+        state.sunEntries
+    }
 
     private var transactions: [SoilTransaction] {
         var txns: [SoilTransaction] = []
 
         for sprout in sprouts {
             // Planted = soil spent
-            if let plantedAt = sprout.plantedAt {
-                txns.append(SoilTransaction(
-                    date: plantedAt,
-                    amount: -Double(sprout.soilCost),
-                    reason: "Planted",
-                    context: sprout.title
-                ))
-            }
+            txns.append(SoilTransaction(
+                date: sprout.plantedAt,
+                amount: -Double(sprout.soilCost),
+                reason: "Planted",
+                context: sprout.title
+            ))
 
             // Watered = small soil recovery
             for entry in sprout.waterEntries {
@@ -203,5 +210,4 @@ struct SoilLogRow: View {
     NavigationStack {
         SoilLogView()
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

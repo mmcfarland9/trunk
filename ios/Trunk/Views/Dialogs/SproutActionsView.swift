@@ -6,17 +6,22 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct SproutActionsView: View {
-    @Bindable var sprout: Sprout
+    let sprout: DerivedSprout
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingWaterSheet = false
     @State private var showingHarvestSheet = false
+
+    // Helper to check if bloom descriptions exist
+    private var hasBloomDescriptions: Bool {
+        (sprout.bloomWither != nil && !sprout.bloomWither!.isEmpty) ||
+        (sprout.bloomBudding != nil && !sprout.bloomBudding!.isEmpty) ||
+        (sprout.bloomFlourish != nil && !sprout.bloomFlourish!.isEmpty)
+    }
 
     var body: some View {
         List {
@@ -46,30 +51,30 @@ struct SproutActionsView: View {
             }
 
             // Bloom descriptions
-            if !sprout.bloomWither.isEmpty || !sprout.bloomBudding.isEmpty || !sprout.bloomFlourish.isEmpty {
+            if hasBloomDescriptions {
                 Section("Bloom Descriptions") {
-                    if !sprout.bloomWither.isEmpty {
+                    if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("1/5 Withering")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(sprout.bloomWither)
+                            Text(bloomWither)
                         }
                     }
-                    if !sprout.bloomBudding.isEmpty {
+                    if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("3/5 Budding")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(sprout.bloomBudding)
+                            Text(bloomBudding)
                         }
                     }
-                    if !sprout.bloomFlourish.isEmpty {
+                    if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("5/5 Flourishing")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(sprout.bloomFlourish)
+                            Text(bloomFlourish)
                         }
                     }
                 }
@@ -78,7 +83,7 @@ struct SproutActionsView: View {
             // Water entries
             if !sprout.waterEntries.isEmpty {
                 Section("Water Journal") {
-                    ForEach(sprout.waterEntries.sorted(by: { $0.timestamp > $1.timestamp }), id: \.id) { entry in
+                    ForEach(sprout.waterEntries.sorted(by: { $0.timestamp > $1.timestamp }), id: \.timestamp) { entry in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(entry.timestamp, style: .date)
                                 .font(.caption)
@@ -121,28 +126,26 @@ struct SproutActionsView: View {
     private var activeSection: some View {
         // Progress
         Section("Progress") {
-            if let plantedAt = sprout.plantedAt {
-                let progress = ProgressionService.progress(plantedAt: plantedAt, season: sprout.season)
-                let harvestDate = ProgressionService.harvestDate(plantedAt: plantedAt, season: sprout.season)
+            let progress = ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)
+            let harvestDate = ProgressionService.harvestDate(plantedAt: sprout.plantedAt, season: sprout.season)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    ProgressView(value: progress)
-                        .tint(.green)
+            VStack(alignment: .leading, spacing: 8) {
+                ProgressView(value: progress)
+                    .tint(.green)
 
-                    HStack {
-                        Text("Planted \(plantedAt, style: .date)")
-                        Spacer()
-                        if sprout.isReady {
-                            Text("Ready!")
-                                .fontWeight(.bold)
-                                .foregroundStyle(.green)
-                        } else {
-                            Text("Ready \(harvestDate, style: .date)")
-                        }
+                HStack {
+                    Text("Planted \(sprout.plantedAt, style: .date)")
+                    Spacer()
+                    if isSproutReady(sprout) {
+                        Text("Ready!")
+                            .fontWeight(.bold)
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Ready \(harvestDate, style: .date)")
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
             Text("Watered \(sprout.waterEntries.count) times")
@@ -159,7 +162,7 @@ struct SproutActionsView: View {
             }
             .disabled(!progression.canWater)
 
-            if sprout.isReady {
+            if isSproutReady(sprout) {
                 Button {
                     showingHarvestSheet = true
                 } label: {
@@ -170,20 +173,17 @@ struct SproutActionsView: View {
 
         Section {
             Button(role: .destructive) {
-                // Return 25% of soil cost (matches web behavior)
-                let soilReturn = Int(Double(sprout.soilCost) * 0.25)
-                progression.returnSoil(soilReturn)
+                // Calculate soil to return (25% of cost)
+                let soilReturned = Double(sprout.soilCost) * 0.25
 
-                // Push to cloud before deleting
-                let sproutId = sprout.sproutId
+                // Push event to cloud
                 Task {
                     try? await SyncService.shared.pushEvent(type: "sprout_uprooted", payload: [
-                        "sproutId": sproutId
+                        "sproutId": sprout.id,
+                        "soilReturned": soilReturned
                     ])
                 }
 
-                // Delete the sprout (web removes entirely, not just marks failed)
-                modelContext.delete(sprout)
                 dismiss()
             } label: {
                 Label("Uproot", systemImage: "xmark.circle")
@@ -219,27 +219,31 @@ struct SproutActionsView: View {
             }
         }
 
-        Section {
-            Button(role: .destructive) {
-                modelContext.delete(sprout)
-                dismiss()
-            } label: {
-                Label("Delete Sprout", systemImage: "trash")
-            }
-        }
+        // No delete button for completed sprouts since they're derived from events
+        // (they'll remain in history)
     }
 }
 
 #Preview {
-    let sprout = Sprout(
+    let sprout = DerivedSprout(
+        id: "preview-sprout",
+        twigId: "branch-0-twig-0",
         title: "Learn SwiftUI",
         season: .threeMonths,
         environment: .firm,
-        nodeId: "branch-0-twig-0",
-        soilCost: 8
+        soilCost: 8,
+        leafId: nil,
+        bloomWither: nil,
+        bloomBudding: nil,
+        bloomFlourish: nil,
+        state: .active,
+        plantedAt: Date(),
+        harvestedAt: nil,
+        result: nil,
+        reflection: nil,
+        waterEntries: []
     )
     return NavigationStack {
         SproutActionsView(sprout: sprout, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

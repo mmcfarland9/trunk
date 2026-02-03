@@ -6,12 +6,18 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct SunLogView: View {
-    @Query(sort: \SunEntry.timestamp, order: .reverse) private var sunEntries: [SunEntry]
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
 
-    private var groupedEntries: [(String, [SunEntry])] {
+    private var sunEntries: [DerivedSunEntry] {
+        state.sunEntries.sorted { $0.timestamp > $1.timestamp }
+    }
+
+    private var groupedEntries: [(String, [DerivedSunEntry])] {
         let grouped = Dictionary(grouping: sunEntries) { entry in
             dateGroupKey(entry.timestamp)
         }
@@ -87,7 +93,7 @@ struct SunLogView: View {
 // MARK: - Sun Log Row
 
 struct SunLogRow: View {
-    let entry: SunEntry
+    let entry: DerivedSunEntry
 
     private var formattedTime: String {
         let formatter = DateFormatter()
@@ -137,5 +143,4 @@ struct SunLogRow: View {
     NavigationStack {
         SunLogView()
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

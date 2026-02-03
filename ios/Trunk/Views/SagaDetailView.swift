@@ -6,16 +6,18 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct SagaDetailView: View {
-    let leaf: Leaf
+    let leaf: DerivedLeaf
     @Bindable var progression: ProgressionViewModel
 
-    @Query private var allSprouts: [Sprout]
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
 
-    private var leafSprouts: [Sprout] {
-        allSprouts.filter { $0.leafId == leaf.id }
+    private var leafSprouts: [DerivedSprout] {
+        state.sprouts.values.filter { $0.leafId == leaf.id }
     }
 
     private var timelineEvents: [TimelineEvent] {
@@ -23,15 +25,13 @@ struct SagaDetailView: View {
 
         for sprout in leafSprouts {
             // Planted event
-            if let plantedAt = sprout.plantedAt {
-                events.append(TimelineEvent(
-                    date: plantedAt,
-                    type: .planted,
-                    title: sprout.title,
-                    subtitle: "\(sprout.season.label) · \(sprout.environment.label)",
-                    detail: nil
-                ))
-            }
+            events.append(TimelineEvent(
+                date: sprout.plantedAt,
+                type: .planted,
+                title: sprout.title,
+                subtitle: "\(sprout.season.label) · \(sprout.environment.label)",
+                detail: nil
+            ))
 
             // Water entries
             for entry in sprout.waterEntries {
@@ -230,10 +230,9 @@ struct TimelineRow: View {
 }
 
 #Preview {
-    let leaf = Leaf(name: "Learning Piano", nodeId: "branch-1-twig-0")
+    let leaf = DerivedLeaf(id: "preview-leaf", twigId: "branch-1-twig-0", name: "Learning Piano", createdAt: Date())
 
     return NavigationStack {
         SagaDetailView(leaf: leaf, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

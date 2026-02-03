@@ -6,13 +6,11 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct WaterSproutView: View {
-    @Bindable var sprout: Sprout
+    let sprout: DerivedSprout
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @State private var note = ""
@@ -97,7 +95,7 @@ struct WaterSproutView: View {
         // Push to cloud - state will derive automatically from events
         Task {
             try? await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
-                "sproutId": sprout.sproutId,
+                "sproutId": sprout.id,
                 "note": content,
                 "timestamp": timestamp
             ])
@@ -112,16 +110,26 @@ struct WaterSproutView: View {
 }
 
 #Preview {
-    let sprout = Sprout(
+    let sprout = DerivedSprout(
+        id: "preview-sprout",
+        twigId: "branch-0-twig-0",
         title: "Learn SwiftUI",
         season: .threeMonths,
         environment: .firm,
-        nodeId: "branch-0-twig-0",
-        soilCost: 8
+        soilCost: 8,
+        leafId: nil,
+        bloomWither: nil,
+        bloomBudding: nil,
+        bloomFlourish: nil,
+        state: .active,
+        plantedAt: Date(),
+        harvestedAt: nil,
+        result: nil,
+        reflection: nil,
+        waterEntries: []
     )
 
     return NavigationStack {
         WaterSproutView(sprout: sprout, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

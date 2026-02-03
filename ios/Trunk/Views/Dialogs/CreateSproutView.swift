@@ -6,16 +6,12 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct CreateSproutView: View {
     let nodeId: String
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-
-    @Query private var allLeaves: [Leaf]
 
     @State private var title = ""
     @State private var season: Season = .oneMonth
@@ -27,9 +23,14 @@ struct CreateSproutView: View {
     @State private var showNewLeafAlert = false
     @State private var newLeafName = ""
 
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
     /// Leaves belonging to this twig
-    private var twigLeaves: [Leaf] {
-        allLeaves.filter { $0.nodeId == nodeId }
+    private var twigLeaves: [DerivedLeaf] {
+        getLeavesForTwig(from: state, twigId: nodeId)
     }
 
     private var soilCost: Int {
@@ -379,5 +380,4 @@ struct BloomField: View {
     NavigationStack {
         CreateSproutView(nodeId: "branch-0-twig-0", progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }
