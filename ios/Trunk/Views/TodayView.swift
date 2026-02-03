@@ -227,6 +227,7 @@ struct TodayView: View {
 
             ForEach(readyToHarvest) { sprout in
                 Button {
+                    HapticManager.tap()
                     selectedSproutForHarvest = sprout
                 } label: {
                     HStack {
@@ -263,6 +264,7 @@ struct TodayView: View {
                 .monoLabel(size: TrunkTheme.textXs)
 
             Button {
+                HapticManager.tap()
                 showShineSheet = true
             } label: {
                 HStack {
@@ -300,6 +302,7 @@ struct TodayView: View {
                 let wateredThisWeek = wasWateredThisWeek(sprout)
 
                 Button {
+                    HapticManager.tap()
                     selectedSproutForWater = sprout
                 } label: {
                     HStack {

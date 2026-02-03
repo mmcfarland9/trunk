@@ -399,6 +399,7 @@ struct ActiveSproutRow: View {
 
             // Water button
             Button {
+                HapticManager.tap()
                 onWater(sprout)
             } label: {
                 Text(wasWateredThisWeek ? "Watered" : "Water")
