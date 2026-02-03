@@ -32,14 +32,14 @@ struct ContentView: View {
         guard authService.isAuthenticated else { return }
 
         do {
-            let pulled = try await SyncService.shared.pullEvents(modelContext: modelContext)
+            let pulled = try await SyncService.shared.pullAllEvents()
             if pulled > 0 {
                 print("Synced \(pulled) events from cloud")
                 progression.refresh()
             }
 
             // Start realtime subscription for instant sync
-            SyncService.shared.subscribeToRealtime(modelContext: modelContext) { _ in
+            SyncService.shared.subscribeToRealtime { _ in
                 // Refresh UI when events arrive from other devices
                 progression.refresh()
             }
