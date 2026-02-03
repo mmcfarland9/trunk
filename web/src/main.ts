@@ -5,10 +5,9 @@ import { isSupabaseConfigured } from './lib/supabase'
 import { pullEvents, uploadAllLocalEvents, pushEvent, subscribeToRealtime, unsubscribeFromRealtime } from './services/sync-service'
 import { setEventSyncCallback } from './events/store'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, getNotificationSettings, saveNotificationSettings, setStorageErrorCallbacks } from './state'
-import type { NotificationSettings } from './types'
-import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
-import { buildApp, getActionButtons } from './ui/dom-builder'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, setStorageErrorCallbacks } from './state'
+import { updateFocus, setFocusedNode } from './ui/node-ui'
+import { buildApp } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
@@ -299,98 +298,7 @@ const leafView = buildLeafView(mapPanel, {
 ctx.twigView = twigView
 ctx.leafView = leafView
 
-const { settingsButton } = getActionButtons(domResult.elements.shell)
-
-// Settings dialog
-function populateSettingsForm(): void {
-  const settings = getNotificationSettings()
-  domResult.elements.settingsNameInput.value = settings.name
-  domResult.elements.settingsEmailInput.value = settings.email
-
-  // Set frequency radio
-  domResult.elements.settingsFrequencyInputs.forEach(input => {
-    input.checked = input.value === settings.checkInFrequency
-  })
-
-  // Set time radio
-  domResult.elements.settingsTimeInputs.forEach(input => {
-    input.checked = input.value === settings.preferredTime
-  })
-
-  // Set checkboxes
-  domResult.elements.settingsHarvestCheckbox.checked = settings.events.harvestReady
-  domResult.elements.settingsShineCheckbox.checked = settings.events.shineAvailable
-
-  // Update time section disabled state
-  updateTimeSection(settings.checkInFrequency)
-}
-
-function updateTimeSection(frequency: string): void {
-  const timeSection = domResult.elements.settingsDialog.querySelector('.settings-time-section')
-  if (timeSection) {
-    timeSection.classList.toggle('is-disabled', frequency === 'off')
-  }
-}
-
-function getSettingsFromForm(): NotificationSettings {
-  let frequency: NotificationSettings['checkInFrequency'] = 'off'
-  domResult.elements.settingsFrequencyInputs.forEach(input => {
-    if (input.checked) frequency = input.value as NotificationSettings['checkInFrequency']
-  })
-
-  let preferredTime: NotificationSettings['preferredTime'] = 'morning'
-  domResult.elements.settingsTimeInputs.forEach(input => {
-    if (input.checked) preferredTime = input.value as NotificationSettings['preferredTime']
-  })
-
-  return {
-    name: domResult.elements.settingsNameInput.value.trim(),
-    email: domResult.elements.settingsEmailInput.value.trim(),
-    checkInFrequency: frequency,
-    preferredTime,
-    events: {
-      harvestReady: domResult.elements.settingsHarvestCheckbox.checked,
-      shineAvailable: domResult.elements.settingsShineCheckbox.checked,
-    },
-  }
-}
-
-function openSettingsDialog(): void {
-  populateSettingsForm()
-  domResult.elements.settingsDialog.classList.remove('hidden')
-}
-
-function closeSettingsDialog(): void {
-  domResult.elements.settingsDialog.classList.add('hidden')
-}
-
-settingsButton.addEventListener('click', openSettingsDialog)
-
-domResult.elements.settingsDialogClose.addEventListener('click', closeSettingsDialog)
-
-domResult.elements.settingsDialog.addEventListener('click', (e) => {
-  if (e.target === domResult.elements.settingsDialog) {
-    closeSettingsDialog()
-  }
-})
-
-// Update time section when frequency changes
-domResult.elements.settingsFrequencyInputs.forEach(input => {
-  input.addEventListener('change', () => {
-    updateTimeSection(input.value)
-  })
-})
-
-domResult.elements.settingsSaveBtn.addEventListener('click', () => {
-  const settings = getSettingsFromForm()
-  saveNotificationSettings(settings)
-  // Update trunk label to reflect name change
-  syncNode(domResult.elements.trunk)
-  updateFocus(domResult.elements.trunk, ctx)
-  closeSettingsDialog()
-  setStatus(ctx.elements, 'Settings saved', 'info')
-})
-
+// Settings dialog hidden for now - not doing much yet
 
 domResult.elements.debugCheckbox.addEventListener('change', (e) => {
   setDebugHoverZone((e.target as HTMLInputElement).checked)
@@ -552,11 +460,6 @@ document.addEventListener('keydown', (e) => {
     if (waterCanApi.isOpen()) {
       e.preventDefault()
       waterCanApi.close()
-      return
-    }
-    if (!domResult.elements.settingsDialog.classList.contains('hidden')) {
-      e.preventDefault()
-      closeSettingsDialog()
       return
     }
 

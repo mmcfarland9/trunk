@@ -41,12 +41,12 @@ export function buildApp(
   logo.src = ampersandImage
   logo.alt = 'Trunk mark'
 
-  const settingsButton = document.createElement('button')
-  settingsButton.type = 'button'
-  settingsButton.className = 'action-button'
-  settingsButton.textContent = 'Settings'
-
-  actions.append(settingsButton)
+  // Settings button hidden for now - not doing much yet
+  // const settingsButton = document.createElement('button')
+  // settingsButton.type = 'button'
+  // settingsButton.className = 'action-button'
+  // settingsButton.textContent = 'Settings'
+  // actions.append(settingsButton)
 
   // Global Soil meter
   const soilMeter = document.createElement('div')
@@ -632,8 +632,6 @@ export function buildApp(
     soilMeter,
   }
 
-  // Wire up button handlers (will be connected to features in main.ts)
-  settingsButton.dataset.action = 'settings'
   return {
     elements,
     branchGroups,
@@ -670,10 +668,4 @@ function getBloomDelay(twigIndex: number): number {
   return baseDelay + distanceFromFront * delayStep
 }
 
-export function getActionButtons(shell: HTMLDivElement): {
-  settingsButton: HTMLButtonElement
-} {
-  return {
-    settingsButton: shell.querySelector<HTMLButtonElement>('[data-action="settings"]')!,
-  }
-}
+// Action buttons removed - settings hidden for now
