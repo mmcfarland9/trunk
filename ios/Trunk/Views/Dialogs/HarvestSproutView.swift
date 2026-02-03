@@ -15,6 +15,18 @@ struct HarvestSproutView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedResult: Int = 3
+    @State private var isHarvesting = false
+    @State private var animateSelection = false
+
+    private var resultEmojis: [(Int, String)] {
+        [
+            (1, "🥀"),
+            (2, "🌱"),
+            (3, "🌿"),
+            (4, "🌳"),
+            (5, "🌲")
+        ]
+    }
 
     private var resultDescriptions: [(Int, String, String)] {
         (1...5).map { result in
@@ -86,41 +98,61 @@ struct HarvestSproutView: View {
                 }
             }
 
-            // Result picker
+            // Emoji result picker
             Section {
-                ForEach(resultDescriptions, id: \.0) { result, label, description in
-                    Button {
-                        selectedResult = result
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 4) {
-                                    ForEach(0..<5, id: \.self) { i in
-                                        Image(systemName: i < result ? "star.fill" : "star")
-                                            .font(.caption)
-                                            .foregroundStyle(i < result ? .yellow : .secondary)
-                                    }
-                                    Text(label)
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
+                VStack(spacing: 16) {
+                    HStack(spacing: 12) {
+                        ForEach(resultEmojis, id: \.0) { result, emoji in
+                            Button {
+                                withAnimation(.trunkBounce) {
+                                    selectedResult = result
+                                    animateSelection = true
                                 }
-                                Text(description)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                HapticManager.selection()
+                                // Reset animation flag
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    animateSelection = false
+                                }
+                            } label: {
+                                VStack(spacing: 4) {
+                                    Text(emoji)
+                                        .font(.system(size: 32))
+                                        .scaleEffect(selectedResult == result && animateSelection ? 1.2 : 1.0)
+                                    Text("\(result)")
+                                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                        .foregroundStyle(selectedResult == result ? Color.ink : Color.inkFaint)
+                                }
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedResult == result ? Color.borderSubtle : Color.clear)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(selectedResult == result ? Color.twig : Color.clear, lineWidth: 2)
+                                )
                             }
-
-                            Spacer()
-
-                            if selectedResult == result {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.green)
-                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .buttonStyle(.plain)
+
+                    // Selected result description
+                    if let desc = resultDescriptions.first(where: { $0.0 == selectedResult }) {
+                        VStack(spacing: 4) {
+                            Text(desc.1)
+                                .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
+                                .foregroundStyle(Color.ink)
+                            Text(desc.2)
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
             } header: {
-                Text("How did it go?")
+                Text("How did it bloom?")
             }
 
             // Reward summary
@@ -158,14 +190,23 @@ struct HarvestSproutView: View {
                 }
             }
             ToolbarItem(placement: .primaryAction) {
-                Button("Harvest") {
+                Button {
                     harvestSprout()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("🌻")
+                        Text("Harvest")
+                    }
                 }
+                .disabled(isHarvesting)
             }
         }
     }
 
     private func harvestSprout() {
+        isHarvesting = true
+        HapticManager.tap()
+
         progression.harvestSprout(sprout, result: selectedResult)
         sprout.harvest(result: selectedResult)
 
@@ -177,7 +218,16 @@ struct HarvestSproutView: View {
             ])
         }
 
-        dismiss()
+        // Celebration haptic sequence and dismiss
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            HapticManager.success()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            HapticManager.impact()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            dismiss()
+        }
     }
 }
 
