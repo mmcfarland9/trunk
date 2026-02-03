@@ -17,7 +17,12 @@ struct ShineView: View {
     @State private var reflection = ""
     @State private var selectedTwig: TwigContext?
     @State private var selectedPrompt: String = ""
+    @State private var isShining = false
     @FocusState private var isReflectionFocused: Bool
+
+    private var hasReflection: Bool {
+        !reflection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         ZStack {
@@ -90,12 +95,18 @@ struct ShineView: View {
                         )
 
                         // Action button
-                        Button("SHINE") {
+                        Button {
                             performShine(twig: twig)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("☀️")
+                                Text("SHINE")
+                            }
                         }
                         .buttonStyle(.trunkSun)
-                        .disabled(reflection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        .opacity(reflection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+                        .disabled(!hasReflection || isShining)
+                        .opacity(!hasReflection || isShining ? 0.5 : 1)
+                        .pulse(hasReflection && !isShining)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .padding(TrunkTheme.space4)
@@ -155,6 +166,9 @@ struct ShineView: View {
     }
 
     private func performShine(twig: TwigContext) {
+        isShining = true
+        HapticManager.tap()
+
         // Create SunEntry (twig-only)
         let entry = SunEntry(
             content: reflection.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -177,7 +191,11 @@ struct ShineView: View {
             ])
         }
 
-        dismiss()
+        // Success haptic and dismiss with slight delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            HapticManager.success()
+            dismiss()
+        }
     }
 
 }
