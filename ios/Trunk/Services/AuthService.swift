@@ -17,6 +17,7 @@ final class AuthService {
     private(set) var user: Auth.User?
     private(set) var session: Auth.Session?
     private(set) var isLoading = true
+    private(set) var userFullName: String?
 
     var isAuthenticated: Bool {
         user != nil
@@ -33,6 +34,9 @@ final class AuthService {
         do {
             session = try await client.auth.session
             user = session?.user
+            if user != nil {
+                await fetchProfile()
+            }
         } catch {
             print("Failed to get session: \(error)")
         }
@@ -45,6 +49,26 @@ final class AuthService {
                 self.session = session
                 self.user = session?.user
             }
+        }
+    }
+
+    /// Fetch user profile from Supabase
+    func fetchProfile() async {
+        guard let client = SupabaseClientProvider.shared,
+              let userId = user?.id else { return }
+
+        do {
+            let response: [String: String?] = try await client
+                .from("profiles")
+                .select("full_name")
+                .eq("id", value: userId.uuidString)
+                .single()
+                .execute()
+                .value
+
+            userFullName = response["full_name"] ?? nil
+        } catch {
+            print("Failed to fetch profile: \(error)")
         }
     }
 
