@@ -291,11 +291,11 @@ struct InteractiveBranchNode: View {
         .scaleEffect(isPressed ? 0.95 : (isSelected ? 1.05 : 1.0))
         .animation(.trunkQuick, value: isPressed)
         .animation(.trunkSpring, value: isSelected)
-        .onTapGesture {
-            onTap()
-        }
         .onTapGesture(count: 2) {
             onDoubleTap()
+        }
+        .onTapGesture {
+            onTap()
         }
         .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
             isPressed = pressing

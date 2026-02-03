@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 
+@MainActor
 enum HapticManager {
     /// Light tap for selections and button presses
     static func tap() {
