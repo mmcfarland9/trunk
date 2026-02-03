@@ -63,17 +63,13 @@ struct DerivedState {
     var sunEntries: [DerivedSunEntry]
 }
 
-// MARK: - Type Aliases for Constants
-
-typealias TrunkConstants = SharedConstants
-
 // MARK: - State Derivation
 
 /// Derive complete state from event log.
 /// This replays all events to compute current state.
 func deriveState(from events: [SyncEvent]) -> DerivedState {
-    var soilCapacity = TrunkConstants.Soil.startingCapacity
-    var soilAvailable = TrunkConstants.Soil.startingCapacity
+    var soilCapacity = SharedConstants.Soil.startingCapacity
+    var soilAvailable = SharedConstants.Soil.startingCapacity
 
     var sprouts: [String: DerivedSprout] = [:]
     var leaves: [String: DerivedLeaf] = [:]
@@ -185,7 +181,7 @@ private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double,
     }
 
     // Soil recovery from watering
-    soilAvailable = min(soilAvailable + TrunkConstants.Soil.waterRecovery, soilCapacity)
+    soilAvailable = min(soilAvailable + SharedConstants.Soil.waterRecovery, soilCapacity)
 }
 
 private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
@@ -252,7 +248,7 @@ private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soil
     sunEntries.append(sunEntry)
 
     // Soil recovery from sun
-    soilAvailable = min(soilAvailable + TrunkConstants.Soil.sunRecovery, soilCapacity)
+    soilAvailable = min(soilAvailable + SharedConstants.Soil.sunRecovery, soilCapacity)
 }
 
 private func processLeafCreated(event: SyncEvent, leaves: inout [String: DerivedLeaf]) {
@@ -284,7 +280,7 @@ func getTodayResetTime(now: Date = Date()) -> Date {
     calendar.timeZone = TimeZone.current
 
     var components = calendar.dateComponents([.year, .month, .day], from: now)
-    components.hour = TrunkConstants.Water.resetHour
+    components.hour = SharedConstants.Water.resetHour
     components.minute = 0
     components.second = 0
 
@@ -307,7 +303,7 @@ func getWeekResetTime(now: Date = Date()) -> Date {
     calendar.firstWeekday = 2 // Monday = 2
 
     var components = calendar.dateComponents([.year, .month, .day, .weekday], from: now)
-    components.hour = TrunkConstants.Sun.resetHour
+    components.hour = SharedConstants.Sun.resetHour
     components.minute = 0
     components.second = 0
 
@@ -339,7 +335,7 @@ func deriveWaterAvailable(from events: [SyncEvent], now: Date = Date()) -> Int {
         event.type == "sprout_watered" && parseTimestamp(event.clientTimestamp) >= resetTime
     }.count
 
-    return max(0, TrunkConstants.Water.dailyCapacity - waterCount)
+    return max(0, SharedConstants.Water.dailyCapacity - waterCount)
 }
 
 /// Derive sun available from events.
@@ -351,7 +347,7 @@ func deriveSunAvailable(from events: [SyncEvent], now: Date = Date()) -> Int {
         event.type == "sun_shone" && parseTimestamp(event.clientTimestamp) >= resetTime
     }.count
 
-    return max(0, TrunkConstants.Sun.weeklyCapacity - sunCount)
+    return max(0, SharedConstants.Sun.weeklyCapacity - sunCount)
 }
 
 /// Check if a sprout was watered this week
