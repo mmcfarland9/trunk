@@ -75,8 +75,8 @@ final class EventStore: ObservableObject {
     }
 
     /// Check if sprout was watered this week
-    func wasSproutWateredThisWeek(sproutId: String, now: Date = Date()) -> Bool {
-        Trunk.wasSproutWateredThisWeek(events: events, sproutId: sproutId, now: now)
+    func checkSproutWateredThisWeek(sproutId: String, now: Date = Date()) -> Bool {
+        wasSproutWateredThisWeek(events: events, sproutId: sproutId, now: now)
     }
 
     // MARK: - Cache Management
