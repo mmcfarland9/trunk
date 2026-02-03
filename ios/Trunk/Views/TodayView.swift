@@ -110,31 +110,38 @@ struct TodayView: View {
                         activeSproutCount: activeSprouts.count,
                         readyToHarvestCount: readyToHarvest.count
                     )
+                    .animatedCard(index: 0)
 
                     // Resource meters
                     resourceMeters
+                        .animatedCard(index: 1)
 
                     // Ready to harvest
                     if !readyToHarvest.isEmpty {
                         harvestSection
+                            .animatedCard(index: 2)
                     }
 
                     // Weekly reflection
                     shineSection
+                        .animatedCard(index: 3)
 
                     // Water your sprouts
                     if !waterable.isEmpty {
                         waterSection
+                            .animatedCard(index: 4)
                     }
 
                     // Active Leafs section (only leafs with active sprouts)
                     if !activeLeafs.isEmpty {
                         leafsSection
+                            .animatedCard(index: 5)
                     }
 
                     // Recent activity
                     if !recentActivity.isEmpty {
                         activitySection
+                            .animatedCard(index: 6)
                     }
                 }
                 .padding(TrunkTheme.space4)
