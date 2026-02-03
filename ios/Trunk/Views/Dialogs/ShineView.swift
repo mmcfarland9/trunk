@@ -11,7 +11,6 @@ import SwiftData
 struct ShineView: View {
     @Bindable var progression: ProgressionViewModel
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @State private var reflection = ""

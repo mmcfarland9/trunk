@@ -10,7 +10,6 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(AuthService.self) private var authService
-    @Environment(\.modelContext) private var modelContext
     @State private var progression = ProgressionViewModel()
 
     var body: some View {
