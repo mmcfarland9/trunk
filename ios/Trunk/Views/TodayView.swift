@@ -491,6 +491,6 @@ struct ActivityItem {
     NavigationStack {
         TodayView(progression: ProgressionViewModel())
     }
-    .environment(AuthService())
+    .environment(AuthService.shared)
     .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }
