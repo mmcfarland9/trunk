@@ -234,3 +234,79 @@ export function clearLocalCache(): void {
   clearCacheVersion()
   replaceEvents([])
 }
+
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
+
+export type SyncResult = {
+  status: SyncStatus
+  pulled: number
+  error: string | null
+  mode: 'incremental' | 'full'
+}
+
+/**
+ * Smart sync: incremental if cache valid, full otherwise.
+ * Uses cached data as fallback if network fails.
+ */
+export async function smartSync(): Promise<SyncResult> {
+  if (!supabase) {
+    return { status: 'error', pulled: 0, error: 'Supabase not configured', mode: 'full' }
+  }
+
+  const { user } = getAuthState()
+  if (!user) {
+    return { status: 'error', pulled: 0, error: 'Not authenticated', mode: 'full' }
+  }
+
+  const cacheValid = isCacheValid()
+  const mode = cacheValid ? 'incremental' : 'full'
+
+  try {
+    let result: { pulled: number; error: string | null }
+
+    if (cacheValid) {
+      // Incremental: pull only new events since last sync
+      result = await pullEvents()
+    } else {
+      // Full: clear and pull everything
+      // But don't clear cache until we have new data (fallback protection)
+      const { data: syncEvents, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        // Network failed - use existing cache as fallback
+        console.warn('Sync failed, using cached data:', error.message)
+        return { status: 'error', pulled: 0, error: error.message, mode }
+      }
+
+      // Success - now safe to replace cache
+      const allEvents = (syncEvents as SyncEvent[]).map(syncToLocalEvent)
+      replaceEvents(allEvents)
+      setCacheVersion()
+
+      if (syncEvents.length > 0) {
+        const latest = syncEvents[syncEvents.length - 1].created_at
+        localStorage.setItem(LAST_SYNC_KEY, latest)
+      }
+
+      result = { pulled: allEvents.length, error: null }
+    }
+
+    if (result.error) {
+      return { status: 'error', pulled: 0, error: result.error, mode }
+    }
+
+    // Update cache version on successful incremental sync too
+    if (cacheValid && result.pulled > 0) {
+      setCacheVersion()
+    }
+
+    return { status: 'success', pulled: result.pulled, error: null, mode }
+  } catch (err) {
+    // Network error - use cached data as fallback
+    console.warn('Sync exception, using cached data:', err)
+    return { status: 'error', pulled: 0, error: String(err), mode }
+  }
+}
