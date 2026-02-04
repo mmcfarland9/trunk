@@ -170,6 +170,7 @@ export type AppElements = {
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
   syncIndicator: HTMLSpanElement
+  syncText: HTMLSpanElement
   sproutsDialog: HTMLDivElement
   sproutsDialogContent: HTMLDivElement
   sproutsDialogClose: HTMLButtonElement

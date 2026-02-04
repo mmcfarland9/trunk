@@ -1687,3 +1687,35 @@ select.account-input {
   color: var(--ink-faint);
   line-height: 1.4;
 }
+
+/* Sync status in Data tab */
+.account-sync-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.account-sync-status .sync-indicator {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.account-sync-text {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+.account-sync-status .sync-indicator[data-status="success"] + .account-sync-text {
+  color: #22a522;
+}
+
+.account-sync-status .sync-indicator[data-status="syncing"] + .account-sync-text {
+  color: #e6b800;
+}
+
+.account-sync-status .sync-indicator[data-status="error"] + .account-sync-text {
+  color: #d9534f;
+}

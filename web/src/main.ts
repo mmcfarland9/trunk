@@ -164,6 +164,14 @@ const domResult = buildApp(app, handleNodeClick)
 subscribeSyncStatus((status) => {
   domResult.elements.syncIndicator.dataset.status = status
   domResult.elements.syncIndicator.title = `Sync: ${status}`
+  // Update the text label based on status
+  const textMap: Record<string, string> = {
+    idle: 'Synced',
+    syncing: 'Syncing...',
+    success: 'Synced',
+    error: 'Sync error'
+  }
+  domResult.elements.syncText.textContent = textMap[status] || 'Synced'
 })
 
 const editor = buildEditor(domResult.elements.canvas, {

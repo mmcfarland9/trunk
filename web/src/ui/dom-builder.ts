@@ -53,18 +53,7 @@ export function buildApp(
   profileEmail.className = 'profile-email'
   profileEmail.textContent = ''
 
-  // Sync status indicator (cloud icon with status dot)
-  const syncIndicator = document.createElement('span')
-  syncIndicator.className = 'sync-indicator'
-  syncIndicator.innerHTML = `
-    <svg class="sync-cloud" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
-    </svg>
-    <span class="sync-dot"></span>
-  `
-  syncIndicator.title = 'Sync status'
-
-  profileBadge.append(profileIcon, profileEmail, syncIndicator)
+  profileBadge.append(profileIcon, profileEmail)
   actions.append(profileBadge)
 
   // Global Soil meter
@@ -578,6 +567,22 @@ export function buildApp(
 
         <div class="account-tab-panel hidden" data-tab="data">
           <div class="account-field">
+            <label class="account-label">Cloud Sync</label>
+            <div class="account-sync-status">
+              <span class="sync-indicator" data-status="idle">
+                <svg class="sync-cloud" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                </svg>
+                <span class="sync-dot"></span>
+              </span>
+              <span class="account-sync-text">Synced</span>
+            </div>
+            <p class="account-field-hint">Your data syncs automatically across devices. All activity is stored securely in the cloud.</p>
+          </div>
+
+          <div class="account-section-divider"></div>
+
+          <div class="account-field">
             <label class="account-label">Reset All Data</label>
             <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity. This cannot be undone.</p>
             <button type="button" class="action-btn action-btn-passive action-btn-destructive account-reset-data-btn">Reset All Data</button>
@@ -616,7 +621,8 @@ export function buildApp(
     cultivatedSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="cultivated"]')!,
     profileBadge,
     profileEmail,
-    syncIndicator,
+    syncIndicator: accountDialog.querySelector<HTMLSpanElement>('.sync-indicator')!,
+    syncText: accountDialog.querySelector<HTMLSpanElement>('.account-sync-text')!,
     sproutsDialog,
     sproutsDialogContent: sproutsDialog.querySelector<HTMLDivElement>('.sprouts-dialog-content')!,
     sproutsDialogClose: sproutsDialog.querySelector<HTMLButtonElement>('.sprouts-dialog-close')!,
