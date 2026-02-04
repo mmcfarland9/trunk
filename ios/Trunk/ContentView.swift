@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
     @Environment(AuthService.self) private var authService
@@ -30,20 +29,23 @@ struct ContentView: View {
     private func syncOnOpen() async {
         guard authService.isAuthenticated else { return }
 
-        do {
-            let pulled = try await SyncService.shared.pullAllEvents()
-            if pulled > 0 {
-                print("Synced \(pulled) events from cloud")
-                progression.refresh()
-            }
+        // Smart sync: incremental if cache valid, full if not
+        let result = await SyncService.shared.smartSync()
 
-            // Start realtime subscription for instant sync
-            SyncService.shared.subscribeToRealtime { _ in
-                // Refresh UI when events arrive from other devices
-                progression.refresh()
-            }
-        } catch {
-            print("Sync failed: \(error)")
+        if let error = result.error {
+            print("Sync failed (\(result.mode.rawValue)): \(error)")
+            // Don't do anything else - use cached data as fallback
+        } else if result.pulled > 0 {
+            print("Synced \(result.pulled) events (\(result.mode.rawValue))")
+            progression.refresh()
+        } else {
+            print("Sync complete, no new events (\(result.mode.rawValue))")
+        }
+
+        // Start realtime subscription for instant sync
+        SyncService.shared.subscribeToRealtime { _ in
+            // Refresh UI when events arrive from other devices
+            progression.refresh()
         }
     }
 }
@@ -51,5 +53,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(AuthService.shared)
-        .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }
