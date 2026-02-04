@@ -147,22 +147,22 @@
   border: 1px solid var(--paper);
 }
 
-/* Sync status states */
+/* Sync status states - clear traffic light colors */
 .sync-indicator[data-status="idle"] .sync-dot {
-  background: var(--ink-faint);
+  background: #888;
 }
 
 .sync-indicator[data-status="syncing"] .sync-dot {
-  background: var(--sun);
+  background: #e6b800;
   animation: sync-pulse 1s ease-in-out infinite;
 }
 
 .sync-indicator[data-status="success"] .sync-dot {
-  background: var(--twig);
+  background: #22a522;
 }
 
 .sync-indicator[data-status="error"] .sync-dot {
-  background: var(--error-tone);
+  background: #d9534f;
 }
 
 @keyframes sync-pulse {
