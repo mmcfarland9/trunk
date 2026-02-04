@@ -212,31 +212,6 @@ final class SyncService: ObservableObject {
         EventStore.shared.clearEvents()
     }
 
-    /// Pull ALL events from Supabase (not incremental - we derive state from full log)
-    func pullAllEvents() async throws -> Int {
-        guard let client = SupabaseClientProvider.shared else {
-            throw SyncError.notConfigured
-        }
-
-        guard AuthService.shared.isAuthenticated else {
-            throw SyncError.notAuthenticated
-        }
-
-        let events: [SyncEvent] = try await client
-            .from("events")
-            .select()
-            .order("created_at")
-            .execute()
-            .value
-
-        // Update EventStore with all events
-        await MainActor.run {
-            EventStore.shared.setEvents(events)
-        }
-
-        return events.count
-    }
-
     /// Push a single event to Supabase and update local EventStore
     func pushEvent(type: String, payload: [String: Any]) async throws {
         guard let client = SupabaseClientProvider.shared else {
