@@ -1,4 +1,4 @@
-import type { LeafViewApi, Sprout, Leaf, SproutSeason, SproutEnvironment } from '../types'
+import type { LeafViewApi, Sprout, SproutSeason, SproutEnvironment } from '../types'
 import { escapeHtml } from '../utils/escape-html'
 import {
   getSeasonLabel,
@@ -6,11 +6,10 @@ import {
   getResultEmoji,
 } from '../utils/sprout-labels'
 import {
-  nodeState,
-  saveState,
-  getLeafById,
+  getState,
   getSproutsByLeaf,
-} from '../state'
+  toSprout,
+} from '../events'
 
 export type LeafViewCallbacks = {
   onClose: () => void
@@ -71,20 +70,13 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
   const logEl = container.querySelector<HTMLDivElement>('.leaf-log')!
 
   // State
-  let currentTwigId: string | null = null
   let currentLeafId: string | null = null
 
-  function getLeaf(): Leaf | undefined {
-    if (!currentTwigId || !currentLeafId) return undefined
-    return getLeafById(currentTwigId, currentLeafId)
-  }
-
   function getSprouts(): Sprout[] {
-    if (!currentTwigId || !currentLeafId) return []
-    const data = nodeState[currentTwigId]
-    if (!data?.sprouts) return []
-    const sprouts = getSproutsByLeaf(data.sprouts, currentLeafId)
-    return sprouts
+    if (!currentLeafId) return []
+    const state = getState()
+    const derivedSprouts = getSproutsByLeaf(state, currentLeafId)
+    return derivedSprouts.map(toSprout)
   }
 
   // Build unified log from all sprouts and their events
@@ -204,28 +196,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
   }
 
   function render(): void {
-    const leaf = getLeaf()
     const sprouts = getSprouts()
-
-    // If no leaf exists but we have sprouts, auto-create the leaf
-    if (!leaf && sprouts.length > 0 && currentTwigId && currentLeafId) {
-      // Create the leaf in state and persist
-      const data = nodeState[currentTwigId]
-      if (data) {
-        if (!data.leaves) data.leaves = []
-        // Derive name from most recent sprout (by createdAt)
-        const sorted = [...sprouts].sort((a, b) =>
-          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-        )
-        const leafName = sorted[0]?.title || 'Unnamed Saga'
-        data.leaves.push({
-          id: currentLeafId,
-          name: leafName,
-          createdAt: new Date().toISOString(),
-        })
-        saveState()
-      }
-    }
 
     // If no sprouts, show empty state
     if (sprouts.length === 0) {
@@ -264,16 +235,14 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
   return {
     container,
-    open(leafId: string, twigId: string, _branchIndex: number) {
+    open(leafId: string, _twigId: string, _branchIndex: number) {
       currentLeafId = leafId
-      currentTwigId = twigId
       render()
       container.classList.add('is-open')
     },
     close() {
       container.classList.remove('is-open')
       currentLeafId = null
-      currentTwigId = null
     },
     isOpen,
   }

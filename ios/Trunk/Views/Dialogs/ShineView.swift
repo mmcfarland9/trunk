@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ShineView: View {
     @Bindable var progression: ProgressionViewModel
@@ -204,5 +203,4 @@ struct TwigContext {
     NavigationStack {
         ShineView(progression: ProgressionViewModel())
     }
-    .modelContainer(for: [Sprout.self, WaterEntry.self, Leaf.self, NodeData.self, SunEntry.self], inMemory: true)
 }

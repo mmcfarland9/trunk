@@ -502,7 +502,7 @@ export function buildApp(
     </div>
   `
 
-  // Account dialog - user profile and sign out
+  // Account dialog - user profile with tabs for Notifications and Data
   const accountDialog = document.createElement('div')
   accountDialog.className = 'account-dialog hidden'
   accountDialog.innerHTML = `
@@ -531,41 +531,56 @@ export function buildApp(
 
         <div class="account-section-divider"></div>
 
-        <div class="account-notifications-section is-disabled">
+        <div class="account-tabs">
+          <button type="button" class="account-tab is-active" data-tab="notifications">Notifications</button>
+          <button type="button" class="account-tab" data-tab="data">Data</button>
+        </div>
+
+        <div class="account-tab-panel" data-tab="notifications">
+          <div class="account-notifications-section is-disabled">
+            <div class="account-field">
+              <label class="account-label">Notifications <span class="account-coming-soon">Coming soon</span></label>
+            </div>
+            <div class="account-field">
+              <label class="account-label">Notify Me Via</label>
+              <div class="account-radio-group account-channel-group">
+                <label class="account-radio"><input type="radio" name="notify-channel" value="email" disabled /><span>Email</span></label>
+                <label class="account-radio"><input type="radio" name="notify-channel" value="sms" disabled /><span>Text</span></label>
+                <label class="account-radio"><input type="radio" name="notify-channel" value="none" disabled /><span>Off</span></label>
+              </div>
+            </div>
+            <div class="account-field account-notify-options">
+              <label class="account-label">Check-in Reminders</label>
+              <div class="account-radio-group account-frequency-group">
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" disabled /><span>Daily</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" disabled /><span>Every 3 days</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" disabled /><span>Weekly</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="off" disabled /><span>Off</span></label>
+              </div>
+            </div>
+            <div class="account-field account-notify-options">
+              <label class="account-label">Preferred Time</label>
+              <div class="account-radio-group account-time-group">
+                <label class="account-radio"><input type="radio" name="notify-time" value="morning" disabled /><span>Morning</span></label>
+                <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" disabled /><span>Afternoon</span></label>
+                <label class="account-radio"><input type="radio" name="notify-time" value="evening" disabled /><span>Evening</span></label>
+              </div>
+            </div>
+            <div class="account-field account-notify-options">
+              <label class="account-label">Event Notifications</label>
+              <div class="account-checkbox-group">
+                <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" disabled /><span>Sprout ready to harvest</span></label>
+                <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" disabled /><span>Shine available</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-tab-panel hidden" data-tab="data">
           <div class="account-field">
-            <label class="account-label">Notifications <span class="account-coming-soon">Coming soon</span></label>
-          </div>
-          <div class="account-field">
-            <label class="account-label">Notify Me Via</label>
-            <div class="account-radio-group account-channel-group">
-              <label class="account-radio"><input type="radio" name="notify-channel" value="email" disabled /><span>Email</span></label>
-              <label class="account-radio"><input type="radio" name="notify-channel" value="sms" disabled /><span>Text</span></label>
-              <label class="account-radio"><input type="radio" name="notify-channel" value="none" disabled /><span>Off</span></label>
-            </div>
-          </div>
-          <div class="account-field account-notify-options">
-            <label class="account-label">Check-in Reminders</label>
-            <div class="account-radio-group account-frequency-group">
-              <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" disabled /><span>Daily</span></label>
-              <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" disabled /><span>Every 3 days</span></label>
-              <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" disabled /><span>Weekly</span></label>
-              <label class="account-radio"><input type="radio" name="notify-frequency" value="off" disabled /><span>Off</span></label>
-            </div>
-          </div>
-          <div class="account-field account-notify-options">
-            <label class="account-label">Preferred Time</label>
-            <div class="account-radio-group account-time-group">
-              <label class="account-radio"><input type="radio" name="notify-time" value="morning" disabled /><span>Morning</span></label>
-              <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" disabled /><span>Afternoon</span></label>
-              <label class="account-radio"><input type="radio" name="notify-time" value="evening" disabled /><span>Evening</span></label>
-            </div>
-          </div>
-          <div class="account-field account-notify-options">
-            <label class="account-label">Event Notifications</label>
-            <div class="account-checkbox-group">
-              <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" disabled /><span>Sprout ready to harvest</span></label>
-              <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" disabled /><span>Shine available</span></label>
-            </div>
+            <label class="account-label">Reset All Data</label>
+            <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity. This cannot be undone.</p>
+            <button type="button" class="action-btn action-btn-passive action-btn-destructive account-reset-data-btn">Reset All Data</button>
           </div>
         </div>
 
@@ -672,6 +687,7 @@ export function buildApp(
     accountDialogShineCheckbox: accountDialog.querySelector<HTMLInputElement>('.account-notify-shine')!,
     accountDialogSignOut: accountDialog.querySelector<HTMLButtonElement>('.account-sign-out-btn')!,
     accountDialogSave: accountDialog.querySelector<HTMLButtonElement>('.account-save-btn')!,
+    accountDialogResetData: accountDialog.querySelector<HTMLButtonElement>('.account-reset-data-btn')!,
   }
 
   return {

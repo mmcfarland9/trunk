@@ -68,15 +68,15 @@
       "timestamp": "2026-01-05T05:59:59Z",
       "twigId": "branch-0-twig-0",
       "twigLabel": "Test",
-      "content": "Sun just before Sunday reset",
+      "content": "Sun just before Monday reset",
       "prompt": "Prompt"
     },
     {
       "type": "sun_shone",
-      "timestamp": "2026-01-05T06:00:00Z",
+      "timestamp": "2026-01-06T06:00:00Z",
       "twigId": "branch-0-twig-0",
       "twigLabel": "Test",
-      "content": "Sun at Sunday reset boundary",
+      "content": "Sun at Monday reset boundary",
       "prompt": "Prompt"
     }
   ]

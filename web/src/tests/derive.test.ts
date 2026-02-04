@@ -174,15 +174,15 @@ describe('Derive Sun Available', () => {
     expect(available).toBe(0) // 1 - 1 = 0
   })
 
-  it('resets on Sunday 6am', () => {
+  it('resets on Monday 6am', () => {
     // Wednesday Jan 29, 2026 at 2pm
     const now = new Date('2026-01-29T14:00:00')
 
     const events: TrunkEvent[] = [
-      // Last Saturday (before this week's Sunday reset)
+      // Last Sunday (before this week's Monday reset)
       {
         type: 'sun_shone',
-        timestamp: '2026-01-25T10:00:00Z',
+        timestamp: '2026-01-26T10:00:00Z',
         twigId: 'branch-0-twig-0',
         twigLabel: 'Test',
         content: 'Last week',

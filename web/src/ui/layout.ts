@@ -6,10 +6,10 @@ import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex, getActiveNode
 const GUIDE_GAP = 8, TWIG_GAP = 4, TWIG_COLLISION_PAD = 8, TWIG_BASE_SIZE = 36, TWIG_PREVIEW_SIZE = 14, TWIG_MAX_SIZE = 80
 const BLOOM_MIN = 0.12, BLOOM_MAX = 0.34, BLOOM_OV_MIN = 0.06, BLOOM_OV_MAX = 0.18, TWIG_RING_RATIO = 0.55
 const WIND_BRANCH_AMP = 6, WIND_TWIG_AMP = 10, WIND_PULSE = 0.04, WIND_MIN = 0.35, WIND_MAX = 0.7
-const PREVIEW_FADE = 500, HOVER_MIN_RATIO = 0.55, HOVER_MAX_RATIO = 1.35
+const PREVIEW_FADE = 500
 
 let guideAnimationId = 0, windAnimationId = 0, windStartTime = 0, previewStartTime = 0
-let lastHoveredBranch: number | null = null, debugHoverZone = false
+let lastHoveredBranch: number | null = null
 
 export function positionNodes(ctx: AppContext): void {
   const { canvas } = ctx.elements
@@ -76,7 +76,6 @@ export function startWind(ctx: AppContext): void {
   windAnimationId = requestAnimationFrame(tick)
 }
 
-export function setDebugHoverZone(enabled: boolean): void { debugHoverZone = enabled }
 
 function drawGuideLines(ctx: AppContext): void {
   const { canvas, trunk, guideLayer } = ctx.elements
@@ -98,28 +97,6 @@ function drawGuideLines(ctx: AppContext): void {
   if (viewMode === 'twig') return
 
   const frag = document.createDocumentFragment()
-
-  // Debug hover zone visualization
-  if (debugHoverZone && viewMode === 'overview') {
-    const cx = rect.width / 2, cy = rect.height / 2
-    const [b0, b2] = [branchGroups[0], branchGroups[2]]
-    if (b0 && b2) {
-      const r0 = b0.branch.getBoundingClientRect(), r2 = b2.branch.getBoundingClientRect()
-      const ringRY = Math.abs(cy - (r0.top - rect.top + r0.height / 2))
-      const ringRX = Math.abs((r2.left - rect.left + r2.width / 2) - cx)
-      const svg = createSvg(rect.width, rect.height)
-      svg.append(createEllipse(cx, cy, ringRX * HOVER_MIN_RATIO, ringRY * HOVER_MIN_RATIO))
-      svg.append(createEllipse(cx, cy, ringRX * HOVER_MAX_RATIO, ringRY * HOVER_MAX_RATIO))
-      const angles = branchGroups.map(g => { const r = g.branch.getBoundingClientRect(); return Math.atan2(r.top - rect.top + r.height/2 - cy, r.left - rect.left + r.width/2 - cx) })
-      for (let i = 0; i < branchGroups.length; i++) {
-        const a1 = angles[i], a2 = angles[(i+1) % branchGroups.length]
-        let diff = a2 - a1; if (diff > Math.PI) diff -= Math.PI*2; if (diff < -Math.PI) diff += Math.PI*2
-        const mid = a1 + diff/2
-        svg.append(createSvgLine(cx + Math.cos(mid)*ringRX*HOVER_MIN_RATIO, cy + Math.sin(mid)*ringRY*HOVER_MIN_RATIO, cx + Math.cos(mid)*ringRX*HOVER_MAX_RATIO, cy + Math.sin(mid)*ringRY*HOVER_MAX_RATIO))
-      }
-      frag.append(svg)
-    }
-  }
 
   const trunkRect = trunk.getBoundingClientRect()
   const trunkCenter = getCenterPoint(trunkRect, rect), trunkRadius = trunkRect.width / 2
@@ -276,27 +253,4 @@ function getSafeRadius(radii: number[], step: number): number {
   const denom = 2 * Math.sin(step / 2)
   if (!denom) return 0
   return Math.max(...radii.map((r, i) => (r + radii[(i+1) % radii.length] + TWIG_GAP) / denom))
-}
-
-// Debug SVG helpers
-function createSvg(w: number, h: number): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('width', `${w}`); svg.setAttribute('height', `${h}`)
-  svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:100'
-  return svg
-}
-
-function createEllipse(cx: number, cy: number, rx: number, ry: number): SVGEllipseElement {
-  const el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
-  el.setAttribute('cx', `${cx}`); el.setAttribute('cy', `${cy}`); el.setAttribute('rx', `${rx}`); el.setAttribute('ry', `${ry}`)
-  el.setAttribute('fill', 'none'); el.setAttribute('stroke', 'red'); el.setAttribute('stroke-width', '2')
-  el.setAttribute('stroke-dasharray', '8 4'); el.setAttribute('opacity', '0.7')
-  return el
-}
-
-function createSvgLine(x1: number, y1: number, x2: number, y2: number): SVGLineElement {
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
-  line.setAttribute('x1', `${x1}`); line.setAttribute('y1', `${y1}`); line.setAttribute('x2', `${x2}`); line.setAttribute('y2', `${y2}`)
-  line.setAttribute('stroke', 'red'); line.setAttribute('stroke-width', '1.5'); line.setAttribute('opacity', '0.6')
-  return line
 }

@@ -18,9 +18,6 @@ extension Animation {
 
     /// Quick spring for micro-interactions
     static let trunkQuick = Animation.spring(response: 0.2, dampingFraction: 0.8)
-
-    /// Slow spring for major view transitions
-    static let trunkSlow = Animation.spring(response: 0.5, dampingFraction: 0.75)
 }
 
 // MARK: - View Modifiers
@@ -32,12 +29,6 @@ extension View {
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 20)
             .animation(.trunkSpring.delay(Double(index) * delay), value: appeared)
-    }
-
-    /// Scale feedback for button presses
-    func pressScale(_ isPressed: Bool) -> some View {
-        self.scaleEffect(isPressed ? 0.96 : 1.0)
-            .animation(.trunkQuick, value: isPressed)
     }
 
     /// Pulse animation for attention-grabbing elements

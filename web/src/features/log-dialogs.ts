@@ -1,17 +1,15 @@
 import type { AppElements } from '../types'
 import { escapeHtml } from '../utils/escape-html'
 import {
-  sunLog,
-  soilLog,
-  getAllWaterEntries,
   getWaterAvailable,
   getWaterCapacity,
   getNextWaterReset,
   formatResetTime,
   getPresetLabel,
-  nodeState,
 } from '../state'
+import { getState, getAllWaterEntries, getEvents, deriveSoilLog } from '../events'
 import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
+import { deleteAllEvents } from '../services/sync-service'
 
 // --- Timestamp Formatters ---
 
@@ -46,7 +44,7 @@ function getBranchLabelFromTwigId(twigId: string): string {
   const match = twigId.match(/^(branch-\d+)-twig-\d+$/)
   if (!match) return ''
   const branchId = match[1]
-  return getPresetLabel(branchId) || nodeState[branchId]?.label || ''
+  return getPresetLabel(branchId) || ''
 }
 
 // --- Sun Log Dialog ---
@@ -57,7 +55,8 @@ type SunLogElements = Pick<
 >
 
 function populateSunLog(elements: SunLogElements): void {
-  const entries = [...sunLog].reverse()
+  const state = getState()
+  const entries = [...state.sunEntries].reverse()
   const isEmpty = entries.length === 0
 
   elements.sunLogDialogEmpty.style.display = isEmpty ? 'block' : 'none'
@@ -123,7 +122,7 @@ type SoilBagElements = Pick<
 >
 
 function populateSoilBag(elements: SoilBagElements): void {
-  const entries = [...soilLog].reverse()
+  const entries = [...deriveSoilLog(getEvents())].reverse()
   const isEmpty = entries.length === 0
 
   elements.soilBagDialogEmpty.style.display = isEmpty ? 'block' : 'none'
@@ -191,7 +190,8 @@ type WaterCanElements = Pick<
 >
 
 function populateWaterCan(elements: WaterCanElements): void {
-  const logEntries = getAllWaterEntries()
+  const state = getState()
+  const logEntries = getAllWaterEntries(state, getPresetLabel)
   const available = getWaterAvailable()
   const capacity = getWaterCapacity()
 
@@ -270,6 +270,7 @@ type AccountElements = Pick<
   | 'accountDialogShineCheckbox'
   | 'accountDialogSignOut'
   | 'accountDialogSave'
+  | 'accountDialogResetData'
   | 'profileBadge'
 >
 
@@ -368,14 +369,35 @@ function populateAccountDialog(elements: AccountElements): void {
 export function initAccountDialog(
   elements: AccountElements
 ): { isOpen: () => boolean; close: () => void } {
+  const tabs = elements.accountDialog.querySelectorAll<HTMLButtonElement>('.account-tab')
+  const panels = elements.accountDialog.querySelectorAll<HTMLDivElement>('.account-tab-panel')
+
+  const switchTab = (tabName: string) => {
+    tabs.forEach(tab => {
+      tab.classList.toggle('is-active', tab.dataset.tab === tabName)
+    })
+    panels.forEach(panel => {
+      panel.classList.toggle('hidden', panel.dataset.tab !== tabName)
+    })
+  }
+
   const openDialog = () => {
     populateAccountDialog(elements)
+    switchTab('notifications') // Reset to first tab
     elements.accountDialog.classList.remove('hidden')
   }
 
   const closeDialog = () => {
     elements.accountDialog.classList.add('hidden')
   }
+
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab
+      if (tabName) switchTab(tabName)
+    })
+  })
 
   elements.profileBadge.addEventListener('click', openDialog)
   elements.accountDialogClose.addEventListener('click', closeDialog)
@@ -393,6 +415,33 @@ export function initAccountDialog(
   elements.accountDialogSignOut.addEventListener('click', async () => {
     closeDialog()
     await signOut()
+  })
+
+  // Reset all data with confirmation
+  elements.accountDialogResetData.addEventListener('click', async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete ALL your data?\n\n' +
+      'This will permanently remove all your sprouts, leaves, journal entries, and activity history.\n\n' +
+      'This action cannot be undone.'
+    )
+
+    if (!confirmed) return
+
+    elements.accountDialogResetData.disabled = true
+    elements.accountDialogResetData.textContent = 'Deleting...'
+
+    const { error } = await deleteAllEvents()
+
+    elements.accountDialogResetData.disabled = false
+    elements.accountDialogResetData.textContent = 'Reset All Data'
+
+    if (error) {
+      console.error('Failed to delete data:', error)
+      alert('Failed to delete data: ' + error)
+    } else {
+      closeDialog()
+      window.location.reload()
+    }
   })
 
   elements.accountDialogSave.addEventListener('click', async () => {

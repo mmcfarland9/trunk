@@ -7,10 +7,10 @@ import {
   getTodayResetTime,
   getNextWaterReset,
   getWaterCapacity,
-  wasWateredThisWeek,
   getWeekResetTime,
 } from '../state'
-import type { Sprout } from '../types'
+import { wasSproutWateredThisWeek } from '../events'
+import type { TrunkEvent } from '../events'
 
 describe('Water Reset Time', () => {
   beforeEach(() => {
@@ -115,12 +115,9 @@ describe('Water Availability', () => {
   it('returns correct water capacity', () => {
     expect(getWaterCapacity()).toBe(3)
   })
-
-  // Note: getWaterAvailable and getWaterUsedToday depend on nodeState
-  // which requires more complex setup. These would be integration tests.
 })
 
-describe('wasWateredThisWeek', () => {
+describe('wasSproutWateredThisWeek (events-based)', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -129,109 +126,82 @@ describe('wasWateredThisWeek', () => {
     vi.useRealTimers()
   })
 
-  it('returns false when sprout has no water entries', () => {
-    const sprout: Sprout = {
-      id: 'test-1',
-      title: 'Test Sprout',
-      season: '1m',
-      environment: 'fertile',
-      state: 'active',
-      soilCost: 3,
-      createdAt: new Date().toISOString(),
-      waterEntries: [],
-    }
-
-    expect(wasWateredThisWeek(sprout)).toBe(false)
+  it('returns false when no water events exist', () => {
+    const events: TrunkEvent[] = []
+    expect(wasSproutWateredThisWeek(events, 'sprout-1')).toBe(false)
   })
 
-  it('returns false when sprout has undefined water entries', () => {
-    const sprout: Sprout = {
-      id: 'test-1',
-      title: 'Test Sprout',
-      season: '1m',
-      environment: 'fertile',
-      state: 'active',
-      soilCost: 3,
-      createdAt: new Date().toISOString(),
-    }
-
-    expect(wasWateredThisWeek(sprout)).toBe(false)
-  })
-
-  it('returns true when sprout has recent water entry', () => {
-    // Set time to Wednesday 10am
+  it('returns false when water event is for different sprout', () => {
     const now = new Date(2024, 0, 17, 10, 0, 0) // Wednesday
     vi.setSystemTime(now)
 
-    getWeekResetTime() // Sunday 6am
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_watered',
+        timestamp: new Date(2024, 0, 16, 10, 0, 0).toISOString(), // Tuesday
+        sproutId: 'other-sprout',
+        content: 'reflection',
+      },
+    ]
 
-    const sprout: Sprout = {
-      id: 'test-1',
-      title: 'Test Sprout',
-      season: '1m',
-      environment: 'fertile',
-      state: 'active',
-      soilCost: 3,
-      createdAt: new Date().toISOString(),
-      waterEntries: [
-        {
-          timestamp: new Date(2024, 0, 16, 10, 0, 0).toISOString(), // Tuesday
-          content: 'Test reflection',
-        },
-      ],
-    }
-
-    expect(wasWateredThisWeek(sprout)).toBe(true)
+    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(false)
   })
 
-  it('returns false when water entry is from last week', () => {
+  it('returns true when sprout has recent water event this week', () => {
+    // Set time to Wednesday 10am
+    const now = new Date(2024, 0, 17, 10, 0, 0)
+    vi.setSystemTime(now)
+
+    getWeekResetTime() // Sunday 6am = Jan 14
+
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_watered',
+        timestamp: new Date(2024, 0, 16, 10, 0, 0).toISOString(), // Tuesday
+        sproutId: 'sprout-1',
+        content: 'Test reflection',
+      },
+    ]
+
+    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(true)
+  })
+
+  it('returns false when water event is from last week', () => {
     // Set time to Wednesday 10am
     const now = new Date(2024, 0, 17, 10, 0, 0) // Wednesday Jan 17
     vi.setSystemTime(now)
 
-    const sprout: Sprout = {
-      id: 'test-1',
-      title: 'Test Sprout',
-      season: '1m',
-      environment: 'fertile',
-      state: 'active',
-      soilCost: 3,
-      createdAt: new Date().toISOString(),
-      waterEntries: [
-        {
-          timestamp: new Date(2024, 0, 10, 10, 0, 0).toISOString(), // Last Wednesday
-          content: 'Old reflection',
-        },
-      ],
-    }
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_watered',
+        timestamp: new Date(2024, 0, 10, 10, 0, 0).toISOString(), // Last Wednesday Jan 10
+        sproutId: 'sprout-1',
+        content: 'Old reflection',
+      },
+    ]
 
-    expect(wasWateredThisWeek(sprout)).toBe(false)
+    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(false)
   })
 
-  it('returns true when at least one entry is from this week', () => {
+  it('returns true when at least one water event is from this week', () => {
     const now = new Date(2024, 0, 17, 10, 0, 0) // Wednesday
     vi.setSystemTime(now)
 
-    const sprout: Sprout = {
-      id: 'test-1',
-      title: 'Test Sprout',
-      season: '1m',
-      environment: 'fertile',
-      state: 'active',
-      soilCost: 3,
-      createdAt: new Date().toISOString(),
-      waterEntries: [
-        {
-          timestamp: new Date(2024, 0, 5, 10, 0, 0).toISOString(), // Old
-          content: 'Old reflection',
-        },
-        {
-          timestamp: new Date(2024, 0, 15, 10, 0, 0).toISOString(), // This week
-          content: 'Recent reflection',
-        },
-      ],
-    }
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_watered',
+        timestamp: new Date(2024, 0, 5, 10, 0, 0).toISOString(), // Old
+        sproutId: 'sprout-1',
+        content: 'Old reflection',
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: new Date(2024, 0, 15, 10, 0, 0).toISOString(), // This week (Monday)
+        sproutId: 'sprout-1',
+        content: 'Recent reflection',
+      },
+    ]
 
-    expect(wasWateredThisWeek(sprout)).toBe(true)
+    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(true)
   })
 })

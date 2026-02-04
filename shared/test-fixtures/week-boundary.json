@@ -1,0 +1,163 @@
+{
+  "_version": 4,
+  "_description": "Week boundary tests for Monday 6am reset. Uses dates clearly within week ranges to avoid timezone edge cases.",
+
+  "scenarios": [
+    {
+      "name": "sun_previous_week",
+      "description": "Sun from the previous week should not count for current week",
+      "testTime": "2026-01-30T12:00:00Z",
+      "events": [
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-22T12:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "Test",
+          "content": "Previous week sun (Wed Jan 22)"
+        }
+      ],
+      "expected": {
+        "sunAvailable": 1,
+        "_note": "Wednesday Jan 22 is clearly in the previous week (Mon Jan 20 - Sun Jan 26)"
+      }
+    },
+    {
+      "name": "sun_this_week",
+      "description": "Sun from this week should count and reduce availability",
+      "testTime": "2026-01-30T12:00:00Z",
+      "events": [
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-29T12:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "Test",
+          "content": "This week sun (Wed Jan 29)"
+        }
+      ],
+      "expected": {
+        "sunAvailable": 0,
+        "_note": "Wednesday Jan 29 is clearly in current week (Mon Jan 27 - Sun Feb 2)"
+      }
+    },
+    {
+      "name": "no_sun_this_week",
+      "description": "No sun this week means sun is available",
+      "testTime": "2026-01-30T12:00:00Z",
+      "events": [],
+      "expected": {
+        "sunAvailable": 1,
+        "_note": "No sun events at all means full capacity"
+      }
+    },
+    {
+      "name": "multiple_suns_old_and_current",
+      "description": "Only count suns from the current week",
+      "testTime": "2026-01-30T12:00:00Z",
+      "events": [
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-15T12:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "Test",
+          "content": "Two weeks ago"
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-22T12:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "Test",
+          "content": "Last week"
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-29T12:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "Test",
+          "content": "This week"
+        }
+      ],
+      "expected": {
+        "sunAvailable": 0,
+        "_note": "Only the Jan 29 sun counts for current week"
+      }
+    }
+  ],
+
+  "waterBoundaryTests": [
+    {
+      "name": "water_yesterday",
+      "description": "Water from yesterday should not count for today's availability",
+      "testTime": "2026-01-30T18:00:00Z",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-test-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Test",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        },
+        {
+          "type": "sprout_watered",
+          "timestamp": "2026-01-29T12:00:00Z",
+          "sproutId": "sprout-test-1",
+          "content": "Yesterday's water"
+        }
+      ],
+      "expected": {
+        "waterAvailable": 3,
+        "_note": "Jan 29 noon water doesn't count for Jan 30 (tested at 6pm UTC)"
+      }
+    },
+    {
+      "name": "water_today",
+      "description": "Water from today should reduce today's availability",
+      "testTime": "2026-01-30T18:00:00Z",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-test-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Test",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        },
+        {
+          "type": "sprout_watered",
+          "timestamp": "2026-01-30T14:00:00Z",
+          "sproutId": "sprout-test-1",
+          "content": "Today's water at 2pm UTC"
+        }
+      ],
+      "expected": {
+        "waterAvailable": 2,
+        "_note": "Jan 30 2pm UTC water counts for Jan 30 when tested at 6pm UTC"
+      }
+    },
+    {
+      "name": "no_water_today",
+      "description": "No water today means full availability",
+      "testTime": "2026-01-30T18:00:00Z",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-test-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Test",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        }
+      ],
+      "expected": {
+        "waterAvailable": 3,
+        "_note": "No waters today means full capacity"
+      }
+    }
+  ]
+}

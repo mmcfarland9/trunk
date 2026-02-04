@@ -1,6 +1,5 @@
 import type { EditorApi } from '../types'
-import { nodeState, saveState, deleteNodeData, setActiveNode, getActiveNode } from '../state'
-import { setNodeLabel } from './node-ui'
+import { setActiveNode, getActiveNode, getPresetLabel } from '../state'
 
 export type EditorCallbacks = {
   onSave: () => void
@@ -9,7 +8,7 @@ export type EditorCallbacks = {
 
 // Editor is now only for trunk and branch nodes (label + note editing)
 // Leaf editing is handled by the leaf-view component
-export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks): EditorApi {
+export function buildEditor(canvas: HTMLDivElement, _callbacks: EditorCallbacks): EditorApi {
   const container = document.createElement('div')
   container.className = 'node-editor hidden'
 
@@ -62,12 +61,12 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
     labelInput.placeholder = placeholder
     noteInput.placeholder = 'Add details...'
 
-    const defaultLabel = target.dataset.defaultLabel || ''
-    const existing = nodeState[nodeId]
-    const savedLabel = existing?.label || ''
-
-    labelInput.value = savedLabel && savedLabel !== defaultLabel ? savedLabel : ''
-    noteInput.value = existing?.note || ''
+    // Labels are now preset-only (from shared constants)
+    const presetLabel = getPresetLabel(nodeId)
+    labelInput.value = presetLabel
+    noteInput.value = ''
+    labelInput.disabled = true // Presets are read-only
+    noteInput.disabled = true
 
     container.classList.remove('hidden')
 
@@ -108,31 +107,7 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
 
   function handleSubmit(event: SubmitEvent): void {
     event.preventDefault()
-    const activeNode = getActiveNode()
-    if (!activeNode) return
-
-    const nodeId = activeNode.dataset.nodeId
-    if (!nodeId) return
-
-    const rawLabel = labelInput.value.trim()
-    const normalizedLabel = rawLabel.replace(/\s+/g, ' ').trim()
-    const label = normalizedLabel || ''
-    const note = noteInput.value.trim()
-    const defaultLabel = activeNode.dataset.defaultLabel || ''
-    const appliedLabel = label || defaultLabel
-    const hasContent = Boolean(label || note)
-
-    setNodeLabel(activeNode, appliedLabel)
-    activeNode.dataset.filled = hasContent ? 'true' : 'false'
-
-    if (hasContent) {
-      nodeState[nodeId] = { label: appliedLabel, note }
-    } else {
-      deleteNodeData(nodeId)
-    }
-
-    saveState(callbacks.onSave)
-    callbacks.onUpdateFocus(activeNode)
+    // Labels are now preset-only, nothing to save
     closeEditor()
   }
 
@@ -143,18 +118,7 @@ export function buildEditor(canvas: HTMLDivElement, callbacks: EditorCallbacks):
 
   function handleClear(event: Event): void {
     event.preventDefault()
-    const activeNode = getActiveNode()
-    if (!activeNode) return
-
-    const nodeId = activeNode.dataset.nodeId
-    if (nodeId) deleteNodeData(nodeId)
-
-    const defaultLabel = activeNode.dataset.defaultLabel || ''
-    setNodeLabel(activeNode, defaultLabel)
-    activeNode.dataset.filled = 'false'
-
-    saveState(callbacks.onSave)
-    callbacks.onUpdateFocus(activeNode)
+    // Labels are preset-only, nothing to clear
     closeEditor()
   }
 

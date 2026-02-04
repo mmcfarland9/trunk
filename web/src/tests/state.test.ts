@@ -1,16 +1,11 @@
 /**
- * Functional tests for state management.
+ * Functional tests for state management and calculations.
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-  calculateSoilCost,
-  getActiveSprouts,
-  getHistorySprouts,
-  generateSproutId,
-  generateLeafId,
-} from '../state'
-import type { Sprout } from '../types'
+import { calculateSoilCost } from '../state'
+import { generateSproutId, generateLeafId, getActiveSprouts, getCompletedSprouts, deriveState } from '../events'
+import type { TrunkEvent } from '../events'
 
 describe('Soil Cost Calculation', () => {
   it('should calculate correct cost for fertile environment', () => {
@@ -38,39 +33,70 @@ describe('Soil Cost Calculation', () => {
   })
 })
 
-describe('Sprout State Filtering', () => {
-  const baseSprout: Omit<Sprout, 'id' | 'state'> = {
-    title: 'Test Sprout',
+describe('Sprout State Filtering (Events-based)', () => {
+  const plantEvent = (id: string, title: string): TrunkEvent => ({
+    type: 'sprout_planted',
+    timestamp: new Date().toISOString(),
+    sproutId: id,
+    twigId: 'twig-1',
+    title,
     season: '1m',
     environment: 'fertile',
     soilCost: 3,
-    createdAt: new Date().toISOString(),
-  }
+  })
 
-  const sprouts: Sprout[] = [
-    { ...baseSprout, id: '1', state: 'active' },
-    { ...baseSprout, id: '2', state: 'active' },
-    { ...baseSprout, id: '3', state: 'completed', result: 4 },
-    { ...baseSprout, id: '4', state: 'completed', result: 2 },
-    { ...baseSprout, id: '5', state: 'completed', result: 5 },
-  ]
+  const harvestEvent = (id: string): TrunkEvent => ({
+    type: 'sprout_harvested',
+    timestamp: new Date().toISOString(),
+    sproutId: id,
+    result: 4,
+    capacityGained: 0.5,
+  })
 
-  it('should return only active sprouts', () => {
-    const active = getActiveSprouts(sprouts)
+  it('should return only active sprouts from derived state', () => {
+    const events: TrunkEvent[] = [
+      plantEvent('1', 'Sprout 1'),
+      plantEvent('2', 'Sprout 2'),
+      plantEvent('3', 'Sprout 3'),
+      harvestEvent('3'), // Harvest sprout 3
+    ]
+
+    const state = deriveState(events)
+    const active = getActiveSprouts(state)
+
     expect(active.length).toBe(2)
     expect(active.every(s => s.state === 'active')).toBe(true)
   })
 
-  it('should return only completed sprouts as history', () => {
-    const history = getHistorySprouts(sprouts)
-    expect(history.length).toBe(3)
-    expect(history.every(s => s.state === 'completed')).toBe(true)
+  it('should return only completed sprouts from derived state', () => {
+    const events: TrunkEvent[] = [
+      plantEvent('1', 'Sprout 1'),
+      plantEvent('2', 'Sprout 2'),
+      plantEvent('3', 'Sprout 3'),
+      harvestEvent('2'),
+      harvestEvent('3'),
+    ]
+
+    const state = deriveState(events)
+    const completed = getCompletedSprouts(state)
+
+    expect(completed.length).toBe(2)
+    expect(completed.every(s => s.state === 'completed')).toBe(true)
   })
 
   it('should correctly partition active and completed sprouts', () => {
-    const active = getActiveSprouts(sprouts)
-    const history = getHistorySprouts(sprouts)
-    expect(active.length + history.length).toBe(sprouts.length)
+    const events: TrunkEvent[] = [
+      plantEvent('1', 'Sprout 1'),
+      plantEvent('2', 'Sprout 2'),
+      plantEvent('3', 'Sprout 3'),
+      harvestEvent('3'),
+    ]
+
+    const state = deriveState(events)
+    const active = getActiveSprouts(state)
+    const completed = getCompletedSprouts(state)
+
+    expect(active.length + completed.length).toBe(3)
   })
 })
 

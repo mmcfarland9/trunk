@@ -1,6 +1,7 @@
 import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { nodeState, getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getActiveSprouts, getHistorySprouts, getDebugDate, getPresetLabel, wasWateredThisWeek, getLeafById } from '../state'
+import { getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getPresetLabel } from '../state'
+import { getState, getSproutsForTwig, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById, checkSproutWateredThisWeek } from '../events'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -8,10 +9,11 @@ export function updateStats(ctx: AppContext): void {
 }
 
 function countActiveSproutsForTwigs(twigs: HTMLButtonElement[]): number {
+  const state = getState()
   return twigs.reduce((sum, twig) => {
-    const data = nodeState[twig.dataset.nodeId || '']
-    const sprouts = data?.sprouts || []
-    return sum + getActiveSprouts(sprouts).length
+    const nodeId = twig.dataset.nodeId || ''
+    const derivedSprouts = getSproutsForTwig(state, nodeId)
+    return sum + derivedSprouts.filter(s => s.state === 'active').length
   }, 0)
 }
 
@@ -88,7 +90,7 @@ function parseBranchIndex(twigId: string): number {
 
 function formatEndDate(dateStr: string): string {
   const date = new Date(dateStr)
-  const now = getDebugDate()
+  const now = new Date()
 
   // If on or past due date, show READY
   if (date <= now) {
@@ -105,18 +107,21 @@ function formatEndDate(dateStr: string): string {
 function getAllSproutsFromState(): { active: SproutWithLocation[], cultivated: SproutWithLocation[] } {
   const active: SproutWithLocation[] = []
   const cultivated: SproutWithLocation[] = []
+  const state = getState()
 
-  Object.entries(nodeState).forEach(([nodeId, data]) => {
-    if (!data.sprouts) return
-    const twigLabel = getPresetLabel(nodeId) || nodeId
-    const branchIndex = parseBranchIndex(nodeId)
+  // Get all sprouts from derived state
+  getActiveDerivedSprouts(state).forEach(derived => {
+    const sprout = toSprout(derived)
+    const twigLabel = getPresetLabel(derived.twigId) || derived.twigId
+    const branchIndex = parseBranchIndex(derived.twigId)
+    active.push({ ...sprout, twigId: derived.twigId, twigLabel, branchIndex })
+  })
 
-    getActiveSprouts(data.sprouts).forEach(s => {
-      active.push({ ...s, twigId: nodeId, twigLabel, branchIndex })
-    })
-    getHistorySprouts(data.sprouts).forEach(s => {
-      cultivated.push({ ...s, twigId: nodeId, twigLabel, branchIndex })
-    })
+  getCompletedSprouts(state).forEach(derived => {
+    const sprout = toSprout(derived)
+    const twigLabel = getPresetLabel(derived.twigId) || derived.twigId
+    const branchIndex = parseBranchIndex(derived.twigId)
+    cultivated.push({ ...sprout, twigId: derived.twigId, twigLabel, branchIndex })
   })
 
   return { active, cultivated }
@@ -186,7 +191,8 @@ function renderLeafGroupedSprouts(
   byLeaf.forEach((leafSprouts, leafId) => {
     const twigId = leafSprouts[0]?.twigId
     if (!twigId) return
-    const leaf = getLeafById(twigId, leafId)
+    const state = getState()
+    const leaf = getLeafById(state, leafId)
     const leafName = leaf?.name || 'Unnamed Leaf'
 
     // Always render as stacked card, even for single sprouts
@@ -455,7 +461,7 @@ function createStackedLeafCard(
     title.className = 'sidebar-stacked-title'
     title.textContent = sprout.title || 'Untitled'
 
-    const isReady = sprout.endDate ? new Date(sprout.endDate) <= getDebugDate() : false
+    const isReady = sprout.endDate ? new Date(sprout.endDate) <= new Date() : false
 
     // Highlight row in green when ready to harvest
     if (isReady) {
@@ -476,7 +482,7 @@ function createStackedLeafCard(
       row.append(title, harvestBtn)
     } else if (onWaterClick) {
       // Water button
-      const watered = wasWateredThisWeek(sprout)
+      const watered = checkSproutWateredThisWeek(sprout.id)
       const waterBtn = document.createElement('button')
       waterBtn.type = 'button'
 
@@ -512,11 +518,11 @@ function createStackedLeafCard(
 }
 
 function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {
-  const defaultLabel = branchNode.dataset.defaultLabel || ''
-  const stored = nodeState[branchNode.dataset.nodeId || '']
-  const storedLabel = stored?.label?.trim() || ''
-  if (storedLabel && storedLabel !== defaultLabel) {
-    return storedLabel
+  // Get label from preset or default
+  const nodeId = branchNode.dataset.nodeId || ''
+  const presetLabel = getPresetLabel(nodeId)
+  if (presetLabel) {
+    return presetLabel
   }
   return `Branch ${index + 1}`
 }

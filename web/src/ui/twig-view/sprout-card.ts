@@ -6,7 +6,8 @@
 import type { Sprout } from '../../types'
 import { escapeHtml } from '../../utils/escape-html'
 import { getSeasonLabel, getResultEmoji } from '../../utils/sprout-labels'
-import { getDebugNow, wasWateredThisWeek, getSoilRecoveryRate } from '../../state'
+import { getSoilRecoveryRate } from '../../state'
+import { checkSproutWateredThisWeek } from '../../events'
 
 export type SproutCardOptions = {
   sprout: Sprout
@@ -18,7 +19,7 @@ export type SproutCardOptions = {
  */
 function isReady(sprout: Sprout): boolean {
   if (!sprout.endDate) return false
-  return new Date(sprout.endDate).getTime() <= getDebugNow()
+  return new Date(sprout.endDate).getTime() <= Date.now()
 }
 
 /**
@@ -27,7 +28,7 @@ function isReady(sprout: Sprout): boolean {
 function getDaysRemaining(sprout: Sprout): number {
   if (!sprout.endDate) return 0
   const end = new Date(sprout.endDate).getTime()
-  const now = getDebugNow()
+  const now = Date.now()
   const diff = end - now
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
@@ -72,7 +73,7 @@ function buildReadyFooter(): string {
  */
 function buildGrowingFooter(sprout: Sprout, showActions: boolean): string {
   const daysLeft = getDaysRemaining(sprout)
-  const watered = wasWateredThisWeek(sprout)
+  const watered = checkSproutWateredThisWeek(sprout.id)
 
   if (!showActions) {
     return `

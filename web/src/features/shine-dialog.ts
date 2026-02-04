@@ -1,6 +1,7 @@
 import type { AppContext, SunEntry } from '../types'
 import sunPromptsData from '../assets/sun-prompts.json'
-import { spendSun, canAffordSun, addSunEntry, getSunAvailable, wasShoneThisWeek, getPresetLabel, recoverSoil, getSunRecoveryRate, getNextSunReset, formatResetTime } from '../state'
+import { canAffordSun, getSunAvailable, getPresetLabel, getNextSunReset, formatResetTime } from '../state'
+import { appendEvent, getEvents, wasShoneThisWeek as wasShoneThisWeekFromEvents } from '../events'
 
 export type ShineCallbacks = {
   onSunMeterChange: () => void
@@ -114,7 +115,7 @@ export function initShine(
 
   function updateSunMeter() {
     const available = getSunAvailable()
-    const canShine = available > 0 && !wasShoneThisWeek()
+    const canShine = available > 0 && !wasShoneThisWeekFromEvents(getEvents())
     ctx.elements.sunCircle.classList.toggle('is-filled', canShine)
   }
 
@@ -136,7 +137,7 @@ export function initShine(
     } = ctx.elements
 
     // Check if already shone this week
-    if (wasShoneThisWeek()) {
+    if (wasShoneThisWeekFromEvents(getEvents())) {
       sunLogShineSection.classList.add('hidden')
       sunLogShineShone.classList.remove('hidden')
       sunLogShineShoneReset.textContent = formatResetTime(getNextSunReset())
@@ -195,16 +196,19 @@ export function initShine(
     }
 
     if (currentContext) {
-      spendSun()
-      updateSunMeter()
-
-      // Recover soil from shining
-      recoverSoil(getSunRecoveryRate(), 0, 'Shone light', currentContext.twigLabel)
-      callbacks.onSoilMeterChange()
-
-      // Save sun entry to global log with context
+      // Emit sun_shone event - this is the source of truth
       const prompt = sunLogShineJournal.placeholder
-      addSunEntry(entry, prompt, currentContext)
+      appendEvent({
+        type: 'sun_shone',
+        timestamp: new Date().toISOString(),
+        twigId: currentContext.twigId,
+        twigLabel: currentContext.twigLabel,
+        content: entry,
+        prompt,
+      })
+
+      updateSunMeter()
+      callbacks.onSoilMeterChange()
 
       // Refresh the shine section (will show "shone" state) and log
       populateSunLogShine()

@@ -2,8 +2,8 @@
 //  SproutModelTests.swift
 //  TrunkTests
 //
-//  Tests for Sprout-related enums (Season, SproutEnvironment, SproutState).
-//  Note: Sprout @Model tests require full app context and are tested via UI/integration tests.
+//  Tests for sprout-related enums (Season, SproutEnvironment, SproutState)
+//  and DerivedSprout utilities from EventDerivation.
 //
 
 import Testing
@@ -179,347 +179,81 @@ struct SproutStateEnumTests {
     }
 }
 
-// MARK: - Sprout Computed Properties Tests
+// MARK: - DerivedSprout Ready Check Tests
 
-@Suite("Sprout Computed Properties")
-struct SproutComputedTests {
+@Suite("DerivedSprout Ready Check")
+struct DerivedSproutReadyTests {
 
-    @Test("isReady returns false before endDate")
-    @MainActor
-    func isReady_falseBeforeEndDate() {
-        let sprout = Sprout(
-            title: "Test",
+    @Test("isSproutReady returns false for newly planted sprout")
+    func isReady_falseForNewSprout() {
+        let sprout = DerivedSprout(
+            id: "test-1",
+            twigId: "branch-0-twig-0",
+            title: "Test Sprout",
             season: .twoWeeks,
             environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        // plantedAt is set to now in init, so 2 weeks haven't passed
-        #expect(sprout.isReady == false)
-    }
-
-    @Test("isReady returns true after season duration")
-    @MainActor
-    func isReady_trueAfterDuration() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        // Set plantedAt to 15 days ago (more than 2 weeks)
-        sprout.plantedAt = Date().addingTimeInterval(-86400 * 15)
-        #expect(sprout.isReady == true)
-    }
-
-    @Test("isReady returns false when no plantedAt")
-    @MainActor
-    func isReady_falseWhenNoPlantedAt() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.plantedAt = nil
-        #expect(sprout.isReady == false)
-    }
-
-    @Test("isReady returns false when completed")
-    @MainActor
-    func isReady_falseWhenCompleted() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.plantedAt = Date().addingTimeInterval(-86400 * 15) // Past due
-        sprout.stateRaw = SproutState.completed.rawValue
-        #expect(sprout.isReady == false)
-    }
-
-    @Test("season computed property returns correct enum")
-    @MainActor
-    func season_returnsCorrectEnum() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .threeMonths,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 5
-        )
-        #expect(sprout.season == .threeMonths)
-    }
-
-    @Test("environment computed property returns correct enum")
-    @MainActor
-    func environment_returnsCorrectEnum() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .barren,
-            nodeId: "branch-0-twig-0",
-            soilCost: 4
-        )
-        #expect(sprout.environment == .barren)
-    }
-
-    @Test("state computed property returns correct enum")
-    @MainActor
-    func state_returnsCorrectEnum() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        #expect(sprout.state == .active)
-    }
-
-    @Test("state defaults to active")
-    @MainActor
-    func state_defaultsToActive() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        #expect(sprout.stateRaw == "active")
-    }
-
-    @Test("plantedAt is set on init")
-    @MainActor
-    func plantedAt_setOnInit() {
-        let before = Date()
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        let after = Date()
-
-        #expect(sprout.plantedAt != nil)
-        #expect(sprout.plantedAt! >= before)
-        #expect(sprout.plantedAt! <= after)
-    }
-}
-
-// MARK: - Sprout Harvest Tests
-
-@Suite("Sprout Harvest")
-struct SproutHarvestTests {
-
-    @Test("harvest sets result")
-    @MainActor
-    func harvest_setsResult() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.harvest(result: 4)
-        #expect(sprout.result == 4)
-    }
-
-    @Test("harvest sets state to completed")
-    @MainActor
-    func harvest_setsStateToCompleted() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.harvest(result: 3)
-        #expect(sprout.state == .completed)
-    }
-
-    @Test("harvest sets harvestedAt")
-    @MainActor
-    func harvest_setsHarvestedAt() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        #expect(sprout.harvestedAt == nil)
-        sprout.harvest(result: 5)
-        #expect(sprout.harvestedAt != nil)
-    }
-
-    @Test("harvest with result 1")
-    @MainActor
-    func harvest_withResult1() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.harvest(result: 1)
-        #expect(sprout.result == 1)
-        #expect(sprout.state == .completed)
-    }
-
-    @Test("harvest with result 5")
-    @MainActor
-    func harvest_withResult5() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.harvest(result: 5)
-        #expect(sprout.result == 5)
-        #expect(sprout.state == .completed)
-    }
-
-    @Test("harvestedAt timestamp is recent")
-    @MainActor
-    func harvestedAt_timestampIsRecent() {
-        let before = Date()
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        sprout.harvest(result: 3)
-        let after = Date()
-
-        #expect(sprout.harvestedAt! >= before)
-        #expect(sprout.harvestedAt! <= after)
-    }
-}
-
-// MARK: - Sprout Initialization Tests
-
-@Suite("Sprout Initialization")
-struct SproutInitTests {
-
-    @Test("sprout generates unique id")
-    @MainActor
-    func init_generatesUniqueId() {
-        let sprout1 = Sprout(
-            title: "Test 1",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        let sprout2 = Sprout(
-            title: "Test 2",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        #expect(sprout1.sproutId != sprout2.sproutId)
-    }
-
-    @Test("sprout stores title")
-    @MainActor
-    func init_storesTitle() {
-        let sprout = Sprout(
-            title: "My Goal",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
-        )
-        #expect(sprout.title == "My Goal")
-    }
-
-    @Test("sprout stores nodeId")
-    @MainActor
-    func init_storesNodeId() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-2-twig-5",
-            soilCost: 2
-        )
-        #expect(sprout.nodeId == "branch-2-twig-5")
-    }
-
-    @Test("sprout stores soilCost")
-    @MainActor
-    func init_storesSoilCost() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .oneYear,
-            environment: .barren,
-            nodeId: "branch-0-twig-0",
-            soilCost: 24
-        )
-        #expect(sprout.soilCost == 24)
-    }
-
-    @Test("sprout stores bloom descriptions")
-    @MainActor
-    func init_storesBloomDescriptions() {
-        let sprout = Sprout(
-            title: "Test",
-            season: .twoWeeks,
-            environment: .fertile,
-            nodeId: "branch-0-twig-0",
             soilCost: 2,
-            bloomWither: "Failed",
-            bloomBudding: "Partially done",
-            bloomFlourish: "Fully achieved"
+            leafId: nil,
+            bloomWither: nil,
+            bloomBudding: nil,
+            bloomFlourish: nil,
+            state: .active,
+            plantedAt: Date(),
+            harvestedAt: nil,
+            result: nil,
+            reflection: nil,
+            waterEntries: []
         )
-        #expect(sprout.bloomWither == "Failed")
-        #expect(sprout.bloomBudding == "Partially done")
-        #expect(sprout.bloomFlourish == "Fully achieved")
+        #expect(isSproutReady(sprout) == false)
     }
 
-    @Test("id property returns sproutId")
-    @MainActor
-    func id_returnsSproutId() {
-        let sprout = Sprout(
-            sproutId: "custom-id-123",
-            title: "Test",
+    @Test("isSproutReady returns true after duration elapsed")
+    func isReady_trueAfterDuration() {
+        // Planted 15 days ago (more than 2 weeks)
+        let plantedDate = Date().addingTimeInterval(-86400 * 15)
+        let sprout = DerivedSprout(
+            id: "test-2",
+            twigId: "branch-0-twig-0",
+            title: "Test Sprout",
             season: .twoWeeks,
             environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
+            soilCost: 2,
+            leafId: nil,
+            bloomWither: nil,
+            bloomBudding: nil,
+            bloomFlourish: nil,
+            state: .active,
+            plantedAt: plantedDate,
+            harvestedAt: nil,
+            result: nil,
+            reflection: nil,
+            waterEntries: []
         )
-        #expect(sprout.id == "custom-id-123")
+        #expect(isSproutReady(sprout) == true)
     }
 
-    @Test("createdAt is set on init")
-    @MainActor
-    func createdAt_setOnInit() {
-        let before = Date()
-        let sprout = Sprout(
-            title: "Test",
+    @Test("isSproutReady returns false when completed")
+    func isReady_falseWhenCompleted() {
+        // Planted 15 days ago (more than 2 weeks) but already completed
+        let plantedDate = Date().addingTimeInterval(-86400 * 15)
+        let sprout = DerivedSprout(
+            id: "test-3",
+            twigId: "branch-0-twig-0",
+            title: "Test Sprout",
             season: .twoWeeks,
             environment: .fertile,
-            nodeId: "branch-0-twig-0",
-            soilCost: 2
+            soilCost: 2,
+            leafId: nil,
+            bloomWither: nil,
+            bloomBudding: nil,
+            bloomFlourish: nil,
+            state: .completed,
+            plantedAt: plantedDate,
+            harvestedAt: Date(),
+            result: 5,
+            reflection: nil,
+            waterEntries: []
         )
-        let after = Date()
-
-        #expect(sprout.createdAt >= before)
-        #expect(sprout.createdAt <= after)
+        #expect(isSproutReady(sprout) == false)
     }
 }

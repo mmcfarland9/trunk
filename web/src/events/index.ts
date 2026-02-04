@@ -23,6 +23,7 @@ export {
   deriveWaterAvailable,
   deriveSunAvailable,
   wasSproutWateredThisWeek,
+  wasShoneThisWeek,
   getTodayResetTime,
   getWeekResetTime,
   getSproutsForTwig,
@@ -30,12 +31,20 @@ export {
   getActiveSprouts,
   getCompletedSprouts,
   toSprout,
+  getLeafById,
+  getSproutsByLeaf,
+  generateSproutId,
+  generateLeafId,
+  getAllWaterEntries,
+  deriveSoilLog,
 } from './derive'
+export type { DerivedSoilEntry } from './derive'
 
 // Store
 export {
   initEventStore,
   setEventStoreErrorCallbacks,
+  setEventSyncCallback,
   appendEvent,
   appendEvents,
   getEvents,
@@ -47,10 +56,13 @@ export {
   replaceEvents,
   getEventCount,
   exportEvents,
+  // Resource getters (derived from events)
+  getSoilAvailable,
+  getSoilCapacity,
+  canAffordSoil,
+  canAffordWater,
+  canAffordSun,
+  getWaterCapacity,
+  getSunCapacity,
 } from './store'
 
-// Migration (for export)
-export { migrateToEvents, validateMigration } from './migrate'
-
-// Rebuild (for import)
-export { rebuildFromEvents, validateRebuild } from './rebuild'

@@ -79,35 +79,6 @@
   color: var(--ink);
 }
 
-/* Debug clock */
-.debug-clock-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.debug-clock-btn {
-  background: transparent;
-  border: 1px dashed var(--border);
-  font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.6);
-  color: var(--ink-faint);
-  cursor: pointer;
-  padding: 0.2rem 0.4rem;
-  transition: all 150ms ease;
-}
-
-.debug-clock-btn:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.debug-clock-offset {
-  font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.55);
-  color: var(--ink-faint);
-}
-
 .twig-title-section {
   flex: 1;
   display: flex;

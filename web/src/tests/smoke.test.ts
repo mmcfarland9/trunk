@@ -69,7 +69,6 @@ describe('App Smoke Tests', () => {
         'shine-dialog.ts',
         'navigation.ts',
         'progress.ts',
-        'status.ts',
         'hover-branch.ts',
       ]
 
@@ -88,12 +87,15 @@ describe('App Smoke Tests', () => {
       expect(types).toBeDefined()
     })
 
-    it('should export state functions', async () => {
+    it('should export state and events functions', async () => {
       const state = await import('../state')
-      expect(state.nodeState).toBeDefined()
-      expect(state.saveState).toBeDefined()
-      expect(state.getActiveSprouts).toBeDefined()
-      expect(state.getHistorySprouts).toBeDefined()
+      expect(state.getSoilCapacity).toBeDefined()
+      expect(state.calculateSoilCost).toBeDefined()
+
+      const events = await import('../events')
+      expect(events.getState).toBeDefined()
+      expect(events.getActiveSprouts).toBeDefined()
+      expect(events.getCompletedSprouts).toBeDefined()
     })
   })
 

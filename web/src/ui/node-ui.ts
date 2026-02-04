@@ -1,8 +1,9 @@
 import type { AppContext } from '../types'
-import { nodeState, getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
+import { getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
 import { getUserProfile } from '../services/auth-service'
+import { getState, getSproutsForTwig, getLeavesForTwig } from '../events'
 
-export function setNodeLabel(element: HTMLButtonElement, label: string): void {
+function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
 
   if (element.classList.contains('twig')) {
@@ -156,18 +157,19 @@ export function syncNode(element: HTMLButtonElement): void {
   // Preset labels are the permanent map structure - use them as the source of truth
   const presetLabel = getPresetLabel(nodeId)
   const presetNote = getPresetNote(nodeId)
-  const stored = nodeState[nodeId]
   const defaultLabel = element.dataset.defaultLabel || ''
 
-  // Labels come from preset first, then stored, then default
-  const label = presetLabel || stored?.label?.trim() || defaultLabel
+  // Labels come from preset first, then default
+  const label = presetLabel || defaultLabel
 
   setNodeLabel(element, label)
 
-  // Has content if there's a preset label/note, or stored data beyond the default
+  // Has content if there's a preset label/note, or sprouts/leaves in this twig
   const hasPresetContent = Boolean(presetLabel || presetNote)
-  const hasStoredContent = Boolean(stored && (stored.note?.trim() || stored.sprouts?.length || stored.leaves?.length))
-  element.dataset.filled = (hasPresetContent || hasStoredContent) ? 'true' : 'false'
+  const state = getState()
+  const hasSprouts = getSproutsForTwig(state, nodeId).length > 0
+  const hasLeaves = getLeavesForTwig(state, nodeId).length > 0
+  element.dataset.filled = (hasPresetContent || hasSprouts || hasLeaves) ? 'true' : 'false'
 }
 
 export function setFocusedNode(
@@ -225,12 +227,11 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
     note = 'a unified framework\nfor mind, body & spirit'
     hasLabel = Boolean(label)
   } else {
-    const stored = nodeId ? nodeState[nodeId] : undefined
     // Preset labels are the source of truth for the map structure
     const presetLabel = nodeId ? getPresetLabel(nodeId) : ''
     const presetNote = nodeId ? getPresetNote(nodeId) : ''
-    label = presetLabel || stored?.label?.trim() || ''
-    note = presetNote || stored?.note?.trim() || ''
+    label = presetLabel || ''
+    note = presetNote || ''
     hasLabel = Boolean(label)
   }
 

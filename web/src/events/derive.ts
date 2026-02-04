@@ -67,7 +67,7 @@ export interface DerivedState {
  * Derive complete state from event log.
  * This replays all events to compute current state.
  */
-export function deriveState(events: TrunkEvent[]): DerivedState {
+export function deriveState(events: readonly TrunkEvent[]): DerivedState {
   let soilCapacity = STARTING_CAPACITY
   let soilAvailable = STARTING_CAPACITY
 
@@ -194,18 +194,21 @@ export function getTodayResetTime(now: Date = new Date()): Date {
 }
 
 /**
- * Get reset time for weekly sun (Sunday 6am local time)
+ * Get reset time for weekly sun (Monday 6am local time)
  */
 export function getWeekResetTime(now: Date = new Date()): Date {
   const reset = new Date(now)
   reset.setHours(6, 0, 0, 0)
 
-  // Find most recent Sunday
-  const daysSinceSunday = reset.getDay()
-  reset.setDate(reset.getDate() - daysSinceSunday)
+  // Find most recent Monday
+  // getDay(): Sunday=0, Monday=1, Tuesday=2, ..., Saturday=6
+  // We want days since Monday: Monday=0, Tuesday=1, ..., Sunday=6
+  const dayOfWeek = reset.getDay()
+  const daysSinceMonday = (dayOfWeek + 6) % 7 // Convert: Mon=0, Tue=1, ..., Sun=6
+  reset.setDate(reset.getDate() - daysSinceMonday)
 
-  // If today is Sunday but before 6am, go back a week
-  if (now.getDay() === 0 && now < reset) {
+  // If today is Monday but before 6am, go back a week
+  if (dayOfWeek === 1 && now < reset) {
     reset.setDate(reset.getDate() - 7)
   }
 
@@ -216,7 +219,7 @@ export function getWeekResetTime(now: Date = new Date()): Date {
  * Derive water available from events.
  * Water = capacity - waters since 6am today
  */
-export function deriveWaterAvailable(events: TrunkEvent[], now: Date = new Date()): number {
+export function deriveWaterAvailable(events: readonly TrunkEvent[], now: Date = new Date()): number {
   const resetTime = getTodayResetTime(now)
 
   const waterCount = events.filter(
@@ -230,7 +233,7 @@ export function deriveWaterAvailable(events: TrunkEvent[], now: Date = new Date(
  * Derive sun available from events.
  * Sun = capacity - shines since Sunday 6am
  */
-export function deriveSunAvailable(events: TrunkEvent[], now: Date = new Date()): number {
+export function deriveSunAvailable(events: readonly TrunkEvent[], now: Date = new Date()): number {
   const resetTime = getWeekResetTime(now)
 
   const sunCount = events.filter(
@@ -244,7 +247,7 @@ export function deriveSunAvailable(events: TrunkEvent[], now: Date = new Date())
  * Check if a sprout was watered this week
  */
 export function wasSproutWateredThisWeek(
-  events: TrunkEvent[],
+  events: readonly TrunkEvent[],
   sproutId: string,
   now: Date = new Date()
 ): boolean {
@@ -323,4 +326,143 @@ function calculateEndDate(plantedAt: string, season: SproutSeason): string {
   // Set to 9am CST (UTC-6 = 15:00 UTC)
   end.setUTCHours(15, 0, 0, 0)
   return end.toISOString()
+}
+
+/**
+ * Get a leaf by its ID
+ */
+export function getLeafById(state: DerivedState, leafId: string): DerivedLeaf | undefined {
+  return state.leaves.get(leafId)
+}
+
+/**
+ * Get all sprouts for a specific leaf
+ */
+export function getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSprout[] {
+  return Array.from(state.sprouts.values()).filter((s) => s.leafId === leafId)
+}
+
+/**
+ * Check if any sun was shone this week
+ */
+export function wasShoneThisWeek(events: readonly TrunkEvent[], now: Date = new Date()): boolean {
+  const resetTime = getWeekResetTime(now)
+  return events.some(
+    (e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime
+  )
+}
+
+/**
+ * Generate a unique sprout ID
+ */
+export function generateSproutId(): string {
+  return `sprout-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+/**
+ * Generate a unique leaf ID
+ */
+export function generateLeafId(): string {
+  return `leaf-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+/**
+ * Get all water entries across all sprouts
+ */
+export function getAllWaterEntries(state: DerivedState, getTwigLabel?: (twigId: string) => string): (WaterEntry & { sproutId: string, sproutTitle: string, twigId: string, twigLabel: string })[] {
+  const entries: (WaterEntry & { sproutId: string, sproutTitle: string, twigId: string, twigLabel: string })[] = []
+  for (const sprout of state.sprouts.values()) {
+    for (const entry of sprout.waterEntries) {
+      entries.push({
+        ...entry,
+        sproutId: sprout.id,
+        sproutTitle: sprout.title,
+        twigId: sprout.twigId,
+        twigLabel: getTwigLabel ? getTwigLabel(sprout.twigId) : sprout.twigId,
+      })
+    }
+  }
+  // Sort by timestamp descending (newest first)
+  return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+}
+
+/**
+ * Soil log entry derived from events
+ */
+export interface DerivedSoilEntry {
+  timestamp: string
+  amount: number
+  reason: string
+  context?: string
+}
+
+/**
+ * Derive soil log from events
+ * Shows how soil changed over time
+ */
+export function deriveSoilLog(events: readonly TrunkEvent[]): DerivedSoilEntry[] {
+  const log: DerivedSoilEntry[] = []
+
+  // Track sprout titles for context
+  const sproutTitles = new Map<string, string>()
+
+  for (const event of events) {
+    switch (event.type) {
+      case 'sprout_planted': {
+        sproutTitles.set(event.sproutId, event.title)
+        log.push({
+          timestamp: event.timestamp,
+          amount: -event.soilCost,
+          reason: 'Planted sprout',
+          context: event.title,
+        })
+        break
+      }
+
+      case 'sprout_watered': {
+        log.push({
+          timestamp: event.timestamp,
+          amount: SOIL_RECOVERY_PER_WATER,
+          reason: 'Watered sprout',
+          context: sproutTitles.get(event.sproutId),
+        })
+        break
+      }
+
+      case 'sprout_harvested': {
+        const title = sproutTitles.get(event.sproutId)
+        // Return soil + capacity gain
+        log.push({
+          timestamp: event.timestamp,
+          amount: event.capacityGained,
+          reason: `Harvested (${event.result}/5)`,
+          context: title,
+        })
+        break
+      }
+
+      case 'sprout_uprooted': {
+        const title = sproutTitles.get(event.sproutId)
+        log.push({
+          timestamp: event.timestamp,
+          amount: event.soilReturned,
+          reason: 'Uprooted sprout',
+          context: title,
+        })
+        break
+      }
+
+      case 'sun_shone': {
+        log.push({
+          timestamp: event.timestamp,
+          amount: SOIL_RECOVERY_PER_SUN,
+          reason: 'Sun reflection',
+          context: event.twigLabel,
+        })
+        break
+      }
+    }
+  }
+
+  return log
 }

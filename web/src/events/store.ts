@@ -176,6 +176,60 @@ export function checkSproutWateredThisWeek(sproutId: string, now: Date = new Dat
   return wasSproutWateredThisWeek(events, sproutId, now)
 }
 
+// ============================================================================
+// RESOURCE GETTERS - Read from derived state
+// These replace the legacy localStorage-based resource functions
+// ============================================================================
+
+/**
+ * Get soil available (derived from events)
+ */
+export function getSoilAvailable(): number {
+  return getState().soilAvailable
+}
+
+/**
+ * Get soil capacity (derived from events)
+ */
+export function getSoilCapacity(): number {
+  return getState().soilCapacity
+}
+
+/**
+ * Check if we can afford a soil cost
+ */
+export function canAffordSoil(cost: number): boolean {
+  return getState().soilAvailable >= cost
+}
+
+/**
+ * Check if we can afford water (have water available today)
+ */
+export function canAffordWater(cost: number = 1): boolean {
+  return getWaterAvailable() >= cost
+}
+
+/**
+ * Check if we can afford sun (have sun available this week)
+ */
+export function canAffordSun(cost: number = 1): boolean {
+  return getSunAvailable() >= cost
+}
+
+/**
+ * Get water capacity (constant from shared config)
+ */
+export function getWaterCapacity(): number {
+  return sharedConstants.water.dailyCapacity
+}
+
+/**
+ * Get sun capacity (constant from shared config)
+ */
+export function getSunCapacity(): number {
+  return sharedConstants.sun.weeklyCapacity
+}
+
 /**
  * Clear all events (for testing/reset)
  */

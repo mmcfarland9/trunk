@@ -240,6 +240,7 @@ export type AppElements = {
   accountDialogShineCheckbox: HTMLInputElement
   accountDialogSignOut: HTMLButtonElement
   accountDialogSave: HTMLButtonElement
+  accountDialogResetData: HTMLButtonElement
 }
 
 export type AppContext = {

@@ -1,8 +1,8 @@
 import type { AppContext } from '../types'
 import wateringPromptsRaw from '../assets/watering-prompts.txt?raw'
-import { nodeState, spendWater, canAffordWater, recoverSoil, addWaterEntry, getSoilRecoveryRate, wasWateredThisWeek, getDebugDate } from '../state'
+import { canAffordWater } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
-import { appendEvent } from '../events'
+import { appendEvent, checkSproutWateredThisWeek } from '../events'
 
 export type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
@@ -37,12 +37,8 @@ function getRandomPrompt(): string {
   return prompt
 }
 
-function wasSproutWateredThisWeek(twigId: string, sproutId: string): boolean {
-  const data = nodeState[twigId]
-  if (!data?.sprouts) return false
-  const sprout = data.sprouts.find(s => s.id === sproutId)
-  if (!sprout) return false
-  return wasWateredThisWeek(sprout)
+function wasSproutWateredThisWeek(_twigId: string, sproutId: string): boolean {
+  return checkSproutWateredThisWeek(sproutId)
 }
 
 export type WaterDialogApi = {
@@ -103,27 +99,21 @@ export function initWaterDialog(
     }
 
     if (currentWateringSprout) {
-      // Spend water, gain soil
-      spendWater()
-      const sproutTitle = ctx.elements.waterDialogTitle.textContent || 'Sprout'
-      recoverSoil(getSoilRecoveryRate(), 0, 'Watered sprout', sproutTitle)
+      // Water spending and soil recovery are now derived from events
       callbacks.onWaterMeterChange()
       callbacks.onSoilMeterChange()
 
       // Save water entry to sprout data
       const prompt = waterDialogJournal.placeholder
 
-      // Emit sprout_watered event
+      // Emit sprout_watered event - this is the source of truth
       appendEvent({
         type: 'sprout_watered',
-        timestamp: getDebugDate().toISOString(),
+        timestamp: new Date().toISOString(),
         sproutId: currentWateringSprout.id,
         content: entry,
         prompt,
       })
-
-      // Also update legacy nodeState for backward compatibility
-      addWaterEntry(currentWateringSprout.twigId, currentWateringSprout.id, entry, prompt)
     }
 
     closeWaterDialog()

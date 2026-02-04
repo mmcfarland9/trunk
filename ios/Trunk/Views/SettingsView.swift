@@ -6,15 +6,11 @@
 //
 
 import SwiftUI
-import SwiftData
 import UniformTypeIdentifiers
 import Auth
 
 struct SettingsView: View {
     @Bindable var progression: ProgressionViewModel
-
-    @Environment(\.modelContext) private var modelContext
-    @Query private var nodeData: [NodeData]
 
     @State private var showingExportSheet = false
     @State private var showingImportPicker = false
@@ -279,7 +275,7 @@ struct SettingsView: View {
     // MARK: - Export
 
     private func exportData() {
-        // TODO: For cloud-synced users, export should come from EventStore.shared.events
+        // For cloud-synced users, export should come from EventStore.shared.events
         // For now, this is a stub - import/export will be updated in a future task
         alertMessage = "Export from events not yet implemented. Please use cloud sync."
         showingAlert = true
@@ -339,19 +335,9 @@ struct SettingsView: View {
         // Replace events in EventStore
         EventStore.shared.setEvents(syncEvents)
 
-        // Clear node data
-        for node in nodeData {
-            modelContext.delete(node)
-        }
-
-        // Re-import circles (node data) from payload
-        for (nodeId, nodeInfo) in payload.circles {
-            let node = NodeData(nodeId: nodeId, label: nodeInfo.label ?? "")
-            node.note = nodeInfo.note ?? ""
-            modelContext.insert(node)
-        }
-
-        try? modelContext.save()
+        // Note: Custom labels (circles) are no longer stored locally.
+        // In pure cloud architecture, labels come from SharedConstants.
+        // Custom label support via events can be added in a future update.
 
         importPayload = nil
         alertMessage = "Imported \(syncEvents.count) events from backup."
@@ -447,5 +433,4 @@ struct SettingsRow: View {
     NavigationStack {
         SettingsView(progression: ProgressionViewModel())
     }
-    .modelContainer(for: [NodeData.self], inMemory: true)
 }

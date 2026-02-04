@@ -4,8 +4,11 @@ import { buildSproutCard, type SproutCardOptions } from '../ui/twig-view/sprout-
 // Mock getDebugNow to return consistent time
 vi.mock('../state', () => ({
   getDebugNow: vi.fn(() => Date.now()),
-  wasWateredThisWeek: vi.fn(() => false),
   getSoilRecoveryRate: vi.fn(() => 0.05),
+}))
+
+vi.mock('../events', () => ({
+  checkSproutWateredThisWeek: vi.fn(() => false),
 }))
 
 describe('buildSproutCard', () => {
@@ -159,8 +162,8 @@ describe('buildSproutCard', () => {
   })
 
   it('shows disabled watered button when already watered this week', async () => {
-    const { wasWateredThisWeek } = await import('../state')
-    vi.mocked(wasWateredThisWeek).mockReturnValue(true)
+    const { checkSproutWateredThisWeek } = await import('../events')
+    vi.mocked(checkSproutWateredThisWeek).mockReturnValue(true)
 
     const card = buildSproutCard(baseOptions)
     const waterBtn = card.querySelector('.sprout-water-btn') as HTMLButtonElement

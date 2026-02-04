@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 // Wrapper for sheet presentation with twig index
 struct TwigSelection: Identifiable {
@@ -17,8 +16,6 @@ struct TwigSelection: Identifiable {
 struct BranchView: View {
     let branchIndex: Int
     @Bindable var progression: ProgressionViewModel
-
-    @Query private var nodeData: [NodeData]
 
     @State private var selectedTwig: TwigSelection?
 
@@ -85,10 +82,7 @@ struct BranchView: View {
     }
 
     private func labelForTwig(_ twigId: String, twigIndex: Int) -> String {
-        if let data = nodeData.first(where: { $0.nodeId == twigId }), !data.label.isEmpty {
-            return data.label
-        }
-        return SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
+        SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
     }
 }
 
@@ -152,5 +146,4 @@ struct TwigRow: View {
     NavigationStack {
         BranchView(branchIndex: 0, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [NodeData.self], inMemory: true)
 }

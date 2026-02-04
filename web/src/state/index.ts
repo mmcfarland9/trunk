@@ -1,19 +1,11 @@
 /**
- * State module - re-exports all state management functionality.
+ * State module - pure cloud architecture.
  *
- * This index provides backward compatibility for code importing from './state'.
- * All exports are organized into focused modules:
- * - migrations.ts: Schema versioning and migration functions
- * - view-state.ts: Navigation and UI state
- * - resources.ts: Soil, water, sun management
- * - node-state.ts: Node data, sprouts, leaves, logs
+ * All state is derived from cloud events. No local persistence except cache.
+ * This file re-exports from the appropriate modules for convenience.
  */
 
-// Schema migrations
-export { CURRENT_SCHEMA_VERSION, runMigrations } from './migrations'
-export type { StoredState } from './migrations'
-
-// View state
+// View state (in-memory only, not persisted)
 export {
   getViewMode,
   setViewModeState,
@@ -31,86 +23,35 @@ export {
   isTwigView,
 } from './view-state'
 
-// Resources
+// Resources - derived from events
 export {
-  // Debug clock
-  getDebugNow,
-  getDebugDate,
-  advanceClockByDays,
-  setDebugDate,
-  // Reset time system
-  getTodayResetTime,
-  getWeekResetTime,
-  getNextWaterReset,
-  getNextSunReset,
-  formatResetTime,
-  getWeekString,
-  // Soil calculations
+  getSoilAvailable,
+  getSoilCapacity,
+  canAffordSoil,
+  getWaterAvailable,
+  getWaterCapacity,
+  canAffordWater,
+  getSunAvailable,
+  getSunCapacity,
+  canAffordSun,
+} from '../events/store'
+
+// Pure calculation functions (no state)
+export {
   calculateSoilCost,
   calculateCapacityReward,
   getCapacityReward,
   getMaxSoilCapacity,
   getSoilRecoveryRate,
-  getSunRecoveryRate,
-  // Soil API
-  getSoilAvailable,
-  getSoilCapacity,
-  canAffordSoil,
-  spendSoil,
-  recoverSoil,
-  recoverPartialSoil,
-  // Water API
-  getWaterAvailable,
-  getWaterCapacity,
-  canAffordWater,
-  spendWater,
-  // Sun API
-  getSunAvailable,
-  getSunCapacity,
-  canAffordSun,
-  spendSun,
-  // Reset
-  resetResources,
-} from './resources'
+  getTodayResetTime,
+  getWeekResetTime,
+  getNextWaterReset,
+  getNextSunReset,
+  formatResetTime,
+} from '../utils/calculations'
 
-// Node state
+// Preset labels from shared constants
 export {
-  // Preset
   getPresetLabel,
   getPresetNote,
-  // State
-  nodeState,
-  lastSavedAt,
-  sunLog,
-  soilLog,
-  // Storage callbacks
-  setStorageErrorCallbacks,
-  // State operations
-  saveState,
-  clearState,
-  deleteNodeData,
-  hasNodeData,
-  // Sprout helpers
-  generateSproutId,
-  getSproutsByState,
-  getActiveSprouts,
-  getHistorySprouts,
-  // Leaf helpers
-  generateLeafId,
-  getTwigLeaves,
-  getLeafById,
-  getSproutsByLeaf,
-  createLeaf,
-  // Water entries
-  getAllWaterEntries,
-  addWaterEntry,
-  wasWateredThisWeek,
-  // Sun entries
-  addSunEntry,
-  wasShoneThisWeek,
-  // Soil entries
-  addSoilEntry,
-  // Notification settings
-  getNotificationSettings,
-  saveNotificationSettings,
-} from './node-state'
+} from '../utils/presets'

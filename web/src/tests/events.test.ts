@@ -505,11 +505,11 @@ describe('Sun Availability Derivation', () => {
     expect(available).toBe(0) // 1 - 1
   })
 
-  it('should not count sun from before Sunday 6am reset', () => {
+  it('should not count sun from before Monday 6am reset', () => {
     // Wednesday Jan 29, 2026
     const now = new Date('2026-01-29T14:00:00')
     const events: TrunkEvent[] = [
-      // Saturday last week (before Sunday reset)
+      // Saturday last week (before Monday reset)
       {
         type: 'sun_shone',
         timestamp: '2026-01-25T10:00:00Z',
@@ -579,13 +579,13 @@ describe('Helper Functions', () => {
   })
 
   describe('getWeekResetTime', () => {
-    it('should return last Sunday 6am', () => {
+    it('should return last Monday 6am', () => {
       // Thursday Jan 29, 2026 at 2pm local
       const now = new Date(2026, 0, 29, 14, 0, 0)
       const reset = getWeekResetTime(now)
-      expect(reset.getDay()).toBe(0) // Sunday
+      expect(reset.getDay()).toBe(1) // Monday
       expect(reset.getHours()).toBe(6)
-      expect(reset.getDate()).toBe(25) // Jan 25 is the Sunday before Thursday Jan 29
+      expect(reset.getDate()).toBe(26) // Jan 26 is the Monday before Thursday Jan 29
     })
   })
 

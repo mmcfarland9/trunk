@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SwiftData
 
 // MARK: - Event Types (match web src/events/types.ts)
 
@@ -115,107 +114,18 @@ struct DataExportService {
 
     // MARK: - Export
 
-    /// Generate v4 export payload from SwiftData models
-    static func generateExport(
-        sprouts: [Sprout],
-        leaves: [Leaf],
-        sunEntries: [SunEntry],
-        nodeData: [NodeData],
-        soilCapacity: Double
-    ) -> ExportPayload {
-        var events: [TrunkEvent] = []
-
-        // Collect all events from models
-
-        // Leaf creation events
-        for leaf in leaves {
-            events.append(.leafCreated(
-                timestamp: isoString(leaf.createdAt),
-                leafId: leaf.id,
-                twigId: leaf.nodeId,
-                name: leaf.name
-            ))
-        }
-
-        // Sprout events
-        for sprout in sprouts {
-            // Only include active/completed sprouts
-            guard sprout.state == .active || sprout.state == .completed else { continue }
-
-            // Planted event
-            let plantedTimestamp = sprout.plantedAt ?? sprout.createdAt
-            events.append(.sproutPlanted(
-                timestamp: isoString(plantedTimestamp),
-                sproutId: sprout.sproutId,
-                twigId: sprout.nodeId,
-                title: sprout.title,
-                season: sprout.seasonRaw,
-                environment: sprout.environmentRaw,
-                soilCost: sprout.soilCost,
-                leafId: sprout.leafId,
-                bloomWither: sprout.bloomWither.isEmpty ? nil : sprout.bloomWither,
-                bloomBudding: sprout.bloomBudding.isEmpty ? nil : sprout.bloomBudding,
-                bloomFlourish: sprout.bloomFlourish.isEmpty ? nil : sprout.bloomFlourish
-            ))
-
-            // Water events
-            for entry in sprout.waterEntries {
-                events.append(.sproutWatered(
-                    timestamp: isoString(entry.timestamp),
-                    sproutId: sprout.sproutId,
-                    content: entry.content,
-                    prompt: entry.prompt
-                ))
-            }
-
-            // Harvest event (if completed)
-            if sprout.state == .completed, let result = sprout.result {
-                let harvestTimestamp = sprout.harvestedAt ?? Date()
-                let capacityGained = ProgressionService.capacityReward(
-                    season: sprout.season,
-                    environment: sprout.environment,
-                    result: result,
-                    currentCapacity: soilCapacity
-                )
-
-                events.append(.sproutHarvested(
-                    timestamp: isoString(harvestTimestamp),
-                    sproutId: sprout.sproutId,
-                    result: result,
-                    reflection: nil,
-                    capacityGained: capacityGained
-                ))
-            }
-        }
-
-        // Sun events
-        for entry in sunEntries {
-            events.append(.sunShone(
-                timestamp: isoString(entry.timestamp),
-                twigId: entry.twigId,
-                twigLabel: entry.twigLabel,
-                content: entry.content,
-                prompt: entry.prompt
-            ))
-        }
-
-        // Sort events chronologically
-        events.sort { $0.timestamp < $1.timestamp }
-
-        // Build circles (node labels/notes)
-        var circles: [String: CircleData] = [:]
-        for node in nodeData {
-            circles[node.nodeId] = CircleData(
-                label: node.label.isEmpty ? nil : node.label,
-                note: node.note.isEmpty ? nil : node.note
-            )
+    /// Generate v4 export payload from EventStore events
+    static func generateExport(events: [SyncEvent]) -> ExportPayload {
+        // Convert SyncEvents to TrunkEvents for export
+        let trunkEvents = events.compactMap { syncEvent -> TrunkEvent? in
+            convertSyncEventToTrunkEvent(syncEvent)
         }
 
         return ExportPayload(
             version: 4,
             exportedAt: isoString(Date()),
-            events: events,
-            circles: circles,
+            events: trunkEvents,
+            circles: [:], // Pure cloud architecture - no custom labels stored locally
             settings: ExportSettings(name: nil)
         )
     }
@@ -235,114 +145,38 @@ struct DataExportService {
         return try decoder.decode(ExportPayload.self, from: data)
     }
 
-    /// Rebuild SwiftData models from imported events
-    /// Returns (sprouts, leaves, sunEntries)
-    static func rebuildFromEvents(
-        _ events: [TrunkEvent],
-        circles: [String: CircleData],
-        context: ModelContext
-    ) -> (sprouts: [Sprout], leaves: [Leaf], sunEntries: [SunEntry], nodeData: [NodeData]) {
-        var sprouts: [Sprout] = []
-        var leaves: [Leaf] = []
-        var sunEntries: [SunEntry] = []
-        var nodeData: [NodeData] = []
+    // MARK: - Event Conversion
 
-        // Track sprouts by ID for water/harvest events
-        var sproutMap: [String: Sprout] = [:]
-
-        for event in events {
-            switch event.type {
-            case .leafCreated:
-                guard let leafId = event.leafId ?? event.sproutId, // leafId might be in sproutId field
-                      let twigId = event.twigId,
-                      let name = event.name else { continue }
-
-                let leaf = Leaf(id: leafId, name: name, nodeId: twigId)
-                leaf.createdAt = parseISODate(event.timestamp)
-                leaves.append(leaf)
-
-            case .sproutPlanted:
-                guard let sproutId = event.sproutId,
-                      let twigId = event.twigId,
-                      let title = event.title,
-                      let seasonRaw = event.season,
-                      let environmentRaw = event.environment,
-                      let soilCost = event.soilCost else { continue }
-
-                let season = Season(rawValue: seasonRaw) ?? .oneMonth
-                let environment = SproutEnvironment(rawValue: environmentRaw) ?? .firm
-
-                let sprout = Sprout(
-                    sproutId: sproutId,
-                    title: title,
-                    season: season,
-                    environment: environment,
-                    nodeId: twigId,
-                    soilCost: soilCost,
-                    bloomWither: event.bloomWither ?? "",
-                    bloomBudding: event.bloomBudding ?? "",
-                    bloomFlourish: event.bloomFlourish ?? ""
-                )
-                sprout.leafId = event.leafId
-                sprout.plantedAt = parseISODate(event.timestamp)
-                sprout.createdAt = parseISODate(event.timestamp)
-
-                sprouts.append(sprout)
-                sproutMap[sproutId] = sprout
-
-            case .sproutWatered:
-                guard let sproutId = event.sproutId,
-                      let content = event.content,
-                      let sprout = sproutMap[sproutId] else { continue }
-
-                let entry = WaterEntry(content: content, prompt: event.prompt)
-                entry.timestamp = parseISODate(event.timestamp)
-                entry.sprout = sprout
-                sprout.waterEntries.append(entry)
-
-            case .sproutHarvested:
-                guard let sproutId = event.sproutId,
-                      let result = event.result,
-                      let sprout = sproutMap[sproutId] else { continue }
-
-                sprout.harvest(result: result)
-                sprout.harvestedAt = parseISODate(event.timestamp)
-
-            case .sproutUprooted:
-                // Uprooted sprouts are removed from the map (not exported)
-                if let sproutId = event.sproutId {
-                    if let index = sprouts.firstIndex(where: { $0.sproutId == sproutId }) {
-                        sprouts.remove(at: index)
-                    }
-                    sproutMap.removeValue(forKey: sproutId)
-                }
-
-            case .sunShone:
-                guard let twigId = event.twigId,
-                      let content = event.content else { continue }
-
-                let entry = SunEntry(
-                    content: content,
-                    prompt: event.prompt,
-                    twigId: twigId,
-                    twigLabel: event.twigLabel ?? ""
-                )
-                entry.timestamp = parseISODate(event.timestamp)
-                sunEntries.append(entry)
-            }
+    /// Convert a SyncEvent to TrunkEvent for export
+    private static func convertSyncEventToTrunkEvent(_ event: SyncEvent) -> TrunkEvent? {
+        guard let eventType = TrunkEventType(rawValue: event.type) else {
+            return nil
         }
 
-        // Build node data from circles
-        for (nodeId, circle) in circles {
-            let node = NodeData(
-                nodeId: nodeId,
-                label: circle.label ?? "",
-                note: circle.note ?? ""
-            )
-            nodeData.append(node)
-        }
+        let payload = event.payload
 
-        return (sprouts, leaves, sunEntries, nodeData)
+        return TrunkEvent(
+            type: eventType,
+            timestamp: event.clientTimestamp,
+            sproutId: getString(payload, "sproutId"),
+            twigId: getString(payload, "twigId"),
+            title: getString(payload, "title"),
+            season: getString(payload, "season"),
+            environment: getString(payload, "environment"),
+            soilCost: getInt(payload, "soilCost"),
+            leafId: getString(payload, "leafId"),
+            bloomWither: getString(payload, "bloomWither"),
+            bloomBudding: getString(payload, "bloomBudding"),
+            bloomFlourish: getString(payload, "bloomFlourish"),
+            content: getString(payload, "note") ?? getString(payload, "content"),
+            prompt: getString(payload, "prompt"),
+            result: getInt(payload, "result"),
+            reflection: getString(payload, "reflection"),
+            capacityGained: getDouble(payload, "capacityGained"),
+            soilReturned: getInt(payload, "soilReturned"),
+            twigLabel: getString(payload, "twigLabel"),
+            name: getString(payload, "name")
+        )
     }
 
     // MARK: - Helpers
@@ -353,20 +187,34 @@ struct DataExportService {
         return formatter
     }()
 
-    private static let isoFormatterNoFraction: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter
-    }()
-
     private static func isoString(_ date: Date) -> String {
         isoFormatter.string(from: date)
     }
 
-    private static func parseISODate(_ string: String) -> Date {
-        isoFormatter.date(from: string) ??
-        isoFormatterNoFraction.date(from: string) ??
-        Date()
+    private static func getString(_ payload: [String: AnyCodable], _ key: String) -> String? {
+        guard let codable = payload[key] else { return nil }
+        return codable.value as? String
+    }
+
+    private static func getInt(_ payload: [String: AnyCodable], _ key: String) -> Int? {
+        guard let codable = payload[key] else { return nil }
+        if let intValue = codable.value as? Int {
+            return intValue
+        }
+        if let doubleValue = codable.value as? Double {
+            return Int(doubleValue)
+        }
+        return nil
+    }
+
+    private static func getDouble(_ payload: [String: AnyCodable], _ key: String) -> Double? {
+        guard let codable = payload[key] else { return nil }
+        if let doubleValue = codable.value as? Double {
+            return doubleValue
+        }
+        if let intValue = codable.value as? Int {
+            return Double(intValue)
+        }
+        return nil
     }
 }
-

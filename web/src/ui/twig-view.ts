@@ -10,27 +10,24 @@ import {
   getResultEmoji,
 } from '../utils/sprout-labels'
 import {
-  nodeState,
-  saveState,
-  generateSproutId,
-  getActiveSprouts,
-  getHistorySprouts,
-  getDebugNow,
-  getDebugDate,
   calculateSoilCost,
   getSoilAvailable,
   canAffordSoil,
-  spendSoil,
-  recoverPartialSoil,
-  addSoilEntry,
-  getTwigLeaves,
-  getSproutsByLeaf,
-  getLeafById,
-  createLeaf,
   getSoilRecoveryRate,
-  wasWateredThisWeek,
+  getPresetLabel,
 } from '../state'
-import { appendEvent } from '../events'
+import {
+  appendEvent,
+  getState,
+  getSproutsForTwig,
+  getLeavesForTwig,
+  getLeafById,
+  toSprout,
+  generateSproutId,
+  generateLeafId,
+  checkSproutWateredThisWeek,
+  type DerivedLeaf,
+} from '../events'
 
 export type TwigViewCallbacks = {
   onClose: () => void
@@ -76,18 +73,18 @@ function formatDate(date: Date): string {
 function isReady(sprout: Sprout): boolean {
   // A sprout without an endDate is not ready (endDate is set when planted)
   if (!sprout.endDate) return false
-  return new Date(sprout.endDate).getTime() <= getDebugNow()
+  return new Date(sprout.endDate).getTime() <= Date.now()
 }
 
 function getDaysRemaining(sprout: Sprout): number {
   if (!sprout.endDate) return 0
   const end = new Date(sprout.endDate).getTime()
-  const now = getDebugNow()
+  const now = Date.now()
   const diff = end - now
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
-// wasWateredThisWeek is now imported from state.ts
+// wasWateredThisWeek uses checkSproutWateredThisWeek from events
 
 export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallbacks): TwigViewApi {
   const container = document.createElement('div')
@@ -214,17 +211,32 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   function getSprouts(): Sprout[] {
     const nodeId = getCurrentNodeId()
     if (!nodeId) return []
-    return nodeState[nodeId]?.sprouts || []
+    // Read from derived event state (source of truth)
+    const state = getState()
+    const derivedSprouts = getSproutsForTwig(state, nodeId)
+    return derivedSprouts.map(toSprout)
   }
 
-  function setSprouts(sprouts: Sprout[]): void {
+  // Helper functions to filter sprouts by state
+  function getActiveSprouts(sprouts: Sprout[]): Sprout[] {
+    return sprouts.filter(s => s.state === 'active')
+  }
+
+  function getHistorySprouts(sprouts: Sprout[]): Sprout[] {
+    return sprouts.filter(s => s.state === 'completed')
+  }
+
+  // Helper to get leaves for current twig
+  function getLeaves(): DerivedLeaf[] {
     const nodeId = getCurrentNodeId()
-    if (!nodeId) return
-    if (!nodeState[nodeId]) {
-      nodeState[nodeId] = { label: '', note: '' }
-    }
-    nodeState[nodeId].sprouts = sprouts.length > 0 ? sprouts : undefined
-    saveState(callbacks.onSave)
+    if (!nodeId) return []
+    const state = getState()
+    return getLeavesForTwig(state, nodeId)
+  }
+
+  // Helper to filter sprouts by leaf
+  function filterSproutsByLeaf(sprouts: Sprout[], leafId: string): Sprout[] {
+    return sprouts.filter(s => s.leafId === leafId)
   }
 
   // Max lengths for form fields
@@ -312,7 +324,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const ready = isReady(s)
     const daysLeft = getDaysRemaining(s)
     const hasLeaf = !!s.leafId
-    const watered = wasWateredThisWeek(s)
+    const watered = checkSproutWateredThisWeek(s.id)
 
     const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
     const bloomHtml = hasBloom ? `
@@ -348,8 +360,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   }
 
   function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boolean): string {
-    const nodeId = getCurrentNodeId()
-    const leaf = nodeId ? getLeafById(nodeId, leafId) : undefined
+    const state = getState()
+    const leaf = getLeafById(state, leafId)
     const leafName = leaf?.name || 'Unnamed Saga'
 
     if (isGrowing) {
@@ -401,9 +413,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const history = getHistorySprouts(sprouts)
 
     // Get all leaves
-    const nodeId = getCurrentNodeId()
-    const leaves = nodeId ? getTwigLeaves(nodeId) : []
-    const leafIdSet = new Set(leaves.map(l => l.id))
+    const leaves = getLeaves()
+    const leafIdSet = new Set(leaves.map((l: DerivedLeaf) => l.id))
 
     // Determine which leaves have active sprouts (these go in Growing)
     const activeLeafIds = new Set(active.filter(s => s.leafId).map(s => s.leafId!))
@@ -414,8 +425,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     // Cultivated leaves = leaves without any active sprouts
     const cultivatedLeaves = leaves.filter(l => !activeLeafIds.has(l.id))
     // Only count leaves that actually have history sprouts
-    const cultivatedLeavesWithHistory = cultivatedLeaves.filter(leaf =>
-      getSproutsByLeaf(history, leaf.id).length > 0
+    const cultivatedLeavesWithHistory = cultivatedLeaves.filter((leaf: DerivedLeaf) =>
+      filterSproutsByLeaf(history, leaf.id).length > 0
     )
     const unassignedHistory = history.filter(s => !s.leafId || !leafIdSet.has(s.leafId))
 
@@ -428,9 +439,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     // Render Growing column - one card per leaf with active sprout
     let activeHtml = ''
 
-    leaves.forEach(leaf => {
+    leaves.forEach((leaf: DerivedLeaf) => {
       if (!activeLeafIds.has(leaf.id)) return
-      const leafSprouts = sprouts.filter(s => s.leafId === leaf.id)
+      const leafSprouts = sprouts.filter((s: Sprout) => s.leafId === leaf.id)
       if (leafSprouts.length === 0) return
       activeHtml += renderLeafCard(leaf.id, leafSprouts, true)
     })
@@ -443,8 +454,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     // Render Cultivated column - one card per leaf without active sprouts
     let historyHtml = ''
 
-    cultivatedLeavesWithHistory.forEach(leaf => {
-      const leafSprouts = sprouts.filter(s => s.leafId === leaf.id)
+    cultivatedLeavesWithHistory.forEach((leaf: DerivedLeaf) => {
+      const leafSprouts = sprouts.filter((s: Sprout) => s.leafId === leaf.id)
       if (leafSprouts.length === 0) return
       historyHtml += renderLeafCard(leaf.id, leafSprouts, false)
     })
@@ -500,22 +511,18 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
           // Uproot returns 25% of soil cost - always log even if amount is 0
           const soilReturn = sprout.soilCost * 0.25
 
-          // Emit sprout_uprooted event
+          // Emit sprout_uprooted event - soil return is derived from events
           appendEvent({
             type: 'sprout_uprooted',
-            timestamp: getDebugDate().toISOString(),
+            timestamp: new Date().toISOString(),
             sproutId: sprout.id,
             soilReturned: soilReturn,
           })
 
-          addSoilEntry(soilReturn, 'Uprooted sprout', sprout.title)
-          recoverPartialSoil(sprout.soilCost, 0.25)
           callbacks.onSoilChange?.()
         }
 
-        // Update legacy nodeState
-        const remaining = sprouts.filter(s => s.id !== id)
-        setSprouts(remaining)
+        // State is derived from events - just re-render
         renderSprouts()
       })
     })
@@ -737,7 +744,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     if (!title) return
 
     const cost = calculateSoilCost(selectedSeason, selectedEnvironment)
-    if (!spendSoil(cost, 'Planted sprout', title)) return
+    if (!canAffordSoil(cost)) return  // Soil will be spent when event is appended
 
     const nodeId = getCurrentNodeId()
     if (!nodeId) return
@@ -748,15 +755,22 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     if (leafChoice === '__new__') {
       // Create new leaf with the provided name
       const leafName = newLeafNameInput.value.trim() || title
-      const newLeaf = createLeaf(nodeId, leafName)
-      leafId = newLeaf.id
+      leafId = generateLeafId()
+      // Emit leaf_created event
+      appendEvent({
+        type: 'leaf_created',
+        timestamp: new Date().toISOString(),
+        leafId,
+        twigId: nodeId,
+        name: leafName,
+      })
     } else if (leafChoice) {
       // Use existing leaf
       leafId = leafChoice
     }
     // If leafChoice is "", sprout is standalone (no leafId)
 
-    const now = getDebugDate()
+    const now = new Date()
     const bloomWither = witherInput.value.trim() || undefined
     const bloomBudding = buddingInput.value.trim() || undefined
     const bloomFlourish = flourishInput.value.trim() || undefined
@@ -779,26 +793,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       bloomFlourish,
     })
 
-    // Also update legacy nodeState for backward compatibility
-    const newSprout: Sprout = {
-      id: sproutId,
-      title,
-      season: selectedSeason,
-      environment: selectedEnvironment,
-      state: 'active',
-      soilCost: cost,
-      createdAt: timestamp,
-      activatedAt: timestamp,
-      plantedAt: timestamp,
-      endDate: getEndDate(selectedSeason, now).toISOString(),
-      bloomWither,
-      bloomBudding,
-      bloomFlourish,
-      leafId,
-    }
-
-    const sprouts = getSprouts()
-    setSprouts([...sprouts, newSprout])
+    // State is derived from events, no need to update legacy nodeState
     resetForm()
     renderSprouts()
     callbacks.onSoilChange?.()
@@ -838,16 +833,13 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       leafSelect.remove(2)
     }
     // Add existing leaves for this twig
-    const nodeId = getCurrentNodeId()
-    if (nodeId) {
-      const leaves = getTwigLeaves(nodeId)
-      leaves.forEach(leaf => {
-        const option = document.createElement('option')
-        option.value = leaf.id
-        option.textContent = leaf.name
-        leafSelect.appendChild(option)
-      })
-    }
+    const leaves = getLeaves()
+    leaves.forEach((leaf: DerivedLeaf) => {
+      const option = document.createElement('option')
+      option.value = leaf.id
+      option.textContent = leaf.name
+      leafSelect.appendChild(option)
+    })
     // Reset to placeholder
     leafSelect.selectedIndex = 0
   }
@@ -857,12 +849,11 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const nodeId = twigNode.dataset.nodeId
     if (!nodeId) return
 
-    const data = nodeState[nodeId]
-    const defaultLabel = twigNode.dataset.defaultLabel || ''
-    const label = data?.label?.trim() || defaultLabel
+    // Labels come from preset constants
+    const label = getPresetLabel(nodeId) || twigNode.dataset.defaultLabel || ''
 
     titleInput.value = label
-    noteInput.value = data?.note || ''
+    noteInput.value = '' // Notes are no longer stored
 
     resetForm()
     populateLeafSelect()

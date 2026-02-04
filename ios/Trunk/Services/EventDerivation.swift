@@ -8,6 +8,51 @@
 
 import Foundation
 
+// MARK: - Enums (shared with DerivedSprout)
+
+/// Season duration for a sprout
+enum Season: String, Codable, CaseIterable {
+    case twoWeeks = "2w"
+    case oneMonth = "1m"
+    case threeMonths = "3m"
+    case sixMonths = "6m"
+    case oneYear = "1y"
+
+    var label: String {
+        SharedConstants.Seasons.labels[rawValue] ?? rawValue
+    }
+
+    var durationMs: Int {
+        SharedConstants.Seasons.durations[rawValue] ?? 0
+    }
+}
+
+/// Environment difficulty for a sprout
+enum SproutEnvironment: String, Codable, CaseIterable {
+    case fertile
+    case firm
+    case barren
+
+    var label: String {
+        SharedConstants.Environments.labels[rawValue] ?? rawValue.capitalized
+    }
+
+    var sproutDescription: String {
+        SharedConstants.Environments.descriptions[rawValue] ?? ""
+    }
+
+    /// Hint text matching web app exactly
+    var formHint: String {
+        SharedConstants.Environments.formHints[rawValue] ?? ""
+    }
+}
+
+/// State of a sprout in its lifecycle
+enum SproutState: String, Codable {
+    case active
+    case completed
+}
+
 // MARK: - Derived State Types
 
 /// A water entry derived from events

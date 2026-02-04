@@ -185,6 +185,35 @@ export function clearLocalCache(): void {
   replaceEvents([])
 }
 
+/**
+ * Delete all events for the current user from Supabase
+ * WARNING: This is destructive and cannot be undone
+ */
+export async function deleteAllEvents(): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Supabase not configured' }
+
+  const { user } = getAuthState()
+  if (!user) return { error: 'Not authenticated' }
+
+  try {
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('user_id', user.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    // Clear local cache after successful deletion
+    clearLocalCache()
+
+    return { error: null }
+  } catch (err) {
+    return { error: String(err) }
+  }
+}
+
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 
 export type SyncResult = {

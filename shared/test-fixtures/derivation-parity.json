@@ -1,0 +1,153 @@
+{
+  "_version": 4,
+  "_description": "Cross-platform parity test: events with expected derivation results. Both web and iOS must produce identical outputs.",
+  "_testDate": "2026-01-29T14:00:00Z",
+
+  "events": [
+    {
+      "type": "leaf_created",
+      "timestamp": "2026-01-01T10:00:00Z",
+      "leafId": "leaf-parity-1",
+      "twigId": "branch-0-twig-0",
+      "name": "Fitness Journey"
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T11:00:00Z",
+      "sproutId": "sprout-parity-1",
+      "twigId": "branch-0-twig-0",
+      "leafId": "leaf-parity-1",
+      "title": "Run 5K",
+      "season": "2w",
+      "environment": "fertile",
+      "soilCost": 2,
+      "bloomWither": "Ran once",
+      "bloomBudding": "Ran 2.5K",
+      "bloomFlourish": "Ran 5K"
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T12:00:00Z",
+      "sproutId": "sprout-parity-2",
+      "twigId": "branch-0-twig-0",
+      "leafId": "leaf-parity-1",
+      "title": "Stretch daily",
+      "season": "1m",
+      "environment": "firm",
+      "soilCost": 5
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-01T13:00:00Z",
+      "sproutId": "sprout-parity-3",
+      "twigId": "branch-1-twig-0",
+      "title": "Learn piano scale",
+      "season": "3m",
+      "environment": "barren",
+      "soilCost": 10
+    },
+    {
+      "type": "sprout_harvested",
+      "timestamp": "2026-01-15T12:00:00Z",
+      "sproutId": "sprout-parity-1",
+      "result": 4,
+      "capacityGained": 0.85,
+      "reflection": "Did well, ran 4K"
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-27T09:00:00Z",
+      "sproutId": "sprout-parity-2",
+      "content": "Stretched for 10 mins",
+      "prompt": "Progress update"
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-27T10:00:00Z",
+      "sproutId": "sprout-parity-3",
+      "content": "Practiced C major"
+    },
+    {
+      "type": "sun_shone",
+      "timestamp": "2026-01-27T11:00:00Z",
+      "twigId": "branch-0-twig-0",
+      "twigLabel": "movement",
+      "content": "Week 1 felt good",
+      "prompt": "Weekly reflection"
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-28T08:00:00Z",
+      "sproutId": "sprout-parity-2",
+      "content": "Morning stretch routine"
+    }
+  ],
+
+  "expectedState": {
+    "_asOf": "2026-01-29T14:00:00Z",
+    "_note": "Test with now=2026-01-29T14:00:00Z (Wednesday), week reset was Monday Jan 27 at 6am, day reset was Jan 29 at 6am",
+
+    "soilCapacity": 10.85,
+    "soilAvailable": 2.5,
+
+    "sproutCount": 3,
+    "activeSproutCount": 2,
+    "completedSproutCount": 1,
+
+    "leafCount": 1,
+    "sunEntryCount": 1,
+
+    "waterAvailable": {
+      "_note": "No waters since Jan 29 6am reset. Last water was Jan 28. Capacity=3, used=0",
+      "value": 3
+    },
+
+    "sunAvailable": {
+      "_note": "1 sun on Jan 27 at 11am (after Mon 6am reset). Capacity=1, used=1",
+      "value": 0
+    },
+
+    "sproutDetails": {
+      "sprout-parity-1": {
+        "state": "completed",
+        "result": 4,
+        "waterEntryCount": 0,
+        "reflection": "Did well, ran 4K"
+      },
+      "sprout-parity-2": {
+        "state": "active",
+        "waterEntryCount": 2
+      },
+      "sprout-parity-3": {
+        "state": "active",
+        "waterEntryCount": 1
+      }
+    },
+
+    "sproutsForTwig": {
+      "branch-0-twig-0": 2,
+      "branch-1-twig-0": 1
+    },
+
+    "leavesForTwig": {
+      "branch-0-twig-0": 1,
+      "branch-1-twig-0": 0
+    }
+  },
+
+  "soilCalculation": {
+    "_note": "Step-by-step soil derivation in timestamp order",
+    "steps": [
+      { "event": "initial", "capacity": 10, "available": 10 },
+      { "event": "leaf_created", "capacity": 10, "available": 10, "note": "no soil change" },
+      { "event": "sprout_planted (cost 2)", "capacity": 10, "available": 8 },
+      { "event": "sprout_planted (cost 5)", "capacity": 10, "available": 3 },
+      { "event": "sprout_planted (cost 10)", "capacity": 10, "available": 0, "note": "clamped from -7" },
+      { "event": "sprout_harvested (cap+0.85, return 2)", "capacity": 10.85, "available": 2 },
+      { "event": "sprout_watered (+0.05)", "capacity": 10.85, "available": 2.05 },
+      { "event": "sprout_watered (+0.05)", "capacity": 10.85, "available": 2.1 },
+      { "event": "sun_shone (+0.35)", "capacity": 10.85, "available": 2.45 },
+      { "event": "sprout_watered (+0.05)", "capacity": 10.85, "available": 2.5 }
+    ]
+  }
+}

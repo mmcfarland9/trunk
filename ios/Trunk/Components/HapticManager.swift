@@ -22,22 +22,10 @@ enum HapticManager {
         generator.impactOccurred()
     }
 
-    /// Heavy impact for significant actions
-    static func heavy() {
-        let generator = UIImpactFeedbackGenerator(style: .heavy)
-        generator.impactOccurred()
-    }
-
     /// Success notification for completed actions
     static func success() {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-    }
-
-    /// Warning notification
-    static func warning() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.warning)
     }
 
     /// Selection changed feedback

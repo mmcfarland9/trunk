@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct TwigDetailView: View {
     let branchIndex: Int
@@ -14,7 +13,6 @@ struct TwigDetailView: View {
     @Bindable var progression: ProgressionViewModel
 
     @Environment(\.dismiss) private var dismiss
-    @Query private var nodeData: [NodeData]
 
     @State private var showingCreateSprout = false
     @State private var selectedSprout: DerivedSprout?
@@ -24,10 +22,7 @@ struct TwigDetailView: View {
     }
 
     private var twigLabel: String {
-        if let data = nodeData.first(where: { $0.nodeId == nodeId }), !data.label.isEmpty {
-            return data.label
-        }
-        return SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
+        SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
     }
 
     // Derived state from EventStore
@@ -238,5 +233,4 @@ struct SproutRow: View {
     NavigationStack {
         TwigDetailView(branchIndex: 0, twigIndex: 0, progression: ProgressionViewModel())
     }
-    .modelContainer(for: [NodeData.self], inMemory: true)
 }

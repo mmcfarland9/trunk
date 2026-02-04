@@ -1,5 +1,5 @@
 import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
-import { nodeState, saveState, recoverSoil, getCapacityReward, calculateCapacityReward, getSoilCapacity, getDebugDate } from '../state'
+import { getCapacityReward, calculateCapacityReward, getSoilCapacity } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { getResultEmoji } from '../utils/sprout-labels'
 import sharedConstants from '../../../shared/constants.json'
@@ -118,24 +118,17 @@ export function initHarvestDialog(
     if (!currentHarvestSprout) return
 
     // Extract values early to avoid non-null assertion issues
-    const { id: sproutId, twigId, season, environment } = currentHarvestSprout
+    const { id: sproutId, season, environment } = currentHarvestSprout
     const result = parseInt(harvestDialogSlider.value, 10)
     const reflection = harvestDialogReflection.value.trim()
 
-    // Find and update the sprout
-    const data = nodeState[twigId]
-    if (!data?.sprouts) return
-
-    const sprout = data.sprouts.find(s => s.id === sproutId)
-    if (!sprout) return
-
-    const timestamp = getDebugDate().toISOString()
+    const timestamp = new Date().toISOString()
 
     // Calculate capacity gained with diminishing returns
     const currentCapacity = getSoilCapacity()
     const capacityGained = calculateCapacityReward(season, environment, result, currentCapacity)
 
-    // Emit sprout_harvested event
+    // Emit sprout_harvested event - this is the only source of truth
     appendEvent({
       type: 'sprout_harvested',
       timestamp,
@@ -145,22 +138,6 @@ export function initHarvestDialog(
       capacityGained,
     })
 
-    // All harvests are completions - result (1-5) indicates outcome
-    // No "failed" state - showing up counts!
-    // Update legacy nodeState for backward compatibility
-    sprout.state = 'completed'
-    sprout.result = result
-    sprout.reflection = reflection || undefined
-    sprout.completedAt = timestamp
-    sprout.harvestedAt = timestamp
-
-    // All harvests return full soil + capacity based on result
-    const resultMultiplier = sharedConstants.soil.resultMultipliers[String(result) as keyof typeof sharedConstants.soil.resultMultipliers] ?? 0.7
-    const baseReward = getCapacityReward(sprout.environment, sprout.season)
-    const capGain = baseReward * resultMultiplier
-    recoverSoil(sprout.soilCost, capGain, 'Harvested sprout', sprout.title)
-
-    saveState()
     callbacks.onSoilMeterChange()
     closeHarvestDialog()
     callbacks.onHarvestComplete()
