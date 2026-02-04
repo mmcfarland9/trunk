@@ -135,6 +135,75 @@ final class SyncService: ObservableObject {
         return (0, nil)
     }
 
+    /// Smart sync: incremental if cache valid, full otherwise.
+    /// Uses cached data as fallback if network fails.
+    func smartSync() async -> SyncResult {
+        guard SupabaseClientProvider.shared != nil else {
+            return SyncResult(status: .error, pulled: 0, error: "Supabase not configured", mode: .full)
+        }
+
+        guard AuthService.shared.isAuthenticated else {
+            return SyncResult(status: .error, pulled: 0, error: "Not authenticated", mode: .full)
+        }
+
+        syncStatus = .syncing
+
+        let cacheValid = isCacheValid()
+        let mode: SyncMode = cacheValid ? .incremental : .full
+
+        do {
+            let result: (pulled: Int, error: String?)
+
+            if cacheValid {
+                // Incremental: pull only new events since last sync
+                result = try await pullEvents()
+            } else {
+                // Full: clear and pull everything
+                // But don't clear cache until we have new data (fallback protection)
+                guard let client = SupabaseClientProvider.shared else {
+                    syncStatus = .error
+                    return SyncResult(status: .error, pulled: 0, error: "Supabase not configured", mode: mode)
+                }
+
+                let syncEvents: [SyncEvent] = try await client
+                    .from("events")
+                    .select()
+                    .order("created_at")
+                    .execute()
+                    .value
+
+                // Success - now safe to replace cache
+                EventStore.shared.setEvents(syncEvents)
+                setCacheVersion()
+
+                if let latest = syncEvents.last?.createdAt {
+                    setLastSync(latest)
+                }
+
+                result = (syncEvents.count, nil)
+            }
+
+            if let error = result.error {
+                syncStatus = .error
+                return SyncResult(status: .error, pulled: 0, error: error, mode: mode)
+            }
+
+            // Update cache version on successful incremental sync too
+            if cacheValid && result.pulled > 0 {
+                setCacheVersion()
+            }
+
+            syncStatus = .success
+            return SyncResult(status: .success, pulled: result.pulled, error: nil, mode: mode)
+
+        } catch {
+            // Network error - use cached data as fallback
+            print("Sync exception, using cached data: \(error)")
+            syncStatus = .error
+            return SyncResult(status: .error, pulled: 0, error: error.localizedDescription, mode: mode)
+        }
+    }
+
     /// Pull ALL events from Supabase (not incremental - we derive state from full log)
     func pullAllEvents() async throws -> Int {
         guard let client = SupabaseClientProvider.shared else {
