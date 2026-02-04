@@ -9,6 +9,33 @@ import Foundation
 import Supabase
 import Realtime
 
+// MARK: - Sync Types
+
+enum SyncStatus: String {
+    case idle
+    case syncing
+    case success
+    case error
+}
+
+enum SyncMode: String {
+    case incremental
+    case full
+}
+
+struct SyncResult {
+    let status: SyncStatus
+    let pulled: Int
+    let error: String?
+    let mode: SyncMode
+}
+
+// MARK: - Storage Constants
+
+private let cacheVersion = 1
+private let cacheVersionKey = "trunk-cache-version"
+private let lastSyncKey = "trunk-last-sync"
+
 @MainActor
 final class SyncService {
     static let shared = SyncService()
