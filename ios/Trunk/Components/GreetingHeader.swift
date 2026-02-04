@@ -48,6 +48,10 @@ struct GreetingHeader: View {
                         .font(.system(size: TrunkTheme.textLg, weight: .medium, design: .monospaced))
                         .foregroundStyle(Color.ink)
                 }
+
+                Spacer()
+
+                SyncIndicatorView()
             }
 
             Rectangle()
