@@ -2,16 +2,16 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
-import { pullEvents, uploadAllLocalEvents, pushEvent, subscribeToRealtime, unsubscribeFromRealtime, rebuildNodeStateFromEvents } from './services/sync-service'
-import { setEventSyncCallback } from './events/store'
+import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncStatus } from './services/sync-service'
+import { setEventSyncCallback, setEventStoreErrorCallbacks } from './events/store'
 import type { AppContext } from './types'
-import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, advanceClockByDays, getDebugDate, nodeState, saveState, getSoilAvailable, getSoilCapacity, getWaterAvailable, resetResources, setStorageErrorCallbacks } from './state'
+import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, getSoilAvailable, getSoilCapacity, getWaterAvailable } from './state'
 import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
 import { buildApp } from './ui/dom-builder'
 import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
-import { positionNodes, startWind, setDebugHoverZone } from './ui/layout'
+import { positionNodes, startWind } from './ui/layout'
 import { setupHoverBranch, setupHoverTwig } from './features/hover-branch'
 import {
   setViewMode,
@@ -58,28 +58,21 @@ async function startWithAuth() {
       }
       app!.classList.remove('hidden')
 
-      // Sync on first auth
+      // Sync on first auth - cloud is single source of truth
       if (isSupabaseConfigured() && state.user && !hasSynced) {
         hasSynced = true
-        // Pull latest events from cloud
-        const { pulled, error } = await pullEvents()
-        if (error) {
-          console.warn('Sync pull failed:', error)
-        } else if (pulled > 0) {
-          console.log(`Synced ${pulled} events from cloud`)
-          // Rebuild nodeState from events so UI can display the data
-          rebuildNodeStateFromEvents()
-          // Refresh UI with new data
-          window.location.reload()
-        }
 
-        // If we have local events and this is a first-time user, offer to upload
-        // For now, just try to upload any unsynced events
-        const { uploaded, error: uploadError } = await uploadAllLocalEvents()
-        if (uploadError) {
-          console.warn('Sync upload failed:', uploadError)
-        } else if (uploaded > 0) {
-          console.log(`Uploaded ${uploaded} events to cloud`)
+        // Smart sync: incremental if cache valid, full if not
+        const result = await smartSync()
+        if (result.error) {
+          console.warn(`Sync failed (${result.mode}):`, result.error)
+          // Don't reload - use cached data as fallback
+        } else if (result.pulled > 0) {
+          console.log(`Synced ${result.pulled} events (${result.mode})`)
+          // Reload to reflect new data
+          window.location.reload()
+        } else {
+          console.log(`Sync complete, no new events (${result.mode})`)
         }
 
         // Enable real-time sync: push events as they're created
@@ -93,8 +86,6 @@ async function startWithAuth() {
 
         // Subscribe to realtime for instant cross-device sync
         subscribeToRealtime(() => {
-          // Rebuild nodeState from events when new events arrive
-          rebuildNodeStateFromEvents()
           // Refresh UI when new events arrive from other devices
           window.location.reload()
         })
@@ -169,6 +160,12 @@ function handleNodeClick(
 
 const domResult = buildApp(app, handleNodeClick)
 
+// Subscribe to sync status changes
+subscribeSyncStatus((status) => {
+  domResult.elements.syncIndicator.dataset.status = status
+  domResult.elements.syncIndicator.title = `Sync: ${status}`
+})
+
 const editor = buildEditor(domResult.elements.canvas, {
   onSave: navCallbacks.onUpdateStats,
   onUpdateFocus: (target) => updateFocus(target, ctx),
@@ -203,7 +200,7 @@ const ctx: AppContext = {
 }
 
 // Set up storage error callbacks
-setStorageErrorCallbacks(
+setEventStoreErrorCallbacks(
   () => {
     // Quota error - prompt user to export data
     console.error('Storage full! Please export your data to prevent data loss.')
@@ -308,63 +305,6 @@ const leafView = buildLeafView(mapPanel, {
 // Complete the context with twig and leaf views
 ctx.twigView = twigView
 ctx.leafView = leafView
-
-// Settings dialog hidden for now - not doing much yet
-
-domResult.elements.debugCheckbox.addEventListener('change', (e) => {
-  setDebugHoverZone((e.target as HTMLInputElement).checked)
-})
-
-// Debug clock - trunk-wide time manipulation
-function updateDebugClockDisplay(): void {
-  const date = getDebugDate()
-  const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  domResult.elements.debugClockOffset.textContent = formatted
-}
-updateDebugClockDisplay() // Show initial date
-
-domResult.elements.debugClockBtn.addEventListener('click', () => {
-  advanceClockByDays(1)
-  updateDebugClockDisplay()
-  updateWaterMeter() // Water resets daily
-  shineApi.updateSunMeter() // Sun resets weekly
-  // Re-render any open twig view to update sprout states
-  if (ctx.twigView?.isOpen()) {
-    const activeBranchIndex = getActiveBranchIndex()
-    const activeTwigId = getActiveTwigId()
-    if (activeBranchIndex !== null && activeTwigId) {
-      const branchGroup = ctx.branchGroups[activeBranchIndex]
-      const twig = branchGroup?.twigs.find(t => t.dataset.nodeId === activeTwigId)
-      if (twig) {
-        ctx.twigView?.close()
-        ctx.twigView?.open(twig)
-      }
-    }
-  }
-})
-
-domResult.elements.debugSoilResetBtn.addEventListener('click', () => {
-  resetResources()
-  updateSoilMeter()
-  updateWaterMeter()
-  shineApi.updateSunMeter()
-  // Reset clock display
-  domResult.elements.debugClockOffset.textContent = '+0d'
-  // Refresh sidebar sprouts (water state may have changed)
-  updateStats(ctx)
-})
-
-domResult.elements.debugClearSproutsBtn.addEventListener('click', () => {
-  // Clear all sprouts and leaves from all twigs
-  Object.keys(nodeState).forEach(nodeId => {
-    if (nodeState[nodeId]) {
-      nodeState[nodeId].sprouts = undefined
-      nodeState[nodeId].leaves = undefined
-    }
-  })
-  saveState()
-  updateStats(ctx)
-})
 
 domResult.elements.backToTrunkButton.addEventListener('click', () => {
   returnToOverview(ctx, navCallbacks)
@@ -552,20 +492,3 @@ document.addEventListener('keydown', (e) => {
 })
 
 // Debug panel toggle: press 'd' then 'b' within 500ms
-let lastKeyTime = 0
-let lastKey = ''
-document.addEventListener('keydown', (e) => {
-  // Skip if in input/textarea
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-
-  const now = Date.now()
-  if (e.key === 'd') {
-    lastKey = 'd'
-    lastKeyTime = now
-  } else if (e.key === 'b' && lastKey === 'd' && now - lastKeyTime < 500) {
-    domResult.elements.debugPanel.classList.toggle('hidden')
-    lastKey = ''
-  } else {
-    lastKey = ''
-  }
-})
