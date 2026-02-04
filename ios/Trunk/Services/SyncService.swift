@@ -204,6 +204,14 @@ final class SyncService: ObservableObject {
         }
     }
 
+    /// Clear local cache (events and sync timestamp)
+    /// Used to ensure cloud is always source of truth
+    func clearLocalCache() {
+        clearLastSync()
+        clearCacheVersion()
+        EventStore.shared.clearEvents()
+    }
+
     /// Pull ALL events from Supabase (not incremental - we derive state from full log)
     func pullAllEvents() async throws -> Int {
         guard let client = SupabaseClientProvider.shared else {
