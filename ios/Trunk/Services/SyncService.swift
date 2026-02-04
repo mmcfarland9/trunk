@@ -81,6 +81,60 @@ final class SyncService: ObservableObject {
         UserDefaults.standard.removeObject(forKey: lastSyncKey)
     }
 
+    // MARK: - Sync Operations
+
+    /// Pull events since last sync (incremental)
+    private func pullEvents() async throws -> (pulled: Int, error: String?) {
+        guard let client = SupabaseClientProvider.shared else {
+            return (0, "Supabase not configured")
+        }
+
+        guard AuthService.shared.isAuthenticated else {
+            return (0, "Not authenticated")
+        }
+
+        let lastSync = getLastSync()
+
+        let syncEvents: [SyncEvent]
+        if let lastSync = lastSync {
+            syncEvents = try await client
+                .from("events")
+                .select()
+                .gt("created_at", value: lastSync)
+                .order("created_at")
+                .execute()
+                .value
+        } else {
+            syncEvents = try await client
+                .from("events")
+                .select()
+                .order("created_at")
+                .execute()
+                .value
+        }
+
+        if !syncEvents.isEmpty {
+            // Merge with existing events, avoiding duplicates by client_timestamp
+            let existingTimestamps = Set(EventStore.shared.events.map { $0.clientTimestamp })
+            let uniqueNewEvents = syncEvents.filter { !existingTimestamps.contains($0.clientTimestamp) }
+
+            if !uniqueNewEvents.isEmpty {
+                for event in uniqueNewEvents {
+                    EventStore.shared.appendEvent(event)
+                }
+            }
+
+            // Update last sync timestamp
+            if let latest = syncEvents.last?.createdAt {
+                setLastSync(latest)
+            }
+
+            return (uniqueNewEvents.count, nil)
+        }
+
+        return (0, nil)
+    }
+
     /// Pull ALL events from Supabase (not incremental - we derive state from full log)
     func pullAllEvents() async throws -> Int {
         guard let client = SupabaseClientProvider.shared else {
