@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 import Supabase
 import Realtime
 
@@ -37,8 +38,10 @@ private let cacheVersionKey = "trunk-cache-version"
 private let lastSyncKey = "trunk-last-sync"
 
 @MainActor
-final class SyncService {
+final class SyncService: ObservableObject {
     static let shared = SyncService()
+
+    @Published private(set) var syncStatus: SyncStatus = .idle
 
     private var realtimeChannel: RealtimeChannelV2?
     private var onRealtimeEvent: ((SyncEvent) -> Void)?
