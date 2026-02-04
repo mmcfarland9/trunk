@@ -45,6 +45,39 @@ final class SyncService {
 
     private init() {}
 
+    // MARK: - Cache Management
+
+    /// Check if cache version matches current version
+    private func isCacheValid() -> Bool {
+        let stored = UserDefaults.standard.integer(forKey: cacheVersionKey)
+        return stored == cacheVersion
+    }
+
+    /// Update stored cache version to current
+    private func setCacheVersion() {
+        UserDefaults.standard.set(cacheVersion, forKey: cacheVersionKey)
+    }
+
+    /// Clear cache version (forces full sync on next load)
+    private func clearCacheVersion() {
+        UserDefaults.standard.removeObject(forKey: cacheVersionKey)
+    }
+
+    /// Get last sync timestamp
+    private func getLastSync() -> String? {
+        UserDefaults.standard.string(forKey: lastSyncKey)
+    }
+
+    /// Set last sync timestamp
+    private func setLastSync(_ timestamp: String) {
+        UserDefaults.standard.set(timestamp, forKey: lastSyncKey)
+    }
+
+    /// Clear last sync timestamp
+    private func clearLastSync() {
+        UserDefaults.standard.removeObject(forKey: lastSyncKey)
+    }
+
     /// Pull ALL events from Supabase (not incremental - we derive state from full log)
     func pullAllEvents() async throws -> Int {
         guard let client = SupabaseClientProvider.shared else {
