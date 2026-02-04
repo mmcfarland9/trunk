@@ -244,6 +244,34 @@ export type SyncResult = {
   mode: 'incremental' | 'full'
 }
 
+let currentSyncStatus: SyncStatus = 'idle'
+type SyncStatusListener = (status: SyncStatus) => void
+const syncStatusListeners: SyncStatusListener[] = []
+
+/**
+ * Get current sync status
+ */
+export function getSyncStatus(): SyncStatus {
+  return currentSyncStatus
+}
+
+/**
+ * Subscribe to sync status changes
+ */
+export function subscribeSyncStatus(listener: SyncStatusListener): () => void {
+  syncStatusListeners.push(listener)
+  listener(currentSyncStatus) // Immediate callback with current status
+  return () => {
+    const index = syncStatusListeners.indexOf(listener)
+    if (index > -1) syncStatusListeners.splice(index, 1)
+  }
+}
+
+function setSyncStatus(status: SyncStatus): void {
+  currentSyncStatus = status
+  syncStatusListeners.forEach(l => l(status))
+}
+
 /**
  * Smart sync: incremental if cache valid, full otherwise.
  * Uses cached data as fallback if network fails.
@@ -257,6 +285,8 @@ export async function smartSync(): Promise<SyncResult> {
   if (!user) {
     return { status: 'error', pulled: 0, error: 'Not authenticated', mode: 'full' }
   }
+
+  setSyncStatus('syncing')
 
   const cacheValid = isCacheValid()
   const mode = cacheValid ? 'incremental' : 'full'
@@ -278,6 +308,7 @@ export async function smartSync(): Promise<SyncResult> {
       if (error) {
         // Network failed - use existing cache as fallback
         console.warn('Sync failed, using cached data:', error.message)
+        setSyncStatus('error')
         return { status: 'error', pulled: 0, error: error.message, mode }
       }
 
@@ -295,6 +326,7 @@ export async function smartSync(): Promise<SyncResult> {
     }
 
     if (result.error) {
+      setSyncStatus('error')
       return { status: 'error', pulled: 0, error: result.error, mode }
     }
 
@@ -303,10 +335,12 @@ export async function smartSync(): Promise<SyncResult> {
       setCacheVersion()
     }
 
+    setSyncStatus('success')
     return { status: 'success', pulled: result.pulled, error: null, mode }
   } catch (err) {
     // Network error - use cached data as fallback
     console.warn('Sync exception, using cached data:', err)
+    setSyncStatus('error')
     return { status: 'error', pulled: 0, error: String(err), mode }
   }
 }
