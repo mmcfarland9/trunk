@@ -53,7 +53,18 @@ export function buildApp(
   profileEmail.className = 'profile-email'
   profileEmail.textContent = ''
 
-  profileBadge.append(profileIcon, profileEmail)
+  // Sync status indicator (cloud icon with status dot)
+  const syncIndicator = document.createElement('span')
+  syncIndicator.className = 'sync-indicator'
+  syncIndicator.innerHTML = `
+    <svg class="sync-cloud" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+    </svg>
+    <span class="sync-dot"></span>
+  `
+  syncIndicator.title = 'Sync status'
+
+  profileBadge.append(profileIcon, profileEmail, syncIndicator)
   actions.append(profileBadge)
 
   // Global Soil meter
@@ -226,63 +237,7 @@ export function buildApp(
     canvas.append(wrapper)
   }
 
-  // Debug panel (hidden by default, toggle with d+b keystroke)
-  const debugPanel = document.createElement('div')
-  debugPanel.className = 'debug-panel hidden'
-
-  // Debug mode master toggle
-  const debugModeLabel = document.createElement('label')
-  debugModeLabel.className = 'debug-mode-toggle'
-  const debugModeCheckbox = document.createElement('input')
-  debugModeCheckbox.type = 'checkbox'
-  debugModeCheckbox.checked = false
-  const debugModeText = document.createTextNode(' Debug Mode')
-  debugModeLabel.append(debugModeCheckbox, debugModeText)
-
-  // Debug controls container (hidden by default)
-  const debugControls = document.createElement('div')
-  debugControls.className = 'debug-controls hidden'
-
-  // Debug checkbox for guide lines
-  const debugLabel = document.createElement('label')
-  debugLabel.className = 'debug-toggle'
-  const debugCheckbox = document.createElement('input')
-  debugCheckbox.type = 'checkbox'
-  debugCheckbox.checked = false
-  const debugText = document.createTextNode(' Show guide lines')
-  debugLabel.append(debugCheckbox, debugText)
-
-  // Debug clock
-  const debugClockRow = document.createElement('div')
-  debugClockRow.className = 'debug-clock-row'
-  const debugClockOffset = document.createElement('span')
-  debugClockOffset.className = 'debug-clock-offset'
-  const debugClockBtn = document.createElement('button')
-  debugClockBtn.type = 'button'
-  debugClockBtn.className = 'debug-clock-btn'
-  debugClockBtn.title = 'Add 1 day to internal clock'
-  debugClockBtn.textContent = '+1 day'
-  const debugSoilResetBtn = document.createElement('button')
-  debugSoilResetBtn.type = 'button'
-  debugSoilResetBtn.className = 'debug-clock-btn'
-  debugSoilResetBtn.title = 'Reset all resources to default'
-  debugSoilResetBtn.textContent = 'Reset Resources'
-  const debugClearSproutsBtn = document.createElement('button')
-  debugClearSproutsBtn.type = 'button'
-  debugClearSproutsBtn.className = 'debug-clock-btn'
-  debugClearSproutsBtn.title = 'Clear all sprouts and leaves'
-  debugClearSproutsBtn.textContent = 'Clear Sprouts'
-  debugClockRow.append(debugClockOffset, debugClockBtn, debugSoilResetBtn, debugClearSproutsBtn)
-
-  debugControls.append(debugLabel, debugClockRow)
-  debugPanel.append(debugModeLabel, debugControls)
-
-  // Wire up debug mode toggle
-  debugModeCheckbox.addEventListener('change', () => {
-    const isDebug = debugModeCheckbox.checked
-    debugControls.classList.toggle('hidden', !isDebug)
-  })
-  mapPanel.append(canvas, guideLayer, debugPanel)
+  mapPanel.append(canvas, guideLayer)
 
   // Side Panel
   const sidePanel = document.createElement('aside')
@@ -646,12 +601,7 @@ export function buildApp(
     cultivatedSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="cultivated"]')!,
     profileBadge,
     profileEmail,
-    debugPanel,
-    debugCheckbox,
-    debugClockBtn,
-    debugSoilResetBtn,
-    debugClearSproutsBtn,
-    debugClockOffset,
+    syncIndicator,
     sproutsDialog,
     sproutsDialogContent: sproutsDialog.querySelector<HTMLDivElement>('.sprouts-dialog-content')!,
     sproutsDialogClose: sproutsDialog.querySelector<HTMLButtonElement>('.sprouts-dialog-close')!,

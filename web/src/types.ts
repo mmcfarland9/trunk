@@ -169,12 +169,7 @@ export type AppElements = {
   cultivatedSproutsList: HTMLDivElement
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
-  debugPanel: HTMLDivElement
-  debugCheckbox: HTMLInputElement
-  debugClockBtn: HTMLButtonElement
-  debugSoilResetBtn: HTMLButtonElement
-  debugClearSproutsBtn: HTMLButtonElement
-  debugClockOffset: HTMLSpanElement
+  syncIndicator: HTMLSpanElement
   sproutsDialog: HTMLDivElement
   sproutsDialogContent: HTMLDivElement
   sproutsDialogClose: HTMLButtonElement
