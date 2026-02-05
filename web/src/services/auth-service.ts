@@ -108,10 +108,6 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
 }
 
-export function isAuthenticated(): boolean {
-  return authState.user !== null
-}
-
 export function getUserProfile(): UserProfile {
   const metadata = authState.user?.user_metadata ?? {}
   return {

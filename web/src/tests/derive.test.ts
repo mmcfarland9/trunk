@@ -13,6 +13,11 @@ import {
   getActiveSprouts,
   getCompletedSprouts,
   toSprout,
+  getLeafById,
+  getSproutsByLeaf,
+  wasShoneThisWeek,
+  getAllWaterEntries,
+  deriveSoilLog,
 } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
@@ -415,5 +420,427 @@ describe('End Date Calculation (via toSprout)', () => {
     expectedEnd.setUTCHours(15, 0, 0, 0)
 
     expect(sprout.endDate).toBe(expectedEnd.toISOString())
+  })
+})
+
+describe('getLeafById', () => {
+  it('returns leaf when found', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'leaf_created',
+        timestamp: '2026-01-01T10:00:00Z',
+        leafId: 'leaf-1',
+        twigId: 'branch-0-twig-0',
+        name: 'Test Saga',
+      },
+    ]
+
+    const state = deriveState(events)
+    const leaf = getLeafById(state, 'leaf-1')
+
+    expect(leaf).toBeDefined()
+    expect(leaf?.name).toBe('Test Saga')
+    expect(leaf?.twigId).toBe('branch-0-twig-0')
+  })
+
+  it('returns undefined when leaf not found', () => {
+    const state = deriveState([])
+    const leaf = getLeafById(state, 'nonexistent')
+
+    expect(leaf).toBeUndefined()
+  })
+})
+
+describe('getSproutsByLeaf', () => {
+  it('returns sprouts belonging to a leaf', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'leaf_created',
+        timestamp: '2026-01-01T10:00:00Z',
+        leafId: 'leaf-1',
+        twigId: 'branch-0-twig-0',
+        name: 'Test Saga',
+      },
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'In Saga',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+        leafId: 'leaf-1',
+      },
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-02T11:00:00Z',
+        sproutId: 'sprout-2',
+        twigId: 'branch-0-twig-0',
+        title: 'Not In Saga',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-02T12:00:00Z',
+        sproutId: 'sprout-3',
+        twigId: 'branch-0-twig-0',
+        title: 'Also In Saga',
+        season: '1m',
+        environment: 'firm',
+        soilCost: 5,
+        leafId: 'leaf-1',
+      },
+    ]
+
+    const state = deriveState(events)
+    const leafSprouts = getSproutsByLeaf(state, 'leaf-1')
+
+    expect(leafSprouts).toHaveLength(2)
+    expect(leafSprouts.map(s => s.title)).toContain('In Saga')
+    expect(leafSprouts.map(s => s.title)).toContain('Also In Saga')
+  })
+
+  it('returns empty array when no sprouts belong to leaf', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'leaf_created',
+        timestamp: '2026-01-01T10:00:00Z',
+        leafId: 'leaf-1',
+        twigId: 'branch-0-twig-0',
+        name: 'Empty Saga',
+      },
+    ]
+
+    const state = deriveState(events)
+    const leafSprouts = getSproutsByLeaf(state, 'leaf-1')
+
+    expect(leafSprouts).toHaveLength(0)
+  })
+})
+
+describe('wasShoneThisWeek', () => {
+  it('returns true when sun was shone this week', () => {
+    // Wednesday Jan 29, 2026 at 2pm
+    const now = new Date('2026-01-29T14:00:00')
+
+    const events: TrunkEvent[] = [
+      {
+        type: 'sun_shone',
+        timestamp: '2026-01-28T10:00:00Z', // Tuesday
+        twigId: 'branch-0-twig-0',
+        twigLabel: 'Test',
+        content: 'Reflection',
+      },
+    ]
+
+    expect(wasShoneThisWeek(events, now)).toBe(true)
+  })
+
+  it('returns false when no sun was shone this week', () => {
+    // Wednesday Jan 29, 2026 at 2pm
+    const now = new Date('2026-01-29T14:00:00')
+
+    const events: TrunkEvent[] = [
+      {
+        type: 'sun_shone',
+        timestamp: '2026-01-20T10:00:00Z', // Previous week
+        twigId: 'branch-0-twig-0',
+        twigLabel: 'Test',
+        content: 'Old reflection',
+      },
+    ]
+
+    expect(wasShoneThisWeek(events, now)).toBe(false)
+  })
+
+  it('returns false when no sun events exist', () => {
+    const now = new Date('2026-01-29T14:00:00')
+    expect(wasShoneThisWeek([], now)).toBe(false)
+  })
+})
+
+describe('getAllWaterEntries', () => {
+  it('returns all water entries across sprouts', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'First Sprout',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 'sprout-1',
+        content: 'First water',
+      },
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T11:00:00Z',
+        sproutId: 'sprout-2',
+        twigId: 'branch-1-twig-0',
+        title: 'Second Sprout',
+        season: '1m',
+        environment: 'firm',
+        soilCost: 5,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-03T10:00:00Z',
+        sproutId: 'sprout-2',
+        content: 'Second water',
+      },
+    ]
+
+    const state = deriveState(events)
+    const entries = getAllWaterEntries(state)
+
+    expect(entries).toHaveLength(2)
+    // Should be sorted by timestamp descending
+    expect(entries[0].content).toBe('Second water')
+    expect(entries[1].content).toBe('First water')
+  })
+
+  it('uses getTwigLabel callback when provided', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 'sprout-1',
+        content: 'Progress',
+      },
+    ]
+
+    const state = deriveState(events)
+    const getTwigLabel = (twigId: string) => `Custom label for ${twigId}`
+    const entries = getAllWaterEntries(state, getTwigLabel)
+
+    expect(entries[0].twigLabel).toBe('Custom label for branch-0-twig-0')
+  })
+
+  it('uses twigId as label when no callback provided', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 'sprout-1',
+        content: 'Progress',
+      },
+    ]
+
+    const state = deriveState(events)
+    const entries = getAllWaterEntries(state)
+
+    expect(entries[0].twigLabel).toBe('branch-0-twig-0')
+  })
+
+  it('returns empty array when no water entries', () => {
+    const state = deriveState([])
+    const entries = getAllWaterEntries(state)
+
+    expect(entries).toHaveLength(0)
+  })
+})
+
+describe('deriveSoilLog', () => {
+  it('logs sprout_planted events', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test Sprout',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const log = deriveSoilLog(events)
+
+    expect(log).toHaveLength(1)
+    expect(log[0].amount).toBe(-2)
+    expect(log[0].reason).toBe('Planted sprout')
+    expect(log[0].context).toBe('Test Sprout')
+  })
+
+  it('logs sprout_watered events', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 'sprout-1',
+        content: 'Progress',
+      },
+    ]
+
+    const log = deriveSoilLog(events)
+
+    expect(log).toHaveLength(2)
+    expect(log[1].amount).toBe(0.05)
+    expect(log[1].reason).toBe('Watered sprout')
+    expect(log[1].context).toBe('Test')
+  })
+
+  it('logs sprout_harvested events', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Harvested One',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_harvested',
+        timestamp: '2026-01-15T10:00:00Z',
+        sproutId: 'sprout-1',
+        result: 4,
+        capacityGained: 1.5,
+      },
+    ]
+
+    const log = deriveSoilLog(events)
+
+    expect(log).toHaveLength(2)
+    expect(log[1].amount).toBe(1.5)
+    expect(log[1].reason).toBe('Harvested (4/5)')
+    expect(log[1].context).toBe('Harvested One')
+  })
+
+  it('logs sprout_uprooted events', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Uprooted One',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_uprooted',
+        timestamp: '2026-01-05T10:00:00Z',
+        sproutId: 'sprout-1',
+        soilReturned: 1,
+      },
+    ]
+
+    const log = deriveSoilLog(events)
+
+    expect(log).toHaveLength(2)
+    expect(log[1].amount).toBe(1)
+    expect(log[1].reason).toBe('Uprooted sprout')
+    expect(log[1].context).toBe('Uprooted One')
+  })
+
+  it('logs sun_shone events', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sun_shone',
+        timestamp: '2026-01-01T10:00:00Z',
+        twigId: 'branch-0-twig-0',
+        twigLabel: 'Movement',
+        content: 'Deep reflection',
+      },
+    ]
+
+    const log = deriveSoilLog(events)
+
+    expect(log).toHaveLength(1)
+    expect(log[0].amount).toBe(0.35)
+    expect(log[0].reason).toBe('Sun reflection')
+    expect(log[0].context).toBe('Movement')
+  })
+
+  it('returns empty array for no events', () => {
+    const log = deriveSoilLog([])
+    expect(log).toHaveLength(0)
+  })
+
+  it('handles mixed events in order', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 'sprout-1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 'sprout-1',
+        content: 'Progress',
+      },
+      {
+        type: 'sun_shone',
+        timestamp: '2026-01-03T10:00:00Z',
+        twigId: 'branch-0-twig-0',
+        twigLabel: 'Movement',
+        content: 'Reflection',
+      },
+      {
+        type: 'sprout_harvested',
+        timestamp: '2026-01-15T10:00:00Z',
+        sproutId: 'sprout-1',
+        result: 5,
+        capacityGained: 0.5,
+      },
+    ]
+
+    const log = deriveSoilLog(events)
+
+    expect(log).toHaveLength(4)
+    expect(log[0].reason).toBe('Planted sprout')
+    expect(log[1].reason).toBe('Watered sprout')
+    expect(log[2].reason).toBe('Sun reflection')
+    expect(log[3].reason).toBe('Harvested (5/5)')
   })
 })

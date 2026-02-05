@@ -18,15 +18,6 @@ export type WaterEntry = {
   prompt?: string
 }
 
-// Water log entry - enriched for display in water can dialog
-export type WaterLogEntry = {
-  timestamp: string
-  content: string
-  prompt?: string
-  sproutTitle: string
-  twigLabel: string
-}
-
 // Sun entry - global philosophical reflection log
 // Randomly selects a twig to reflect on
 export type SunEntry = {
@@ -38,14 +29,6 @@ export type SunEntry = {
     twigId: string
     twigLabel: string
   }
-}
-
-// Soil entry - tracks soil gains and losses
-export type SoilEntry = {
-  timestamp: string
-  amount: number // positive = gain, negative = loss
-  reason: string // e.g., "Planted sprout", "Shone light", "Watered sprout"
-  context?: string // optional detail like sprout title
 }
 
 // Leaf - a saga/trajectory of related sprouts (identity derived from its sprouts)
@@ -77,36 +60,6 @@ export type Sprout = {
   // Leaf association
   leafId?: string
   waterEntries?: WaterEntry[]
-}
-
-// Soil system - represents focus/energy capacity
-export type SoilState = {
-  available: number
-  capacity: number
-}
-
-// Water system - represents daily/recurring attention
-export type WaterState = {
-  available: number
-  capacity: number
-}
-
-// Sun system - represents reflective/planning capacity
-export type SunState = {
-  available: number
-  capacity: number
-}
-
-// Notification settings - stored locally, backend integration later
-export type NotificationSettings = {
-  name: string // User's name, displayed on trunk
-  email: string
-  checkInFrequency: 'daily' | 'every3days' | 'weekly' | 'off'
-  preferredTime: 'morning' | 'afternoon' | 'evening'
-  events: {
-    harvestReady: boolean
-    shineAvailable: boolean
-  }
 }
 
 // Legacy goal type (for migration)

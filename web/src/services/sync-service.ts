@@ -39,7 +39,7 @@ let onRealtimeEvent: ((event: TrunkEvent) => void) | null = null
 /**
  * Pull events from Supabase since last sync
  */
-export async function pullEvents(): Promise<{ pulled: number; error: string | null }> {
+async function pullEvents(): Promise<{ pulled: number; error: string | null }> {
   if (!supabase) return { pulled: 0, error: 'Supabase not configured' }
 
   const { user } = getAuthState()
@@ -179,7 +179,7 @@ export function unsubscribeFromRealtime(): void {
  * Clear local cache (events and sync timestamp)
  * Used to ensure cloud is always source of truth
  */
-export function clearLocalCache(): void {
+function clearLocalCache(): void {
   localStorage.removeItem(LAST_SYNC_KEY)
   clearCacheVersion()
   replaceEvents([])
@@ -214,7 +214,7 @@ export async function deleteAllEvents(): Promise<{ error: string | null }> {
   }
 }
 
-export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
+type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 
 export type SyncResult = {
   status: SyncStatus
@@ -226,13 +226,6 @@ export type SyncResult = {
 let currentSyncStatus: SyncStatus = 'idle'
 type SyncStatusListener = (status: SyncStatus) => void
 const syncStatusListeners: SyncStatusListener[] = []
-
-/**
- * Get current sync status
- */
-export function getSyncStatus(): SyncStatus {
-  return currentSyncStatus
-}
 
 /**
  * Subscribe to sync status changes

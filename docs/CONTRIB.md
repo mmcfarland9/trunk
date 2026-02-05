@@ -28,6 +28,7 @@ All scripts run from `web/` directory:
 
 | Script | Command | Description |
 |--------|---------|-------------|
+| **generate** | `npm run generate` | Regenerate constants from shared/constants.json |
 | **dev** | `npm run dev` | Start Vite development server with HMR |
 | **build** | `npm run build` | TypeScript compile + production build |
 | **preview** | `npm run preview` | Preview production build locally |
@@ -73,10 +74,22 @@ npm test && npm run build
 
 ## Environment Variables
 
-This is a **client-side application** with no server-side secrets.
+Copy `.env.example` to `.env` for local development with cloud sync:
 
-All configuration lives in:
-- `shared/constants.json` - Application constants
+```bash
+cp .env.example .env
+# Edit .env with your Supabase credentials
+```
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `VITE_SUPABASE_URL` | Supabase project URL | For cloud sync |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | For cloud sync |
+
+**Note**: The app works offline without these variables - cloud sync is optional.
+
+Additional configuration lives in:
+- `shared/constants.json` - Application constants (run `npm run generate` after changes)
 - `vite.config.ts` - Build configuration
 - `tsconfig.json` - TypeScript settings
 

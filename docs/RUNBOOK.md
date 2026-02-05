@@ -32,16 +32,31 @@ Build and distribute via Xcode:
 
 ## Data Storage
 
-All data is stored **client-side** in localStorage:
+### Cloud Storage (Supabase)
 
-| Key | Purpose | Size Concern |
-|-----|---------|--------------|
-| `trunk-events-v1` | Event log | Grows over time |
-| `trunk-notes-v1` | Node data, logs | Medium |
-| `trunk-resources-v1` | Resource state | Small |
-| `trunk-settings-v1` | User preferences | Small |
+Primary data storage is **cloud-based** via Supabase for authenticated users:
 
-**No server-side storage** - users own their data locally.
+| Table | Purpose |
+|-------|---------|
+| `events` | All user events (plants, waters, harvests, etc.) |
+| `auth.users` | User accounts (managed by Supabase Auth) |
+
+### Local Cache (localStorage)
+
+Local storage acts as a **cache** for offline support:
+
+| Key | Purpose | Notes |
+|-----|---------|-------|
+| `trunk-events-v1` | Cached event log | Synced to/from cloud |
+| `trunk-last-sync` | Last sync timestamp | For incremental sync |
+| `trunk-cache-version` | Cache version | Forces full sync when changed |
+
+### Sync Architecture
+
+- **Cloud is source of truth** - local cache is derived
+- **Incremental sync** - only fetches events since last sync
+- **Full sync on cache miss** - rebuilds from cloud if cache invalid
+- **Offline fallback** - uses cached data if network fails
 
 ---
 
@@ -99,9 +114,10 @@ npm run build
 **Issue**: User reports lost data
 
 **Solution**:
-1. Check if localStorage was cleared (browser settings)
-2. Ask user to export data regularly (7-day reminder built-in)
-3. No server recovery possible - data is local only
+1. If user was signed in: data should be in Supabase - check `events` table
+2. If anonymous: check if localStorage was cleared (browser settings)
+3. Ask user to sign in to recover cloud data
+4. Last resort: restore from JSON export if user has one
 
 ---
 
@@ -109,9 +125,32 @@ npm run build
 
 **Solution**:
 1. Open browser DevTools > Application > Local Storage
-2. Check `trunk-notes-v1` for valid JSON
-3. User can clear and re-import from backup
-4. Debug panel (d+b) has "Reset" options
+2. Check `trunk-events-v1` for valid JSON
+3. Clear local cache to force full sync from cloud: remove `trunk-*` keys
+4. If cloud data is bad: use "Reset All Data" in Account Settings (requires confirmation)
+5. Debug panel (d+b) has additional reset options for development
+
+---
+
+### Sync Issues
+
+**Issue**: Sync indicator shows error
+
+**Solution**:
+1. Check network connectivity
+2. Verify Supabase project is online
+3. Check browser console for specific error
+4. Try signing out and back in to refresh auth token
+
+---
+
+**Issue**: Data not syncing between devices
+
+**Solution**:
+1. Ensure user is signed in on both devices
+2. Check sync indicator status
+3. Pull to refresh or reload the app
+4. Verify events exist in Supabase `events` table
 
 ---
 
@@ -168,9 +207,11 @@ For static hosting, standard CDN health checks apply.
 
 ### User Data Recovery
 
-1. Ask user to check browser's localStorage
-2. If they have JSON export, guide them to import
-3. If no backup exists, data cannot be recovered
+1. Ask if user was signed in (email associated with account)
+2. If signed in: data should be recoverable from Supabase
+3. If anonymous: check browser's localStorage for cached events
+4. If they have JSON export, guide them to import
+5. Cloud data can be queried in Supabase dashboard (`events` table)
 
 ### Bug Reports
 
@@ -182,17 +223,23 @@ For static hosting, standard CDN health checks apply.
 
 ## Security Considerations
 
-### No Secrets
+### Environment Variables
 
-- No API keys in codebase
-- No server-side credentials
-- All data is user-controlled
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are **public** (anon key is safe to expose)
+- No server-side secrets in the codebase
+- Supabase Row Level Security (RLS) protects user data
+
+### Authentication
+
+- Email OTP via Supabase Auth
+- No passwords stored
+- Session managed via Supabase client
 
 ### localStorage Risks
 
-- Data visible to browser extensions
+- Local cache visible to browser extensions
 - Cleared with browser data
-- No encryption (planned future enhancement)
+- Cloud data protected by authentication
 
 ### XSS Prevention
 
