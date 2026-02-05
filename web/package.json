@@ -21,6 +21,7 @@
     "@stryker-mutator/vitest-runner": "^8.7.1",
     "@types/jsdom": "^27.0.0",
     "@vitest/coverage-v8": "^4.0.18",
+    "dotenv": "^17.2.3",
     "jsdom": "^27.4.0",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.2.5",

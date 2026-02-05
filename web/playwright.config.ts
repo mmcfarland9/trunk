@@ -11,7 +11,13 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    // Always start fresh server for tests to ensure clean env
+    reuseExistingServer: false,
     timeout: 120000,
+    // Disable Supabase for E2E tests - run in local-only mode
+    env: {
+      VITE_SUPABASE_URL: '',
+      VITE_SUPABASE_ANON_KEY: '',
+    },
   },
 })
