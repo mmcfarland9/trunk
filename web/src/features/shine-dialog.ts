@@ -3,7 +3,7 @@ import sunPromptsData from '../assets/sun-prompts.json'
 import { canAffordSun, getSunAvailable, getPresetLabel, getNextSunReset, formatResetTime } from '../state'
 import { appendEvent, getEvents, wasShoneThisWeek as wasShoneThisWeekFromEvents } from '../events'
 
-export type ShineCallbacks = {
+type ShineCallbacks = {
   onSunMeterChange: () => void
   onSoilMeterChange: () => void
   onShineComplete: () => void
@@ -27,6 +27,11 @@ const GENERIC_WEIGHT = 0.75
 function getRandomPrompt(twigId: string, twigLabel: string): string {
   const genericPrompts = sunPrompts.generic
   const specificPrompts = sunPrompts.specific[twigId] || []
+
+  // Base case: if source arrays are empty, no amount of retrying will help
+  if (genericPrompts.length === 0 && specificPrompts.length === 0) {
+    return 'What are you reflecting on today?'
+  }
 
   // Filter out recently shown prompts from each pool
   const availableGeneric = genericPrompts.filter(p => !recentPrompts.includes(p))
@@ -101,7 +106,7 @@ function selectRandomTwig(): SunEntry['context'] | null {
   }
 }
 
-export type ShineApi = {
+type ShineApi = {
   updateSunMeter: () => void
   populateSunLogShine: () => void
 }
