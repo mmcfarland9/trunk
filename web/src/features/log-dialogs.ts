@@ -13,7 +13,8 @@ import { deleteAllEvents } from '../services/sync-service'
 
 // --- Timestamp Formatters ---
 
-function formatSunLogTimestamp(dateStr: string): string {
+/** Format as "MM/DD h:mm AM/PM" (used by sun log and soil bag) */
+function formatDateShort(dateStr: string): string {
   const date = new Date(dateStr)
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -21,15 +22,8 @@ function formatSunLogTimestamp(dateStr: string): string {
   return `${month}/${day} ${time}`
 }
 
-function formatSoilTimestamp(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day} ${time}`
-}
-
-function formatWaterLogTimestamp(dateStr: string): string {
+/** Format as "MM/DD/YYYY h:mm AM/PM" (used by water log for full history) */
+function formatDateWithYear(dateStr: string): string {
   const date = new Date(dateStr)
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -69,7 +63,7 @@ function populateSunLog(elements: SunLogElements): void {
     const context = branchLabel
       ? `${escapeHtml(branchLabel)} : ${escapeHtml(entry.context.twigLabel)}`
       : escapeHtml(entry.context.twigLabel)
-    const timestamp = formatSunLogTimestamp(entry.timestamp)
+    const timestamp = formatDateShort(entry.timestamp)
     const promptHtml = entry.prompt
       ? `<p class="sun-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
       : ''
@@ -136,7 +130,7 @@ function populateSoilBag(elements: SoilBagElements): void {
     const contextHtml = entry.context
       ? `<span class="soil-bag-entry-context">${escapeHtml(entry.context)}</span>`
       : ''
-    const timestamp = formatSoilTimestamp(entry.timestamp)
+    const timestamp = formatDateShort(entry.timestamp)
 
     return `
       <div class="soil-bag-entry">
@@ -210,7 +204,7 @@ function populateWaterCan(elements: WaterCanElements): void {
 
   if (hasLog) {
     elements.waterCanLogEntries.innerHTML = logEntries.map(entry => {
-      const timestamp = formatWaterLogTimestamp(entry.timestamp)
+      const timestamp = formatDateWithYear(entry.timestamp)
       const promptHtml = entry.prompt
         ? `<p class="water-can-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
         : ''
