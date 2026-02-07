@@ -72,16 +72,22 @@ export function getTodayResetTime(now: Date = new Date()): Date {
 }
 
 /**
- * Get the most recent weekly reset time (Sunday at 6am)
+ * Get the most recent weekly reset time (Monday at 6am)
+ * Per shared/formulas.md: "Resets weekly on Monday at 6:00 AM"
  */
 export function getWeekResetTime(now: Date = new Date()): Date {
   const reset = new Date(now)
   reset.setHours(RESET_HOUR, 0, 0, 0)
 
-  const daysSinceSunday = reset.getDay()
-  reset.setDate(reset.getDate() - daysSinceSunday)
+  // Find most recent Monday
+  // getDay(): Sunday=0, Monday=1, Tuesday=2, ..., Saturday=6
+  // daysSinceMonday: Monday=0, Tuesday=1, ..., Sunday=6
+  const dayOfWeek = reset.getDay()
+  const daysSinceMonday = (dayOfWeek + 6) % 7
+  reset.setDate(reset.getDate() - daysSinceMonday)
 
-  if (now.getDay() === 0 && now < reset) {
+  // If today is Monday but before 6am, go back a week
+  if (dayOfWeek === 1 && now < reset) {
     reset.setDate(reset.getDate() - 7)
   }
 

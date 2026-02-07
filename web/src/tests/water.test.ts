@@ -152,7 +152,7 @@ describe('wasSproutWateredThisWeek (events-based)', () => {
     const now = new Date(2024, 0, 17, 10, 0, 0)
     vi.setSystemTime(now)
 
-    getWeekResetTime() // Sunday 6am = Jan 14
+    getWeekResetTime() // Monday 6am = Jan 15
 
     const events: TrunkEvent[] = [
       {

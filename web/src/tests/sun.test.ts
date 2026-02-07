@@ -20,49 +20,53 @@ describe('Sun Reset Time', () => {
   })
 
   describe('getWeekResetTime', () => {
-    it('returns Sunday 6am of current week when on Wednesday', () => {
+    it('returns Monday 6am of current week when on Wednesday', () => {
       // Set time to Wednesday Jan 17, 2024, 10am
       const now = new Date(2024, 0, 17, 10, 0, 0)
       vi.setSystemTime(now)
 
       const reset = getWeekResetTime()
 
-      expect(reset.getDay()).toBe(0) // Sunday
-      expect(reset.getDate()).toBe(14) // Sunday Jan 14
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(15) // Monday Jan 15
       expect(reset.getHours()).toBe(6)
       expect(reset.getMinutes()).toBe(0)
     })
 
-    it('returns Sunday 6am of current week when on Saturday', () => {
+    it('returns Monday 6am of current week when on Saturday', () => {
       // Set time to Saturday Jan 20, 2024, 10am
       const now = new Date(2024, 0, 20, 10, 0, 0)
       vi.setSystemTime(now)
 
       const reset = getWeekResetTime()
 
-      expect(reset.getDay()).toBe(0) // Sunday
-      expect(reset.getDate()).toBe(14) // Sunday Jan 14
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(15) // Monday Jan 15
     })
 
-    it('returns current Sunday 6am when on Sunday after 6am', () => {
+    it('returns previous Monday 6am when on Sunday after 6am', () => {
       // Set time to Sunday Jan 14, 2024, 10am
+      // Sunday is day 6 past Monday, so most recent Monday = Jan 8
       const now = new Date(2024, 0, 14, 10, 0, 0)
       vi.setSystemTime(now)
 
       const reset = getWeekResetTime()
 
-      expect(reset.getDate()).toBe(14) // This Sunday
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(8) // Monday Jan 8
       expect(reset.getHours()).toBe(6)
     })
 
-    it('returns previous Sunday 6am when on Sunday before 6am', () => {
+    it('returns previous Monday 6am when on Sunday before 6am', () => {
       // Set time to Sunday Jan 14, 2024, 3am
+      // Sunday before 6am is still in the Mon Jan 8 week
       const now = new Date(2024, 0, 14, 3, 0, 0)
       vi.setSystemTime(now)
 
       const reset = getWeekResetTime()
 
-      expect(reset.getDate()).toBe(7) // Previous Sunday Jan 7
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(8) // Monday Jan 8
       expect(reset.getHours()).toBe(6)
     })
 
@@ -74,7 +78,8 @@ describe('Sun Reset Time', () => {
       const reset = getWeekResetTime()
 
       expect(reset.getMonth()).toBe(1) // February
-      expect(reset.getDate()).toBe(4) // Sunday Feb 4
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(5) // Monday Feb 5 (today)
     })
 
     it('handles year boundary correctly', () => {
@@ -84,43 +89,73 @@ describe('Sun Reset Time', () => {
 
       const reset = getWeekResetTime()
 
-      expect(reset.getFullYear()).toBe(2023) // Previous year
-      expect(reset.getMonth()).toBe(11) // December
-      expect(reset.getDate()).toBe(31) // Sunday Dec 31
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getFullYear()).toBe(2024)
+      expect(reset.getMonth()).toBe(0) // January
+      expect(reset.getDate()).toBe(1) // Monday Jan 1
+    })
+
+    it('returns previous Monday when on Monday before 6am', () => {
+      // Set time to Monday Jan 15, 2024, 3am
+      const now = new Date(2024, 0, 15, 3, 0, 0)
+      vi.setSystemTime(now)
+
+      const reset = getWeekResetTime()
+
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(8) // Previous Monday Jan 8
+      expect(reset.getHours()).toBe(6)
+    })
+
+    it('returns current Monday when on Monday after 6am', () => {
+      // Set time to Monday Jan 15, 2024, 10am
+      const now = new Date(2024, 0, 15, 10, 0, 0)
+      vi.setSystemTime(now)
+
+      const reset = getWeekResetTime()
+
+      expect(reset.getDay()).toBe(1) // Monday
+      expect(reset.getDate()).toBe(15) // This Monday
+      expect(reset.getHours()).toBe(6)
     })
   })
 
   describe('getNextSunReset', () => {
-    it('returns next Sunday 6am', () => {
+    it('returns next Monday 6am', () => {
       // Set time to Wednesday Jan 17, 2024, 10am
+      // Current reset = Mon Jan 15, next = Mon Jan 22
       const now = new Date(2024, 0, 17, 10, 0, 0)
       vi.setSystemTime(now)
 
       const nextReset = getNextSunReset()
 
-      expect(nextReset.getDay()).toBe(0) // Sunday
-      expect(nextReset.getDate()).toBe(21) // Next Sunday Jan 21
+      expect(nextReset.getDay()).toBe(1) // Monday
+      expect(nextReset.getDate()).toBe(22) // Next Monday Jan 22
       expect(nextReset.getHours()).toBe(6)
     })
 
-    it('returns next week Sunday when on Sunday after 6am', () => {
+    it('returns next week Monday when on Sunday after 6am', () => {
       // Set time to Sunday Jan 14, 2024, 10am
+      // Current reset = Mon Jan 8, next = Mon Jan 15
       const now = new Date(2024, 0, 14, 10, 0, 0)
       vi.setSystemTime(now)
 
       const nextReset = getNextSunReset()
 
-      expect(nextReset.getDate()).toBe(21) // Next Sunday
+      expect(nextReset.getDay()).toBe(1) // Monday
+      expect(nextReset.getDate()).toBe(15) // Next Monday Jan 15
     })
 
-    it('returns this Sunday when on Sunday before 6am', () => {
+    it('returns this Monday when on Sunday before 6am', () => {
       // Set time to Sunday Jan 14, 2024, 3am
+      // Current reset = Mon Jan 8, next = Mon Jan 15
       const now = new Date(2024, 0, 14, 3, 0, 0)
       vi.setSystemTime(now)
 
       const nextReset = getNextSunReset()
 
-      expect(nextReset.getDate()).toBe(14) // This Sunday
+      expect(nextReset.getDay()).toBe(1) // Monday
+      expect(nextReset.getDate()).toBe(15) // Next Monday Jan 15
     })
   })
 })
