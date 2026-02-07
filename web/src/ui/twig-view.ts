@@ -29,7 +29,7 @@ import {
   type DerivedLeaf,
 } from '../events'
 
-export type TwigViewCallbacks = {
+type TwigViewCallbacks = {
   onClose: () => void
   onSave: () => void
   onSoilChange?: () => void

@@ -5,12 +5,12 @@ import { getResultEmoji } from '../utils/sprout-labels'
 import sharedConstants from '../../../shared/constants.json'
 import { appendEvent } from '../events'
 
-export type HarvestDialogCallbacks = {
+type HarvestDialogCallbacks = {
   onSoilMeterChange: () => void
   onHarvestComplete: () => void
 }
 
-export type HarvestDialogApi = {
+type HarvestDialogApi = {
   openHarvestDialog: (sprout: {
     id: string
     title: string

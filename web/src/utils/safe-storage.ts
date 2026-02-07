@@ -2,7 +2,7 @@
  * Safe localStorage wrapper that handles quota errors gracefully.
  */
 
-export type StorageResult = {
+type StorageResult = {
   success: boolean
   isQuotaError: boolean
 }

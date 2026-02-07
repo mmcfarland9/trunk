@@ -11,7 +11,7 @@ import {
   toSprout,
 } from '../events'
 
-export type LeafViewCallbacks = {
+type LeafViewCallbacks = {
   onClose: () => void
   onSave: () => void
   onSoilChange?: () => void

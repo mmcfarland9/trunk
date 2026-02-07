@@ -6,7 +6,7 @@ const VALID_ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
 // (converted to active/completed during sanitization)
 const LEGACY_STATES = ['draft', 'active', 'completed', 'failed']
 
-export type ValidationResult = {
+type ValidationResult = {
   valid: boolean
   errors: string[]
   warnings: string[]

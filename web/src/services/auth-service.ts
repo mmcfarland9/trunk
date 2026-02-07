@@ -1,15 +1,15 @@
 import { supabase } from '../lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
-export type AuthState = {
+type AuthState = {
   user: User | null
   session: Session | null
   loading: boolean
 }
 
-export type NotificationChannel = 'email' | 'sms' | 'none'
+type NotificationChannel = 'email' | 'sms' | 'none'
 
-export type NotificationPreferences = {
+type NotificationPreferences = {
   channel: NotificationChannel
   check_in_frequency: 'daily' | 'every3days' | 'weekly' | 'off'
   preferred_time: 'morning' | 'afternoon' | 'evening'
@@ -17,7 +17,7 @@ export type NotificationPreferences = {
   notify_shine_available: boolean
 }
 
-export type UserProfile = {
+type UserProfile = {
   full_name?: string
   phone?: string
   timezone?: string
