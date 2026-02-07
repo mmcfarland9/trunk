@@ -14,6 +14,8 @@ import {
   deriveWaterAvailable,
   deriveSunAvailable,
   wasSproutWateredThisWeek,
+  getTodayResetTime,
+  getWeekResetTime,
 } from './derive'
 import { safeSetItem } from '../utils/safe-storage'
 import sharedConstants from '../../../shared/constants.json'
@@ -26,9 +28,11 @@ let events: TrunkEvent[] = []
 // Cached derived state (invalidated on event append)
 let cachedState: DerivedState | null = null
 
-// Cached water/sun availability (invalidated on relevant events)
+// Cached water/sun availability (invalidated on relevant events or reset boundary)
 let cachedWaterAvailable: number | null = null
 let cachedSunAvailable: number | null = null
+let cachedWaterAt: number | null = null
+let cachedSunAt: number | null = null
 
 // Error callbacks
 let onQuotaError: (() => void) | null = null
@@ -137,6 +141,8 @@ function invalidateCache(): void {
   cachedState = null
   cachedWaterAvailable = null
   cachedSunAvailable = null
+  cachedWaterAt = null
+  cachedSunAt = null
 }
 
 /**
@@ -181,24 +187,28 @@ export function getState(): DerivedState {
 }
 
 /**
- * Get water available (cached)
+ * Get water available (cached, invalidates on daily reset boundary)
  */
 export function getWaterAvailable(now: Date = new Date()): number {
-  // Simple cache - just check if we have a cached value
-  // In practice, we should invalidate when crossing reset boundary
-  if (cachedWaterAvailable === null) {
-    cachedWaterAvailable = deriveWaterAvailable(events, now)
+  const resetMs = getTodayResetTime(now).getTime()
+  if (cachedWaterAvailable !== null && cachedWaterAt !== null && cachedWaterAt >= resetMs) {
+    return cachedWaterAvailable
   }
+  cachedWaterAvailable = deriveWaterAvailable(events, now)
+  cachedWaterAt = now.getTime()
   return cachedWaterAvailable
 }
 
 /**
- * Get sun available (cached)
+ * Get sun available (cached, invalidates on weekly reset boundary)
  */
 export function getSunAvailable(now: Date = new Date()): number {
-  if (cachedSunAvailable === null) {
-    cachedSunAvailable = deriveSunAvailable(events, now)
+  const resetMs = getWeekResetTime(now).getTime()
+  if (cachedSunAvailable !== null && cachedSunAt !== null && cachedSunAt >= resetMs) {
+    return cachedSunAvailable
   }
+  cachedSunAvailable = deriveSunAvailable(events, now)
+  cachedSunAt = now.getTime()
   return cachedSunAvailable
 }
 
