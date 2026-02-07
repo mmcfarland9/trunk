@@ -108,6 +108,8 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
       case 'sprout_watered': {
         const sprout = sprouts.get(event.sproutId)
         if (sprout) {
+          // DerivedSprout objects are freshly created per deriveState() call,
+          // so .push() here mutates local working data, not cached/external state.
           sprout.waterEntries.push({
             timestamp: event.timestamp,
             content: event.content,
@@ -389,7 +391,7 @@ export function getAllWaterEntries(state: DerivedState, getTwigLabel?: (twigId: 
 /**
  * Soil log entry derived from events
  */
-export interface DerivedSoilEntry {
+interface DerivedSoilEntry {
   timestamp: string
   amount: number
   reason: string
