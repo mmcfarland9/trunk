@@ -4,7 +4,7 @@ import { canAffordWater } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { appendEvent, checkSproutWateredThisWeek } from '../events'
 
-export type WaterDialogCallbacks = {
+type WaterDialogCallbacks = {
   onWaterMeterChange: () => void
   onSoilMeterChange: () => void
   onWaterComplete: () => void
@@ -37,11 +37,7 @@ function getRandomPrompt(): string {
   return prompt
 }
 
-function wasSproutWateredThisWeek(_twigId: string, sproutId: string): boolean {
-  return checkSproutWateredThisWeek(sproutId)
-}
-
-export type WaterDialogApi = {
+type WaterDialogApi = {
   openWaterDialog: (sprout: { id: string; title: string; twigId: string; twigLabel: string; season: string }) => void
   closeWaterDialog: () => void
   isOpen: () => boolean
@@ -62,7 +58,7 @@ export function initWaterDialog(
 
   function openWaterDialog(sprout: { id: string; title: string; twigId: string; twigLabel: string; season: string }) {
     // Check if already watered this week
-    if (wasSproutWateredThisWeek(sprout.twigId, sprout.id)) {
+    if (checkSproutWateredThisWeek(sprout.id)) {
       return
     }
 

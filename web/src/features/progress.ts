@@ -67,13 +67,13 @@ export function updateScopedProgress(ctx: AppContext): void {
 
 type SproutWithLocation = Sprout & { twigId: string, twigLabel: string, branchIndex: number }
 
-export type SidebarBranchCallbacks = {
+type SidebarBranchCallbacks = {
   onClick: (index: number) => void
 }
 
-export type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
-export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
-export type SidebarHarvestCallback = (sprout: SproutWithLocation) => void
+type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
+type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
+type SidebarHarvestCallback = (sprout: SproutWithLocation) => void
 
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
@@ -181,7 +181,6 @@ function renderLeafGroupedSprouts(
   container: HTMLElement,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  _onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback,
   onHarvestClick?: SidebarHarvestCallback
 ): void {
@@ -300,8 +299,8 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
   if (showFlatList) {
     // Twig view OR hovering twig: group by leaf
-    renderLeafGroupedSprouts(filteredActive, activeSproutsList, true, onWaterClick, onTwigClick, onLeafClick, onHarvestClick)
-    renderLeafGroupedSprouts(filteredCultivated, cultivatedSproutsList, false, undefined, onTwigClick, onLeafClick, undefined)
+    renderLeafGroupedSprouts(filteredActive, activeSproutsList, true, onWaterClick, onLeafClick, onHarvestClick)
+    renderLeafGroupedSprouts(filteredCultivated, cultivatedSproutsList, false, undefined, onLeafClick, undefined)
   } else if (showTwigGrouping && branchIdxForTwigFolders !== null) {
     // Branch view OR hovering branch: group by twig, then by leaf within each twig
     const activeByTwig = groupByTwig(filteredActive)
@@ -310,14 +309,14 @@ export function updateSidebarSprouts(ctx: AppContext): void {
     activeByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onTwigClick, onLeafClick, onHarvestClick)
+      renderLeafGroupedSprouts(sprouts, folder, true, onWaterClick, onLeafClick, onHarvestClick)
       activeSproutsList.append(folder)
     })
 
     cultivatedByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
       const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onTwigClick, onLeafClick, undefined)
+      renderLeafGroupedSprouts(sprouts, folder, false, undefined, onLeafClick, undefined)
       cultivatedSproutsList.append(folder)
     })
   } else {
@@ -334,7 +333,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       byTwig.forEach((twigSprouts, twigId) => {
         const twigLabel = getTwigLabel(twigId)
         const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
-        renderLeafGroupedSprouts(twigSprouts, twigFolder, true, onWaterClick, onTwigClick, onLeafClick, onHarvestClick)
+        renderLeafGroupedSprouts(twigSprouts, twigFolder, true, onWaterClick, onLeafClick, onHarvestClick)
         branchFolder.append(twigFolder)
       })
 
@@ -350,7 +349,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       byTwig.forEach((twigSprouts, twigId) => {
         const twigLabel = getTwigLabel(twigId)
         const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
-        renderLeafGroupedSprouts(twigSprouts, twigFolder, false, undefined, onTwigClick, onLeafClick, undefined)
+        renderLeafGroupedSprouts(twigSprouts, twigFolder, false, undefined, onLeafClick, undefined)
         branchFolder.append(twigFolder)
       })
 
