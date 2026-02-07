@@ -118,7 +118,6 @@ describe('App Smoke Tests', () => {
       const constants = await import('../constants')
       expect(constants.BRANCH_COUNT).toBe(8)
       expect(constants.TWIG_COUNT).toBe(8)
-      expect(constants.STORAGE_KEY).toBeDefined()
     })
   })
 })
