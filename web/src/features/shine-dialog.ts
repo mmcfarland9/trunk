@@ -1,4 +1,5 @@
 import type { AppContext, SunEntry } from '../types'
+import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import sunPromptsData from '../assets/sun-prompts.json'
 import { canAffordSun, getSunAvailable, getPresetLabel, getNextSunReset, formatResetTime } from '../state'
 import { appendEvent, getEvents, wasShoneThisWeek as wasShoneThisWeekFromEvents } from '../events'
@@ -78,8 +79,8 @@ function getRandomPrompt(twigId: string, twigLabel: string): string {
 function getAllTwigs(): { twigId: string; twigLabel: string }[] {
   const twigs: { twigId: string; twigLabel: string }[] = []
 
-  for (let b = 0; b < 8; b++) {
-    for (let t = 0; t < 8; t++) {
+  for (let b = 0; b < BRANCH_COUNT; b++) {
+    for (let t = 0; t < TWIG_COUNT; t++) {
       const twigId = `branch-${b}-twig-${t}`
       const label = getPresetLabel(twigId)
       if (label) {
