@@ -23,7 +23,8 @@ import { updateStats, initSidebarSprouts } from './features/progress'
 import { initWaterDialog } from './features/water-dialog'
 import { initHarvestDialog } from './features/harvest-dialog'
 import { initShine } from './features/shine-dialog'
-import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog, initAccountDialog } from './features/log-dialogs'
+import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from './features/log-dialogs'
+import { initAccountDialog } from './features/account-dialog'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) {

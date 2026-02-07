@@ -33,7 +33,7 @@ export function getPresetLabel(nodeId: string): string {
     return branches[branchIndex]?.twigs[twigIndex] || ''
   }
 
-  return ''
+  return nodeId || 'Untitled'
 }
 
 /**

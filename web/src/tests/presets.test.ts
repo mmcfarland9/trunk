@@ -29,8 +29,8 @@ describe('getPresetLabel', () => {
       expect(getPresetLabel('branch-99')).toBe('')
     })
 
-    it('returns empty string for negative branch index', () => {
-      expect(getPresetLabel('branch--1')).toBe('')
+    it('returns nodeId for negative branch index (no regex match)', () => {
+      expect(getPresetLabel('branch--1')).toBe('branch--1')
     })
   })
 
@@ -61,20 +61,20 @@ describe('getPresetLabel', () => {
   })
 
   describe('invalid node ids', () => {
-    it('returns empty string for empty string', () => {
-      expect(getPresetLabel('')).toBe('')
+    it('returns "Untitled" for empty string', () => {
+      expect(getPresetLabel('')).toBe('Untitled')
     })
 
-    it('returns empty string for random string', () => {
-      expect(getPresetLabel('random')).toBe('')
+    it('returns nodeId for random string', () => {
+      expect(getPresetLabel('random')).toBe('random')
     })
 
-    it('returns empty string for malformed branch id', () => {
-      expect(getPresetLabel('branch-abc')).toBe('')
+    it('returns nodeId for malformed branch id', () => {
+      expect(getPresetLabel('branch-abc')).toBe('branch-abc')
     })
 
-    it('returns empty string for partial twig id', () => {
-      expect(getPresetLabel('branch-0-twig')).toBe('')
+    it('returns nodeId for partial twig id', () => {
+      expect(getPresetLabel('branch-0-twig')).toBe('branch-0-twig')
     })
   })
 })

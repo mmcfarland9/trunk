@@ -71,7 +71,6 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
   function handleClick(event: MouseEvent): void {
     if (getViewMode() !== 'overview') return
     const target = event.target as HTMLElement | null
-    if (target?.closest('.node-editor')) return
     if (target?.closest('button.node')) return
 
     const hoveredIndex = getHoveredBranchIndex()
