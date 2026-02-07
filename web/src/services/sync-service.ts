@@ -64,7 +64,9 @@ async function pullEvents(): Promise<{ pulled: number; error: string | null }> {
     }
 
     if (syncEvents && syncEvents.length > 0) {
-      const newLocalEvents = (syncEvents as SyncEvent[]).map(syncToLocalEvent)
+      const newLocalEvents = (syncEvents as SyncEvent[])
+        .map(syncToLocalEvent)
+        .filter((e): e is TrunkEvent => e !== null)
 
       // Merge with existing local events, avoiding duplicates by timestamp
       const existingEvents = getEvents()
@@ -143,6 +145,7 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
       (payload) => {
         const syncEvent = payload.new as SyncEvent
         const localEvent = syncToLocalEvent(syncEvent)
+        if (!localEvent) return
 
         // Check if we already have this event (we pushed it ourselves)
         const existingEvents = getEvents()
@@ -285,7 +288,9 @@ export async function smartSync(): Promise<SyncResult> {
       }
 
       // Success - now safe to replace cache
-      const allEvents = (syncEvents as SyncEvent[]).map(syncToLocalEvent)
+      const allEvents = (syncEvents as SyncEvent[])
+        .map(syncToLocalEvent)
+        .filter((e): e is TrunkEvent => e !== null)
       replaceEvents(allEvents)
       setCacheVersion()
 

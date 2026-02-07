@@ -49,6 +49,27 @@ export function localToSyncPayload(
   }
 }
 
-export function syncToLocalEvent(sync: SyncEvent): TrunkEvent {
+const VALID_EVENT_TYPES = new Set([
+  'sprout_planted',
+  'sprout_watered',
+  'sprout_harvested',
+  'sprout_uprooted',
+  'sun_shone',
+  'leaf_created',
+])
+
+function validateSyncPayload(payload: unknown): payload is TrunkEvent {
+  if (typeof payload !== 'object' || payload === null) return false
+  const p = payload as Record<string, unknown>
+  if (typeof p.type !== 'string' || !VALID_EVENT_TYPES.has(p.type)) return false
+  if (typeof p.timestamp !== 'string') return false
+  return true
+}
+
+export function syncToLocalEvent(sync: SyncEvent): TrunkEvent | null {
+  if (!validateSyncPayload(sync.payload)) {
+    console.warn('Sync: rejected invalid event payload', sync.payload)
+    return null
+  }
   return sync.payload as unknown as TrunkEvent
 }
