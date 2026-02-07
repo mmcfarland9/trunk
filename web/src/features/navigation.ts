@@ -1,11 +1,10 @@
 import type { AppContext, ViewMode } from '../types'
-import { ZOOM_TRANSITION_DURATION, EDITOR_OPEN_DELAY } from '../constants'
+import { ZOOM_TRANSITION_DURATION } from '../constants'
 import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, isBranchView, isTwigView } from '../state'
 import {
   setNodeVisibility,
   setFocusedNode,
   updateFocus,
-  getNodePlaceholder,
 } from '../ui/node-ui'
 import { animateGuideLines } from '../ui/layout'
 
@@ -155,7 +154,6 @@ export function setViewMode(
     }, ZOOM_TRANSITION_DURATION)
   }
 
-  ctx.editor.close()
   updateVisibility(ctx)
   callbacks.onPositionNodes()
   if (shouldAnimate) {
@@ -179,7 +177,6 @@ export function enterBranchView(
   ctx: AppContext,
   callbacks: NavigationCallbacks,
   focusNode?: HTMLButtonElement | null,
-  openEditor = false
 ): void {
   setViewMode('branch', ctx, callbacks, index)
   callbacks.onUpdateStats() // Update sidebar to show twigs
@@ -188,12 +185,6 @@ export function enterBranchView(
   if (!target) return
 
   setFocusedNode(target, ctx, (t) => updateFocus(t, ctx))
-
-  if (openEditor) {
-    window.setTimeout(() => {
-      ctx.editor.open(target, getNodePlaceholder(target))
-    }, EDITOR_OPEN_DELAY)
-  }
 }
 
 export function enterTwigView(
@@ -221,7 +212,6 @@ export function enterTwigView(
     }, ZOOM_TRANSITION_DURATION)
   }
 
-  ctx.editor.close()
   updateVisibility(ctx)
   callbacks.onUpdateStats()
 

@@ -8,7 +8,6 @@ import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, getSoilAvailable, getSoilCapacity, getWaterAvailable } from './state'
 import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
 import { buildApp } from './ui/dom-builder'
-import { buildEditor } from './ui/editor'
 import { buildTwigView } from './ui/twig-view'
 import { buildLeafView } from './ui/leaf-view'
 import { positionNodes, startWind } from './ui/layout'
@@ -177,12 +176,6 @@ subscribeSyncStatus((status) => {
   domResult.elements.syncText.textContent = textMap[status] || 'Synced'
 })
 
-const editor = buildEditor(domResult.elements.canvas, {
-  onSave: navCallbacks.onUpdateStats,
-  onUpdateFocus: (target) => updateFocus(target, ctx),
-})
-domResult.elements.shell.append(editor.container)
-
 // Soil meter update function
 function updateSoilMeter(): void {
   const available = getSoilAvailable()
@@ -206,7 +199,6 @@ const ctx: AppContext = {
   branchGroups: domResult.branchGroups,
   allNodes: domResult.allNodes,
   nodeLookup: domResult.nodeLookup,
-  editor,
   twigView: undefined,
   leafView: undefined,
 }

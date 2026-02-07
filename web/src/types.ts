@@ -77,13 +77,6 @@ export type NodeData = {
   goalTitle?: string
 }
 
-export type EditorApi = {
-  container: HTMLDivElement
-  open: (target: HTMLButtonElement, placeholder: string) => void
-  reposition: (target: HTMLButtonElement) => void
-  close: () => void
-}
-
 export type TwigViewApi = {
   container: HTMLDivElement
   open: (twigNode: HTMLButtonElement) => void
@@ -193,7 +186,6 @@ export type AppContext = {
   branchGroups: BranchGroup[]
   allNodes: HTMLButtonElement[]
   nodeLookup: Map<string, HTMLButtonElement>
-  editor: EditorApi
   twigView?: TwigViewApi
   leafView?: LeafViewApi
 }

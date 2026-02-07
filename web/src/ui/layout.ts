@@ -1,6 +1,6 @@
 import type { AppContext } from '../types'
 import { BRANCH_COUNT, GUIDE_ANIMATION_DURATION } from '../constants'
-import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex, getActiveNode } from '../state'
+import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex } from '../state'
 
 // Layout constants
 const GUIDE_GAP = 8, TWIG_GAP = 4, TWIG_COLLISION_PAD = 8, TWIG_BASE_SIZE = 36, TWIG_PREVIEW_SIZE = 14, TWIG_MAX_SIZE = 80
@@ -26,7 +26,7 @@ const twigRadiusCache = new Map<HTMLElement, number>()
 
 export function positionNodes(ctx: AppContext): void {
   const { canvas } = ctx.elements
-  const { branchGroups, editor } = ctx
+  const { branchGroups } = ctx
   const width = canvas.clientWidth, height = canvas.clientHeight
   if (!width || !height) return
 
@@ -73,8 +73,6 @@ export function positionNodes(ctx: AppContext): void {
 
   setCameraTransform(ctx, isFocusedBranch ? centerX - activeBranchX : 0, isFocusedBranch ? centerY - activeBranchY : 0)
   drawGuideLines(ctx)
-  const activeNode = getActiveNode()
-  if (activeNode) editor.reposition(activeNode)
 }
 
 export function animateGuideLines(ctx: AppContext, duration = GUIDE_ANIMATION_DURATION): void {
@@ -161,7 +159,7 @@ function drawGuideLines(ctx: AppContext): void {
 }
 
 function applyWind(ctx: AppContext, timestamp: number): void {
-  const { branchGroups, editor } = ctx
+  const { branchGroups } = ctx
   const viewMode = getViewMode(), activeBranchIndex = getActiveBranchIndex()
   const isFocusedBranch = (viewMode === 'branch' || viewMode === 'twig') && activeBranchIndex !== null
   const time = (timestamp - windStartTime) / 1000
@@ -195,8 +193,6 @@ function applyWind(ctx: AppContext, timestamp: number): void {
       twig.style.top = `${y * p + Math.cos(time * sp * 0.9 + ph) * amp * WIND_Y_DAMPING - fl}px`
     })
   })
-  const activeNode = getActiveNode()
-  if (activeNode && !editor.container.classList.contains('hidden')) editor.reposition(activeNode)
 }
 
 // Helpers
