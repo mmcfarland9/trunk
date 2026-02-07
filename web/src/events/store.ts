@@ -37,6 +37,31 @@ let onSaveError: ((error: unknown) => void) | null = null
 // Sync callback - called when events are appended
 let onEventAppended: ((event: TrunkEvent) => void) | null = null
 
+const VALID_EVENT_TYPES = new Set([
+  'sprout_planted',
+  'sprout_watered',
+  'sprout_harvested',
+  'sprout_uprooted',
+  'sun_shone',
+  'leaf_created',
+])
+
+/**
+ * Validate that a value has the required shape of a TrunkEvent.
+ * Checks for required fields (type, timestamp) and known event type.
+ * Exported for use in sync validation (H3).
+ */
+export function validateEvent(event: unknown): event is TrunkEvent {
+  if (typeof event !== 'object' || event === null) return false
+  const e = event as Record<string, unknown>
+  return (
+    typeof e.type === 'string' &&
+    VALID_EVENT_TYPES.has(e.type) &&
+    typeof e.timestamp === 'string' &&
+    e.timestamp.length > 0
+  )
+}
+
 /**
  * Load events from localStorage
  */
@@ -46,7 +71,15 @@ function loadEvents(): TrunkEvent[] {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
-        return parsed
+        const valid: TrunkEvent[] = []
+        for (const item of parsed) {
+          if (validateEvent(item)) {
+            valid.push(item)
+          } else {
+            console.warn('Skipping invalid event during load:', item)
+          }
+        }
+        return valid
       }
     }
   } catch (error) {

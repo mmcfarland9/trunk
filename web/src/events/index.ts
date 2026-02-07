@@ -38,10 +38,9 @@ export {
   getAllWaterEntries,
   deriveSoilLog,
 } from './derive'
-export type { DerivedSoilEntry } from './derive'
-
 // Store
 export {
+  validateEvent,
   initEventStore,
   setEventStoreErrorCallbacks,
   setEventSyncCallback,
