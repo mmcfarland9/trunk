@@ -184,7 +184,8 @@ domResult.elements.shell.append(editor.container)
 function updateSoilMeter(): void {
   const available = getSoilAvailable()
   const capacity = getSoilCapacity()
-  domResult.elements.soilMeterFill.style.width = `${(available / capacity) * 100}%`
+  const pct = capacity > 0 ? (available / capacity) * 100 : 0
+  domResult.elements.soilMeterFill.style.width = `${pct}%`
   domResult.elements.soilMeterValue.textContent = `${available.toFixed(2)}/${capacity.toFixed(2)}`
 }
 
