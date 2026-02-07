@@ -309,5 +309,3 @@ export function exportEvents(): TrunkEvent[] {
   return [...events]
 }
 
-// Initialize on module load
-initEventStore()
