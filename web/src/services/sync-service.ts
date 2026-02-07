@@ -152,13 +152,13 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
           // New event from another device - apply it
           appendEvents([localEvent])
           onRealtimeEvent?.(localEvent)
-          console.log('Realtime: received event from another device', localEvent.type)
+          console.info('Realtime: received event from another device', localEvent.type)
         }
       }
     )
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        console.log('Realtime: connected')
+        console.info('Realtime: connected')
       }
     })
 }
@@ -170,7 +170,7 @@ export function unsubscribeFromRealtime(): void {
   if (realtimeChannel) {
     supabase?.removeChannel(realtimeChannel)
     realtimeChannel = null
-    console.log('Realtime: disconnected')
+    console.info('Realtime: disconnected')
   }
   onRealtimeEvent = null
 }
@@ -216,7 +216,7 @@ export async function deleteAllEvents(): Promise<{ error: string | null }> {
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 
-export type SyncResult = {
+type SyncResult = {
   status: SyncStatus
   pulled: number
   error: string | null
