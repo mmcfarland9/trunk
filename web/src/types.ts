@@ -148,15 +148,6 @@ export type AppElements = {
   soilMeterValue: HTMLSpanElement
   waterCircles: HTMLSpanElement[]
   sunCircle: HTMLSpanElement
-  settingsDialog: HTMLDivElement
-  settingsDialogClose: HTMLButtonElement
-  settingsNameInput: HTMLInputElement
-  settingsEmailInput: HTMLInputElement
-  settingsFrequencyInputs: NodeListOf<HTMLInputElement>
-  settingsTimeInputs: NodeListOf<HTMLInputElement>
-  settingsHarvestCheckbox: HTMLInputElement
-  settingsShineCheckbox: HTMLInputElement
-  settingsSaveBtn: HTMLButtonElement
   waterCanDialog: HTMLDivElement
   waterCanDialogClose: HTMLButtonElement
   waterCanStatusText: HTMLParagraphElement

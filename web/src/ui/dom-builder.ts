@@ -4,14 +4,14 @@ import { syncNode } from './node-ui'
 import { getSoilAvailable, getSoilCapacity, getWaterAvailable } from '../state'
 import ampersandImage from '../../assets/ampersand_alpha.png'
 
-export type DomBuilderResult = {
+type DomBuilderResult = {
   elements: AppElements
   branchGroups: BranchGroup[]
   allNodes: HTMLButtonElement[]
   nodeLookup: Map<string, HTMLButtonElement>
 }
 
-export type NodeClickHandler = (
+type NodeClickHandler = (
   element: HTMLButtonElement,
   nodeId: string,
   placeholder: string
@@ -339,88 +339,6 @@ export function buildApp(
     </div>
   `
 
-  // Settings dialog
-  const settingsDialog = document.createElement('div')
-  settingsDialog.className = 'settings-dialog hidden'
-  settingsDialog.innerHTML = `
-    <div class="settings-dialog-box" role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title">
-      <div class="settings-dialog-header">
-        <h2 id="settings-dialog-title" class="settings-dialog-title">Settings</h2>
-        <button type="button" class="settings-dialog-close" aria-label="Close dialog">×</button>
-      </div>
-      <div class="settings-dialog-body">
-        <div class="settings-section">
-          <label class="settings-label">Name</label>
-          <input type="text" class="settings-name-input" placeholder="Your name" />
-        </div>
-
-        <div class="settings-section">
-          <label class="settings-label">Email</label>
-          <input type="email" class="settings-email-input" placeholder="your@email.com" />
-        </div>
-
-        <div class="settings-section">
-          <label class="settings-label">Check-in Reminders</label>
-          <div class="settings-radio-group settings-frequency-group">
-            <label class="settings-radio">
-              <input type="radio" name="frequency" value="daily" />
-              <span>Daily</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="frequency" value="every3days" />
-              <span>Every 3 days</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="frequency" value="weekly" />
-              <span>Weekly</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="frequency" value="off" />
-              <span>Off</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="settings-section settings-time-section">
-          <label class="settings-label">Preferred Time</label>
-          <div class="settings-radio-group settings-time-group">
-            <label class="settings-radio">
-              <input type="radio" name="time" value="morning" />
-              <span>Morning</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="time" value="afternoon" />
-              <span>Afternoon</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="time" value="evening" />
-              <span>Evening</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <label class="settings-label">Event Notifications</label>
-          <div class="settings-checkbox-group">
-            <label class="settings-checkbox">
-              <input type="checkbox" class="settings-harvest-checkbox" />
-              <span>Sprout ready to harvest</span>
-            </label>
-            <label class="settings-checkbox">
-              <input type="checkbox" class="settings-shine-checkbox" />
-              <span>Shine available</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="settings-dialog-actions">
-          <button type="button" class="action-btn action-btn-progress action-btn-twig settings-save-btn">Save</button>
-        </div>
-        <p class="settings-note">Email notifications coming soon</p>
-      </div>
-    </div>
-  `
-
   // Water Can dialog - status box + water log
   const waterCanDialog = document.createElement('div')
   waterCanDialog.className = 'water-can-dialog hidden'
@@ -597,7 +515,7 @@ export function buildApp(
     </div>
   `
 
-  shell.append(header, body, sproutsDialog, waterDialog, harvestDialog, settingsDialog, waterCanDialog, sunLogDialog, soilBagDialog, accountDialog)
+  shell.append(header, body, sproutsDialog, waterDialog, harvestDialog, waterCanDialog, sunLogDialog, soilBagDialog, accountDialog)
   appRoot.append(shell)
 
   const elements: AppElements = {
@@ -647,15 +565,6 @@ export function buildApp(
     soilMeterValue: soilValue,
     waterCircles,
     sunCircle,
-    settingsDialog,
-    settingsDialogClose: settingsDialog.querySelector<HTMLButtonElement>('.settings-dialog-close')!,
-    settingsNameInput: settingsDialog.querySelector<HTMLInputElement>('.settings-name-input')!,
-    settingsEmailInput: settingsDialog.querySelector<HTMLInputElement>('.settings-email-input')!,
-    settingsFrequencyInputs: settingsDialog.querySelectorAll<HTMLInputElement>('input[name="frequency"]'),
-    settingsTimeInputs: settingsDialog.querySelectorAll<HTMLInputElement>('input[name="time"]'),
-    settingsHarvestCheckbox: settingsDialog.querySelector<HTMLInputElement>('.settings-harvest-checkbox')!,
-    settingsShineCheckbox: settingsDialog.querySelector<HTMLInputElement>('.settings-shine-checkbox')!,
-    settingsSaveBtn: settingsDialog.querySelector<HTMLButtonElement>('.settings-save-btn')!,
     waterCanDialog,
     waterCanDialogClose: waterCanDialog.querySelector<HTMLButtonElement>('.water-can-dialog-close')!,
     waterCanStatusText: waterCanDialog.querySelector<HTMLParagraphElement>('.water-can-status-text')!,
