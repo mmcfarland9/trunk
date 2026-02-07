@@ -20,6 +20,10 @@ const WIND_Y_DAMPING = 0.6, WIND_FLUTTER_SCALE = 0.18
 let guideAnimationId = 0, windAnimationId = 0, windStartTime = 0, previewStartTime = 0
 let lastHoveredBranch: number | null = null
 
+// Position cache to avoid parseFloat in animation frames
+const positionCache = new Map<HTMLElement, { x: number, y: number }>()
+const twigRadiusCache = new Map<HTMLElement, number>()
+
 export function positionNodes(ctx: AppContext): void {
   const { canvas } = ctx.elements
   const { branchGroups, editor } = ctx
@@ -56,8 +60,14 @@ export function positionNodes(ctx: AppContext): void {
 
     group.twigs.forEach((twig, i) => {
       setBasePosition(twig, offsets[i]?.x ?? 0, offsets[i]?.y ?? 0)
-      if (isActive) twig.dataset.twigRadius = `${twigSizes[i] / 2}`
-      else delete twig.dataset.twigRadius
+      if (isActive) {
+        const r = twigSizes[i] / 2
+        twig.dataset.twigRadius = `${r}`
+        twigRadiusCache.set(twig, r)
+      } else {
+        delete twig.dataset.twigRadius
+        twigRadiusCache.delete(twig)
+      }
     })
   })
 
@@ -219,6 +229,7 @@ function getCenterPoint(r: DOMRect, canvas: DOMRect): {x: number, y: number} {
 function setBasePosition(el: HTMLElement, x: number, y: number): void {
   el.style.left = `${x}px`; el.style.top = `${y}px`
   el.dataset.baseX = `${x}`; el.dataset.baseY = `${y}`
+  positionCache.set(el, { x, y })
 }
 
 function setCameraTransform(ctx: AppContext, x: number, y: number): void {
@@ -227,6 +238,8 @@ function setCameraTransform(ctx: AppContext, x: number, y: number): void {
 }
 
 function getBase(el: HTMLElement, axis: 'x'|'y'): number | null {
+  const cached = positionCache.get(el)
+  if (cached) return axis === 'x' ? cached.x : cached.y
   const v = el.dataset[axis === 'x' ? 'baseX' : 'baseY']
   if (!v) return null
   const p = parseFloat(v)
@@ -240,6 +253,8 @@ function getTwigCollisionDiameter(el: HTMLElement): number {
 }
 
 function getTwigRadius(el: HTMLElement): number {
+  const cached = twigRadiusCache.get(el)
+  if (cached !== undefined) return cached
   const r = el.dataset.twigRadius
   if (r) { const p = parseFloat(r); if (!isNaN(p)) return p }
   return Math.hypot(el.offsetWidth || TWIG_BASE_SIZE, el.offsetHeight || TWIG_BASE_SIZE) / 2
