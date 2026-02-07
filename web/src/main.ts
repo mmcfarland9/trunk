@@ -3,7 +3,7 @@ import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
 import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncStatus } from './services/sync-service'
-import { setEventSyncCallback, setEventStoreErrorCallbacks } from './events/store'
+import { initEventStore, setEventSyncCallback, setEventStoreErrorCallbacks } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, getSoilAvailable, getSoilCapacity, getWaterAvailable } from './state'
 import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
@@ -30,6 +30,9 @@ const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) {
   throw new Error('Root container "#app" not found.')
 }
+
+// Initialize event store before any state derivation
+initEventStore()
 
 // Auth gating - show login if Supabase is configured and user not authenticated
 let loginView: HTMLElement | null = null
