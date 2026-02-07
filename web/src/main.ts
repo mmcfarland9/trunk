@@ -68,11 +68,11 @@ async function startWithAuth() {
           console.warn(`Sync failed (${result.mode}):`, result.error)
           // Don't reload - use cached data as fallback
         } else if (result.pulled > 0) {
-          console.log(`Synced ${result.pulled} events (${result.mode})`)
+          console.info(`Synced ${result.pulled} events (${result.mode})`)
           // Reload to reflect new data
           window.location.reload()
         } else {
-          console.log(`Sync complete, no new events (${result.mode})`)
+          console.info(`Sync complete, no new events (${result.mode})`)
         }
 
         // Enable real-time sync: push events as they're created
