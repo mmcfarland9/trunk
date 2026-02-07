@@ -1,12 +1,21 @@
 import type { AppContext } from '../types'
-import { GUIDE_ANIMATION_DURATION } from '../constants'
+import { BRANCH_COUNT, GUIDE_ANIMATION_DURATION } from '../constants'
 import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex, getActiveNode } from '../state'
 
-// Constants
+// Layout constants
 const GUIDE_GAP = 8, TWIG_GAP = 4, TWIG_COLLISION_PAD = 8, TWIG_BASE_SIZE = 36, TWIG_PREVIEW_SIZE = 14, TWIG_MAX_SIZE = 80
 const BLOOM_MIN = 0.12, BLOOM_MAX = 0.34, BLOOM_OV_MIN = 0.06, BLOOM_OV_MAX = 0.18, TWIG_RING_RATIO = 0.55
+const BRANCH_ORBIT_RATIO_X = 0.42, BRANCH_ORBIT_MIN_X = 0.34, BRANCH_ORBIT_RATIO_Y = 0.34
+const TWIG_SPREAD_ACTIVE = 1.8, TWIG_SPREAD_OVERVIEW = 1.4
+const BLOOM_CAP_ACTIVE = 0.42, BLOOM_CAP_OVERVIEW = 0.22
+const BRANCH_ANGLE_STEP = (2 * Math.PI) / BRANCH_COUNT
+const TWIG_LINE_SPACING = 8, BRANCH_LINE_SPACING = 12
+const PREVIEW_FADE = 500, PREVIEW_OPACITY_MAX = 0.4
+
+// Wind animation constants
 const WIND_BRANCH_AMP = 6, WIND_TWIG_AMP = 10, WIND_PULSE = 0.04, WIND_MIN = 0.35, WIND_MAX = 0.7
-const PREVIEW_FADE = 500
+const WIND_FOCUS_BRANCH_SCALE = 0.7, WIND_FOCUS_TWIG_SCALE = 0.85
+const WIND_Y_DAMPING = 0.6, WIND_FLUTTER_SCALE = 0.18
 
 let guideAnimationId = 0, windAnimationId = 0, windStartTime = 0, previewStartTime = 0
 let lastHoveredBranch: number | null = null
@@ -23,11 +32,11 @@ export function positionNodes(ctx: AppContext): void {
   const isBranchView = viewMode === 'branch' && activeBranchIndex !== null
   const isTwigView = viewMode === 'twig' && activeBranchIndex !== null
   const isFocusedBranch = isBranchView || isTwigView
-  const radiusX = Math.max(base * 0.42, width * 0.34), radiusY = height * 0.34
+  const radiusX = Math.max(base * BRANCH_ORBIT_RATIO_X, width * BRANCH_ORBIT_MIN_X), radiusY = height * BRANCH_ORBIT_RATIO_Y
   let activeBranchX = centerX, activeBranchY = centerY
 
   branchGroups.forEach((group, index) => {
-    const angle = (Math.PI / 4) * index - Math.PI / 2
+    const angle = BRANCH_ANGLE_STEP * index - Math.PI / 2
     const branchX = centerX + Math.cos(angle) * radiusX
     const branchY = centerY + Math.sin(angle) * radiusY
     setBasePosition(group.group, branchX, branchY)
@@ -40,8 +49,8 @@ export function positionNodes(ctx: AppContext): void {
     const [minRatio, maxRatio] = isActive ? [BLOOM_MIN, BLOOM_MAX] : [BLOOM_OV_MIN, BLOOM_OV_MAX]
     const minRadius = Math.max(mainRadius + maxTwigRadius + GUIDE_GAP, base * minRatio)
     const maxRadius = Math.min(
-      Math.max(minRadius + maxTwigRadius * (isActive ? 1.8 : 1.4), base * maxRatio),
-      base * (isActive ? 0.42 : 0.22) // Hard cap to keep twigs in bounds
+      Math.max(minRadius + maxTwigRadius * (isActive ? TWIG_SPREAD_ACTIVE : TWIG_SPREAD_OVERVIEW), base * maxRatio),
+      base * (isActive ? BLOOM_CAP_ACTIVE : BLOOM_CAP_OVERVIEW) // Hard cap to keep twigs in bounds
     )
     const offsets = buildRadialOffsets(group.twigs.length, minRadius, maxRadius, twigSizes, angle)
 
@@ -126,7 +135,7 @@ function drawGuideLines(ctx: AppContext): void {
     })
     if (hoveredBranchIndex !== null) {
       if (lastHoveredBranch !== hoveredBranchIndex) { previewStartTime = performance.now(); lastHoveredBranch = hoveredBranchIndex }
-      const opacity = 0.4 * Math.min((performance.now() - previewStartTime) / PREVIEW_FADE, 1)
+      const opacity = PREVIEW_OPACITY_MAX * Math.min((performance.now() - previewStartTime) / PREVIEW_FADE, 1)
       const bg = branchGroups[hoveredBranchIndex]
       if (bg) {
         const mr = bg.branch.getBoundingClientRect()
@@ -146,9 +155,9 @@ function applyWind(ctx: AppContext, timestamp: number): void {
   const viewMode = getViewMode(), activeBranchIndex = getActiveBranchIndex()
   const isFocusedBranch = (viewMode === 'branch' || viewMode === 'twig') && activeBranchIndex !== null
   const time = (timestamp - windStartTime) / 1000
-  const bAmp = WIND_BRANCH_AMP * (isFocusedBranch ? 0.7 : 1)
-  const tAmp = WIND_TWIG_AMP * (isFocusedBranch ? 0.85 : 1)
-  const pulse = WIND_PULSE * (isFocusedBranch ? 0.85 : 1)
+  const bAmp = WIND_BRANCH_AMP * (isFocusedBranch ? WIND_FOCUS_BRANCH_SCALE : 1)
+  const tAmp = WIND_TWIG_AMP * (isFocusedBranch ? WIND_FOCUS_TWIG_SCALE : 1)
+  const pulse = WIND_PULSE * (isFocusedBranch ? WIND_FOCUS_TWIG_SCALE : 1)
 
   branchGroups.forEach((bg, idx) => {
     if (isFocusedBranch && idx !== activeBranchIndex) return
@@ -158,7 +167,7 @@ function applyWind(ctx: AppContext, timestamp: number): void {
     const bx = getBase(bg.group, 'x'), by = getBase(bg.group, 'y')
     if (bx !== null && by !== null) {
       bg.group.style.left = `${bx + Math.sin(time * speed + phase) * bAmp}px`
-      bg.group.style.top = `${by + Math.cos(time * speed * 0.8 + phase) * bAmp * 0.6}px`
+      bg.group.style.top = `${by + Math.cos(time * speed * 0.8 + phase) * bAmp * WIND_Y_DAMPING}px`
     }
     bg.twigs.forEach(twig => {
       const x = getBase(twig, 'x'), y = getBase(twig, 'y')
@@ -171,9 +180,9 @@ function applyWind(ctx: AppContext, timestamp: number): void {
       const ph = seeded(s, 29.3) * Math.PI * 2
       const amp = tAmp * scale * (0.7 + seeded(s, 41.7) * 0.6)
       const p = 1 + Math.sin(time * sp * 0.5 + ph) * pulse * scale
-      const fl = Math.sin(time * sp * 2.2 + ph) * amp * 0.18
+      const fl = Math.sin(time * sp * 2.2 + ph) * amp * WIND_FLUTTER_SCALE
       twig.style.left = `${x * p + Math.sin(time * sp + ph) * amp + fl}px`
-      twig.style.top = `${y * p + Math.cos(time * sp * 0.9 + ph) * amp * 0.6 - fl}px`
+      twig.style.top = `${y * p + Math.cos(time * sp * 0.9 + ph) * amp * WIND_Y_DAMPING - fl}px`
     })
   })
   const activeNode = getActiveNode()
@@ -190,7 +199,7 @@ function drawLineBetween(frag: DocumentFragment, p1: {x:number,y:number}, r1: nu
 
 function appendLine(frag: DocumentFragment, x1: number, y1: number, x2: number, y2: number, variant: 'branch'|'twig'|'trunk', opacity?: number): void {
   const dx = x2-x1, dy = y2-y1, dist = Math.hypot(dx, dy)
-  const spacing = variant === 'twig' ? 8 : 12, n = Math.max(1, Math.floor(dist / spacing))
+  const spacing = variant === 'twig' ? TWIG_LINE_SPACING : BRANCH_LINE_SPACING, n = Math.max(1, Math.floor(dist / spacing))
   for (let i = 0; i < n; i++) {
     const t = n > 1 ? i/(n-1) : 0.5
     const span = document.createElement('span')
