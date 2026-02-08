@@ -15,87 +15,120 @@ struct LoginView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
 
-            Text("Trunk")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+            VStack(spacing: TrunkTheme.space6) {
+                Spacer()
 
-            Text("Reap what you sow")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .italic()
+                VStack(spacing: TrunkTheme.space2) {
+                    Text("TRUNK")
+                        .trunkFont(size: 28, weight: .semibold)
+                        .tracking(6)
+                        .foregroundStyle(Color.wood)
 
-            Spacer()
+                    Text("Reap what you sow")
+                        .trunkFont(size: TrunkTheme.textSm)
+                        .foregroundStyle(Color.inkFaint)
+                        .italic()
+                }
 
-            if showCodeEntry {
-                codeEntryForm
-            } else {
-                emailForm
+                Spacer()
+
+                if showCodeEntry {
+                    codeEntryForm
+                } else {
+                    emailForm
+                }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .trunkFont(size: TrunkTheme.textXs)
+                        .foregroundStyle(Color.trunkDestructive)
+                        .padding(TrunkTheme.space3)
+                        .background(Color.trunkDestructive.opacity(0.08))
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.trunkDestructive.opacity(0.3), lineWidth: 1)
+                        )
+                }
+
+                Spacer()
             }
-
-            if let error = errorMessage {
-                Text(error)
-                    .foregroundStyle(.red)
-                    .font(.caption)
-                    .padding()
-                    .background(Color.red.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-
-            Spacer()
-        }
-        .padding()
-        .disabled(isLoading)
-        .overlay {
-            if isLoading {
-                ProgressView()
+            .padding(TrunkTheme.space4)
+            .disabled(isLoading)
+            .overlay {
+                if isLoading {
+                    ProgressView()
+                        .tint(Color.wood)
+                }
             }
         }
     }
 
     private var emailForm: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: TrunkTheme.space4) {
             TextField("Email address", text: $email)
                 .textContentType(.emailAddress)
                 .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .trunkFont(size: TrunkTheme.textBase)
+                .foregroundStyle(Color.ink)
+                .padding(TrunkTheme.space3)
+                .background(Color.paper)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.border, lineWidth: 1)
+                )
 
-            Button("Send code") {
+            Button("SEND CODE") {
                 Task { await requestCode() }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.trunk)
             .disabled(email.isEmpty)
+            .opacity(email.isEmpty ? 0.5 : 1)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(maxWidth: 300)
     }
 
     private var codeEntryForm: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: TrunkTheme.space4) {
             Text("Code sent to \(email)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .trunkFont(size: TrunkTheme.textXs)
+                .foregroundStyle(Color.inkFaint)
 
             TextField("6-digit code", text: $code)
                 .textContentType(.oneTimeCode)
                 .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
                 .multilineTextAlignment(.center)
+                .trunkFont(size: TrunkTheme.textLg)
+                .foregroundStyle(Color.ink)
+                .padding(TrunkTheme.space3)
+                .background(Color.paper)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.border, lineWidth: 1)
+                )
 
-            Button("Verify") {
+            Button("VERIFY") {
                 Task { await verifyCode() }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.trunk)
             .disabled(code.count != 6)
+            .opacity(code.count != 6 ? 0.5 : 1)
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Button("Back") {
+            Button {
                 showCodeEntry = false
                 code = ""
                 errorMessage = nil
+            } label: {
+                Text("BACK")
+                    .trunkFont(size: TrunkTheme.textSm)
+                    .foregroundStyle(Color.inkFaint)
             }
-            .buttonStyle(.borderless)
         }
         .frame(maxWidth: 300)
     }

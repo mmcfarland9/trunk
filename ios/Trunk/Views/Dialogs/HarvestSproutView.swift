@@ -16,6 +16,7 @@ struct HarvestSproutView: View {
     @State private var selectedResult: Int = 3
     @State private var isHarvesting = false
     @State private var animateSelection = false
+    @State private var errorMessage: String?
 
     private var resultEmojis: [(Int, String)] {
         [
@@ -44,198 +45,262 @@ struct HarvestSproutView: View {
         )
     }
 
-    // Helper to check if bloom descriptions exist
     private var hasBloomDescriptions: Bool {
-        (sprout.bloomWither != nil && !sprout.bloomWither!.isEmpty) ||
-        (sprout.bloomBudding != nil && !sprout.bloomBudding!.isEmpty) ||
-        (sprout.bloomFlourish != nil && !sprout.bloomFlourish!.isEmpty)
+        sprout.bloomWither?.isEmpty == false ||
+        sprout.bloomBudding?.isEmpty == false ||
+        sprout.bloomFlourish?.isEmpty == false
     }
 
     var body: some View {
-        Form {
-            // Sprout info
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(sprout.title)
-                        .font(.headline)
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
 
-                    HStack(spacing: 12) {
-                        Label(sprout.season.label, systemImage: "calendar")
-                        Label(sprout.environment.label, systemImage: "leaf")
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                }
-            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: TrunkTheme.space5) {
+                    // Sprout info
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text(sprout.title)
+                            .trunkFont(size: TrunkTheme.textLg, weight: .semibold)
+                            .foregroundStyle(Color.ink)
 
-            // Bloom reference
-            if hasBloomDescriptions {
-                Section("Your Bloom Descriptions") {
-                    if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
-                        HStack(alignment: .top) {
-                            Text("1/5")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .frame(width: 30)
-                            Text(bloomWither)
-                                .font(.caption)
+                        HStack(spacing: TrunkTheme.space3) {
+                            Text(sprout.season.label)
+                            Text("·")
+                            Text(sprout.environment.label)
                         }
+                        .trunkFont(size: TrunkTheme.textSm)
+                        .foregroundStyle(Color.inkFaint)
                     }
-                    if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
-                        HStack(alignment: .top) {
-                            Text("3/5")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .frame(width: 30)
-                            Text(bloomBudding)
-                                .font(.caption)
-                        }
-                    }
-                    if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
-                        HStack(alignment: .top) {
-                            Text("5/5")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .frame(width: 30)
-                            Text(bloomFlourish)
-                                .font(.caption)
-                        }
-                    }
-                }
-            }
 
-            // Emoji result picker
-            Section {
-                VStack(spacing: 16) {
-                    HStack(spacing: 12) {
-                        ForEach(resultEmojis, id: \.0) { result, emoji in
-                            Button {
-                                withAnimation(.trunkBounce) {
-                                    selectedResult = result
-                                    animateSelection = true
+                    // Bloom reference
+                    if hasBloomDescriptions {
+                        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                            Text("YOUR BLOOM DESCRIPTIONS")
+                                .monoLabel(size: TrunkTheme.textXs)
+
+                            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                                if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
+                                    HStack(alignment: .top, spacing: TrunkTheme.space2) {
+                                        Text("1/5")
+                                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
+                                            .frame(width: 30)
+                                        Text(bloomWither)
+                                            .trunkFont(size: TrunkTheme.textSm)
+                                            .foregroundStyle(Color.inkLight)
+                                    }
                                 }
-                                HapticManager.selection()
-                                // Reset animation flag
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    animateSelection = false
+                                if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
+                                    HStack(alignment: .top, spacing: TrunkTheme.space2) {
+                                        Text("3/5")
+                                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
+                                            .frame(width: 30)
+                                        Text(bloomBudding)
+                                            .trunkFont(size: TrunkTheme.textSm)
+                                            .foregroundStyle(Color.inkLight)
+                                    }
                                 }
-                            } label: {
-                                VStack(spacing: 4) {
-                                    Text(emoji)
-                                        .font(.system(size: 32))
-                                        .scaleEffect(selectedResult == result && animateSelection ? 1.2 : 1.0)
-                                    Text("\(result)")
-                                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                        .foregroundStyle(selectedResult == result ? Color.ink : Color.inkFaint)
+                                if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
+                                    HStack(alignment: .top, spacing: TrunkTheme.space2) {
+                                        Text("5/5")
+                                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
+                                            .frame(width: 30)
+                                        Text(bloomFlourish)
+                                            .trunkFont(size: TrunkTheme.textSm)
+                                            .foregroundStyle(Color.inkLight)
+                                    }
                                 }
-                                .padding(8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedResult == result ? Color.borderSubtle : Color.clear)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(selectedResult == result ? Color.twig : Color.clear, lineWidth: 2)
-                                )
                             }
-                            .buttonStyle(.plain)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
                         }
                     }
 
-                    // Selected result description
-                    if let desc = resultDescriptions.first(where: { $0.0 == selectedResult }) {
-                        VStack(spacing: 4) {
-                            Text(desc.1)
-                                .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
-                                .foregroundStyle(Color.ink)
-                            Text(desc.2)
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                                .multilineTextAlignment(.center)
+                    // Emoji result picker
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("HOW DID IT BLOOM?")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        VStack(spacing: TrunkTheme.space4) {
+                            HStack(spacing: TrunkTheme.space3) {
+                                ForEach(resultEmojis, id: \.0) { result, emoji in
+                                    Button {
+                                        withAnimation(.trunkBounce) {
+                                            selectedResult = result
+                                            animateSelection = true
+                                        }
+                                        HapticManager.selection()
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            animateSelection = false
+                                        }
+                                    } label: {
+                                        VStack(spacing: TrunkTheme.space1) {
+                                            Text(emoji)
+                                                .font(.system(size: 32))
+                                                .scaleEffect(selectedResult == result && animateSelection ? 1.2 : 1.0)
+                                            Text("\(result)")
+                                                .trunkFont(size: TrunkTheme.textXs)
+                                                .foregroundStyle(selectedResult == result ? Color.ink : Color.inkFaint)
+                                        }
+                                        .frame(minWidth: 44, minHeight: 44)
+                                        .padding(TrunkTheme.space2)
+                                        .background(selectedResult == result ? Color.borderSubtle : Color.clear)
+                                        .overlay(
+                                            Rectangle()
+                                                .stroke(selectedResult == result ? Color.twig : Color.clear, lineWidth: 2)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("\(emoji) result \(result) of 5")
+                                }
+                            }
+
+                            if let desc = resultDescriptions.first(where: { $0.0 == selectedResult }) {
+                                VStack(spacing: TrunkTheme.space1) {
+                                    Text(desc.1)
+                                        .trunkFont(size: TrunkTheme.textSm, weight: .medium)
+                                        .foregroundStyle(Color.ink)
+                                    Text(desc.2)
+                                        .trunkFont(size: TrunkTheme.textXs)
+                                        .foregroundStyle(Color.inkFaint)
+                                        .multilineTextAlignment(.center)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(TrunkTheme.space3)
+                        .background(Color.paper)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                    }
+
+                    // Reward summary
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("REWARDS")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        VStack(spacing: 1) {
+                            HStack {
+                                Text("Soil Returned")
+                                    .trunkFont(size: TrunkTheme.textBase)
+                                    .foregroundStyle(Color.ink)
+                                Spacer()
+                                Text("+\(sprout.soilCost)")
+                                    .trunkFont(size: TrunkTheme.textBase)
+                                    .foregroundStyle(Color.twig)
+                            }
+                            .padding(TrunkTheme.space3)
+
+                            HStack {
+                                Text("Capacity Reward")
+                                    .trunkFont(size: TrunkTheme.textBase)
+                                    .foregroundStyle(Color.ink)
+                                Spacer()
+                                Text("+\(String(format: "%.2f", reward))")
+                                    .trunkFont(size: TrunkTheme.textBase)
+                                    .foregroundStyle(Color.twig)
+                            }
+                            .padding(TrunkTheme.space3)
+
+                            HStack {
+                                Text("New Capacity")
+                                    .trunkFont(size: TrunkTheme.textBase, weight: .medium)
+                                    .foregroundStyle(Color.ink)
+                                Spacer()
+                                Text(String(format: "%.1f", progression.soilCapacity + reward))
+                                    .trunkFont(size: TrunkTheme.textBase, weight: .semibold)
+                                    .foregroundStyle(Color.ink)
+                            }
+                            .padding(TrunkTheme.space3)
+                        }
+                        .background(Color.paper)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                    }
+
+                    // Error message
+                    if let error = errorMessage {
+                        Text(error)
+                            .trunkFont(size: TrunkTheme.textXs)
+                            .foregroundStyle(Color.trunkDestructive)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.trunkDestructive.opacity(0.08))
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.trunkDestructive.opacity(0.3), lineWidth: 1)
+                            )
+                    }
+
+                    // Harvest button
+                    Button {
+                        harvestSprout()
+                    } label: {
+                        HStack(spacing: TrunkTheme.space1) {
+                            Text("🌻")
+                            Text("HARVEST")
                         }
                     }
+                    .buttonStyle(.trunk)
+                    .disabled(isHarvesting)
+                    .opacity(isHarvesting ? 0.5 : 1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-            } header: {
-                Text("How did it bloom?")
-            }
-
-            // Reward summary
-            Section {
-                HStack {
-                    Text("Soil Returned")
-                    Spacer()
-                    Text("+\(sprout.soilCost)")
-                        .foregroundStyle(.brown)
-                }
-
-                HStack {
-                    Text("Capacity Reward")
-                    Spacer()
-                    Text("+\(String(format: "%.2f", reward))")
-                        .foregroundStyle(.green)
-                }
-
-                HStack {
-                    Text("New Capacity")
-                    Spacer()
-                    Text(String(format: "%.1f", progression.soilCapacity + reward))
-                        .fontWeight(.bold)
-                }
-            } header: {
-                Text("Rewards")
+                .padding(TrunkTheme.space4)
             }
         }
-        .navigationTitle("Harvest")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
                     dismiss()
                 }
+                .trunkFont(size: TrunkTheme.textSm)
+                .foregroundStyle(Color.inkFaint)
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    harvestSprout()
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("🌻")
-                        Text("Harvest")
-                    }
-                }
-                .disabled(isHarvesting)
+            ToolbarItem(placement: .principal) {
+                Text("HARVEST")
+                    .trunkFont(size: TrunkTheme.textBase)
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
             }
         }
     }
 
     private func harvestSprout() {
         isHarvesting = true
+        errorMessage = nil
         HapticManager.tap()
 
-        // Calculate capacity gained (same formula as web - pre-calculated at harvest time)
         let capacityGained = reward
         let timestamp = ISO8601DateFormatter().string(from: Date())
 
-        // Push to cloud - state will derive automatically from events
         Task {
-            try? await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
-                "sproutId": sprout.id,
-                "result": selectedResult,
-                "capacityGained": capacityGained,
-                "timestamp": timestamp
-            ])
-        }
-
-        // Celebration haptic sequence and dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            HapticManager.success()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            HapticManager.impact()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            dismiss()
+            do {
+                try await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
+                    "sproutId": sprout.id,
+                    "result": selectedResult,
+                    "capacityGained": capacityGained,
+                    "timestamp": timestamp
+                ])
+                HapticManager.success()
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                HapticManager.impact()
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                dismiss()
+            } catch {
+                isHarvesting = false
+                errorMessage = "Failed to save. Check your connection and try again."
+                HapticManager.error()
+            }
         }
     }
 }

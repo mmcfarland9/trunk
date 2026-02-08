@@ -33,4 +33,10 @@ enum HapticManager {
         let generator = UISelectionFeedbackGenerator()
         generator.selectionChanged()
     }
+
+    /// Error notification for failed actions
+    static func error() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+    }
 }

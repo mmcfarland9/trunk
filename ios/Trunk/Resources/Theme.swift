@@ -6,28 +6,95 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - Colors
 
 extension Color {
-    // Core palette - warm, earthy tones
-    static let ink = Color(red: 0.169, green: 0.102, blue: 0.071)          // #2b1a12
-    static let inkLight = Color(red: 0.290, green: 0.200, blue: 0.145)     // #4a3325
-    static let inkFaint = Color(red: 0.435, green: 0.337, blue: 0.267)     // #6f5644
-    static let wood = Color(red: 0.420, green: 0.267, blue: 0.137)         // #6b4423
-    static let twig = Color(red: 0.545, green: 0.353, blue: 0.169)         // #8b5a2b
-    static let paper = Color(red: 0.973, green: 0.965, blue: 0.945)        // #f8f6f1
-    static let parchment = Color(red: 0.953, green: 0.922, blue: 0.878)    // #f3ebe0
+    // Core palette - adaptive for light/dark mode
+    static let ink = Color(
+        light: Color(red: 0.169, green: 0.102, blue: 0.071),          // #2b1a12
+        dark: Color(red: 0.910, green: 0.878, blue: 0.847)            // #e8e0d8
+    )
+    static let inkLight = Color(
+        light: Color(red: 0.290, green: 0.200, blue: 0.145),          // #4a3325
+        dark: Color(red: 0.749, green: 0.698, blue: 0.651)            // #bfb2a6
+    )
+    static let inkFaint = Color(
+        light: Color(red: 0.435, green: 0.337, blue: 0.267),          // #6f5644
+        dark: Color(red: 0.576, green: 0.529, blue: 0.482)            // #93877b
+    )
+    static let wood = Color(
+        light: Color(red: 0.420, green: 0.267, blue: 0.137),          // #6b4423
+        dark: Color(red: 0.671, green: 0.498, blue: 0.337)            // #ab7f56
+    )
+    static let twig = Color(
+        light: Color(red: 0.545, green: 0.353, blue: 0.169),          // #8b5a2b
+        dark: Color(red: 0.722, green: 0.545, blue: 0.369)            // #b88b5e
+    )
+    static let paper = Color(
+        light: Color(red: 0.973, green: 0.965, blue: 0.945),          // #f8f6f1
+        dark: Color(red: 0.161, green: 0.137, blue: 0.118)            // #29231e
+    )
+    static let parchment = Color(
+        light: Color(red: 0.953, green: 0.922, blue: 0.878),          // #f3ebe0
+        dark: Color(red: 0.118, green: 0.098, blue: 0.082)            // #1e1915
+    )
 
-    // Semantic colors
-    static let trunkWater = Color(red: 0.275, green: 0.510, blue: 0.706)   // steelblue
-    static let trunkSun = Color(red: 0.831, green: 0.627, blue: 0.000)     // #d4a000
-    static let trunkDestructive = Color(red: 0.54, green: 0.29, blue: 0.23) // #8a4a3a
+    // Semantic colors - slightly brighter in dark mode for contrast
+    static let trunkWater = Color(
+        light: Color(red: 0.275, green: 0.510, blue: 0.706),          // steelblue
+        dark: Color(red: 0.396, green: 0.616, blue: 0.800)            // lighter steel
+    )
+    static let trunkSun = Color(
+        light: Color(red: 0.831, green: 0.627, blue: 0.000),          // #d4a000
+        dark: Color(red: 0.918, green: 0.729, blue: 0.118)            // brighter gold
+    )
+    static let trunkDestructive = Color(
+        light: Color(red: 0.54, green: 0.29, blue: 0.23),             // #8a4a3a
+        dark: Color(red: 0.698, green: 0.420, blue: 0.353)            // lighter russet
+    )
 
-    // Borders
-    static let borderSubtle = Color.wood.opacity(0.08)
-    static let border = Color.wood.opacity(0.15)
-    static let borderStrong = Color.wood.opacity(0.25)
+    // Muted success green for completed states
+    static let trunkSuccess = Color(
+        light: Color(red: 0.4, green: 0.6, blue: 0.4),               // muted green
+        dark: Color(red: 0.5, green: 0.7, blue: 0.5)                 // lighter muted green
+    )
+
+    // Muted warning for negative amounts / unaffordable costs
+    static let trunkWarning = Color(
+        light: Color(red: 0.6, green: 0.35, blue: 0.3),              // muted rust
+        dark: Color(red: 0.75, green: 0.47, blue: 0.4)               // lighter rust
+    )
+
+    // Borders - adaptive
+    static let borderSubtle = Color(
+        light: Color(red: 0.420, green: 0.267, blue: 0.137).opacity(0.08),
+        dark: Color(red: 0.671, green: 0.498, blue: 0.337).opacity(0.10)
+    )
+    static let border = Color(
+        light: Color(red: 0.420, green: 0.267, blue: 0.137).opacity(0.15),
+        dark: Color(red: 0.671, green: 0.498, blue: 0.337).opacity(0.20)
+    )
+    static let borderStrong = Color(
+        light: Color(red: 0.420, green: 0.267, blue: 0.137).opacity(0.25),
+        dark: Color(red: 0.671, green: 0.498, blue: 0.337).opacity(0.30)
+    )
+}
+
+// MARK: - Adaptive Color Helper
+
+extension Color {
+    init(light: Color, dark: Color) {
+        self.init(uiColor: UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor(dark)
+            default:
+                return UIColor(light)
+            }
+        })
+    }
 }
 
 // MARK: - Theme

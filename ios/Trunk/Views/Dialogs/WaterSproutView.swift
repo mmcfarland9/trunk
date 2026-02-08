@@ -15,6 +15,7 @@ struct WaterSproutView: View {
 
     @State private var note = ""
     @State private var isWatering = false
+    @State private var errorMessage: String?
     @FocusState private var isNoteFocused: Bool
 
     private var hasNote: Bool {
@@ -22,62 +23,112 @@ struct WaterSproutView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(sprout.title)
-                        .font(.headline)
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
 
-                    HStack(spacing: 8) {
-                        Label("\(progression.waterAvailable)", systemImage: "drop.fill")
-                            .foregroundStyle(.blue)
-                        Text("water remaining today")
-                            .foregroundStyle(.secondary)
+            ScrollView {
+                VStack(alignment: .leading, spacing: TrunkTheme.space5) {
+                    // Sprout info
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text(sprout.title)
+                            .trunkFont(size: TrunkTheme.textLg, weight: .semibold)
+                            .foregroundStyle(Color.ink)
+
+                        HStack(spacing: TrunkTheme.space2) {
+                            Text("💧")
+                            Text("\(progression.waterAvailable) water remaining today")
+                                .trunkFont(size: TrunkTheme.textSm)
+                                .foregroundStyle(Color.trunkWater)
+                        }
                     }
-                    .font(.subheadline)
-                }
-            }
 
-            Section {
-                TextField("What did you do today?", text: $note, axis: .vertical)
-                    .lineLimit(3...6)
-                    .focused($isNoteFocused)
-            } header: {
-                Text("Journal Entry (Optional)")
-            } footer: {
-                Text("Record your progress, thoughts, or reflections.")
-            }
+                    // Journal entry
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("JOURNAL ENTRY")
+                            .monoLabel(size: TrunkTheme.textXs)
 
-            Section {
-                HStack {
-                    Text("Soil Recovery")
-                    Spacer()
-                    Text("+\(String(format: "%.2f", ProgressionService.waterRecovery))")
-                        .foregroundStyle(.green)
+                        TextField("What did you do today?", text: $note, axis: .vertical)
+                            .trunkFont(size: TrunkTheme.textBase)
+                            .foregroundStyle(Color.ink)
+                            .lineLimit(3...6)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                            .focused($isNoteFocused)
+
+                        Text("Record your progress, thoughts, or reflections.")
+                            .trunkFont(size: TrunkTheme.textXs)
+                            .foregroundStyle(Color.inkFaint)
+                    }
+
+                    // Soil recovery
+                    HStack {
+                        Text("SOIL RECOVERY")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        Spacer()
+
+                        Text("+\(String(format: "%.2f", ProgressionService.waterRecovery))")
+                            .trunkFont(size: TrunkTheme.textBase)
+                            .foregroundStyle(Color.twig)
+                    }
+                    .padding(TrunkTheme.space3)
+                    .background(Color.paper)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.border, lineWidth: 1)
+                    )
+
+                    // Error message
+                    if let error = errorMessage {
+                        Text(error)
+                            .trunkFont(size: TrunkTheme.textXs)
+                            .foregroundStyle(Color.trunkDestructive)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.trunkDestructive.opacity(0.08))
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.trunkDestructive.opacity(0.3), lineWidth: 1)
+                            )
+                    }
+
+                    // Water button
+                    Button {
+                        waterSprout()
+                    } label: {
+                        HStack(spacing: TrunkTheme.space1) {
+                            Text("💧")
+                            Text("WATER")
+                        }
+                    }
+                    .buttonStyle(.trunkWater)
+                    .disabled(!progression.canWater || isWatering)
+                    .opacity(!progression.canWater || isWatering ? 0.5 : 1)
+                    .pulse(hasNote && progression.canWater && !isWatering)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-            } footer: {
-                Text("Watering helps you recover a tiny bit of soil capacity.")
+                .padding(TrunkTheme.space4)
             }
         }
-        .navigationTitle("Water Sprout")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
                     dismiss()
                 }
+                .trunkFont(size: TrunkTheme.textSm)
+                .foregroundStyle(Color.inkFaint)
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    waterSprout()
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("💧")
-                        Text("Water")
-                    }
-                }
-                .disabled(!progression.canWater || isWatering)
-                .pulse(hasNote && progression.canWater && !isWatering)
+            ToolbarItem(placement: .principal) {
+                Text("WATER SPROUT")
+                    .trunkFont(size: TrunkTheme.textBase)
+                    .tracking(2)
+                    .foregroundStyle(Color.trunkWater)
             }
         }
         .onAppear {
@@ -87,24 +138,26 @@ struct WaterSproutView: View {
 
     private func waterSprout() {
         isWatering = true
+        errorMessage = nil
         HapticManager.tap()
 
         let content = note.trimmingCharacters(in: .whitespacesAndNewlines)
         let timestamp = ISO8601DateFormatter().string(from: Date())
 
-        // Push to cloud - state will derive automatically from events
         Task {
-            try? await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
-                "sproutId": sprout.id,
-                "note": content,
-                "timestamp": timestamp
-            ])
-        }
-
-        // Success feedback and dismiss with slight delay for visual feedback
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            HapticManager.success()
-            dismiss()
+            do {
+                try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
+                    "sproutId": sprout.id,
+                    "note": content,
+                    "timestamp": timestamp
+                ])
+                HapticManager.success()
+                dismiss()
+            } catch {
+                isWatering = false
+                errorMessage = "Failed to save. Check your connection and try again."
+                HapticManager.tap()
+            }
         }
     }
 }

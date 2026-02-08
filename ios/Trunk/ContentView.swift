@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(\.scenePhase) private var scenePhase
     @State private var progression = ProgressionViewModel()
 
     var body: some View {
@@ -24,27 +25,25 @@ struct ContentView: View {
                     }
             }
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                // Invalidate time-sensitive caches (water/sun availability)
+                // when app returns to foreground - may have crossed 6am boundary
+                progression.refresh()
+            }
+        }
     }
 
     private func syncOnOpen() async {
         guard authService.isAuthenticated else { return }
 
-        // Smart sync: incremental if cache valid, full if not
         let result = await SyncService.shared.smartSync()
 
-        if let error = result.error {
-            print("Sync failed (\(result.mode.rawValue)): \(error)")
-            // Don't do anything else - use cached data as fallback
-        } else if result.pulled > 0 {
-            print("Synced \(result.pulled) events (\(result.mode.rawValue))")
+        if result.error == nil, result.pulled > 0 {
             progression.refresh()
-        } else {
-            print("Sync complete, no new events (\(result.mode.rawValue))")
         }
 
-        // Start realtime subscription for instant sync
         SyncService.shared.subscribeToRealtime { _ in
-            // Refresh UI when events arrive from other devices
             progression.refresh()
         }
     }

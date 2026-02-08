@@ -134,6 +134,7 @@ struct TreeCanvasView: View {
                     }
                 )
                 .position(x: position.x + windOffset.x, y: position.y + windOffset.y)
+                .transition(.scale.combined(with: .opacity))
             }
         }
     }
@@ -290,6 +291,7 @@ struct AsciiDotLine: View {
                         y: y1 + lineDy * t
                     )
             }
+            .allowsHitTesting(false)
         }
     }
 }
@@ -335,18 +337,18 @@ struct InteractiveBranchNode: View {
                     .foregroundStyle(Color.twig)
             }
         }
-        .scaleEffect(isPressed ? 0.95 : (isSelected ? 1.05 : 1.0))
+        .padding(TrunkTheme.space2)
+        .frame(minWidth: 44, minHeight: 44)
+        .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.trunkQuick, value: isPressed)
-        .animation(.trunkSpring, value: isSelected)
-        .onTapGesture(count: 2) {
-            onDoubleTap()
-        }
+        .contentShape(Rectangle())
         .onTapGesture {
             onTap()
         }
         .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
+        .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
     }
 
     private var borderColor: Color {

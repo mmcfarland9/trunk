@@ -81,20 +81,6 @@ struct SagasView: View {
         sprouts.filter { $0.leafId == leaf.id }
     }
 
-    private func contextLabel(for leaf: DerivedLeaf) -> String {
-        // Parse twigId like "branch-0-twig-3" to get branch and twig names
-        let parts = leaf.twigId.split(separator: "-")
-        guard parts.count >= 4,
-              let branchIndex = Int(parts[1]),
-              let twigIndex = Int(parts[3]) else {
-            return leaf.twigId
-        }
-
-        let branchName = SharedConstants.Tree.branchName(branchIndex)
-        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
-
-        return "\(branchName) / \(twigLabel.capitalized)"
-    }
 }
 
 // MARK: - Saga Row

@@ -154,6 +154,12 @@ struct TodayView: View {
                         activitySection
                             .animatedCard(index: 6)
                     }
+
+                    // Empty state for brand-new users
+                    if activeSprouts.isEmpty && recentActivity.isEmpty {
+                        getStartedSection
+                            .animatedCard(index: 7)
+                    }
                 }
                 .padding(TrunkTheme.space4)
             }
@@ -206,6 +212,10 @@ struct TodayView: View {
                 }
 
                 GeometryReader { geo in
+                    let fillWidth = progression.soilCapacity > 0
+                        ? geo.size.width * min(1.0, progression.soilAvailable / progression.soilCapacity)
+                        : 0.0
+
                     ZStack(alignment: .leading) {
                         Rectangle()
                             .fill(Color.borderSubtle)
@@ -213,7 +223,7 @@ struct TodayView: View {
 
                         Rectangle()
                             .fill(Color.twig)
-                            .frame(width: geo.size.width * (progression.soilAvailable / progression.soilCapacity), height: 8)
+                            .frame(width: max(0, fillWidth), height: 8)
                     }
                 }
                 .frame(height: 8)
@@ -434,6 +444,31 @@ struct TodayView: View {
         )
     }
 
+    private var getStartedSection: some View {
+        VStack(spacing: TrunkTheme.space3) {
+            Text("( )")
+                .font(.system(size: 24, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            Text("Plant your first sprout")
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            Text("Tap Trunk below, pick a branch, then a twig to start growing.")
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, TrunkTheme.space6)
+        .padding(.horizontal, TrunkTheme.space4)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+
     // MARK: - Helpers
 
     private func wasWateredThisWeek(_ sprout: DerivedSprout) -> Bool {
@@ -455,35 +490,6 @@ struct TodayView: View {
             let days = Int(interval / 86400)
             return "\(days)d ago"
         }
-    }
-
-    private func resultToEmoji(_ result: Int) -> String {
-        switch result {
-        case 1: return "🥀"
-        case 2: return "🌱"
-        case 3: return "🌿"
-        case 4: return "🌳"
-        case 5: return "🌲"
-        default: return "🌿"
-        }
-    }
-
-    private func sproutsForLeaf(_ leaf: DerivedLeaf) -> [DerivedSprout] {
-        sprouts.filter { $0.leafId == leaf.id }
-    }
-
-    private func contextLabel(for leaf: DerivedLeaf) -> String {
-        // Parse twigId like "branch-0-twig-3" to get branch and twig names
-        let parts = leaf.twigId.split(separator: "-")
-        guard parts.count >= 4,
-              let branchIndex = Int(parts[1]),
-              let twigIndex = Int(parts[3]) else {
-            return leaf.twigId
-        }
-
-        let branchName = SharedConstants.Tree.branchName(branchIndex)
-        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
-        return "\(branchName) / \(twigLabel.capitalized)"
     }
 }
 

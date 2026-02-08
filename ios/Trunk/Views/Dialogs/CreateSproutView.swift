@@ -22,6 +22,8 @@ struct CreateSproutView: View {
     @State private var selectedLeafId: String?
     @State private var showNewLeafAlert = false
     @State private var newLeafName = ""
+    @State private var isPlanting = false
+    @State private var errorMessage: String?
 
     // Derived state from EventStore
     private var state: DerivedState {
@@ -60,6 +62,7 @@ struct CreateSproutView: View {
                             // Existing leaves
                             ForEach(twigLeaves) { leaf in
                                 Button {
+                                    HapticManager.selection()
                                     selectedLeafId = leaf.id
                                 } label: {
                                     HStack {
@@ -75,6 +78,7 @@ struct CreateSproutView: View {
                                     }
                                     .padding(.vertical, TrunkTheme.space2)
                                     .padding(.horizontal, TrunkTheme.space3)
+                                    .frame(minHeight: 44)
                                     .background(Color.paper)
                                 }
                                 .buttonStyle(.plain)
@@ -125,6 +129,7 @@ struct CreateSproutView: View {
                         VStack(spacing: 1) {
                             ForEach(Season.allCases, id: \.self) { s in
                                 Button {
+                                    HapticManager.selection()
                                     season = s
                                 } label: {
                                     HStack {
@@ -146,6 +151,7 @@ struct CreateSproutView: View {
                                     }
                                     .padding(.vertical, TrunkTheme.space2)
                                     .padding(.horizontal, TrunkTheme.space3)
+                                    .frame(minHeight: 44)
                                     .background(Color.paper)
                                 }
                                 .buttonStyle(.plain)
@@ -164,6 +170,7 @@ struct CreateSproutView: View {
                         VStack(spacing: 1) {
                             ForEach(SproutEnvironment.allCases, id: \.self) { e in
                                 Button {
+                                    HapticManager.selection()
                                     environment = e
                                 } label: {
                                     HStack {
@@ -191,6 +198,7 @@ struct CreateSproutView: View {
                                     }
                                     .padding(.vertical, TrunkTheme.space2)
                                     .padding(.horizontal, TrunkTheme.space3)
+                                    .frame(minHeight: 44)
                                     .background(Color.paper)
                                 }
                                 .buttonStyle(.plain)
@@ -225,7 +233,7 @@ struct CreateSproutView: View {
                             Text("\(soilCost)")
                                 .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                                 .fontWeight(.medium)
-                                .foregroundStyle(canAfford ? Color.twig : Color(red: 0.6, green: 0.35, blue: 0.3))
+                                .foregroundStyle(canAfford ? Color.twig : Color.trunkWarning)
                         }
 
                         HStack {
@@ -247,13 +255,26 @@ struct CreateSproutView: View {
                             .stroke(Color.border, lineWidth: 1)
                     )
 
+                    // Error message
+                    if let error = errorMessage {
+                        Text(error)
+                            .trunkFont(size: TrunkTheme.textXs)
+                            .foregroundStyle(Color.trunkDestructive)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.trunkDestructive.opacity(0.08))
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.trunkDestructive.opacity(0.3), lineWidth: 1)
+                            )
+                    }
+
                     // Actions
                     Button("PLANT") {
                         plantSprout()
                     }
                     .buttonStyle(.trunk)
-                    .disabled(!isValid || !canAfford)
-                    .opacity(isValid && canAfford ? 1 : 0.5)
+                    .disabled(!isValid || !canAfford || isPlanting)
+                    .opacity(isValid && canAfford && !isPlanting ? 1 : 0.5)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding(TrunkTheme.space4)
@@ -308,27 +329,34 @@ struct CreateSproutView: View {
     }
 
     private func plantSprout() {
+        isPlanting = true
+        errorMessage = nil
+
         let sproutId = UUID().uuidString
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Push to cloud - state will derive automatically from events
         Task {
-            try? await SyncService.shared.pushEvent(type: "sprout_planted", payload: [
-                "sproutId": sproutId,
-                "title": trimmedTitle,
-                "twigId": nodeId,
-                "season": season.rawValue,
-                "environment": environment.rawValue,
-                "soilCost": soilCost,
-                "leafId": selectedLeafId as Any,
-                "bloomWither": bloomWither,
-                "bloomBudding": bloomBudding,
-                "bloomFlourish": bloomFlourish
-            ])
+            do {
+                try await SyncService.shared.pushEvent(type: "sprout_planted", payload: [
+                    "sproutId": sproutId,
+                    "title": trimmedTitle,
+                    "twigId": nodeId,
+                    "season": season.rawValue,
+                    "environment": environment.rawValue,
+                    "soilCost": soilCost,
+                    "leafId": selectedLeafId as Any,
+                    "bloomWither": bloomWither,
+                    "bloomBudding": bloomBudding,
+                    "bloomFlourish": bloomFlourish
+                ])
+                HapticManager.success()
+                dismiss()
+            } catch {
+                isPlanting = false
+                errorMessage = "Failed to save. Check your connection and try again."
+                HapticManager.error()
+            }
         }
-
-        HapticManager.success()
-        dismiss()
     }
 }
 
@@ -337,7 +365,7 @@ struct LabelWithHint: View {
     let hint: String
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: TrunkTheme.space1) {
             Text(label)
                 .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                 .textCase(.uppercase)

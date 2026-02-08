@@ -262,6 +262,7 @@ final class SyncService: ObservableObject {
         Task {
             do {
                 let channel = client.realtimeV2.channel("events-realtime")
+                self.realtimeChannel = channel
 
                 let insertions = channel.postgresChange(InsertAction.self, table: "events", filter: .eq("user_id", value: userId.uuidString))
 
@@ -304,7 +305,7 @@ final class SyncService: ObservableObject {
 
     private func randomString(length: Int) -> String {
         let letters = "abcdefghijklmnopqrstuvwxyz0123456789"
-        return String((0..<length).map { _ in letters.randomElement()! })
+        return String((0..<length).compactMap { _ in letters.randomElement() })
     }
 }
 

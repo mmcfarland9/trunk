@@ -15,96 +15,139 @@ struct SproutActionsView: View {
 
     @State private var showingWaterSheet = false
     @State private var showingHarvestSheet = false
+    @State private var isUprooting = false
+    @State private var errorMessage: String?
 
-    // Helper to check if bloom descriptions exist
     private var hasBloomDescriptions: Bool {
-        (sprout.bloomWither != nil && !sprout.bloomWither!.isEmpty) ||
-        (sprout.bloomBudding != nil && !sprout.bloomBudding!.isEmpty) ||
-        (sprout.bloomFlourish != nil && !sprout.bloomFlourish!.isEmpty)
+        sprout.bloomWither?.isEmpty == false ||
+        sprout.bloomBudding?.isEmpty == false ||
+        sprout.bloomFlourish?.isEmpty == false
     }
 
     var body: some View {
-        List {
-            // Sprout info
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(sprout.title)
-                        .font(.title2)
-                        .fontWeight(.bold)
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
 
-                    HStack(spacing: 12) {
-                        Label(sprout.season.label, systemImage: "calendar")
-                        Label(sprout.environment.label, systemImage: "leaf")
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 4)
-            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: TrunkTheme.space5) {
+                    // Sprout info
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text(sprout.title)
+                            .trunkFont(size: TrunkTheme.textXl, weight: .semibold)
+                            .foregroundStyle(Color.ink)
 
-            // State-specific content
-            switch sprout.state {
-            case .active:
-                activeSection
-            case .completed:
-                completedSection
-            }
-
-            // Bloom descriptions
-            if hasBloomDescriptions {
-                Section("Bloom Descriptions") {
-                    if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("1/5 Withering")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(bloomWither)
+                        HStack(spacing: TrunkTheme.space3) {
+                            Text(sprout.season.label)
+                            Text("·")
+                            Text(sprout.environment.label)
                         }
+                        .trunkFont(size: TrunkTheme.textSm)
+                        .foregroundStyle(Color.inkFaint)
                     }
-                    if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("3/5 Budding")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(bloomBudding)
-                        }
-                    }
-                    if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("5/5 Flourishing")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(bloomFlourish)
-                        }
-                    }
-                }
-            }
 
-            // Water entries
-            if !sprout.waterEntries.isEmpty {
-                Section("Water Journal") {
-                    ForEach(sprout.waterEntries.sorted(by: { $0.timestamp > $1.timestamp }), id: \.timestamp) { entry in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(entry.timestamp, style: .date)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            if !entry.content.isEmpty {
-                                Text(entry.content)
-                                    .font(.subheadline)
+                    // State-specific content
+                    switch sprout.state {
+                    case .active:
+                        activeSection
+                    case .completed:
+                        completedSection
+                    }
+
+                    // Bloom descriptions
+                    if hasBloomDescriptions {
+                        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                            Text("BLOOM DESCRIPTIONS")
+                                .monoLabel(size: TrunkTheme.textXs)
+
+                            VStack(alignment: .leading, spacing: TrunkTheme.space3) {
+                                if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
+                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                        Text("1/5 Withering")
+                                            .trunkFont(size: TrunkTheme.textXs, weight: .medium)
+                                            .foregroundStyle(Color.inkFaint)
+                                        Text(bloomWither)
+                                            .trunkFont(size: TrunkTheme.textSm)
+                                            .foregroundStyle(Color.inkLight)
+                                    }
+                                }
+                                if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
+                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                        Text("3/5 Budding")
+                                            .trunkFont(size: TrunkTheme.textXs, weight: .medium)
+                                            .foregroundStyle(Color.inkFaint)
+                                        Text(bloomBudding)
+                                            .trunkFont(size: TrunkTheme.textSm)
+                                            .foregroundStyle(Color.inkLight)
+                                    }
+                                }
+                                if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
+                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                        Text("5/5 Flourishing")
+                                            .trunkFont(size: TrunkTheme.textXs, weight: .medium)
+                                            .foregroundStyle(Color.inkFaint)
+                                        Text(bloomFlourish)
+                                            .trunkFont(size: TrunkTheme.textSm)
+                                            .foregroundStyle(Color.inkLight)
+                                    }
+                                }
                             }
+                            .padding(TrunkTheme.space3)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
                         }
-                        .padding(.vertical, 2)
+                    }
+
+                    // Water entries
+                    if !sprout.waterEntries.isEmpty {
+                        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                            Text("WATER JOURNAL")
+                                .monoLabel(size: TrunkTheme.textXs)
+
+                            VStack(spacing: 1) {
+                                ForEach(sprout.waterEntries.sorted(by: { $0.timestamp > $1.timestamp }), id: \.timestamp) { entry in
+                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                        Text(entry.timestamp, style: .date)
+                                            .trunkFont(size: TrunkTheme.textXs)
+                                            .foregroundStyle(Color.inkFaint)
+                                        if !entry.content.isEmpty {
+                                            Text(entry.content)
+                                                .trunkFont(size: TrunkTheme.textSm)
+                                                .foregroundStyle(Color.inkLight)
+                                        }
+                                    }
+                                    .padding(TrunkTheme.space3)
+                                }
+                            }
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                        }
                     }
                 }
+                .padding(TrunkTheme.space4)
             }
         }
-        .navigationTitle("Sprout")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") {
                     dismiss()
                 }
+                .trunkFont(size: TrunkTheme.textSm)
+                .foregroundStyle(Color.inkFaint)
+            }
+            ToolbarItem(placement: .principal) {
+                Text("SPROUT")
+                    .trunkFont(size: TrunkTheme.textBase)
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
             }
         }
         .sheet(isPresented: $showingWaterSheet) {
@@ -124,69 +167,110 @@ struct SproutActionsView: View {
 
     @ViewBuilder
     private var activeSection: some View {
-        // Progress
-        Section("Progress") {
-            let progress = ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)
-            let harvestDate = ProgressionService.harvestDate(plantedAt: sprout.plantedAt, season: sprout.season)
+        let progress = ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)
+        let harvestDate = ProgressionService.harvestDate(plantedAt: sprout.plantedAt, season: sprout.season)
 
-            VStack(alignment: .leading, spacing: 8) {
-                ProgressView(value: progress)
-                    .tint(.green)
+        // Progress
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("PROGRESS")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(alignment: .leading, spacing: TrunkTheme.space3) {
+                // Progress bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Rectangle()
+                            .fill(Color.borderSubtle)
+                            .frame(height: 6)
+
+                        Rectangle()
+                            .fill(Color.twig)
+                            .frame(width: geo.size.width * progress, height: 6)
+                    }
+                }
+                .frame(height: 6)
 
                 HStack {
                     Text("Planted \(sprout.plantedAt, style: .date)")
+                        .trunkFont(size: TrunkTheme.textXs)
+                        .foregroundStyle(Color.inkFaint)
                     Spacer()
                     if isSproutReady(sprout) {
                         Text("Ready!")
-                            .fontWeight(.bold)
-                            .foregroundStyle(.green)
+                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
+                            .foregroundStyle(Color.twig)
                     } else {
                         Text("Ready \(harvestDate, style: .date)")
+                            .trunkFont(size: TrunkTheme.textXs)
+                            .foregroundStyle(Color.inkFaint)
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
 
-            Text("Watered \(sprout.waterEntries.count) times")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text("Watered \(sprout.waterEntries.count) times")
+                    .trunkFont(size: TrunkTheme.textSm)
+                    .foregroundStyle(Color.inkFaint)
+            }
+            .padding(TrunkTheme.space3)
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
         }
 
         // Actions
-        Section("Actions") {
-            Button {
-                showingWaterSheet = true
-            } label: {
-                Label("Water Sprout", systemImage: "drop.fill")
-            }
-            .disabled(!progression.canWater)
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("ACTIONS")
+                .monoLabel(size: TrunkTheme.textXs)
 
-            if isSproutReady(sprout) {
+            VStack(spacing: TrunkTheme.space2) {
                 Button {
-                    showingHarvestSheet = true
+                    showingWaterSheet = true
                 } label: {
-                    Label("Harvest Sprout", systemImage: "sparkles")
+                    HStack(spacing: TrunkTheme.space1) {
+                        Text("💧")
+                        Text("WATER SPROUT")
+                    }
                 }
-            }
-        }
+                .buttonStyle(.trunkWater)
+                .disabled(!progression.canWater)
+                .opacity(progression.canWater ? 1 : 0.5)
 
-        Section {
-            Button(role: .destructive) {
-                // Calculate soil to return (25% of cost)
-                let soilReturned = Double(sprout.soilCost) * 0.25
-
-                // Push event to cloud
-                Task {
-                    try? await SyncService.shared.pushEvent(type: "sprout_uprooted", payload: [
-                        "sproutId": sprout.id,
-                        "soilReturned": soilReturned
-                    ])
+                if isSproutReady(sprout) {
+                    Button {
+                        showingHarvestSheet = true
+                    } label: {
+                        HStack(spacing: TrunkTheme.space1) {
+                            Text("🌻")
+                            Text("HARVEST SPROUT")
+                        }
+                    }
+                    .buttonStyle(.trunk)
                 }
 
-                dismiss()
-            } label: {
-                Label("Uproot", systemImage: "xmark.circle")
+                // Error message
+                if let error = errorMessage {
+                    Text(error)
+                        .trunkFont(size: TrunkTheme.textXs)
+                        .foregroundStyle(Color.trunkDestructive)
+                        .padding(TrunkTheme.space3)
+                        .background(Color.trunkDestructive.opacity(0.08))
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.trunkDestructive.opacity(0.3), lineWidth: 1)
+                        )
+                }
+
+                Button {
+                    uprootSprout()
+                } label: {
+                    HStack(spacing: TrunkTheme.space1) {
+                        Text("✕")
+                        Text("UPROOT")
+                    }
+                }
+                .buttonStyle(.trunkDestructive)
+                .disabled(isUprooting)
             }
         }
     }
@@ -195,32 +279,67 @@ struct SproutActionsView: View {
 
     @ViewBuilder
     private var completedSection: some View {
-        Section("Result") {
-            if let result = sprout.result {
-                HStack {
-                    Text("Harvest Result")
-                    Spacer()
-                    HStack(spacing: 2) {
-                        ForEach(0..<5, id: \.self) { i in
-                            Image(systemName: i < result ? "star.fill" : "star")
-                                .foregroundStyle(i < result ? .yellow : .secondary)
-                        }
-                    }
-                }
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("RESULT")
+                .monoLabel(size: TrunkTheme.textXs)
 
-                if let harvestedAt = sprout.harvestedAt {
+            VStack(spacing: 1) {
+                if let result = sprout.result {
                     HStack {
-                        Text("Harvested")
+                        Text("Harvest Result")
+                            .trunkFont(size: TrunkTheme.textBase)
+                            .foregroundStyle(Color.ink)
                         Spacer()
-                        Text(harvestedAt, style: .date)
-                            .foregroundStyle(.secondary)
+                        Text(String(repeating: "★", count: result) + String(repeating: "☆", count: 5 - result))
+                            .trunkFont(size: TrunkTheme.textSm)
+                            .foregroundStyle(Color.trunkSun)
+                    }
+                    .padding(TrunkTheme.space3)
+
+                    if let harvestedAt = sprout.harvestedAt {
+                        HStack {
+                            Text("Harvested")
+                                .trunkFont(size: TrunkTheme.textBase)
+                                .foregroundStyle(Color.ink)
+                            Spacer()
+                            Text(harvestedAt, style: .date)
+                                .trunkFont(size: TrunkTheme.textSm)
+                                .foregroundStyle(Color.inkFaint)
+                        }
+                        .padding(TrunkTheme.space3)
                     }
                 }
             }
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
         }
+    }
 
-        // No delete button for completed sprouts since they're derived from events
-        // (they'll remain in history)
+    // MARK: - Uproot
+
+    private func uprootSprout() {
+        isUprooting = true
+        errorMessage = nil
+
+        let soilReturned = Double(sprout.soilCost) * 0.25
+
+        Task {
+            do {
+                try await SyncService.shared.pushEvent(type: "sprout_uprooted", payload: [
+                    "sproutId": sprout.id,
+                    "soilReturned": soilReturned
+                ])
+                HapticManager.impact()
+                dismiss()
+            } catch {
+                isUprooting = false
+                errorMessage = "Failed to save. Check your connection and try again."
+                HapticManager.error()
+            }
+        }
     }
 }
 

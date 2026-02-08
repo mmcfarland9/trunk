@@ -173,7 +173,7 @@ struct SproutRow: View {
                 .fill(borderColor)
                 .frame(width: 2)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: TrunkTheme.space1) {
                 Text(sprout.title)
                     .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                     .foregroundStyle(Color.ink)
@@ -195,13 +195,14 @@ struct SproutRow: View {
         }
         .padding(.vertical, TrunkTheme.space2)
         .padding(.horizontal, TrunkTheme.space3)
+        .frame(minHeight: 44)
         .background(Color.paper)
     }
 
     private var borderColor: Color {
         switch sprout.state {
         case .active: return Color.twig
-        case .completed: return Color(red: 0.4, green: 0.6, blue: 0.4)
+        case .completed: return Color.trunkSuccess
         }
     }
 

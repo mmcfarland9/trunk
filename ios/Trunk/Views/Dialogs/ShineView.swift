@@ -16,6 +16,7 @@ struct ShineView: View {
     @State private var selectedTwig: TwigContext?
     @State private var selectedPrompt: String = ""
     @State private var isShining = false
+    @State private var errorMessage: String?
     @FocusState private var isReflectionFocused: Bool
 
     private var hasReflection: Bool {
@@ -92,6 +93,19 @@ struct ShineView: View {
                                 .stroke(Color.border, lineWidth: 1)
                         )
 
+                        // Error message
+                        if let error = errorMessage {
+                            Text(error)
+                                .trunkFont(size: TrunkTheme.textXs)
+                                .foregroundStyle(Color.trunkDestructive)
+                                .padding(TrunkTheme.space3)
+                                .background(Color.trunkDestructive.opacity(0.08))
+                                .overlay(
+                                    Rectangle()
+                                        .stroke(Color.trunkDestructive.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+
                         // Action button
                         Button {
                             performShine(twig: twig)
@@ -165,26 +179,28 @@ struct ShineView: View {
 
     private func performShine(twig: TwigContext) {
         isShining = true
+        errorMessage = nil
         HapticManager.tap()
 
         let content = reflection.trimmingCharacters(in: .whitespacesAndNewlines)
         let timestamp = ISO8601DateFormatter().string(from: Date())
 
-        // Push to cloud - state will derive automatically from events
         Task {
-            try? await SyncService.shared.pushEvent(type: "sun_shone", payload: [
-                "twigId": twig.nodeId,
-                "twigLabel": twig.label,
-                "note": content,
-                "prompt": selectedPrompt,
-                "timestamp": timestamp
-            ])
-        }
-
-        // Success haptic and dismiss with slight delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            HapticManager.success()
-            dismiss()
+            do {
+                try await SyncService.shared.pushEvent(type: "sun_shone", payload: [
+                    "twigId": twig.nodeId,
+                    "twigLabel": twig.label,
+                    "note": content,
+                    "prompt": selectedPrompt,
+                    "timestamp": timestamp
+                ])
+                HapticManager.success()
+                dismiss()
+            } catch {
+                isShining = false
+                errorMessage = "Failed to save. Check your connection and try again."
+                HapticManager.tap()
+            }
         }
     }
 

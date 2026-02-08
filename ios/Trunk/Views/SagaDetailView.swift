@@ -89,6 +89,7 @@ struct SagaDetailView: View {
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .tracking(2)
                     .foregroundStyle(Color.wood)
+                    .lineLimit(1)
             }
         }
     }
@@ -107,16 +108,6 @@ struct SagaDetailView: View {
         .padding(TrunkTheme.space4)
     }
 
-    private func resultToEmoji(_ result: Int) -> String {
-        switch result {
-        case 1: return "🥀"
-        case 2: return "🌱"
-        case 3: return "🌿"
-        case 4: return "🌳"
-        case 5: return "🌲"
-        default: return "🌿"
-        }
-    }
 }
 
 // MARK: - Timeline Event

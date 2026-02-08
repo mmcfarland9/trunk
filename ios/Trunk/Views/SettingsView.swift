@@ -406,7 +406,7 @@ struct SettingsRow: View {
                 .font(.system(size: TrunkTheme.textBase))
                 .frame(width: 24)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: TrunkTheme.space1) {
                 Text(title)
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .foregroundStyle(Color.ink)
@@ -425,6 +425,7 @@ struct SettingsRow: View {
                 .foregroundStyle(Color.inkFaint)
         }
         .padding(TrunkTheme.space3)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 }

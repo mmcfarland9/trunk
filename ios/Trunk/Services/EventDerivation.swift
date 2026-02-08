@@ -439,6 +439,32 @@ func isSproutReady(_ sprout: DerivedSprout) -> Bool {
     return Int(elapsed) >= sprout.season.durationMs
 }
 
+/// Convert a harvest result (1-5) to its display emoji
+func resultToEmoji(_ result: Int) -> String {
+    switch result {
+    case 1: return "🥀"
+    case 2: return "🌱"
+    case 3: return "🌿"
+    case 4: return "🌳"
+    case 5: return "🌲"
+    default: return "🌿"
+    }
+}
+
+/// Get a human-readable context label for a leaf (e.g., "CORE / Movement")
+func contextLabel(for leaf: DerivedLeaf) -> String {
+    let parts = leaf.twigId.split(separator: "-")
+    guard parts.count >= 4,
+          let branchIndex = Int(parts[1]),
+          let twigIndex = Int(parts[3]) else {
+        return leaf.twigId
+    }
+
+    let branchName = SharedConstants.Tree.branchName(branchIndex)
+    let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
+    return "\(branchName) / \(twigLabel.capitalized)"
+}
+
 // MARK: - Payload Parsing Helpers
 
 /// Parse ISO8601 timestamp string to Date

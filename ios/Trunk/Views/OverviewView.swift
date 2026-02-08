@@ -28,71 +28,69 @@ struct OverviewView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Parchment background
-                Color.parchment
-                    .ignoresSafeArea()
+        ZStack {
+            // Parchment background
+            Color.parchment
+                .ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    // Resource meters at top
-                    ResourceMetersView(progression: progression)
-                        .padding(.horizontal, TrunkTheme.space4)
-                        .padding(.top, TrunkTheme.space2)
-
-                    // Interactive tree canvas with zoom gestures
-                    TreeCanvasView(
-                        sprouts: sprouts,
-                        progression: progression,
-                        onNavigateToBranch: { branchIndex in
-                            guard !navigationCooldown else { return }
-                            navigateToBranch = branchIndex
-                        }
-                    )
-                    .frame(maxHeight: .infinity)
-
-                    // Active sprouts section
-                    ActiveSproutsSection(
-                        sprouts: activeSprouts,
-                        progression: progression,
-                        onWater: { sprout in
-                            sproutToWater = sprout
-                        }
-                    )
+            VStack(spacing: 0) {
+                // Resource meters at top
+                ResourceMetersView(progression: progression)
                     .padding(.horizontal, TrunkTheme.space4)
-                    .padding(.bottom, TrunkTheme.space4)
-                }
-            }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("TRUNK")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .tracking(3)
-                        .foregroundStyle(Color.wood)
-                }
-            }
-            .onAppear {
-                progression.refresh()
-            }
-            .sheet(item: $sproutToWater) { sprout in
-                NavigationStack {
-                    WaterSproutView(sprout: sprout, progression: progression)
-                }
-                .presentationDetents([.medium])
-            }
-            .navigationDestination(item: $navigateToBranch) { branchIndex in
-                BranchView(branchIndex: branchIndex, progression: progression)
-            }
-            .onChange(of: navigateToBranch) { oldValue, newValue in
-                // When navigating back (branch -> nil), activate cooldown to
-                // prevent stray taps from immediately re-triggering navigation.
-                if oldValue != nil && newValue == nil {
-                    navigationCooldown = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        navigationCooldown = false
+                    .padding(.top, TrunkTheme.space2)
+
+                // Interactive tree canvas with zoom gestures
+                TreeCanvasView(
+                    sprouts: sprouts,
+                    progression: progression,
+                    onNavigateToBranch: { branchIndex in
+                        guard !navigationCooldown else { return }
+                        navigateToBranch = branchIndex
                     }
+                )
+                .frame(maxHeight: .infinity)
+
+                // Active sprouts section
+                ActiveSproutsSection(
+                    sprouts: activeSprouts,
+                    progression: progression,
+                    onWater: { sprout in
+                        sproutToWater = sprout
+                    }
+                )
+                .padding(.horizontal, TrunkTheme.space4)
+                .padding(.bottom, TrunkTheme.space4)
+            }
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("TRUNK")
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(3)
+                    .foregroundStyle(Color.wood)
+            }
+        }
+        .onAppear {
+            progression.refresh()
+        }
+        .sheet(item: $sproutToWater) { sprout in
+            NavigationStack {
+                WaterSproutView(sprout: sprout, progression: progression)
+            }
+            .presentationDetents([.medium])
+        }
+        .navigationDestination(item: $navigateToBranch) { branchIndex in
+            BranchView(branchIndex: branchIndex, progression: progression)
+        }
+        .onChange(of: navigateToBranch) { oldValue, newValue in
+            // When navigating back (branch -> nil), activate cooldown to
+            // prevent stray taps from immediately re-triggering navigation.
+            if oldValue != nil && newValue == nil {
+                navigationCooldown = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    navigationCooldown = false
                 }
             }
         }
@@ -107,7 +105,7 @@ struct ResourceMetersView: View {
     var body: some View {
         HStack(spacing: TrunkTheme.space3) {
             // Soil meter - horizontal bar with fill
-            HStack(spacing: 4) {
+            HStack(spacing: TrunkTheme.space1) {
                 Text("Soil:")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
@@ -122,46 +120,58 @@ struct ResourceMetersView: View {
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.twig)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Soil: \(String(format: "%.1f", progression.soilAvailable)) of \(String(format: "%.1f", progression.soilCapacity))")
 
             Spacer()
 
             // Water meter - circles
-            HStack(spacing: 4) {
+            HStack(spacing: TrunkTheme.space1) {
                 Text("Water:")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
 
                 HStack(spacing: 2) {
                     ForEach(0..<progression.waterCapacity, id: \.self) { i in
+                        let isFilled = i < progression.waterAvailable
                         Circle()
-                            .fill(i < progression.waterAvailable ? Color.trunkWater : Color.clear)
+                            .fill(isFilled ? Color.trunkWater : Color.clear)
                             .frame(width: 6, height: 6)
                             .overlay(
                                 Circle()
                                     .stroke(Color.trunkWater, lineWidth: 1)
                             )
+                            .scaleEffect(isFilled ? 1.0 : 0.8)
+                            .animation(.trunkQuick, value: isFilled)
                     }
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Water: \(progression.waterAvailable) of \(progression.waterCapacity)")
 
             // Sun meter - circle
-            HStack(spacing: 4) {
+            HStack(spacing: TrunkTheme.space1) {
                 Text("Sun:")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
 
                 HStack(spacing: 2) {
                     ForEach(0..<progression.sunCapacity, id: \.self) { i in
+                        let isFilled = i < progression.sunAvailable
                         Circle()
-                            .fill(i < progression.sunAvailable ? Color.trunkSun : Color.clear)
+                            .fill(isFilled ? Color.trunkSun : Color.clear)
                             .frame(width: 6, height: 6)
                             .overlay(
                                 Circle()
                                     .stroke(Color.trunkSun, lineWidth: 1)
                             )
+                            .scaleEffect(isFilled ? 1.0 : 0.8)
+                            .animation(.trunkQuick, value: isFilled)
                     }
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Sun: \(progression.sunAvailable) of \(progression.sunCapacity)")
         }
         .padding(.horizontal, TrunkTheme.space2)
         .padding(.vertical, TrunkTheme.space2)
@@ -191,10 +201,11 @@ struct SoilMeter: View {
                 Rectangle()
                     .fill(Color.twig.opacity(0.15))
 
-                // Fill
+                // Fill - animated width changes
                 Rectangle()
                     .fill(Color.twig)
                     .frame(width: max(0, filledWidth))
+                    .animation(.trunkSpring, value: fillPercent)
             }
             .overlay(
                 Rectangle()
@@ -212,6 +223,8 @@ struct ActiveSproutsSection: View {
     let progression: ProgressionViewModel
     let onWater: (DerivedSprout) -> Void
 
+    @State private var contentAppeared = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
             Text("ACTIVE SPROUTS")
@@ -226,13 +239,21 @@ struct ActiveSproutsSection: View {
                     .padding(.vertical, TrunkTheme.space3)
             } else {
                 VStack(spacing: 2) {
-                    ForEach(sprouts.prefix(5), id: \.id) { sprout in
+                    ForEach(Array(sprouts.prefix(5).enumerated()), id: \.element.id) { index, sprout in
                         ActiveSproutRow(sprout: sprout, progression: progression, onWater: onWater)
+                            .opacity(contentAppeared ? 1 : 0)
+                            .offset(y: contentAppeared ? 0 : 8)
+                            .animation(
+                                .trunkFadeIn.delay(Double(index) * 0.05),
+                                value: contentAppeared
+                            )
                     }
                     if sprouts.count > 5 {
                         Text("+ \(sprouts.count - 5) more")
                             .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                             .foregroundStyle(Color.inkFaint)
+                            .opacity(contentAppeared ? 1 : 0)
+                            .animation(.trunkFadeIn.delay(0.25), value: contentAppeared)
                     }
                 }
             }
@@ -244,6 +265,12 @@ struct ActiveSproutsSection: View {
             Rectangle()
                 .stroke(Color.border, lineWidth: 1)
         )
+        .onAppear {
+            // Small delay to let layout settle, then fade content in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                contentAppeared = true
+            }
+        }
     }
 }
 
@@ -296,7 +323,8 @@ struct ActiveSproutRow: View {
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(wasWateredThisWeek ? Color.inkFaint : Color.trunkWater)
                     .padding(.horizontal, TrunkTheme.space2)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, TrunkTheme.space1)
+                    .frame(minHeight: 44)
                     .overlay(
                         Rectangle()
                             .stroke(wasWateredThisWeek ? Color.border : Color.trunkWater, lineWidth: 1)
@@ -306,26 +334,6 @@ struct ActiveSproutRow: View {
             .disabled(wasWateredThisWeek || !progression.canWater)
         }
         .padding(.vertical, TrunkTheme.space1)
-    }
-}
-
-struct CircularProgressView: View {
-    let progress: Double
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.border, lineWidth: 2)
-
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(Color.twig, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-
-            Text("\(Int(progress * 100))%")
-                .font(.system(size: 8, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-        }
     }
 }
 

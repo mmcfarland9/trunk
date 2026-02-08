@@ -7,11 +7,6 @@
 
 import Foundation
 
-// MARK: - Constants
-// Now uses SharedConstants (auto-generated from shared/constants.json)
-// Legacy alias for backward compatibility
-typealias TrunkConstants = SharedConstants
-
 // MARK: - ProgressionService
 
 struct ProgressionService {
@@ -24,7 +19,7 @@ struct ProgressionService {
     ///   - environment: The sprout's difficulty environment
     /// - Returns: The soil cost (integer)
     static func soilCost(season: Season, environment: SproutEnvironment) -> Int {
-        guard let costs = TrunkConstants.Soil.plantingCosts[season.rawValue],
+        guard let costs = SharedConstants.Soil.plantingCosts[season.rawValue],
               let cost = costs[environment.rawValue] else {
             return 5 // Fallback
         }
@@ -47,8 +42,8 @@ struct ProgressionService {
         currentCapacity: Double
     ) -> Double {
         let baseReward = SharedConstants.Seasons.baseRewards[season.rawValue] ?? 2.0
-        let envMultiplier = TrunkConstants.Soil.environmentMultipliers[environment.rawValue] ?? 1.0
-        let resultMultiplier = TrunkConstants.Soil.resultMultipliers[result] ?? 0.7
+        let envMultiplier = SharedConstants.Soil.environmentMultipliers[environment.rawValue] ?? 1.0
+        let resultMultiplier = SharedConstants.Soil.resultMultipliers[result] ?? 0.7
         let diminishingFactor = diminishingReturns(currentCapacity: currentCapacity)
 
         return baseReward * envMultiplier * resultMultiplier * diminishingFactor
@@ -58,7 +53,7 @@ struct ProgressionService {
     /// - Parameter currentCapacity: The user's current soil capacity
     /// - Returns: Diminishing factor (0.0 to 1.0)
     static func diminishingReturns(currentCapacity: Double) -> Double {
-        let ratio = currentCapacity / TrunkConstants.Soil.maxCapacity
+        let ratio = currentCapacity / SharedConstants.Soil.maxCapacity
         let factor = max(0, 1 - ratio)
         return pow(factor, 1.5)
     }
@@ -67,12 +62,12 @@ struct ProgressionService {
 
     /// Soil capacity gained from watering a sprout
     static var waterRecovery: Double {
-        TrunkConstants.Soil.waterRecovery
+        SharedConstants.Soil.waterRecovery
     }
 
     /// Soil capacity gained from shining on a twig
     static var sunRecovery: Double {
-        TrunkConstants.Soil.sunRecovery
+        SharedConstants.Soil.sunRecovery
     }
 
     // MARK: - Reset Time Calculations
@@ -86,16 +81,19 @@ struct ProgressionService {
 
         // Get the most recent 6 AM
         var components = calendar.dateComponents([.year, .month, .day], from: now)
-        components.hour = TrunkConstants.Water.resetHour
+        components.hour = SharedConstants.Water.resetHour
         components.minute = 0
         components.second = 0
 
         guard let todayReset = calendar.date(from: components) else { return false }
 
         // If it's before 6 AM today, use yesterday's 6 AM
-        let effectiveReset = now < todayReset
-            ? calendar.date(byAdding: .day, value: -1, to: todayReset)!
-            : todayReset
+        let effectiveReset: Date
+        if now < todayReset {
+            effectiveReset = calendar.date(byAdding: .day, value: -1, to: todayReset) ?? todayReset
+        } else {
+            effectiveReset = todayReset
+        }
 
         return lastReset < effectiveReset
     }
@@ -120,7 +118,7 @@ struct ProgressionService {
             let hour = calendar.component(.hour, from: now)
 
             // Sunday=1, Monday=2 in Calendar
-            if weekday > 2 || (weekday == 2 && hour >= TrunkConstants.Sun.resetHour) {
+            if weekday > 2 || (weekday == 2 && hour >= SharedConstants.Sun.resetHour) {
                 return true
             }
         }

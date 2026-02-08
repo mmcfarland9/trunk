@@ -169,7 +169,7 @@ struct SoilLogRow: View {
     }
 
     private var amountColor: Color {
-        transaction.amount >= 0 ? .twig : Color(red: 0.6, green: 0.35, blue: 0.3)
+        transaction.amount >= 0 ? .twig : .trunkWarning
     }
 
     var body: some View {
