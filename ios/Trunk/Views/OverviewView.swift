@@ -12,6 +12,7 @@ struct OverviewView: View {
 
     @State private var sproutToWater: DerivedSprout?
     @State private var navigateToBranch: Int? = nil
+    @State private var navigationCooldown = false
 
     // Derived state from EventStore
     private var state: DerivedState {
@@ -44,6 +45,7 @@ struct OverviewView: View {
                         sprouts: sprouts,
                         progression: progression,
                         onNavigateToBranch: { branchIndex in
+                            guard !navigationCooldown else { return }
                             navigateToBranch = branchIndex
                         }
                     )
@@ -82,6 +84,16 @@ struct OverviewView: View {
             }
             .navigationDestination(item: $navigateToBranch) { branchIndex in
                 BranchView(branchIndex: branchIndex, progression: progression)
+            }
+            .onChange(of: navigateToBranch) { oldValue, newValue in
+                // When navigating back (branch -> nil), activate cooldown to
+                // prevent stray taps from immediately re-triggering navigation.
+                if oldValue != nil && newValue == nil {
+                    navigationCooldown = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        navigationCooldown = false
+                    }
+                }
             }
         }
     }
