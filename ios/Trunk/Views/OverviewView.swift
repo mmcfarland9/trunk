@@ -236,7 +236,6 @@ struct ActiveSproutsSection: View {
                     .foregroundStyle(Color.inkFaint)
                     .italic()
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, TrunkTheme.space3)
             } else {
                 VStack(spacing: 2) {
                     ForEach(Array(sprouts.prefix(5).enumerated()), id: \.element.id) { index, sprout in
@@ -258,7 +257,6 @@ struct ActiveSproutsSection: View {
                 }
             }
         }
-        .frame(height: 160)
         .padding(TrunkTheme.space3)
         .background(Color.paper)
         .overlay(
