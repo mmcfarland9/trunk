@@ -34,9 +34,8 @@ struct TreeCanvasView: View {
 
     private let branchCount = SharedConstants.Tree.branchCount
 
-    // Elliptical orbit ratios (web: BRANCH_ORBIT_RATIO_X=0.42, BRANCH_ORBIT_RATIO_Y=0.34)
-    private let orbitRatioX: CGFloat = 0.42
-    private let orbitRatioY: CGFloat = 0.34
+    // Circular orbit ratio (matches branch view: 0.34 of smallest dimension)
+    private let orbitRatio: CGFloat = 0.34
 
     // Wind animation (web: WIND_BRANCH_AMP=6, WIND_MIN=0.35, WIND_MAX=0.7)
     private let windAmplitude: CGFloat = 6.0
@@ -55,55 +54,50 @@ struct TreeCanvasView: View {
     var body: some View {
         GeometryReader { geo in
             let base = min(geo.size.width, geo.size.height)
+            let radius = base * orbitRatio
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-            let radiusX = base * orbitRatioX
-            let radiusY = geo.size.height * orbitRatioY
 
             TimelineView(.animation) { timeline in
                 let time = timeline.date.timeIntervalSinceReferenceDate
 
                 ZStack {
-                    treeContent(center: center, radiusX: radiusX, radiusY: radiusY, time: time, geo: geo)
+                    treeContent(center: center, radius: radius, time: time, geo: geo)
                         .scaleEffect(scale)
                         .offset(offset)
                 }
             }
             .gesture(magnifyGesture)
             .gesture(dragGesture)
-            .simultaneousGesture(doubleTapGesture(center: center, radiusX: radiusX, radiusY: radiusY))
+            .simultaneousGesture(doubleTapGesture(center: center, radius: radius))
         }
     }
 
     // MARK: - Tree Content
 
     @ViewBuilder
-    private func treeContent(center: CGPoint, radiusX: CGFloat, radiusY: CGFloat, time: Double, geo: GeometryProxy) -> some View {
+    private func treeContent(center: CGPoint, radius: CGFloat, time: Double, geo: GeometryProxy) -> some View {
         ZStack {
             // ASCII dot guide lines (replacing dashed Path strokes)
             ForEach(0..<branchCount, id: \.self) { index in
                 let angle = angleForBranch(index)
                 let windOffset = windOffsetFor(index: index, time: time)
-                let endPoint = pointOnEllipse(center: center, radiusX: radiusX, radiusY: radiusY, angle: angle)
+                let endPoint = pointOnCircle(center: center, radius: radius, angle: angle)
                 let swayedEnd = CGPoint(x: endPoint.x + windOffset.x, y: endPoint.y + windOffset.y)
 
                 AsciiDotLine(
                     from: center,
                     to: swayedEnd,
-                    startGap: guideGap + 16, // gap past trunk asterisk
-                    endGap: guideGap + 20,   // gap before branch box
+                    startGap: guideGap,      // gap from center
+                    endGap: guideGap + 36,   // gap before branch box
                     dotSpacing: guideDotSpacing
                 )
             }
 
-            // Trunk (center asterisk)
-            Text("*")
-                .font(.system(size: 32, design: .monospaced))
-                .foregroundStyle(Color.wood)
+            // Invisible center tap target (reset to overview on double-tap)
+            Color.clear
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
                 .position(center)
-                .offset(
-                    x: sin(time * windMin * 0.3) * windAmplitude * 0.3,
-                    y: cos(time * windMin * 0.25) * windAmplitude * 0.2
-                )
                 .onTapGesture(count: 2) {
                     withAnimation(.trunkBounce) {
                         resetToOverview()
@@ -114,7 +108,7 @@ struct TreeCanvasView: View {
             // Branch nodes
             ForEach(0..<branchCount, id: \.self) { index in
                 let angle = angleForBranch(index)
-                let position = pointOnEllipse(center: center, radiusX: radiusX, radiusY: radiusY, angle: angle)
+                let position = pointOnCircle(center: center, radius: radius, angle: angle)
                 let branchSprouts = sproutsForBranch(index)
                 let hasActive = branchSprouts.contains { $0.state == .active }
                 let windOffset = windOffsetFor(index: index, time: time)
@@ -180,12 +174,12 @@ struct TreeCanvasView: View {
             }
     }
 
-    private func doubleTapGesture(center: CGPoint, radiusX: CGFloat, radiusY: CGFloat) -> some Gesture {
+    private func doubleTapGesture(center: CGPoint, radius: CGFloat) -> some Gesture {
         SpatialTapGesture(count: 2)
             .onEnded { value in
                 for i in 0..<branchCount {
                     let angle = angleForBranch(i)
-                    let branchPos = pointOnEllipse(center: center, radiusX: radiusX, radiusY: radiusY, angle: angle)
+                    let branchPos = pointOnCircle(center: center, radius: radius, angle: angle)
                     let distance = hypot(value.location.x - branchPos.x, value.location.y - branchPos.y)
 
                     if distance < 40 {
@@ -228,11 +222,11 @@ struct TreeCanvasView: View {
         return startAngle + Double(index) * angleStep
     }
 
-    /// Elliptical positioning (web uses separate radiusX and radiusY)
-    private func pointOnEllipse(center: CGPoint, radiusX: CGFloat, radiusY: CGFloat, angle: Double) -> CGPoint {
+    /// Circular positioning (matches branch view layout)
+    private func pointOnCircle(center: CGPoint, radius: CGFloat, angle: Double) -> CGPoint {
         CGPoint(
-            x: center.x + radiusX * CGFloat(cos(angle)),
-            y: center.y + radiusY * CGFloat(sin(angle))
+            x: center.x + radius * CGFloat(cos(angle)),
+            y: center.y + radius * CGFloat(sin(angle))
         )
     }
 
@@ -316,24 +310,24 @@ struct InteractiveBranchNode: View {
             // Unicode box with rounded heavy borders
             VStack(spacing: 0) {
                 Text(boxLines.topBorder)
-                    .font(.system(size: 9, design: .monospaced))
+                    .font(.system(size: 13, design: .monospaced))
                     .foregroundStyle(borderColor)
 
                 ForEach(Array(boxLines.middleRows.enumerated()), id: \.offset) { _, row in
                     Text(row)
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(.system(size: 15, design: .monospaced))
                         .foregroundStyle(hasActiveSprouts ? Color.wood : Color.inkFaint)
                 }
 
                 Text(boxLines.bottomBorder)
-                    .font(.system(size: 9, design: .monospaced))
+                    .font(.system(size: 13, design: .monospaced))
                     .foregroundStyle(borderColor)
             }
 
             // Sprout indicator
             if activeSproutCount > 0 {
                 Text("*\(activeSproutCount)")
-                    .font(.system(size: 9, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(Color.twig)
             }
         }

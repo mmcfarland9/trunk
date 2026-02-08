@@ -50,16 +50,6 @@ struct OverviewView: View {
                 )
                 .frame(maxHeight: .infinity)
 
-                // Active sprouts section
-                ActiveSproutsSection(
-                    sprouts: activeSprouts,
-                    progression: progression,
-                    onWater: { sprout in
-                        sproutToWater = sprout
-                    }
-                )
-                .padding(.horizontal, TrunkTheme.space4)
-                .padding(.bottom, TrunkTheme.space4)
             }
         }
         .navigationTitle("")
