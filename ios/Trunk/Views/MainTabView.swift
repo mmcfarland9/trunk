@@ -16,10 +16,13 @@ struct MainTabView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Resource meters - always visible across all tabs
+            // Hidden until first sync so defaults (10/10 soil) aren't shown as real data
             ResourceMetersView(progression: progression)
                 .padding(.horizontal, TrunkTheme.space4)
                 .padding(.vertical, TrunkTheme.space2)
                 .background(Color.parchment)
+                .opacity(progression.hasLoaded ? 1 : 0)
+                .animation(.trunkFadeIn, value: progression.hasLoaded)
 
             TabView(selection: $selectedTab) {
                 NavigationStack {

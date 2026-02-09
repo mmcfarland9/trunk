@@ -35,31 +35,34 @@ struct TodayView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: TrunkTheme.space4) {
-                    // Greeting header
+                    // Greeting header (doesn't depend on event data)
                     GreetingHeader(
                         userName: authService.userFullName,
                         onAvatarTap: { showDataInfo = true }
                     )
                     .animatedCard(index: 0)
 
-                    // Water a sprout
-                    waterSection
-                        .animatedCard(index: 1)
+                    // Data-dependent sections — hidden until first sync completes
+                    // so we never show defaults (empty sprouts, 10/10 soil) as real data
+                    if progression.hasLoaded {
+                        // Water a sprout
+                        waterSection
+                            .animatedCard(index: 1)
 
-                    // Weekly reflection
-                    shineSection
-                        .animatedCard(index: 2)
+                        // Weekly reflection
+                        shineSection
+                            .animatedCard(index: 2)
 
-                    // Next harvest countdown
-                    if let nextSprout = cachedNextHarvestSprout {
-                        nextHarvestSection(sprout: nextSprout)
-                            .animatedCard(index: 3)
+                        // Next harvest countdown
+                        if let nextSprout = cachedNextHarvestSprout {
+                            nextHarvestSection(sprout: nextSprout)
+                                .animatedCard(index: 3)
+                        }
+
+                        // Soil capacity over time
+                        soilCapacitySection
+                            .animatedCard(index: 4)
                     }
-
-                    // Soil capacity over time
-                    soilCapacitySection
-                        .animatedCard(index: 4)
-
                 }
                 .padding(TrunkTheme.space4)
             }

@@ -37,13 +37,18 @@ struct ContentView: View {
     }
 
     private func syncOnOpen() async {
-        guard authService.isAuthenticated else { return }
+        guard authService.isAuthenticated else {
+            // No sync needed — mark ready with local data
+            progression.markLoaded()
+            return
+        }
 
         let result = await SyncService.shared.smartSync()
 
         // Always refresh state after sync - even with 0 new events,
         // derived state needs to reflect current time (water/sun resets)
         progression.refresh()
+        progression.markLoaded()
 
         // Only subscribe once (idempotent - unsubscribes first internally)
         if result.error == nil {

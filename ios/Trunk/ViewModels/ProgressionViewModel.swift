@@ -21,6 +21,11 @@ final class ProgressionViewModel {
     /// to know when to refresh their local @State caches.
     private(set) var version: Int = 0
 
+    /// Whether the first sync has completed and data is ready to display.
+    /// Until this is true, views should not render data-dependent content
+    /// (the defaults from an empty EventStore look like real values).
+    private(set) var hasLoaded = false
+
     init() {
         recompute()
     }
@@ -72,6 +77,11 @@ final class ProgressionViewModel {
         soilAvailable = state.soilAvailable
         waterAvailable = EventStore.shared.getWaterAvailable()
         sunAvailable = EventStore.shared.getSunAvailable()
+    }
+
+    /// Mark data as ready after first sync (success or error fallback).
+    func markLoaded() {
+        hasLoaded = true
     }
 
     // MARK: - Debug
