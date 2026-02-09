@@ -16,13 +16,15 @@ struct TodayView: View {
     @State private var selectedSproutForWater: DerivedSprout?
     @State private var selectedSproutForHarvest: DerivedSprout?
     @State private var showShineSheet = false
+    @State private var showDataInfo = false
 
     // MARK: - Cached State (updated in .task / .onAppear)
 
     @State private var activeSprouts: [DerivedSprout] = []
     @State private var readyToHarvest: [DerivedSprout] = []
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
-    @State private var cachedSoilHistory: [SoilCapacityPoint] = []
+    @State private var cachedSoilHistory: [SoilChartPoint] = []
+    @State private var selectedSoilRange: SoilChartRange = .inception
 
     // MARK: - Body
 
@@ -37,7 +39,8 @@ struct TodayView: View {
                     GreetingHeader(
                         userName: authService.userFullName,
                         activeSproutCount: activeSprouts.count,
-                        readyToHarvestCount: readyToHarvest.count
+                        readyToHarvestCount: readyToHarvest.count,
+                        onAvatarTap: { showDataInfo = true }
                     )
                     .animatedCard(index: 0)
 
@@ -88,6 +91,9 @@ struct TodayView: View {
                 ShineView(progression: progression)
             }
         }
+        .sheet(isPresented: $showDataInfo) {
+            DataInfoSheet(progression: progression)
+        }
         .onAppear {
             progression.refresh()
             refreshCachedState()
@@ -115,7 +121,7 @@ struct TodayView: View {
             .first
 
         // Soil capacity history
-        cachedSoilHistory = computeSoilCapacityHistory()
+        cachedSoilHistory = computeSoilHistory()
     }
 
     // MARK: - Sections
@@ -243,33 +249,86 @@ struct TodayView: View {
         .disabled(!progression.canShine)
     }
 
-    private var soilCapacitySection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("SOIL CAPACITY")
-                .monoLabel(size: TrunkTheme.textXs)
+    private var filteredSoilHistory: [SoilChartPoint] {
+        guard let rangeStart = selectedSoilRange.startDate else {
+            return cachedSoilHistory
+        }
 
-            if cachedSoilHistory.count < 2 {
+        let inRange = cachedSoilHistory.filter { $0.date >= rangeStart }
+
+        // Interpolate a boundary point from the last value before the range
+        if let lastBefore = cachedSoilHistory.last(where: { $0.date < rangeStart }) {
+            let boundary = SoilChartPoint(
+                date: rangeStart,
+                capacity: lastBefore.capacity,
+                available: lastBefore.available
+            )
+            return [boundary] + inRange
+        }
+
+        return inRange
+    }
+
+    private var soilCapacitySection: some View {
+        let points = filteredSoilHistory
+
+        return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            // Title + Legend
+            HStack(alignment: .center) {
+                Text("SOIL")
+                    .monoLabel(size: TrunkTheme.textXs)
+
+                Spacer()
+
+                HStack(spacing: TrunkTheme.space3) {
+                    legendItem(color: Color.twig, label: "Capacity")
+                    legendItem(color: Color.trunkSuccess, label: "Available")
+                }
+            }
+
+            if points.count < 2 {
                 Text("Harvest sprouts to grow capacity")
                     .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
                     .padding(.vertical, TrunkTheme.space3)
             } else {
-                Chart(cachedSoilHistory) { point in
+                let maxCapacity = points.map(\.capacity).max() ?? 15
+                Chart(points) { point in
+                    // Capacity line
                     LineMark(
                         x: .value("Date", point.date),
-                        y: .value("Capacity", point.capacity)
+                        y: .value("Value", point.capacity),
+                        series: .value("Series", "Capacity")
                     )
                     .foregroundStyle(Color.twig)
                     .interpolationMethod(.stepEnd)
 
                     AreaMark(
                         x: .value("Date", point.date),
-                        y: .value("Capacity", point.capacity)
+                        y: .value("Value", point.capacity),
+                        series: .value("Series", "Capacity")
                     )
-                    .foregroundStyle(Color.twig.opacity(0.1))
+                    .foregroundStyle(Color.twig.opacity(0.08))
+                    .interpolationMethod(.stepEnd)
+
+                    // Available line
+                    LineMark(
+                        x: .value("Date", point.date),
+                        y: .value("Value", point.available),
+                        series: .value("Series", "Available")
+                    )
+                    .foregroundStyle(Color.trunkSuccess)
+                    .interpolationMethod(.stepEnd)
+
+                    AreaMark(
+                        x: .value("Date", point.date),
+                        y: .value("Value", point.available),
+                        series: .value("Series", "Available")
+                    )
+                    .foregroundStyle(Color.trunkSuccess.opacity(0.08))
                     .interpolationMethod(.stepEnd)
                 }
-                .chartYScale(domain: 0 ... max(cachedSoilHistory.last?.capacity ?? 10, 15))
+                .chartYScale(domain: 0 ... max(maxCapacity, 15))
                 .chartXAxis {
                     AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                         AxisGridLine()
@@ -288,8 +347,16 @@ struct TodayView: View {
                             .foregroundStyle(Color.inkFaint)
                     }
                 }
+                .chartForegroundStyleScale([
+                    "Capacity": Color.twig,
+                    "Available": Color.trunkSuccess
+                ])
+                .chartLegend(.hidden)
                 .frame(height: 140)
             }
+
+            // Time range picker
+            soilRangePicker
         }
         .padding(TrunkTheme.space3)
         .background(Color.paper)
@@ -299,32 +366,81 @@ struct TodayView: View {
         )
     }
 
+    private func legendItem(color: Color, label: String) -> some View {
+        HStack(spacing: 4) {
+            RoundedRectangle(cornerRadius: 1)
+                .fill(color)
+                .frame(width: 12, height: 2)
+            Text(label)
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+        }
+    }
+
+    private var soilRangePicker: some View {
+        HStack(spacing: 0) {
+            ForEach(SoilChartRange.allCases, id: \.self) { range in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedSoilRange = range
+                    }
+                } label: {
+                    Text(range.rawValue)
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(selectedSoilRange == range ? Color.ink : Color.inkFaint)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(
+                            selectedSoilRange == range
+                                ? Color.border
+                                : Color.clear
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                }
+                .buttonStyle(.plain)
+
+                if range != SoilChartRange.allCases.last {
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
     // MARK: - Computation Helpers
 
-    private func computeSoilCapacityHistory() -> [SoilCapacityPoint] {
+    private func computeSoilHistory() -> [SoilChartPoint] {
         let events = EventStore.shared.events
         var capacity = SharedConstants.Soil.startingCapacity
-        var history: [SoilCapacityPoint] = []
+        var available = SharedConstants.Soil.startingCapacity
+        var history: [SoilChartPoint] = []
 
-        // Track planted sprouts so we can compute harvest rewards
-        var sproutInfo: [String: (season: String, environment: String)] = [:]
+        // Track planted sprouts for harvest/uproot reward calculation
+        var sproutInfo: [String: (season: String, environment: String, soilCost: Int)] = [:]
 
-        // Find earliest event for starting point
+        // Starting point from first event
         if let firstEvent = events.first {
             let date = Self.parseISO8601(firstEvent.clientTimestamp)
-            history.append(SoilCapacityPoint(date: date, capacity: capacity))
+            history.append(SoilChartPoint(date: date, capacity: capacity, available: available))
         }
 
         for event in events {
             let date = Self.parseISO8601(event.clientTimestamp)
+            var changed = false
 
             switch event.type {
             case "sprout_planted":
                 if let sproutId = event.payload["sproutId"]?.value as? String,
                    let season = event.payload["season"]?.value as? String,
-                   let environment = event.payload["environment"]?.value as? String {
-                    sproutInfo[sproutId] = (season: season, environment: environment)
+                   let environment = event.payload["environment"]?.value as? String,
+                   let soilCost = event.payload["soilCost"]?.value as? Int {
+                    sproutInfo[sproutId] = (season: season, environment: environment, soilCost: soilCost)
+                    available = max(0, available - Double(soilCost))
+                    changed = true
                 }
+
+            case "sprout_watered":
+                available = min(available + SharedConstants.Soil.waterRecovery, capacity)
+                changed = true
 
             case "sprout_harvested":
                 if let sproutId = event.payload["sproutId"]?.value as? String,
@@ -339,16 +455,32 @@ struct TodayView: View {
                         currentCapacity: capacity
                     )
                     capacity += reward
-                    history.append(SoilCapacityPoint(date: date, capacity: capacity))
+                    let returnedSoil = Double(info.soilCost)
+                    available = min(available + returnedSoil, capacity)
+                    changed = true
                 }
+
+            case "sprout_uprooted":
+                if let soilReturned = event.payload["soilReturned"]?.value as? Double {
+                    available = min(available + soilReturned, capacity)
+                    changed = true
+                }
+
+            case "sun_shone":
+                available = min(available + SharedConstants.Soil.sunRecovery, capacity)
+                changed = true
 
             default:
                 break
             }
+
+            if changed {
+                history.append(SoilChartPoint(date: date, capacity: capacity, available: available))
+            }
         }
 
         // Add current date as final point
-        history.append(SoilCapacityPoint(date: Date(), capacity: capacity))
+        history.append(SoilChartPoint(date: Date(), capacity: capacity, available: available))
 
         return history
     }
@@ -380,12 +512,38 @@ struct TodayView: View {
     }
 }
 
-// MARK: - Soil Capacity Point
+// MARK: - Soil Chart Types
 
-struct SoilCapacityPoint: Identifiable {
+struct SoilChartPoint: Identifiable {
     let id = UUID()
     let date: Date
     let capacity: Double
+    let available: Double
+}
+
+enum SoilChartRange: String, CaseIterable {
+    case oneDay = "1D"
+    case oneWeek = "1W"
+    case oneMonth = "1M"
+    case threeMonths = "3M"
+    case sixMonths = "6M"
+    case yearToDate = "YTD"
+    case inception = "ALL"
+
+    var startDate: Date? {
+        let calendar = Calendar.current
+        let now = Date()
+        switch self {
+        case .oneDay: return calendar.date(byAdding: .day, value: -1, to: now)
+        case .oneWeek: return calendar.date(byAdding: .day, value: -7, to: now)
+        case .oneMonth: return calendar.date(byAdding: .month, value: -1, to: now)
+        case .threeMonths: return calendar.date(byAdding: .month, value: -3, to: now)
+        case .sixMonths: return calendar.date(byAdding: .month, value: -6, to: now)
+        case .yearToDate:
+            return calendar.date(from: calendar.dateComponents([.year], from: now))
+        case .inception: return nil
+        }
+    }
 }
 
 #Preview {
