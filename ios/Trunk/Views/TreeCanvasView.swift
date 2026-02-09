@@ -29,6 +29,7 @@ struct TreeCanvasView: View {
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
+    @State private var isVisible = false
 
     // MARK: - Layout constants (matching web)
 
@@ -51,47 +52,70 @@ struct TreeCanvasView: View {
     private let zoomOutThreshold: CGFloat = 0.7
     private let zoomInThreshold: CGFloat = 1.5
 
+    // Pre-computed per-branch sprout data (hoisted out of TimelineView)
+    private var branchSproutData: [(hasActive: Bool, activeCount: Int)] {
+        (0..<branchCount).map { index in
+            let branchSprouts = sproutsForBranch(index)
+            let activeCount = branchSprouts.filter { $0.state == .active }.count
+            return (hasActive: activeCount > 0, activeCount: activeCount)
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let base = min(geo.size.width, geo.size.height)
             let radius = base * orbitRatio
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
 
-            TimelineView(.animation) { timeline in
-                let time = timeline.date.timeIntervalSinceReferenceDate
+            if isVisible {
+                TimelineView(.animation) { timeline in
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+
+                    ZStack {
+                        treeContent(center: center, radius: radius, time: time, geo: geo)
+                            .scaleEffect(scale)
+                            .offset(offset)
+                    }
+                }
+                .gesture(magnifyGesture)
+                .gesture(dragGesture)
+                .simultaneousGesture(doubleTapGesture(center: center, radius: radius))
+            } else {
+                let time = Date().timeIntervalSinceReferenceDate
 
                 ZStack {
                     treeContent(center: center, radius: radius, time: time, geo: geo)
                         .scaleEffect(scale)
                         .offset(offset)
                 }
+                .gesture(magnifyGesture)
+                .gesture(dragGesture)
+                .simultaneousGesture(doubleTapGesture(center: center, radius: radius))
             }
-            .gesture(magnifyGesture)
-            .gesture(dragGesture)
-            .simultaneousGesture(doubleTapGesture(center: center, radius: radius))
         }
+        .onAppear { isVisible = true }
+        .onDisappear { isVisible = false }
     }
 
     // MARK: - Tree Content
 
     @ViewBuilder
     private func treeContent(center: CGPoint, radius: CGFloat, time: Double, geo: GeometryProxy) -> some View {
-        ZStack {
-            // ASCII dot guide lines (replacing dashed Path strokes)
-            ForEach(0..<branchCount, id: \.self) { index in
-                let angle = angleForBranch(index)
-                let windOffset = windOffsetFor(index: index, time: time)
-                let endPoint = pointOnCircle(center: center, radius: radius, angle: angle)
-                let swayedEnd = CGPoint(x: endPoint.x + windOffset.x, y: endPoint.y + windOffset.y)
+        let cachedData = branchSproutData
 
-                AsciiDotLine(
-                    from: center,
-                    to: swayedEnd,
-                    startGap: guideGap,      // gap from center
-                    endGap: guideGap + 36,   // gap before branch box
-                    dotSpacing: guideDotSpacing
-                )
-            }
+        ZStack {
+            // ASCII dot guide lines — single Canvas for all 8 branches
+            CanvasDotGuideLines(
+                branchCount: branchCount,
+                center: center,
+                radius: radius,
+                time: time,
+                guideGap: guideGap,
+                guideDotSpacing: guideDotSpacing,
+                angleForBranch: angleForBranch,
+                windOffsetFor: windOffsetFor,
+                pointOnCircle: { c, r, a in pointOnCircle(center: c, radius: r, angle: a) }
+            )
 
             // Invisible center tap target (reset to overview on double-tap)
             Color.clear
@@ -109,14 +133,13 @@ struct TreeCanvasView: View {
             ForEach(0..<branchCount, id: \.self) { index in
                 let angle = angleForBranch(index)
                 let position = pointOnCircle(center: center, radius: radius, angle: angle)
-                let branchSprouts = sproutsForBranch(index)
-                let hasActive = branchSprouts.contains { $0.state == .active }
+                let data = cachedData[index]
                 let windOffset = windOffsetFor(index: index, time: time)
 
                 InteractiveBranchNode(
                     index: index,
-                    hasActiveSprouts: hasActive,
-                    activeSproutCount: branchSprouts.filter { $0.state == .active }.count,
+                    hasActiveSprouts: data.hasActive,
+                    activeSproutCount: data.activeCount,
                     isSelected: false,
                     onTap: {
                         HapticManager.impact()
@@ -248,45 +271,61 @@ struct TreeCanvasView: View {
     }
 }
 
-// MARK: - ASCII Dot Guide Line
+// MARK: - Canvas Dot Guide Lines (all branches in a single Canvas)
 
-/// Renders a trail of "." characters between two points, matching the web's guide lines.
-struct AsciiDotLine: View {
-    let from: CGPoint
-    let to: CGPoint
-    let startGap: CGFloat
-    let endGap: CGFloat
-    let dotSpacing: CGFloat
+/// Renders dot guide lines for all branches using a single Canvas draw call,
+/// replacing the previous AsciiDotLine that created individual Text(".") views per dot.
+struct CanvasDotGuideLines: View {
+    let branchCount: Int
+    let center: CGPoint
+    let radius: CGFloat
+    let time: Double
+    let guideGap: CGFloat
+    let guideDotSpacing: CGFloat
+    let angleForBranch: (Int) -> Double
+    let windOffsetFor: (Int, Double) -> CGPoint
+    let pointOnCircle: (CGPoint, CGFloat, Double) -> CGPoint
+
+    private let dotSize: CGFloat = 2
+    private let endGapExtra: CGFloat = 36
 
     var body: some View {
-        let dx = to.x - from.x
-        let dy = to.y - from.y
-        let dist = hypot(dx, dy)
+        Canvas { context, _ in
+            for index in 0..<branchCount {
+                let angle = angleForBranch(index)
+                let windOffset = windOffsetFor(index, time)
+                let endPoint = pointOnCircle(center, radius, angle)
+                let swayedEnd = CGPoint(x: endPoint.x + windOffset.x, y: endPoint.y + windOffset.y)
 
-        if dist > startGap + endGap {
-            let ux = dx / dist
-            let uy = dy / dist
-            let x1 = from.x + ux * startGap
-            let y1 = from.y + uy * startGap
-            let x2 = to.x - ux * endGap
-            let y2 = to.y - uy * endGap
-            let lineDx = x2 - x1
-            let lineDy = y2 - y1
-            let lineDist = hypot(lineDx, lineDy)
-            let dotCount = max(1, Int(lineDist / dotSpacing))
+                let dx = swayedEnd.x - center.x
+                let dy = swayedEnd.y - center.y
+                let dist = hypot(dx, dy)
+                guard dist > guideGap + guideGap + endGapExtra else { continue }
 
-            ForEach(0..<dotCount, id: \.self) { i in
-                let t = dotCount > 1 ? CGFloat(i) / CGFloat(dotCount - 1) : 0.5
-                Text(".")
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint.opacity(0.35))
-                    .position(
-                        x: x1 + lineDx * t,
-                        y: y1 + lineDy * t
+                let ux = dx / dist
+                let uy = dy / dist
+                let startX = center.x + ux * guideGap
+                let startY = center.y + uy * guideGap
+                let endX = swayedEnd.x - ux * (guideGap + endGapExtra)
+                let endY = swayedEnd.y - uy * (guideGap + endGapExtra)
+                let lineDist = hypot(endX - startX, endY - startY)
+                let dotCount = max(1, Int(lineDist / guideDotSpacing))
+
+                for i in 0..<dotCount {
+                    let t = dotCount > 1 ? CGFloat(i) / CGFloat(dotCount - 1) : 0.5
+                    let x = startX + (endX - startX) * t
+                    let y = startY + (endY - startY) * t
+                    let rect = CGRect(
+                        x: x - dotSize / 2,
+                        y: y - dotSize / 2,
+                        width: dotSize,
+                        height: dotSize
                     )
+                    context.fill(Path(ellipseIn: rect), with: .color(Color.inkFaint.opacity(0.35)))
+                }
             }
-            .allowsHitTesting(false)
         }
+        .allowsHitTesting(false)
     }
 }
 

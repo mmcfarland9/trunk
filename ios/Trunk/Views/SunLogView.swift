@@ -33,16 +33,17 @@ struct SunLogView: View {
                 emptyState
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                    LazyVStack(alignment: .leading, spacing: TrunkTheme.space4, pinnedViews: [.sectionHeaders]) {
                         ForEach(groupedEntries, id: \.0) { group in
-                            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                                Text(group.0.uppercased())
-                                    .monoLabel(size: TrunkTheme.textXs)
-                                    .padding(.horizontal, TrunkTheme.space1)
-
+                            Section {
                                 ForEach(group.1) { entry in
                                     SunLogRow(entry: entry)
                                 }
+                            } header: {
+                                Text(group.0.uppercased())
+                                    .monoLabel(size: TrunkTheme.textXs)
+                                    .padding(.horizontal, TrunkTheme.space1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                     }
@@ -76,6 +77,12 @@ struct SunLogView: View {
         .padding(TrunkTheme.space4)
     }
 
+    private static let dateGroupFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
     private func dateGroupKey(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
@@ -83,9 +90,7 @@ struct SunLogView: View {
         } else if calendar.isDateInYesterday(date) {
             return "Yesterday"
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+            return Self.dateGroupFormatter.string(from: date)
         }
     }
 }
@@ -95,10 +100,14 @@ struct SunLogView: View {
 struct SunLogRow: View {
     let entry: DerivedSunEntry
 
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
+
     private var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: entry.timestamp)
+        Self.timeFormatter.string(from: entry.timestamp)
     }
 
     var body: some View {
@@ -131,11 +140,7 @@ struct SunLogRow: View {
                 .lineLimit(4)
         }
         .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
+        .paperCard()
     }
 }
 

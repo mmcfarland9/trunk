@@ -30,17 +30,12 @@ struct SproutsView: View {
     @State private var selectedFilter: SproutFilter = .all
     @State private var selectedSort: SproutSort = .planted
 
-    // Derived state from EventStore
-    private var state: DerivedState {
-        EventStore.shared.getState()
-    }
-
-    private var allSprouts: [DerivedSprout] {
-        Array(state.sprouts.values)
-    }
+    // Cached state - refreshed on appear, not per-keystroke
+    @State private var cachedSprouts: [DerivedSprout] = []
+    @State private var cachedState: DerivedState? = nil
 
     private var filteredSprouts: [DerivedSprout] {
-        var sprouts = allSprouts
+        var sprouts = cachedSprouts
 
         // Apply status filter
         switch selectedFilter {
@@ -77,11 +72,11 @@ struct SproutsView: View {
     }
 
     private var activeCount: Int {
-        allSprouts.filter { $0.state == .active }.count
+        cachedSprouts.filter { $0.state == .active }.count
     }
 
     private var completedCount: Int {
-        allSprouts.filter { $0.state == .completed }.count
+        cachedSprouts.filter { $0.state == .completed }.count
     }
 
     var body: some View {
@@ -89,7 +84,7 @@ struct SproutsView: View {
             Color.parchment
                 .ignoresSafeArea()
 
-            if allSprouts.isEmpty {
+            if cachedSprouts.isEmpty {
                 emptyState
             } else {
                 ScrollView {
@@ -129,6 +124,15 @@ struct SproutsView: View {
                     .foregroundStyle(Color.wood)
             }
         }
+        .onAppear {
+            refreshCachedState()
+        }
+    }
+
+    private func refreshCachedState() {
+        let state = EventStore.shared.getState()
+        cachedState = state
+        cachedSprouts = Array(state.sprouts.values)
     }
 
     // MARK: - Summary Bar
@@ -136,7 +140,7 @@ struct SproutsView: View {
     private var summaryBar: some View {
         HStack(spacing: TrunkTheme.space4) {
             HStack(spacing: TrunkTheme.space2) {
-                Text("\(allSprouts.count)")
+                Text("\(cachedSprouts.count)")
                     .font(.system(size: TrunkTheme.textLg, design: .monospaced))
                     .foregroundStyle(Color.ink)
 
@@ -250,11 +254,11 @@ struct SproutsView: View {
                     }
                 } label: {
                     HStack(spacing: TrunkTheme.space1) {
-                        Text(selectedSort.rawValue)
+                        Text("Sort: \(selectedSort.rawValue)")
                             .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                             .foregroundStyle(Color.inkFaint)
 
-                        Text("v")
+                        Text("\u{25BE}")
                             .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                             .foregroundStyle(Color.inkFaint)
                     }
@@ -277,7 +281,7 @@ struct SproutsView: View {
                 NavigationLink {
                     SproutDetailView(sproutId: sprout.id)
                 } label: {
-                    SproutListRow(sprout: sprout, state: state)
+                    SproutListRow(sprout: sprout, state: cachedState ?? EventStore.shared.getState())
                 }
                 .buttonStyle(.plain)
             }

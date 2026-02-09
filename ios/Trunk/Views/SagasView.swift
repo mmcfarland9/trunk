@@ -32,15 +32,16 @@ struct SagasView: View {
                 emptyState
             } else {
                 ScrollView {
-                    VStack(spacing: TrunkTheme.space2) {
+                    LazyVStack(spacing: TrunkTheme.space2) {
                         ForEach(leaves, id: \.id) { leaf in
+                            let leafSprouts = sproutsForLeaf(leaf)
                             NavigationLink {
                                 SagaDetailView(leaf: leaf, progression: progression)
                             } label: {
                                 SagaRow(
                                     leaf: leaf,
-                                    sproutCount: sproutsForLeaf(leaf).count,
-                                    activeCount: sproutsForLeaf(leaf).filter { $0.state == .active }.count,
+                                    sproutCount: leafSprouts.count,
+                                    activeCount: leafSprouts.filter { $0.state == .active }.count,
                                     contextLabel: contextLabel(for: leaf)
                                 )
                             }
@@ -125,11 +126,7 @@ struct SagaRow: View {
         }
         .padding(.vertical, TrunkTheme.space3)
         .padding(.horizontal, TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
+        .paperCard()
     }
 }
 

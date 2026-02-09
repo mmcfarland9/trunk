@@ -26,12 +26,12 @@ extension Animation {
 // MARK: - View Modifiers
 
 extension View {
-    /// Staggered entrance animation for list items
+    /// Staggered entrance animation for list items (capped at index 5 for max 0.4s delay)
     func staggeredEntrance(index: Int, appeared: Bool, delay: Double = 0.08) -> some View {
         self
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 20)
-            .animation(.trunkSpring.delay(Double(index) * delay), value: appeared)
+            .animation(.trunkSpring.delay(min(Double(index), 5.0) * delay), value: appeared)
     }
 
     /// Pulse animation for attention-grabbing elements

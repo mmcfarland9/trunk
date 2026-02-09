@@ -10,40 +10,29 @@ import Foundation
 @Observable
 final class ProgressionViewModel {
 
-    init() {}
+    // MARK: - Cached Values
 
-    // MARK: - Derived State Access
+    private(set) var soilCapacity: Double = SharedConstants.Soil.startingCapacity
+    private(set) var soilAvailable: Double = SharedConstants.Soil.startingCapacity
+    private(set) var waterAvailable: Int = SharedConstants.Water.dailyCapacity
+    private(set) var sunAvailable: Int = SharedConstants.Sun.weeklyCapacity
 
-    private var state: DerivedState {
-        EventStore.shared.getState()
+    init() {
+        recompute()
     }
 
-    // MARK: - Soil
-
-    var soilCapacity: Double {
-        state.soilCapacity
-    }
-
-    var soilAvailable: Double {
-        state.soilAvailable
-    }
+    // MARK: - Derived (cheap, from cached values)
 
     var soilCapacityInt: Int {
-        Int(state.soilCapacity.rounded())
+        Int(soilCapacity.rounded())
     }
 
     var soilAvailableInt: Int {
-        Int(state.soilAvailable.rounded())
+        Int(soilAvailable.rounded())
     }
 
     func canAfford(cost: Int) -> Bool {
         soilAvailable >= Double(cost)
-    }
-
-    // MARK: - Water
-
-    var waterAvailable: Int {
-        EventStore.shared.getWaterAvailable()
     }
 
     var waterCapacity: Int {
@@ -52,12 +41,6 @@ final class ProgressionViewModel {
 
     var canWater: Bool {
         waterAvailable > 0
-    }
-
-    // MARK: - Sun
-
-    var sunAvailable: Int {
-        EventStore.shared.getSunAvailable()
     }
 
     var sunCapacity: Int {
@@ -70,15 +53,24 @@ final class ProgressionViewModel {
 
     // MARK: - Refresh
 
-    /// Refresh state (invalidate caches for time-based resources)
+    /// Refresh state (invalidate caches and recompute stored values)
     func refresh() {
         EventStore.shared.refresh()
+        recompute()
+    }
+
+    private func recompute() {
+        let state = EventStore.shared.getState()
+        soilCapacity = state.soilCapacity
+        soilAvailable = state.soilAvailable
+        waterAvailable = EventStore.shared.getWaterAvailable()
+        sunAvailable = EventStore.shared.getSunAvailable()
     }
 
     // MARK: - Debug
 
     func resetToDefaults() {
-        // Clear local events - would need to clear cloud too for real reset
         EventStore.shared.clearEvents()
+        recompute()
     }
 }

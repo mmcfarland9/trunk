@@ -122,12 +122,8 @@ func deriveState(from events: [SyncEvent]) -> DerivedState {
     var leaves: [String: DerivedLeaf] = [:]
     var sunEntries: [DerivedSunEntry] = []
 
-    // Sort events by timestamp to ensure correct ordering
-    let sortedEvents = events.sorted { event1, event2 in
-        parseTimestamp(event1.clientTimestamp) < parseTimestamp(event2.clientTimestamp)
-    }
-
-    for event in sortedEvents {
+    // Events are appended chronologically — no sort needed
+    for event in events {
         switch event.type {
         case "sprout_planted":
             processSproutPlanted(event: event, soilAvailable: &soilAvailable, sprouts: &sprouts)
@@ -468,15 +464,23 @@ func contextLabel(for leaf: DerivedLeaf) -> String {
 // MARK: - Payload Parsing Helpers
 
 /// Parse ISO8601 timestamp string to Date
-private func parseTimestamp(_ timestamp: String) -> Date {
+private let iso8601WithFractional: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    if let date = formatter.date(from: timestamp) {
+    return formatter
+}()
+
+private let iso8601WithoutFractional: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+}()
+
+private func parseTimestamp(_ timestamp: String) -> Date {
+    if let date = iso8601WithFractional.date(from: timestamp) {
         return date
     }
-    // Try without fractional seconds
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter.date(from: timestamp) ?? Date.distantPast
+    return iso8601WithoutFractional.date(from: timestamp) ?? Date.distantPast
 }
 
 /// Safely get a string value from payload

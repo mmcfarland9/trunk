@@ -37,6 +37,13 @@ final class EventStore: ObservableObject {
         invalidateCache()
     }
 
+    /// Append multiple events then invalidate caches once (for batch sync)
+    func appendEvents(_ newEvents: [SyncEvent]) {
+        guard !newEvents.isEmpty else { return }
+        events.append(contentsOf: newEvents)
+        invalidateCache()
+    }
+
     /// Clear all events (for logout)
     func clearEvents() {
         events = []

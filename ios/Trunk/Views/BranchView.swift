@@ -21,6 +21,7 @@ struct BranchView: View {
     @State private var selectedTwig: TwigSelection?
     @State private var appeared = false
     @State private var centerAppeared = false
+    @State private var isVisible = false
 
     private let twigCount = SharedConstants.Tree.twigCount
 
@@ -37,6 +38,18 @@ struct BranchView: View {
         Array(state.sprouts.values)
     }
 
+    // Pre-computed sprout data hoisted out of TimelineView
+    private var branchActiveCount: Int {
+        sproutsForBranch().filter { $0.state == .active }.count
+    }
+
+    private var twigActiveCounts: [Int] {
+        (0..<twigCount).map { twigIndex in
+            let twigId = "branch-\(branchIndex)-twig-\(twigIndex)"
+            return sproutsForTwig(twigId).filter { $0.state == .active }.count
+        }
+    }
+
     var body: some View {
         ZStack {
             Color.parchment
@@ -45,66 +58,17 @@ struct BranchView: View {
             GeometryReader { geo in
                 let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
                 let radius = min(geo.size.width, geo.size.height) * 0.34
+                let cachedBranchActive = branchActiveCount
+                let cachedTwigActive = twigActiveCounts
 
-                TimelineView(.animation) { timeline in
-                    let time = timeline.date.timeIntervalSinceReferenceDate
-
-                    ZStack {
-                        // Guide lines from center to each twig
-                        ForEach(0..<twigCount, id: \.self) { twigIndex in
-                            let angle = angleForTwig(twigIndex)
-                            let windOffset = windOffsetFor(index: twigIndex, time: time)
-                            let endPoint = pointOnCircle(center: center, radius: radius, angle: angle)
-                            let swayedEnd = CGPoint(
-                                x: endPoint.x + windOffset.x,
-                                y: endPoint.y + windOffset.y
-                            )
-
-                            BranchGuideLine(from: center, to: swayedEnd)
-                                .opacity(appeared ? 1 : 0)
-                                .animation(.trunkFadeIn, value: appeared)
-                        }
-
-                        // Central branch node
-                        BranchCenterNode(
-                            branchIndex: branchIndex,
-                            activeSproutCount: sproutsForBranch().filter { $0.state == .active }.count
-                        )
-                        .position(center)
-                        .offset(
-                            x: sin(time * windSpeed * 0.3) * windAmplitude * 0.3,
-                            y: cos(time * windSpeed * 0.25) * windAmplitude * 0.2
-                        )
-                        .opacity(centerAppeared ? 1 : 0)
-                        .scaleEffect(centerAppeared ? 1 : 0.7)
-                        .animation(.trunkSpring, value: centerAppeared)
-
-                        // Twig nodes arranged radially
-                        ForEach(0..<twigCount, id: \.self) { twigIndex in
-                            let angle = angleForTwig(twigIndex)
-                            let position = pointOnCircle(center: center, radius: radius, angle: angle)
-                            let windOffset = windOffsetFor(index: twigIndex, time: time)
-                            let twigId = "branch-\(branchIndex)-twig-\(twigIndex)"
-                            let twigSprouts = sproutsForTwig(twigId)
-                            let activeCount = twigSprouts.filter { $0.state == .active }.count
-
-                            Button {
-                                HapticManager.tap()
-                                selectedTwig = TwigSelection(id: twigIndex)
-                            } label: {
-                                TwigNode(
-                                    label: labelForTwig(twigIndex),
-                                    activeSproutCount: activeCount
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .position(
-                                x: position.x + windOffset.x,
-                                y: position.y + windOffset.y
-                            )
-                            .staggeredRadial(index: twigIndex, appeared: appeared)
-                        }
+                if isVisible {
+                    TimelineView(.animation) { timeline in
+                        let time = timeline.date.timeIntervalSinceReferenceDate
+                        branchContent(center: center, radius: radius, time: time, branchActive: cachedBranchActive, twigActive: cachedTwigActive)
                     }
+                } else {
+                    let time = Date().timeIntervalSinceReferenceDate
+                    branchContent(center: center, radius: radius, time: time, branchActive: cachedBranchActive, twigActive: cachedTwigActive)
                 }
             }
         }
@@ -132,6 +96,7 @@ struct BranchView: View {
             }
         }
         .onAppear {
+            isVisible = true
             withAnimation {
                 centerAppeared = true
             }
@@ -143,9 +108,70 @@ struct BranchView: View {
             }
         }
         .onDisappear {
+            isVisible = false
             // Reset so re-entry re-animates
             appeared = false
             centerAppeared = false
+        }
+    }
+
+    // MARK: - Branch Content (extracted from TimelineView closure)
+
+    @ViewBuilder
+    private func branchContent(center: CGPoint, radius: CGFloat, time: Double, branchActive: Int, twigActive: [Int]) -> some View {
+        ZStack {
+            // Guide lines from center to each twig
+            ForEach(0..<twigCount, id: \.self) { twigIndex in
+                let angle = angleForTwig(twigIndex)
+                let windOffset = windOffsetFor(index: twigIndex, time: time)
+                let endPoint = pointOnCircle(center: center, radius: radius, angle: angle)
+                let swayedEnd = CGPoint(
+                    x: endPoint.x + windOffset.x,
+                    y: endPoint.y + windOffset.y
+                )
+
+                BranchGuideLine(from: center, to: swayedEnd)
+                    .opacity(appeared ? 1 : 0)
+                    .animation(.trunkFadeIn, value: appeared)
+            }
+
+            // Central branch node
+            BranchCenterNode(
+                branchIndex: branchIndex,
+                activeSproutCount: branchActive
+            )
+            .position(center)
+            .offset(
+                x: sin(time * windSpeed * 0.3) * windAmplitude * 0.3,
+                y: cos(time * windSpeed * 0.25) * windAmplitude * 0.2
+            )
+            .opacity(centerAppeared ? 1 : 0)
+            .scaleEffect(centerAppeared ? 1 : 0.7)
+            .animation(.trunkSpring, value: centerAppeared)
+
+            // Twig nodes arranged radially
+            ForEach(0..<twigCount, id: \.self) { twigIndex in
+                let angle = angleForTwig(twigIndex)
+                let position = pointOnCircle(center: center, radius: radius, angle: angle)
+                let windOffset = windOffsetFor(index: twigIndex, time: time)
+                let activeCount = twigActive[twigIndex]
+
+                Button {
+                    HapticManager.tap()
+                    selectedTwig = TwigSelection(id: twigIndex)
+                } label: {
+                    TwigNode(
+                        label: labelForTwig(twigIndex),
+                        activeSproutCount: activeCount
+                    )
+                }
+                .buttonStyle(.plain)
+                .position(
+                    x: position.x + windOffset.x,
+                    y: position.y + windOffset.y
+                )
+                .staggeredRadial(index: twigIndex, appeared: appeared)
+            }
         }
     }
 

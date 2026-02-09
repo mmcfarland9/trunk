@@ -16,184 +16,17 @@ struct TodayView: View {
     @State private var selectedSproutForHarvest: DerivedSprout?
     @State private var showShineSheet = false
 
-    // MARK: - Derived State from EventStore
+    // MARK: - Cached State (updated in .task / .onAppear)
 
-    private var state: DerivedState {
-        EventStore.shared.getState()
-    }
-
-    private var sprouts: [DerivedSprout] {
-        Array(state.sprouts.values)
-    }
-
-    private var sunEntries: [DerivedSunEntry] {
-        state.sunEntries.sorted { $0.timestamp > $1.timestamp }
-    }
-
-    private var leaves: [DerivedLeaf] {
-        Array(state.leaves.values).sorted { $0.createdAt > $1.createdAt }
-    }
-
-    // MARK: - Computed Properties
-
-    private var activeSprouts: [DerivedSprout] {
-        getActiveSprouts(from: state)
-    }
-
-    private var readyToHarvest: [DerivedSprout] {
-        activeSprouts.filter { isSproutReady($0) }
-    }
-
-    /// Leafs that have at least one active sprout
-    private var activeLeafs: [DerivedLeaf] {
-        leaves.filter { leaf in
-            sprouts.contains { $0.leafId == leaf.id && $0.state == .active }
-        }
-    }
-
-    // MARK: - Insight Widget Data
-
-    /// Activity counts per day for the current week (Mon-Sun)
-    private var weeklyActivityCounts: [(waters: Int, shines: Int)] {
-        let calendar = Calendar.current
-        let now = Date()
-
-        // Find most recent Monday at 00:00
-        let weekday = calendar.component(.weekday, from: now)
-        let daysSinceMonday = (weekday - 2 + 7) % 7
-        guard let mondayStart = calendar.date(byAdding: .day, value: -daysSinceMonday, to: calendar.startOfDay(for: now)) else {
-            return Array(repeating: (waters: 0, shines: 0), count: 7)
-        }
-
-        var counts: [(waters: Int, shines: Int)] = []
-        for dayOffset in 0..<7 {
-            guard let dayStart = calendar.date(byAdding: .day, value: dayOffset, to: mondayStart),
-                  let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
-                counts.append((waters: 0, shines: 0))
-                continue
-            }
-
-            // Only count days up to now
-            if dayStart > now {
-                counts.append((waters: 0, shines: 0))
-                continue
-            }
-
-            let waterCount = sprouts.flatMap(\.waterEntries).filter { entry in
-                entry.timestamp >= dayStart && entry.timestamp < dayEnd
-            }.count
-
-            let shineCount = state.sunEntries.filter { entry in
-                entry.timestamp >= dayStart && entry.timestamp < dayEnd
-            }.count
-
-            counts.append((waters: waterCount, shines: shineCount))
-        }
-
-        return counts
-    }
-
-    /// Activity counts per branch in the last 30 days
-    private var branchActivityCounts: [Int] {
-        let now = Date()
-        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
-
-        var counts = Array(repeating: 0, count: SharedConstants.Tree.branchCount)
-
-        for sprout in sprouts {
-            guard let branchIndex = branchIndex(from: sprout.twigId) else { continue }
-
-            // Count waters in last 30 days
-            let recentWaters = sprout.waterEntries.filter { $0.timestamp >= thirtyDaysAgo }.count
-            counts[branchIndex] += recentWaters
-
-            // Count plants in last 30 days
-            if sprout.plantedAt >= thirtyDaysAgo {
-                counts[branchIndex] += 1
-            }
-
-            // Count harvests in last 30 days
-            if let harvestedAt = sprout.harvestedAt, harvestedAt >= thirtyDaysAgo {
-                counts[branchIndex] += 1
-            }
-        }
-
-        // Count shines in last 30 days
-        for entry in state.sunEntries {
-            guard entry.timestamp >= thirtyDaysAgo,
-                  let branchIndex = branchIndex(from: entry.twigId) else { continue }
-            counts[branchIndex] += 1
-        }
-
-        return counts
-    }
-
-    /// Weekly soil gain rate based on last 7 days of activity
-    private var weeklySoilGain: Double {
-        let now = Date()
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
-
-        let recentWaterCount = sprouts.flatMap(\.waterEntries).filter { $0.timestamp >= sevenDaysAgo }.count
-        let recentShineCount = state.sunEntries.filter { $0.timestamp >= sevenDaysAgo }.count
-
-        return Double(recentWaterCount) * SharedConstants.Soil.waterRecovery
-            + Double(recentShineCount) * SharedConstants.Soil.sunRecovery
-    }
-
-    /// The active sprout closest to being ready (but not yet ready)
-    private var nextHarvestSprout: DerivedSprout? {
-        activeSprouts
-            .filter { !isSproutReady($0) }
-            .sorted { sprout1, sprout2 in
-                let date1 = ProgressionService.harvestDate(plantedAt: sprout1.plantedAt, season: sprout1.season)
-                let date2 = ProgressionService.harvestDate(plantedAt: sprout2.plantedAt, season: sprout2.season)
-                return date1 < date2
-            }
-            .first
-    }
-
-    private var recentActivity: [ActivityItem] {
-        var items: [ActivityItem] = []
-
-        // Recent water entries
-        for sprout in sprouts {
-            for entry in sprout.waterEntries {
-                items.append(ActivityItem(
-                    date: entry.timestamp,
-                    icon: "💧",
-                    text: "Watered \"\(sprout.title)\""
-                ))
-            }
-
-            // Planted
-            items.append(ActivityItem(
-                date: sprout.plantedAt,
-                icon: "🌱",
-                text: "Planted \"\(sprout.title)\""
-            ))
-
-            // Harvested
-            if let harvestedAt = sprout.harvestedAt, sprout.state == .completed {
-                let emoji = resultToEmoji(sprout.result ?? 3)
-                items.append(ActivityItem(
-                    date: harvestedAt,
-                    icon: emoji,
-                    text: "Harvested \"\(sprout.title)\""
-                ))
-            }
-        }
-
-        // Sun entries
-        for entry in sunEntries {
-            items.append(ActivityItem(
-                date: entry.timestamp,
-                icon: "☀️",
-                text: "Shined on \(entry.twigLabel)"
-            ))
-        }
-
-        return Array(items.sorted { $0.date > $1.date }.prefix(5))
-    }
+    @State private var activeSprouts: [DerivedSprout] = []
+    @State private var readyToHarvest: [DerivedSprout] = []
+    @State private var activeLeafs: [DerivedLeaf] = []
+    @State private var cachedWeeklyActivity: [(waters: Int, shines: Int)] = Array(repeating: (waters: 0, shines: 0), count: 7)
+    @State private var cachedBranchActivity: [Int] = Array(repeating: 0, count: SharedConstants.Tree.branchCount)
+    @State private var cachedWeeklySoilGain: Double = 0
+    @State private var cachedSoilAvailable: Double = 0
+    @State private var cachedNextHarvestSprout: DerivedSprout? = nil
+    @State private var cachedRecentActivity: [ActivityItem] = []
 
     // MARK: - Body
 
@@ -229,7 +62,7 @@ struct TodayView: View {
                         .animatedCard(index: 4)
 
                     // Next harvest countdown
-                    if let nextSprout = nextHarvestSprout {
+                    if let nextSprout = cachedNextHarvestSprout {
                         nextHarvestSection(sprout: nextSprout)
                             .animatedCard(index: 5)
                     }
@@ -255,7 +88,7 @@ struct TodayView: View {
                     }
 
                     // Recent activity
-                    if !recentActivity.isEmpty {
+                    if !cachedRecentActivity.isEmpty {
                         activitySection
                             .animatedCard(index: 10)
                     }
@@ -291,7 +124,174 @@ struct TodayView: View {
         }
         .onAppear {
             progression.refresh()
+            refreshCachedState()
         }
+    }
+
+    // MARK: - State Refresh
+
+    private func refreshCachedState() {
+        let state = EventStore.shared.getState()
+        let allSprouts = Array(state.sprouts.values)
+        let allSunEntries = state.sunEntries
+        let allLeaves = Array(state.leaves.values).sorted { $0.createdAt > $1.createdAt }
+
+        // Active sprouts & harvest-ready
+        let active = getActiveSprouts(from: state)
+        activeSprouts = active
+        readyToHarvest = active.filter { isSproutReady($0) }
+
+        // Active leafs
+        activeLeafs = allLeaves.filter { leaf in
+            allSprouts.contains { $0.leafId == leaf.id && $0.state == .active }
+        }
+
+        // Soil available for forecast
+        cachedSoilAvailable = state.soilAvailable
+
+        // Weekly activity counts
+        cachedWeeklyActivity = computeWeeklyActivity(sprouts: allSprouts, sunEntries: allSunEntries)
+
+        // Branch activity counts
+        cachedBranchActivity = computeBranchActivity(sprouts: allSprouts, sunEntries: allSunEntries)
+
+        // Weekly soil gain
+        cachedWeeklySoilGain = computeWeeklySoilGain(sprouts: allSprouts, sunEntries: allSunEntries)
+
+        // Next harvest sprout
+        cachedNextHarvestSprout = active
+            .filter { !isSproutReady($0) }
+            .sorted { sprout1, sprout2 in
+                let date1 = ProgressionService.harvestDate(plantedAt: sprout1.plantedAt, season: sprout1.season)
+                let date2 = ProgressionService.harvestDate(plantedAt: sprout2.plantedAt, season: sprout2.season)
+                return date1 < date2
+            }
+            .first
+
+        // Recent activity
+        cachedRecentActivity = computeRecentActivity(
+            sprouts: allSprouts,
+            sunEntries: allSunEntries.sorted { $0.timestamp > $1.timestamp }
+        )
+    }
+
+    // MARK: - Computation Helpers
+
+    private func computeWeeklyActivity(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> [(waters: Int, shines: Int)] {
+        let calendar = Calendar.current
+        let now = Date()
+
+        let weekday = calendar.component(.weekday, from: now)
+        let daysSinceMonday = (weekday - 2 + 7) % 7
+        guard let mondayStart = calendar.date(byAdding: .day, value: -daysSinceMonday, to: calendar.startOfDay(for: now)) else {
+            return Array(repeating: (waters: 0, shines: 0), count: 7)
+        }
+
+        var counts: [(waters: Int, shines: Int)] = []
+        for dayOffset in 0..<7 {
+            guard let dayStart = calendar.date(byAdding: .day, value: dayOffset, to: mondayStart),
+                  let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+                counts.append((waters: 0, shines: 0))
+                continue
+            }
+
+            if dayStart > now {
+                counts.append((waters: 0, shines: 0))
+                continue
+            }
+
+            let waterCount = sprouts.flatMap(\.waterEntries).filter { entry in
+                entry.timestamp >= dayStart && entry.timestamp < dayEnd
+            }.count
+
+            let shineCount = sunEntries.filter { entry in
+                entry.timestamp >= dayStart && entry.timestamp < dayEnd
+            }.count
+
+            counts.append((waters: waterCount, shines: shineCount))
+        }
+
+        return counts
+    }
+
+    private func computeBranchActivity(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> [Int] {
+        let now = Date()
+        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+
+        var counts = Array(repeating: 0, count: SharedConstants.Tree.branchCount)
+
+        for sprout in sprouts {
+            guard let bIndex = branchIndex(from: sprout.twigId) else { continue }
+
+            let recentWaters = sprout.waterEntries.filter { $0.timestamp >= thirtyDaysAgo }.count
+            counts[bIndex] += recentWaters
+
+            if sprout.plantedAt >= thirtyDaysAgo {
+                counts[bIndex] += 1
+            }
+
+            if let harvestedAt = sprout.harvestedAt, harvestedAt >= thirtyDaysAgo {
+                counts[bIndex] += 1
+            }
+        }
+
+        for entry in sunEntries {
+            guard entry.timestamp >= thirtyDaysAgo,
+                  let bIndex = branchIndex(from: entry.twigId) else { continue }
+            counts[bIndex] += 1
+        }
+
+        return counts
+    }
+
+    private func computeWeeklySoilGain(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> Double {
+        let now = Date()
+        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
+
+        let recentWaterCount = sprouts.flatMap(\.waterEntries).filter { $0.timestamp >= sevenDaysAgo }.count
+        let recentShineCount = sunEntries.filter { $0.timestamp >= sevenDaysAgo }.count
+
+        return Double(recentWaterCount) * SharedConstants.Soil.waterRecovery
+            + Double(recentShineCount) * SharedConstants.Soil.sunRecovery
+    }
+
+    private func computeRecentActivity(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> [ActivityItem] {
+        var items: [ActivityItem] = []
+
+        for sprout in sprouts {
+            for entry in sprout.waterEntries {
+                items.append(ActivityItem(
+                    date: entry.timestamp,
+                    icon: "💧",
+                    text: "Watered \"\(sprout.title)\""
+                ))
+            }
+
+            items.append(ActivityItem(
+                date: sprout.plantedAt,
+                icon: "🌱",
+                text: "Planted \"\(sprout.title)\""
+            ))
+
+            if let harvestedAt = sprout.harvestedAt, sprout.state == .completed {
+                let emoji = resultToEmoji(sprout.result ?? 3)
+                items.append(ActivityItem(
+                    date: harvestedAt,
+                    icon: emoji,
+                    text: "Harvested \"\(sprout.title)\""
+                ))
+            }
+        }
+
+        for entry in sunEntries {
+            items.append(ActivityItem(
+                date: entry.timestamp,
+                icon: "☀️",
+                text: "Shined on \(entry.twigLabel)"
+            ))
+        }
+
+        return Array(items.sorted { $0.date > $1.date }.prefix(5))
     }
 
     // MARK: - Sections
@@ -358,7 +358,7 @@ struct TodayView: View {
 
     private var weeklyRhythmSection: some View {
         let dayInitials = ["M", "T", "W", "T", "F", "S", "S"]
-        let counts = weeklyActivityCounts
+        let counts = cachedWeeklyActivity
 
         return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
             Text("THIS WEEK")
@@ -394,7 +394,7 @@ struct TodayView: View {
     }
 
     private var branchBalanceSection: some View {
-        let counts = branchActivityCounts
+        let counts = cachedBranchActivity
         let maxCount = counts.max() ?? 0
 
         return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -445,8 +445,8 @@ struct TodayView: View {
     }
 
     private var soilForecastSection: some View {
-        let gain = weeklySoilGain
-        let currentSoil = state.soilAvailable
+        let gain = cachedWeeklySoilGain
+        let currentSoil = cachedSoilAvailable
         let maxSoil = SharedConstants.Soil.maxCapacity
 
         // ASCII progress bar for current/max
@@ -714,8 +714,8 @@ struct TodayView: View {
             Text("RECENT ACTIVITY")
                 .monoLabel(size: TrunkTheme.textXs)
 
-            ForEach(recentActivity.indices, id: \.self) { index in
-                let item = recentActivity[index]
+            ForEach(cachedRecentActivity.indices, id: \.self) { index in
+                let item = cachedRecentActivity[index]
                 HStack {
                     Text(item.icon)
                         .font(.system(size: TrunkTheme.textSm))

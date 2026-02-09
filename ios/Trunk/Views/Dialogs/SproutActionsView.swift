@@ -30,7 +30,7 @@ struct SproutActionsView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: TrunkTheme.space5) {
+                LazyVStack(alignment: .leading, spacing: TrunkTheme.space5) {
                     // Sprout info
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
                         Text(sprout.title)
@@ -93,11 +93,7 @@ struct SproutActionsView: View {
                                 }
                             }
                             .padding(TrunkTheme.space3)
-                            .background(Color.paper)
-                            .overlay(
-                                Rectangle()
-                                    .stroke(Color.border, lineWidth: 1)
-                            )
+                            .paperCard()
                         }
                     }
 
@@ -108,7 +104,7 @@ struct SproutActionsView: View {
                                 .monoLabel(size: TrunkTheme.textXs)
 
                             VStack(spacing: 1) {
-                                ForEach(sprout.waterEntries.sorted(by: { $0.timestamp > $1.timestamp }), id: \.timestamp) { entry in
+                                ForEach(sprout.waterEntries.sorted(by: { $0.timestamp > $1.timestamp })) { entry in
                                     VStack(alignment: .leading, spacing: TrunkTheme.space1) {
                                         Text(entry.timestamp, style: .date)
                                             .trunkFont(size: TrunkTheme.textXs)
@@ -122,11 +118,7 @@ struct SproutActionsView: View {
                                     .padding(TrunkTheme.space3)
                                 }
                             }
-                            .background(Color.paper)
-                            .overlay(
-                                Rectangle()
-                                    .stroke(Color.border, lineWidth: 1)
-                            )
+                            .paperCard()
                         }
                     }
                 }
@@ -211,11 +203,7 @@ struct SproutActionsView: View {
                     .foregroundStyle(Color.inkFaint)
             }
             .padding(TrunkTheme.space3)
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
+            .paperCard()
         }
 
         // Actions
@@ -310,11 +298,7 @@ struct SproutActionsView: View {
                     }
                 }
             }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
+            .paperCard()
         }
     }
 

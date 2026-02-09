@@ -69,8 +69,8 @@ struct SagaDetailView: View {
                 emptyState
             } else {
                 ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(Array(timelineEvents.enumerated()), id: \.offset) { index, event in
+                    LazyVStack(spacing: 0) {
+                        ForEach(Array(timelineEvents.enumerated()), id: \.element.id) { index, event in
                             TimelineRow(
                                 event: event,
                                 isLast: index == timelineEvents.count - 1
@@ -112,7 +112,9 @@ struct SagaDetailView: View {
 
 // MARK: - Timeline Event
 
-struct TimelineEvent {
+struct TimelineEvent: Identifiable {
+    let id = UUID()
+
     enum EventType {
         case planted
         case watered
@@ -148,16 +150,24 @@ struct TimelineRow: View {
     let event: TimelineEvent
     let isLast: Bool
 
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
+
     private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: event.date)
+        Self.dateFormatter.string(from: event.date)
     }
 
     private var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: event.date)
+        Self.timeFormatter.string(from: event.date)
     }
 
     var body: some View {

@@ -10,33 +10,38 @@ import UIKit
 
 @MainActor
 enum HapticManager {
+    private static let lightGenerator = UIImpactFeedbackGenerator(style: .light)
+    private static let mediumGenerator = UIImpactFeedbackGenerator(style: .medium)
+    private static let notificationGenerator = UINotificationFeedbackGenerator()
+    private static let selectionGenerator = UISelectionFeedbackGenerator()
+
     /// Light tap for selections and button presses
     static func tap() {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        lightGenerator.prepare()
+        lightGenerator.impactOccurred()
     }
 
     /// Medium impact for successful actions
     static func impact() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        mediumGenerator.prepare()
+        mediumGenerator.impactOccurred()
     }
 
     /// Success notification for completed actions
     static func success() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        notificationGenerator.prepare()
+        notificationGenerator.notificationOccurred(.success)
     }
 
     /// Selection changed feedback
     static func selection() {
-        let generator = UISelectionFeedbackGenerator()
-        generator.selectionChanged()
+        selectionGenerator.prepare()
+        selectionGenerator.selectionChanged()
     }
 
     /// Error notification for failed actions
     static func error() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.error)
+        notificationGenerator.prepare()
+        notificationGenerator.notificationOccurred(.error)
     }
 }

@@ -11,19 +11,7 @@ struct MainTabView: View {
     @Bindable var progression: ProgressionViewModel
 
     @State private var selectedTab = 0
-
-    // Derived state from EventStore
-    private var state: DerivedState {
-        EventStore.shared.getState()
-    }
-
-    private var readyToHarvestCount: Int {
-        getActiveSprouts(from: state).filter { isSproutReady($0) }.count
-    }
-
-    private var hasPendingActions: Bool {
-        readyToHarvestCount > 0 || progression.canShine
-    }
+    @State private var hasPendingActions = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -56,6 +44,15 @@ struct MainTabView: View {
         .transaction { transaction in
             transaction.animation = nil
         }
+        .onAppear {
+            refreshPendingActions()
+        }
+    }
+
+    private func refreshPendingActions() {
+        let state = EventStore.shared.getState()
+        let readyCount = getActiveSprouts(from: state).filter { isSproutReady($0) }.count
+        hasPendingActions = readyCount > 0 || progression.canShine
     }
 }
 

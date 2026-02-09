@@ -83,16 +83,17 @@ struct SoilLogView: View {
                 emptyState
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                    LazyVStack(alignment: .leading, spacing: TrunkTheme.space4, pinnedViews: [.sectionHeaders]) {
                         ForEach(groupedTransactions, id: \.0) { group in
-                            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                            Section {
+                                ForEach(group.1) { transaction in
+                                    SoilLogRow(transaction: transaction)
+                                }
+                            } header: {
                                 Text(group.0.uppercased())
                                     .monoLabel(size: TrunkTheme.textXs)
                                     .padding(.horizontal, TrunkTheme.space1)
-
-                                ForEach(group.1.indices, id: \.self) { index in
-                                    SoilLogRow(transaction: group.1[index])
-                                }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                     }
@@ -126,6 +127,12 @@ struct SoilLogView: View {
         .padding(TrunkTheme.space4)
     }
 
+    private static let dateGroupFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
     private func dateGroupKey(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
@@ -133,16 +140,15 @@ struct SoilLogView: View {
         } else if calendar.isDateInYesterday(date) {
             return "Yesterday"
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+            return Self.dateGroupFormatter.string(from: date)
         }
     }
 }
 
 // MARK: - Soil Transaction
 
-struct SoilTransaction {
+struct SoilTransaction: Identifiable {
+    let id = UUID()
     let date: Date
     let amount: Double
     let reason: String
@@ -154,10 +160,14 @@ struct SoilTransaction {
 struct SoilLogRow: View {
     let transaction: SoilTransaction
 
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
+
     private var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: transaction.date)
+        Self.timeFormatter.string(from: transaction.date)
     }
 
     private var amountText: String {
@@ -198,11 +208,7 @@ struct SoilLogRow: View {
             }
         }
         .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
+        .paperCard()
     }
 }
 
