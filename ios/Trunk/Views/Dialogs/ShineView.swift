@@ -190,7 +190,7 @@ struct ShineView: View {
                 try await SyncService.shared.pushEvent(type: "sun_shone", payload: [
                     "twigId": twig.nodeId,
                     "twigLabel": twig.label,
-                    "note": content,
+                    "content": content,
                     "prompt": selectedPrompt,
                     "timestamp": timestamp
                 ])

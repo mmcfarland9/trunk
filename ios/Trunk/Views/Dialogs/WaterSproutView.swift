@@ -148,7 +148,7 @@ struct WaterSproutView: View {
             do {
                 try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
                     "sproutId": sprout.id,
-                    "note": content,
+                    "content": content,
                     "timestamp": timestamp
                 ])
                 HapticManager.success()

@@ -67,9 +67,25 @@ function validateSyncPayload(payload: unknown): payload is TrunkEvent {
 }
 
 export function syncToLocalEvent(sync: SyncEvent): TrunkEvent | null {
-  if (!validateSyncPayload(sync.payload)) {
-    console.warn('Sync: rejected invalid event payload', sync.payload)
+  // Build event by merging top-level columns into payload.
+  // Web stores the full event object as payload (includes type/timestamp),
+  // but iOS stores only domain fields in payload (type/timestamp are separate columns).
+  // Merge ensures both formats produce a valid local event.
+  const merged: Record<string, unknown> = {
+    ...sync.payload,
+    type: sync.payload.type ?? sync.type,
+    timestamp: sync.payload.timestamp ?? sync.client_timestamp,
+  }
+
+  // Normalize field names: iOS uses "note", web uses "content"
+  if ('note' in merged && !('content' in merged)) {
+    merged.content = merged.note
+    delete merged.note
+  }
+
+  if (!validateSyncPayload(merged)) {
+    console.warn('Sync: rejected invalid event payload', merged)
     return null
   }
-  return sync.payload as unknown as TrunkEvent
+  return merged as unknown as TrunkEvent
 }
