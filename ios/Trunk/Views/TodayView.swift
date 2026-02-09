@@ -17,11 +17,11 @@ struct TodayView: View {
     @State private var selectedSproutForHarvest: DerivedSprout?
     @State private var showShineSheet = false
     @State private var showDataInfo = false
+    @State private var showWaterPicker = false
 
     // MARK: - Cached State (updated in .task / .onAppear)
 
     @State private var activeSprouts: [DerivedSprout] = []
-    @State private var readyToHarvest: [DerivedSprout] = []
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
     @State private var cachedSoilHistory: [SoilChartPoint] = []
     @State private var selectedSoilRange: SoilChartRange = .inception
@@ -38,8 +38,6 @@ struct TodayView: View {
                     // Greeting header
                     GreetingHeader(
                         userName: authService.userFullName,
-                        activeSproutCount: activeSprouts.count,
-                        readyToHarvestCount: readyToHarvest.count,
                         onAvatarTap: { showDataInfo = true }
                     )
                     .animatedCard(index: 0)
@@ -94,6 +92,20 @@ struct TodayView: View {
         .sheet(isPresented: $showDataInfo) {
             DataInfoSheet(progression: progression)
         }
+        .sheet(isPresented: $showWaterPicker) {
+            NavigationStack {
+                WaterSproutPickerView(
+                    sprouts: activeSprouts,
+                    onSelect: { sprout in
+                        showWaterPicker = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            selectedSproutForWater = sprout
+                        }
+                    }
+                )
+            }
+            .presentationDetents([.medium])
+        }
         .onAppear {
             progression.refresh()
             refreshCachedState()
@@ -105,10 +117,9 @@ struct TodayView: View {
     private func refreshCachedState() {
         let state = EventStore.shared.getState()
 
-        // Active sprouts & harvest-ready
+        // Active sprouts
         let active = getActiveSprouts(from: state)
         activeSprouts = active
-        readyToHarvest = active.filter { isSproutReady($0) }
 
         // Next harvest sprout
         cachedNextHarvestSprout = active
@@ -179,7 +190,6 @@ struct TodayView: View {
 
     private var waterSection: some View {
         let canWater = progression.waterAvailable > 0 && !activeSprouts.isEmpty
-        let nextSprout = activeSprouts.first { !wasWateredToday($0) } ?? activeSprouts.first
 
         let label: String = {
             if activeSprouts.isEmpty {
@@ -193,7 +203,7 @@ struct TodayView: View {
 
         return Button {
             HapticManager.tap()
-            selectedSproutForWater = nextSprout
+            showWaterPicker = true
         } label: {
             HStack {
                 Text("💧")
@@ -294,7 +304,7 @@ struct TodayView: View {
             } else {
                 let maxCapacity = points.map(\.capacity).max() ?? 15
                 Chart(points) { point in
-                    // Capacity line
+                    // Capacity line with subtle fill
                     LineMark(
                         x: .value("Date", point.date),
                         y: .value("Value", point.capacity),
@@ -308,10 +318,10 @@ struct TodayView: View {
                         y: .value("Value", point.capacity),
                         series: .value("Series", "Capacity")
                     )
-                    .foregroundStyle(Color.twig.opacity(0.08))
+                    .foregroundStyle(Color.twig.opacity(0.06))
                     .interpolationMethod(.stepEnd)
 
-                    // Available line
+                    // Available line (no area fill to prevent overlap)
                     LineMark(
                         x: .value("Date", point.date),
                         y: .value("Value", point.available),
@@ -319,14 +329,7 @@ struct TodayView: View {
                     )
                     .foregroundStyle(Color.trunkSuccess)
                     .interpolationMethod(.stepEnd)
-
-                    AreaMark(
-                        x: .value("Date", point.date),
-                        y: .value("Value", point.available),
-                        series: .value("Series", "Available")
-                    )
-                    .foregroundStyle(Color.trunkSuccess.opacity(0.08))
-                    .interpolationMethod(.stepEnd)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
                 }
                 .chartYScale(domain: 0 ... max(maxCapacity, 15))
                 .chartXAxis {
@@ -542,6 +545,78 @@ enum SoilChartRange: String, CaseIterable {
         case .yearToDate:
             return calendar.date(from: calendar.dateComponents([.year], from: now))
         case .inception: return nil
+        }
+    }
+}
+
+// MARK: - Water Sprout Picker
+
+struct WaterSproutPickerView: View {
+    let sprouts: [DerivedSprout]
+    let onSelect: (DerivedSprout) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: TrunkTheme.space2) {
+                    ForEach(sprouts, id: \.id) { sprout in
+                        Button {
+                            onSelect(sprout)
+                        } label: {
+                            HStack(spacing: TrunkTheme.space3) {
+                                Rectangle()
+                                    .fill(Color.twig)
+                                    .frame(width: 2)
+
+                                VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                    Text(sprout.title)
+                                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                                        .foregroundStyle(Color.ink)
+                                        .lineLimit(1)
+
+                                    Text(sprout.season.label)
+                                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                        .foregroundStyle(Color.inkFaint)
+                                }
+
+                                Spacer()
+
+                                Text("💧")
+                            }
+                            .padding(TrunkTheme.space3)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(TrunkTheme.space4)
+            }
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+            }
+            ToolbarItem(placement: .principal) {
+                Text("CHOOSE SPROUT")
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(Color.trunkWater)
+            }
         }
     }
 }
