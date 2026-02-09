@@ -304,10 +304,6 @@ struct SproutsView: View {
 
     private var emptyState: some View {
         VStack(spacing: TrunkTheme.space3) {
-            Text("( )")
-                .font(.system(size: 24, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-
             Text("No sprouts yet")
                 .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                 .foregroundStyle(Color.inkFaint)
@@ -379,10 +375,18 @@ struct SproutListRow: View {
                 .frame(width: 2)
 
             VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                // Leaf name (prominent — above title for visual primacy)
+                if let leafName {
+                    Text(leafName)
+                        .font(.system(size: TrunkTheme.textBase, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.wood)
+                        .lineLimit(1)
+                }
+
                 // Title row
                 HStack {
                     Text(sprout.title)
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                         .foregroundStyle(Color.ink)
                         .lineLimit(1)
 
@@ -426,14 +430,6 @@ struct SproutListRow: View {
                     Text(sprout.environment.label)
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                         .foregroundStyle(Color.inkFaint)
-                }
-
-                // Leaf name (prominent)
-                if let leafName {
-                    Text(leafName)
-                        .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
-                        .foregroundStyle(Color.wood)
-                        .lineLimit(1)
                 }
 
                 // Location row

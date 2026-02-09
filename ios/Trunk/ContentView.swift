@@ -27,11 +27,8 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                // Invalidate time-sensitive caches (water/sun availability)
-                // when app returns to foreground - may have crossed 6am boundary
-                progression.refresh()
-
                 // Re-sync from cloud on foreground return
+                // (syncOnOpen always calls progression.refresh() after sync)
                 Task {
                     await syncOnOpen()
                 }
