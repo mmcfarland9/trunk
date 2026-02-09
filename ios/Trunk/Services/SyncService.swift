@@ -41,12 +41,19 @@ private let lastSyncKey = "trunk-last-sync"
 final class SyncService: ObservableObject {
     static let shared = SyncService()
 
-    @Published private(set) var syncStatus: SyncStatus = .idle
+    @Published private(set) var syncStatus: SyncStatus = .syncing
 
     private var realtimeChannel: RealtimeChannelV2?
     private var onRealtimeEvent: ((SyncEvent) -> Void)?
 
     private init() {}
+
+    /// Reset sync status when sync is not applicable (e.g., not authenticated
+    /// or Supabase not configured). Prevents the icon from showing amber
+    /// indefinitely in local-only mode.
+    func markNotNeeded() {
+        syncStatus = .idle
+    }
 
     // MARK: - Cache Management
 
@@ -237,6 +244,8 @@ final class SyncService: ObservableObject {
         let clientId = "\(ISO8601DateFormatter().string(from: Date()))-\(randomString(length: 6))"
         let clientTimestamp = ISO8601DateFormatter().string(from: Date())
 
+        syncStatus = .syncing
+
         // 1. Optimistic local update — user sees the result immediately
         let optimisticEvent = SyncEvent(
             id: UUID(),
@@ -267,9 +276,11 @@ final class SyncService: ObservableObject {
                 .value
             // Server confirmed — the optimistic event stays in the store.
             // On next sync, dedup by clientTimestamp prevents duplicates.
+            syncStatus = .success
         } catch {
             // Rollback the optimistic event so state is consistent
             EventStore.shared.removeEvent(withClientId: clientId)
+            syncStatus = .error
             throw error
         }
     }

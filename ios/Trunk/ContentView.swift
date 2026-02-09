@@ -38,7 +38,8 @@ struct ContentView: View {
 
     private func syncOnOpen() async {
         guard authService.isAuthenticated else {
-            // No sync needed — mark ready with local data
+            // No sync needed — reset icon from .syncing to .idle
+            SyncService.shared.markNotNeeded()
             progression.markLoaded()
             return
         }
