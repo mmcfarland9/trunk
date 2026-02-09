@@ -2,35 +2,86 @@
 //  SettingsView.swift
 //  Trunk
 //
-//  App settings, history logs, and data management.
+//  Sprouts panel: browse, search, and filter all sprouts.
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
-import Auth
 
-struct SettingsView: View {
+// MARK: - Filter & Sort
+
+enum SproutFilter: String, CaseIterable {
+    case all = "All"
+    case active = "Active"
+    case completed = "Completed"
+}
+
+enum SproutSort: String, CaseIterable {
+    case planted = "Planted"
+    case alphabetical = "A-Z"
+    case status = "Status"
+}
+
+// MARK: - Sprouts View
+
+struct SproutsView: View {
     @Bindable var progression: ProgressionViewModel
 
-    @State private var showingExportSheet = false
-    @State private var showingImportPicker = false
-    @State private var showingImportConfirm = false
-    @State private var exportURL: URL?
-    @State private var importPayload: ExportPayload?
-    @State private var alertMessage = ""
-    @State private var showingAlert = false
+    @State private var searchText = ""
+    @State private var selectedFilter: SproutFilter = .all
+    @State private var selectedSort: SproutSort = .planted
 
     // Derived state from EventStore
     private var state: DerivedState {
         EventStore.shared.getState()
     }
 
-    private var sproutCount: Int {
-        state.sprouts.count
+    private var allSprouts: [DerivedSprout] {
+        Array(state.sprouts.values)
     }
 
-    private var leafCount: Int {
-        state.leaves.count
+    private var filteredSprouts: [DerivedSprout] {
+        var sprouts = allSprouts
+
+        // Apply status filter
+        switch selectedFilter {
+        case .all:
+            break
+        case .active:
+            sprouts = sprouts.filter { $0.state == .active }
+        case .completed:
+            sprouts = sprouts.filter { $0.state == .completed }
+        }
+
+        // Apply search
+        if !searchText.isEmpty {
+            let query = searchText.lowercased()
+            sprouts = sprouts.filter { $0.title.lowercased().contains(query) }
+        }
+
+        // Apply sort
+        switch selectedSort {
+        case .planted:
+            sprouts.sort { $0.plantedAt > $1.plantedAt }
+        case .alphabetical:
+            sprouts.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .status:
+            sprouts.sort { sprout1, sprout2 in
+                if sprout1.state != sprout2.state {
+                    return sprout1.state == .active
+                }
+                return sprout1.plantedAt > sprout2.plantedAt
+            }
+        }
+
+        return sprouts
+    }
+
+    private var activeCount: Int {
+        allSprouts.filter { $0.state == .active }.count
+    }
+
+    private var completedCount: Int {
+        allSprouts.filter { $0.state == .completed }.count
     }
 
     var body: some View {
@@ -38,400 +89,687 @@ struct SettingsView: View {
             Color.parchment
                 .ignoresSafeArea()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: TrunkTheme.space5) {
-                    // History section
-                    historySection
+            if allSprouts.isEmpty {
+                emptyState
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                        // Summary bar
+                        summaryBar
+                            .animatedCard(index: 0)
 
-                    // Cloud sync section (when authenticated)
-                    if AuthService.shared.isAuthenticated {
-                        cloudSyncSection
-                    } else {
-                        // Data section (import/export when not authenticated)
-                        dataSection
+                        // Search
+                        searchBar
+                            .animatedCard(index: 1)
+
+                        // Filters and sort
+                        filtersSection
+                            .animatedCard(index: 2)
+
+                        // Sprout list
+                        if filteredSprouts.isEmpty {
+                            noMatchState
+                                .animatedCard(index: 3)
+                        } else {
+                            sproutList
+                                .animatedCard(index: 3)
+                        }
                     }
-
-                    // About section
-                    aboutSection
+                    .padding(TrunkTheme.space4)
                 }
-                .padding(TrunkTheme.space4)
             }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("SETTINGS")
+                Text("SPROUTS")
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .tracking(2)
                     .foregroundStyle(Color.wood)
             }
         }
-        .sheet(isPresented: $showingExportSheet) {
-            if let url = exportURL {
-                ShareSheet(activityItems: [url])
-            }
-        }
-        .fileImporter(
-            isPresented: $showingImportPicker,
-            allowedContentTypes: [.json],
-            allowsMultipleSelection: false
-        ) { result in
-            handleFileImport(result)
-        }
-        .alert("Import Data", isPresented: $showingImportConfirm) {
-            Button("Cancel", role: .cancel) {
-                importPayload = nil
-            }
-            Button("Import", role: .destructive) {
-                performImport()
-            }
-        } message: {
-            if let payload = importPayload {
-                Text("This will replace all current data with \(payload.events.count) events from the backup. This cannot be undone.")
-            }
-        }
-        .alert("Notice", isPresented: $showingAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(alertMessage)
-        }
     }
 
-    // MARK: - Sections
+    // MARK: - Summary Bar
 
-    private var cloudSyncSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("CLOUD SYNC")
-                .monoLabel(size: TrunkTheme.textXs)
+    private var summaryBar: some View {
+        HStack(spacing: TrunkTheme.space4) {
+            HStack(spacing: TrunkTheme.space2) {
+                Text("\(allSprouts.count)")
+                    .font(.system(size: TrunkTheme.textLg, design: .monospaced))
+                    .foregroundStyle(Color.ink)
 
-            VStack(spacing: 1) {
-                Button {
-                    Task {
-                        try? await AuthService.shared.signOut()
-                    }
-                } label: {
-                    HStack {
-                        Text("🚪")
-                            .font(.system(size: TrunkTheme.textBase))
-                            .frame(width: 24)
-
-                        Text("Sign Out")
-                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                            .foregroundStyle(Color.ink)
-
-                        Spacer()
-
-                        Text(">")
-                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                    }
-                    .padding(TrunkTheme.space3)
-                    .contentShape(Rectangle())
-                }
-            }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
-
-            if let email = AuthService.shared.user?.email {
-                Text("Signed in as \(email)")
+                Text("total")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
             }
 
-            Text("Syncs automatically")
+            Spacer()
+
+            HStack(spacing: TrunkTheme.space2) {
+                Text("\(activeCount)")
+                    .font(.system(size: TrunkTheme.textLg, design: .monospaced))
+                    .foregroundStyle(Color.twig)
+
+                Text("active")
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+            }
+
+            HStack(spacing: TrunkTheme.space2) {
+                Text("\(completedCount)")
+                    .font(.system(size: TrunkTheme.textLg, design: .monospaced))
+                    .foregroundStyle(Color.inkLight)
+
+                Text("done")
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+            }
+        }
+        .padding(TrunkTheme.space3)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Search Bar
+
+    private var searchBar: some View {
+        HStack(spacing: TrunkTheme.space2) {
+            Text("?")
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            TextField("Search sprouts...", text: $searchText)
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(Color.ink)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Text("x")
+                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint)
+                }
+            }
+        }
+        .padding(TrunkTheme.space3)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Filters
+
+    private var filtersSection: some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            // Status filter
+            HStack(spacing: TrunkTheme.space1) {
+                ForEach(SproutFilter.allCases, id: \.self) { filter in
+                    Button {
+                        HapticManager.tap()
+                        selectedFilter = filter
+                    } label: {
+                        Text(filter.rawValue)
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(selectedFilter == filter ? Color.wood : Color.inkFaint)
+                            .padding(.horizontal, TrunkTheme.space2)
+                            .padding(.vertical, TrunkTheme.space1)
+                            .background(selectedFilter == filter ? Color.wood.opacity(0.08) : Color.clear)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(selectedFilter == filter ? Color.wood : Color.border, lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Spacer()
+
+                // Sort control
+                Menu {
+                    ForEach(SproutSort.allCases, id: \.self) { sort in
+                        Button {
+                            selectedSort = sort
+                        } label: {
+                            HStack {
+                                Text(sort.rawValue)
+                                if selectedSort == sort {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: TrunkTheme.space1) {
+                        Text(selectedSort.rawValue)
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+
+                        Text("v")
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
+                    .padding(.horizontal, TrunkTheme.space2)
+                    .padding(.vertical, TrunkTheme.space1)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.border, lineWidth: 1)
+                    )
+                }
+            }
+        }
+    }
+
+    // MARK: - Sprout List
+
+    private var sproutList: some View {
+        VStack(spacing: TrunkTheme.space2) {
+            ForEach(filteredSprouts, id: \.id) { sprout in
+                NavigationLink {
+                    SproutDetailView(sproutId: sprout.id)
+                } label: {
+                    SproutListRow(sprout: sprout, state: state)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Empty States
+
+    private var emptyState: some View {
+        VStack(spacing: TrunkTheme.space3) {
+            Text("( )")
+                .font(.system(size: 24, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            Text("No sprouts yet")
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            Text("Plant your first sprout from the Trunk tab to see it here.")
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, TrunkTheme.space6)
+        .padding(.horizontal, TrunkTheme.space4)
+    }
+
+    private var noMatchState: some View {
+        VStack(spacing: TrunkTheme.space3) {
+            Text("No matches")
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            Text("Try a different search or filter.")
                 .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                 .foregroundStyle(Color.inkFaint)
         }
-    }
-
-    private var historySection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("HISTORY")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            VStack(spacing: 1) {
-                NavigationLink {
-                    WaterLogView()
-                } label: {
-                    SettingsRow(icon: "💧", title: "Water Log")
-                }
-
-                NavigationLink {
-                    SunLogView()
-                } label: {
-                    SettingsRow(icon: "☀️", title: "Sun Log")
-                }
-
-                NavigationLink {
-                    SoilLogView()
-                } label: {
-                    SettingsRow(icon: "🪴", title: "Soil Log")
-                }
-            }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
-        }
-    }
-
-    private var dataSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("DATA")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            VStack(spacing: 1) {
-                Button {
-                    exportData()
-                } label: {
-                    SettingsRow(icon: "↑", title: "Export Data", subtitle: "Download JSON backup")
-                }
-
-                Button {
-                    showingImportPicker = true
-                } label: {
-                    SettingsRow(icon: "↓", title: "Import Data", subtitle: "Restore from backup")
-                }
-            }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
-        }
-    }
-
-    private var aboutSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("ABOUT")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            VStack(spacing: 1) {
-                HStack {
-                    Text("Version")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-
-                    Spacer()
-
-                    Text("0.1.0")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-                }
-                .padding(TrunkTheme.space3)
-
-                HStack {
-                    Text("Soil Capacity")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-
-                    Spacer()
-
-                    Text("\(progression.soilCapacityInt)")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.twig)
-                }
-                .padding(TrunkTheme.space3)
-
-                HStack {
-                    Text("Total Sprouts")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-
-                    Spacer()
-
-                    Text("\(sproutCount)")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-                }
-                .padding(TrunkTheme.space3)
-
-                HStack {
-                    Text("Total Leaves")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-
-                    Spacer()
-
-                    Text("\(leafCount)")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-                }
-                .padding(TrunkTheme.space3)
-            }
-            .background(Color.paper)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.border, lineWidth: 1)
-            )
-        }
-    }
-
-    // MARK: - Export
-
-    private func exportData() {
-        // For cloud-synced users, export should come from EventStore.shared.events
-        // For now, this is a stub - import/export will be updated in a future task
-        alertMessage = "Export from events not yet implemented. Please use cloud sync."
-        showingAlert = true
-    }
-
-    // MARK: - Import
-
-    private func handleFileImport(_ result: Result<[URL], Error>) {
-        switch result {
-        case .success(let urls):
-            guard let url = urls.first else { return }
-
-            // Need to access security-scoped resource
-            guard url.startAccessingSecurityScopedResource() else {
-                alertMessage = "Cannot access file"
-                showingAlert = true
-                return
-            }
-
-            defer { url.stopAccessingSecurityScopedResource() }
-
-            do {
-                let data = try Data(contentsOf: url)
-                let payload = try DataExportService.parseImport(data)
-
-                guard payload.version >= 4 else {
-                    alertMessage = "This backup is from an older format (v\(payload.version)). Please export a new backup from the web app."
-                    showingAlert = true
-                    return
-                }
-
-                importPayload = payload
-                showingImportConfirm = true
-
-            } catch {
-                alertMessage = "Invalid backup file: \(error.localizedDescription)"
-                showingAlert = true
-            }
-
-        case .failure(let error):
-            alertMessage = "Import failed: \(error.localizedDescription)"
-            showingAlert = true
-        }
-    }
-
-    private func performImport() {
-        guard let payload = importPayload else { return }
-
-        // Convert TrunkEvents to SyncEvent format and populate EventStore
-        var syncEvents: [SyncEvent] = []
-        for event in payload.events {
-            if let syncEvent = convertTrunkEventToSyncEvent(event) {
-                syncEvents.append(syncEvent)
-            }
-        }
-
-        // Replace events in EventStore
-        EventStore.shared.setEvents(syncEvents)
-
-        // Note: Custom labels (circles) are no longer stored locally.
-        // In pure cloud architecture, labels come from SharedConstants.
-        // Custom label support via events can be added in a future update.
-
-        importPayload = nil
-        alertMessage = "Imported \(syncEvents.count) events from backup."
-        showingAlert = true
-    }
-
-    /// Convert a TrunkEvent to SyncEvent format
-    private func convertTrunkEventToSyncEvent(_ event: TrunkEvent) -> SyncEvent? {
-        var payload: [String: AnyCodable] = [:]
-
-        // Copy all non-nil fields to payload
-        if let sproutId = event.sproutId { payload["sproutId"] = AnyCodable(sproutId) }
-        if let twigId = event.twigId { payload["twigId"] = AnyCodable(twigId) }
-        if let title = event.title { payload["title"] = AnyCodable(title) }
-        if let season = event.season { payload["season"] = AnyCodable(season) }
-        if let environment = event.environment { payload["environment"] = AnyCodable(environment) }
-        if let soilCost = event.soilCost { payload["soilCost"] = AnyCodable(soilCost) }
-        if let leafId = event.leafId { payload["leafId"] = AnyCodable(leafId) }
-        if let bloomWither = event.bloomWither { payload["bloomWither"] = AnyCodable(bloomWither) }
-        if let bloomBudding = event.bloomBudding { payload["bloomBudding"] = AnyCodable(bloomBudding) }
-        if let bloomFlourish = event.bloomFlourish { payload["bloomFlourish"] = AnyCodable(bloomFlourish) }
-        if let content = event.content { payload["note"] = AnyCodable(content) }
-        if let prompt = event.prompt { payload["prompt"] = AnyCodable(prompt) }
-        if let result = event.result { payload["result"] = AnyCodable(result) }
-        if let reflection = event.reflection { payload["reflection"] = AnyCodable(reflection) }
-        if let capacityGained = event.capacityGained { payload["capacityGained"] = AnyCodable(capacityGained) }
-        if let soilReturned = event.soilReturned { payload["soilReturned"] = AnyCodable(soilReturned) }
-        if let twigLabel = event.twigLabel { payload["twigLabel"] = AnyCodable(twigLabel) }
-        if let name = event.name { payload["name"] = AnyCodable(name) }
-
-        // Generate dummy UUID for imported events (they don't have real server IDs)
-        return SyncEvent(
-            id: UUID(),
-            userId: UUID(), // Dummy user ID for imported events
-            type: event.type.rawValue,
-            payload: payload,
-            clientId: "import",
-            clientTimestamp: event.timestamp,
-            createdAt: event.timestamp
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, TrunkTheme.space5)
+        .padding(.horizontal, TrunkTheme.space4)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 }
 
-// MARK: - Share Sheet
+// MARK: - Sprout List Row
 
-struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
+struct SproutListRow: View {
+    let sprout: DerivedSprout
+    let state: DerivedState
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    private var isReady: Bool {
+        isSproutReady(sprout)
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
+    private var locationLabel: String {
+        let parts = sprout.twigId.split(separator: "-")
+        guard parts.count >= 4,
+              let branchIndex = Int(parts[1]),
+              let twigIndex = Int(parts[3]) else {
+            return sprout.twigId
+        }
 
-// MARK: - Settings Row
+        let branchName = SharedConstants.Tree.branchName(branchIndex)
+        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
+        return "\(branchName) / \(twigLabel.capitalized)"
+    }
 
-struct SettingsRow: View {
-    let icon: String
-    let title: String
-    var subtitle: String? = nil
+    private var leafName: String? {
+        guard let leafId = sprout.leafId else { return nil }
+        return state.leaves[leafId]?.name
+    }
 
     var body: some View {
-        HStack {
-            Text(icon)
-                .font(.system(size: TrunkTheme.textBase))
-                .frame(width: 24)
+        HStack(spacing: TrunkTheme.space3) {
+            // Left border indicator
+            Rectangle()
+                .fill(sprout.state == .active ? Color.twig : Color.border)
+                .frame(width: 2)
 
             VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                Text(title)
-                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                    .foregroundStyle(Color.ink)
+                // Title row
+                HStack {
+                    Text(sprout.title)
+                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                        .foregroundStyle(Color.ink)
+                        .lineLimit(1)
 
-                if let subtitle = subtitle {
-                    Text(subtitle)
+                    Spacer()
+
+                    // Status badge
+                    if sprout.state == .completed, let result = sprout.result {
+                        Text(resultToEmoji(result))
+                            .font(.system(size: TrunkTheme.textSm))
+                    } else if isReady {
+                        Text("ready")
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.twig)
+                            .padding(.horizontal, TrunkTheme.space1)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.twig, lineWidth: 1)
+                            )
+                    }
+                }
+
+                // Detail row
+                HStack(spacing: TrunkTheme.space2) {
+                    // Status
+                    Text(sprout.state == .active ? "active" : "completed")
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(sprout.state == .active ? Color.twig : Color.inkFaint)
+
+                    Text("·")
+                        .foregroundStyle(Color.inkFaint)
+
+                    // Season
+                    Text(sprout.season.label)
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint)
+
+                    Text("·")
+                        .foregroundStyle(Color.inkFaint)
+
+                    // Environment
+                    Text(sprout.environment.label)
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                         .foregroundStyle(Color.inkFaint)
                 }
-            }
 
-            Spacer()
+                // Location row
+                HStack(spacing: TrunkTheme.space2) {
+                    Text(locationLabel)
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint)
+                        .lineLimit(1)
+
+                    if let leafName {
+                        Text("·")
+                            .foregroundStyle(Color.inkFaint)
+
+                        Text(leafName)
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                            .lineLimit(1)
+                    }
+                }
+            }
 
             Text(">")
                 .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                 .foregroundStyle(Color.inkFaint)
         }
-        .padding(TrunkTheme.space3)
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
+        .padding(.vertical, TrunkTheme.space3)
+        .padding(.horizontal, TrunkTheme.space3)
+        .background(Color.paper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 }
 
+// MARK: - Sprout Detail View
+
+struct SproutDetailView: View {
+    let sproutId: String
+
+    // Derived state from EventStore
+    private var state: DerivedState {
+        EventStore.shared.getState()
+    }
+
+    private var sprout: DerivedSprout? {
+        state.sprouts[sproutId]
+    }
+
+    private var locationLabel: String {
+        guard let sprout else { return "" }
+        let parts = sprout.twigId.split(separator: "-")
+        guard parts.count >= 4,
+              let branchIndex = Int(parts[1]),
+              let twigIndex = Int(parts[3]) else {
+            return sprout.twigId
+        }
+
+        let branchName = SharedConstants.Tree.branchName(branchIndex)
+        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
+        return "\(branchName) / \(twigLabel.capitalized)"
+    }
+
+    private var leafName: String? {
+        guard let leafId = sprout?.leafId else { return nil }
+        return state.leaves[leafId]?.name
+    }
+
+    private var formattedPlantedDate: String {
+        guard let sprout else { return "" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: sprout.plantedAt)
+    }
+
+    private var formattedHarvestDate: String? {
+        guard let harvestedAt = sprout?.harvestedAt else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: harvestedAt)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.parchment
+                .ignoresSafeArea()
+
+            if let sprout {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                        // Status and metadata
+                        metadataSection(sprout)
+                            .animatedCard(index: 0)
+
+                        // Bloom descriptions
+                        if sprout.bloomWither != nil || sprout.bloomBudding != nil || sprout.bloomFlourish != nil {
+                            bloomSection(sprout)
+                                .animatedCard(index: 1)
+                        }
+
+                        // Result (if completed)
+                        if sprout.state == .completed {
+                            resultSection(sprout)
+                                .animatedCard(index: 2)
+                        }
+
+                        // Water entries
+                        if !sprout.waterEntries.isEmpty {
+                            waterSection(sprout)
+                                .animatedCard(index: 3)
+                        }
+                    }
+                    .padding(TrunkTheme.space4)
+                }
+            } else {
+                Text("Sprout not found")
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+            }
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text((sprout?.title ?? "SPROUT").uppercased())
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    // MARK: - Metadata Section
+
+    private func metadataSection(_ sprout: DerivedSprout) -> some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("DETAILS")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(spacing: 0) {
+                detailRow(label: "Status", value: sprout.state == .active ? "Active" : "Completed",
+                         valueColor: sprout.state == .active ? Color.twig : Color.inkFaint)
+
+                Divider().overlay(Color.borderSubtle)
+
+                detailRow(label: "Season", value: sprout.season.label)
+
+                Divider().overlay(Color.borderSubtle)
+
+                detailRow(label: "Environment", value: sprout.environment.label)
+
+                Divider().overlay(Color.borderSubtle)
+
+                detailRow(label: "Soil Cost", value: "\(sprout.soilCost)")
+
+                Divider().overlay(Color.borderSubtle)
+
+                detailRow(label: "Planted", value: formattedPlantedDate)
+
+                if let harvestDate = formattedHarvestDate {
+                    Divider().overlay(Color.borderSubtle)
+
+                    detailRow(label: "Harvested", value: harvestDate)
+                }
+
+                Divider().overlay(Color.borderSubtle)
+
+                detailRow(label: "Location", value: locationLabel)
+
+                if let leafName {
+                    Divider().overlay(Color.borderSubtle)
+
+                    detailRow(label: "Leaf", value: leafName)
+                }
+            }
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+    }
+
+    private func detailRow(label: String, value: String, valueColor: Color = Color.ink) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+
+            Spacer()
+
+            Text(value)
+                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                .foregroundStyle(valueColor)
+        }
+        .padding(TrunkTheme.space3)
+    }
+
+    // MARK: - Bloom Section
+
+    private func bloomSection(_ sprout: DerivedSprout) -> some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("BLOOM")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(spacing: 0) {
+                if let wither = sprout.bloomWither {
+                    bloomRow(level: "1/5", description: wither)
+                }
+
+                if sprout.bloomWither != nil && sprout.bloomBudding != nil {
+                    Divider().overlay(Color.borderSubtle)
+                }
+
+                if let budding = sprout.bloomBudding {
+                    bloomRow(level: "3/5", description: budding)
+                }
+
+                if sprout.bloomBudding != nil && sprout.bloomFlourish != nil {
+                    Divider().overlay(Color.borderSubtle)
+                }
+
+                if let flourish = sprout.bloomFlourish {
+                    bloomRow(level: "5/5", description: flourish)
+                }
+            }
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+    }
+
+    private func bloomRow(level: String, description: String) -> some View {
+        HStack(alignment: .top, spacing: TrunkTheme.space3) {
+            Text(level)
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+                .frame(width: 28, alignment: .leading)
+
+            Text(description)
+                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                .foregroundStyle(Color.ink)
+        }
+        .padding(TrunkTheme.space3)
+    }
+
+    // MARK: - Result Section
+
+    private func resultSection(_ sprout: DerivedSprout) -> some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("HARVEST")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(spacing: 0) {
+                if let result = sprout.result {
+                    HStack {
+                        Text("Result")
+                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+
+                        Spacer()
+
+                        HStack(spacing: TrunkTheme.space2) {
+                            Text(resultToEmoji(result))
+                                .font(.system(size: TrunkTheme.textBase))
+
+                            Text("\(result)/5")
+                                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                                .foregroundStyle(Color.ink)
+                        }
+                    }
+                    .padding(TrunkTheme.space3)
+                }
+
+                if let reflection = sprout.reflection, !reflection.isEmpty {
+                    Divider().overlay(Color.borderSubtle)
+
+                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                        Text("Reflection")
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+
+                        Text(reflection)
+                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                            .foregroundStyle(Color.ink)
+                    }
+                    .padding(TrunkTheme.space3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+    }
+
+    // MARK: - Water Entries Section
+
+    private func waterSection(_ sprout: DerivedSprout) -> some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("WATER LOG (\(sprout.waterEntries.count))")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            let sortedEntries = sprout.waterEntries.sorted { $0.timestamp > $1.timestamp }
+
+            VStack(spacing: 0) {
+                ForEach(Array(sortedEntries.enumerated()), id: \.element.id) { index, entry in
+                    if index > 0 {
+                        Divider().overlay(Color.borderSubtle)
+                    }
+
+                    waterEntryRow(entry)
+                }
+            }
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+    }
+
+    private func waterEntryRow(_ entry: DerivedWaterEntry) -> some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+            HStack {
+                Text("💧")
+                    .font(.system(size: TrunkTheme.textSm))
+
+                Text(formatWaterDate(entry.timestamp))
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+
+                Spacer()
+            }
+
+            if !entry.content.isEmpty {
+                Text(entry.content)
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.inkLight)
+            }
+        }
+        .padding(TrunkTheme.space3)
+    }
+
+    private func formatWaterDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Previews
+
 #Preview {
     NavigationStack {
-        SettingsView(progression: ProgressionViewModel())
+        SproutsView(progression: ProgressionViewModel())
     }
 }

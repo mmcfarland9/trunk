@@ -2,7 +2,7 @@
 //  MainTabView.swift
 //  Trunk
 //
-//  Root tab view container with Today, Tree, and Settings tabs.
+//  Root tab view container with Today, Tree, and Sprouts tabs.
 //
 
 import SwiftUI
@@ -45,10 +45,10 @@ struct MainTabView: View {
             .tag(1)
 
             NavigationStack {
-                SettingsView(progression: progression)
+                SproutsView(progression: progression)
             }
             .tabItem {
-                Label("Settings", systemImage: "gearshape")
+                Label("Sprouts", systemImage: "leaf")
             }
             .tag(2)
         }
