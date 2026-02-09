@@ -47,10 +47,22 @@ struct SproutsView: View {
             sprouts = sprouts.filter { $0.state == .completed }
         }
 
-        // Apply search
-        if !searchText.isEmpty {
-            let query = searchText.lowercased()
-            sprouts = sprouts.filter { $0.title.lowercased().contains(query) }
+        // Apply search (case-insensitive against sprout title and leaf name)
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            let query = trimmed.lowercased()
+            let leaves = cachedState?.leaves ?? [:]
+            sprouts = sprouts.filter { sprout in
+                if sprout.title.lowercased().contains(query) {
+                    return true
+                }
+                if let leafId = sprout.leafId,
+                   let leaf = leaves[leafId],
+                   leaf.name.lowercased().contains(query) {
+                    return true
+                }
+                return false
+            }
         }
 
         // Apply sort
