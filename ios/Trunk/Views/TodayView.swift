@@ -25,6 +25,7 @@ struct TodayView: View {
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
     @State private var cachedSoilHistory: [SoilChartPoint] = []
     @State private var selectedSoilRange: SoilChartRange = .inception
+    @State private var scrubIndex: Int? = nil
 
     // MARK: - Body
 
@@ -289,18 +290,24 @@ struct TodayView: View {
         let points = filteredSoilHistory
 
         return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            // Title + Legend
+            // Title + Legend (or scrub data label when active)
             HStack(alignment: .center) {
-                Text("SOIL")
-                    .monoLabel(size: TrunkTheme.textXs)
+                if let idx = scrubIndex, idx < points.count {
+                    let pt = points[idx]
+                    scrubLabel(point: pt)
+                } else {
+                    Text("SOIL")
+                        .monoLabel(size: TrunkTheme.textXs)
 
-                Spacer()
+                    Spacer()
 
-                HStack(spacing: TrunkTheme.space3) {
-                    legendItem(color: Color.twig, label: "Capacity")
-                    legendItem(color: Color.trunkSuccess, label: "Available")
+                    HStack(spacing: TrunkTheme.space3) {
+                        legendItem(color: Color.twig, label: "Capacity")
+                        legendItem(color: Color.trunkSuccess, label: "Available")
+                    }
                 }
             }
+            .animation(.none, value: scrubIndex)
 
             if points.count < 2 {
                 Text("Harvest sprouts to grow capacity")
@@ -309,33 +316,85 @@ struct TodayView: View {
                     .padding(.vertical, TrunkTheme.space3)
             } else {
                 let maxCapacity = points.map(\.capacity).max() ?? 15
-                Chart(points) { point in
-                    // Capacity line with subtle fill
-                    LineMark(
-                        x: .value("Date", point.date),
-                        y: .value("Value", point.capacity),
-                        series: .value("Series", "Capacity")
-                    )
-                    .foregroundStyle(Color.twig)
-                    .interpolationMethod(.stepEnd)
+                let selectedDate = (scrubIndex != nil && scrubIndex! < points.count) ? points[scrubIndex!].date : nil
+                Chart {
+                    ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+                        // Capacity line with subtle fill
+                        LineMark(
+                            x: .value("Date", point.date),
+                            y: .value("Value", point.capacity),
+                            series: .value("Series", "Capacity")
+                        )
+                        .foregroundStyle(Color.twig)
+                        .interpolationMethod(.stepEnd)
 
-                    AreaMark(
-                        x: .value("Date", point.date),
-                        y: .value("Value", point.capacity),
-                        series: .value("Series", "Capacity")
-                    )
-                    .foregroundStyle(Color.twig.opacity(0.06))
-                    .interpolationMethod(.stepEnd)
+                        AreaMark(
+                            x: .value("Date", point.date),
+                            y: .value("Value", point.capacity),
+                            series: .value("Series", "Capacity")
+                        )
+                        .foregroundStyle(Color.twig.opacity(0.06))
+                        .interpolationMethod(.stepEnd)
 
-                    // Available line (no area fill to prevent overlap)
-                    LineMark(
-                        x: .value("Date", point.date),
-                        y: .value("Value", point.available),
-                        series: .value("Series", "Available")
-                    )
-                    .foregroundStyle(Color.trunkSuccess)
-                    .interpolationMethod(.stepEnd)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
+                        // Available line (no area fill to prevent overlap)
+                        LineMark(
+                            x: .value("Date", point.date),
+                            y: .value("Value", point.available),
+                            series: .value("Series", "Available")
+                        )
+                        .foregroundStyle(Color.trunkSuccess)
+                        .interpolationMethod(.stepEnd)
+                        .lineStyle(StrokeStyle(lineWidth: 2))
+
+                        // Data nodes — small dots at each point
+                        PointMark(
+                            x: .value("Date", point.date),
+                            y: .value("Value", point.capacity)
+                        )
+                        .foregroundStyle(Color.twig)
+                        .symbolSize(index == scrubIndex ? 30 : 12)
+
+                        PointMark(
+                            x: .value("Date", point.date),
+                            y: .value("Value", point.available)
+                        )
+                        .foregroundStyle(Color.trunkSuccess)
+                        .symbolSize(index == scrubIndex ? 30 : 12)
+                    }
+
+                    // Scrub rule line (inside chart for proper coordinate alignment)
+                    if let date = selectedDate {
+                        RuleMark(x: .value("Scrub", date))
+                            .foregroundStyle(Color.inkFaint.opacity(0.4))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    }
+                }
+                // Scrub gesture
+                .chartOverlay { proxy in
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.clear)
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        let xPos = value.location.x
+                                        guard let date: Date = proxy.value(atX: xPos) else { return }
+                                        let newIndex = closestPointIndex(to: date, in: points)
+                                        if newIndex != scrubIndex {
+                                            if scrubIndex == nil {
+                                                HapticManager.tap()
+                                            } else {
+                                                HapticManager.selection()
+                                            }
+                                            scrubIndex = newIndex
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        scrubIndex = nil
+                                    }
+                            )
+                    }
                 }
                 .chartYScale(domain: 0 ... max(maxCapacity, 15))
                 .chartXAxis {
@@ -377,6 +436,57 @@ struct TodayView: View {
         )
     }
 
+    private static let scrubDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy h:mm a"
+        return f
+    }()
+
+    private func scrubLabel(point: SoilChartPoint) -> some View {
+        return HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Self.scrubDateFormatter.string(from: point.date))
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkLight)
+            }
+
+            Spacer()
+
+            HStack(spacing: TrunkTheme.space3) {
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(Color.twig)
+                        .frame(width: 8, height: 2)
+                    Text(String(format: "%.2f", point.capacity))
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.twig)
+                }
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(Color.trunkSuccess)
+                        .frame(width: 8, height: 2)
+                    Text(String(format: "%.2f", point.available))
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.trunkSuccess)
+                }
+            }
+        }
+    }
+
+    private func closestPointIndex(to date: Date, in points: [SoilChartPoint]) -> Int? {
+        guard !points.isEmpty else { return nil }
+        var bestIndex = 0
+        var bestDistance = abs(date.timeIntervalSince(points[0].date))
+        for i in 1..<points.count {
+            let distance = abs(date.timeIntervalSince(points[i].date))
+            if distance < bestDistance {
+                bestDistance = distance
+                bestIndex = i
+            }
+        }
+        return bestIndex
+    }
+
     private func legendItem(color: Color, label: String) -> some View {
         HStack(spacing: 4) {
             RoundedRectangle(cornerRadius: 1)
@@ -392,6 +502,7 @@ struct TodayView: View {
         HStack(spacing: 0) {
             ForEach(SoilChartRange.allCases, id: \.self) { range in
                 Button {
+                    scrubIndex = nil
                     withAnimation(.easeInOut(duration: 0.2)) {
                         selectedSoilRange = range
                     }
