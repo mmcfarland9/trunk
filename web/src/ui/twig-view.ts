@@ -749,14 +749,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       return
     }
 
-    if (e.key === 'ArrowLeft' && callbacks.onNavigate) {
+    if (e.key === 'ArrowLeft' && e.metaKey && callbacks.onNavigate) {
       e.preventDefault()
       const prevTwig = callbacks.onNavigate('prev')
       if (prevTwig) open(prevTwig)
       return
     }
 
-    if (e.key === 'ArrowRight' && callbacks.onNavigate) {
+    if (e.key === 'ArrowRight' && e.metaKey && callbacks.onNavigate) {
       e.preventDefault()
       const nextTwig = callbacks.onNavigate('next')
       if (nextTwig) open(nextTwig)

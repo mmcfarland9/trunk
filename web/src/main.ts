@@ -445,7 +445,7 @@ document.addEventListener('keydown', (e) => {
   if (ctx.twigView?.isOpen()) return
 
   // Arrow keys cycle through branches in branch view
-  if (getViewMode() === 'branch' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+  if (getViewMode() === 'branch' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.metaKey) {
     const currentIndex = getActiveBranchIndex()
     if (currentIndex === null) return
 

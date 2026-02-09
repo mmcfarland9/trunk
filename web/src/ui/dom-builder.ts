@@ -262,7 +262,7 @@ export function buildApp(
     </section>
     <section class="panel-section keyboard-hints">
       <p class="keyboard-hint hint-escape" title="Press Escape to go back"><kbd>Esc</kbd> Back</p>
-      <p class="keyboard-hint hint-arrows" title="Arrow keys to cycle branches"><kbd>←</kbd><kbd>→</kbd> Cycle</p>
+      <p class="keyboard-hint hint-arrows" title="Cmd+Arrow to cycle"><kbd>⌘←</kbd><kbd>⌘→</kbd> Cycle</p>
       <p class="keyboard-hint hint-numbers" title="Number keys to select"><kbd>1-8</kbd> Select</p>
     </section>
   `
