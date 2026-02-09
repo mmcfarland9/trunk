@@ -30,6 +30,11 @@ struct ContentView: View {
                 // Invalidate time-sensitive caches (water/sun availability)
                 // when app returns to foreground - may have crossed 6am boundary
                 progression.refresh()
+
+                // Re-sync from cloud on foreground return
+                Task {
+                    await syncOnOpen()
+                }
             }
         }
     }
@@ -39,12 +44,15 @@ struct ContentView: View {
 
         let result = await SyncService.shared.smartSync()
 
-        if result.error == nil, result.pulled > 0 {
-            progression.refresh()
-        }
+        // Always refresh state after sync - even with 0 new events,
+        // derived state needs to reflect current time (water/sun resets)
+        progression.refresh()
 
-        SyncService.shared.subscribeToRealtime { _ in
-            progression.refresh()
+        // Only subscribe once (idempotent - unsubscribes first internally)
+        if result.error == nil {
+            SyncService.shared.subscribeToRealtime { _ in
+                progression.refresh()
+            }
         }
     }
 }
