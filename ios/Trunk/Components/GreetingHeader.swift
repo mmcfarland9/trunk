@@ -65,13 +65,13 @@ struct GreetingHeader: View {
 
     var body: some View {
         HStack(spacing: TrunkTheme.space2) {
-            SyncIndicatorView()
-
-            Spacer()
-
             Text(greeting)
                 .font(.system(size: TrunkTheme.textLg, design: .monospaced))
                 .foregroundStyle(Color.inkLight)
+
+            Spacer()
+
+            SyncIndicatorView()
 
             Button {
                 onAvatarTap?()
