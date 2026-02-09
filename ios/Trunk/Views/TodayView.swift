@@ -353,12 +353,14 @@ struct TodayView: View {
                             .foregroundStyle(Color.inkFaint)
                     }
                 }
+                .chartXScale(domain: (points.first?.date ?? Date()) ... Date())
                 .chartForegroundStyleScale([
                     "Capacity": Color.twig,
                     "Available": Color.trunkSuccess
                 ])
                 .chartLegend(.hidden)
                 .frame(height: 140)
+                .id(selectedSoilRange)
             }
 
             // Time range picker
