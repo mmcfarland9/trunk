@@ -45,52 +45,48 @@ struct TodayView: View {
                     )
                     .animatedCard(index: 0)
 
-                    // Resource meters
-                    resourceMeters
-                        .animatedCard(index: 1)
-
                     // Weekly rhythm heatmap
                     weeklyRhythmSection
-                        .animatedCard(index: 2)
+                        .animatedCard(index: 1)
 
                     // Branch balance radar
                     branchBalanceSection
-                        .animatedCard(index: 3)
+                        .animatedCard(index: 2)
 
                     // Soil forecast
                     soilForecastSection
-                        .animatedCard(index: 4)
+                        .animatedCard(index: 3)
 
                     // Next harvest countdown
                     if let nextSprout = cachedNextHarvestSprout {
                         nextHarvestSection(sprout: nextSprout)
-                            .animatedCard(index: 5)
+                            .animatedCard(index: 4)
                     }
 
                     // Ready to harvest
                     if !readyToHarvest.isEmpty {
                         harvestSection
-                            .animatedCard(index: 6)
+                            .animatedCard(index: 5)
                     }
 
                     // Water a sprout
                     waterSection
-                        .animatedCard(index: 7)
+                        .animatedCard(index: 6)
 
                     // Weekly reflection
                     shineSection
-                        .animatedCard(index: 8)
+                        .animatedCard(index: 7)
 
                     // Active Leafs section (only leafs with active sprouts)
                     if !activeLeafs.isEmpty {
                         leafsSection
-                            .animatedCard(index: 9)
+                            .animatedCard(index: 8)
                     }
 
                     // Recent activity
                     if !cachedRecentActivity.isEmpty {
                         activitySection
-                            .animatedCard(index: 10)
+                            .animatedCard(index: 9)
                     }
 
                 }
@@ -295,66 +291,6 @@ struct TodayView: View {
     }
 
     // MARK: - Sections
-
-    private var resourceMeters: some View {
-        VStack(spacing: TrunkTheme.space3) {
-            // Soil bar
-            VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                HStack {
-                    Text("SOIL")
-                        .monoLabel(size: TrunkTheme.textXs)
-
-                    Spacer()
-
-                    Text("\(progression.soilAvailableInt) / \(progression.soilCapacityInt)")
-                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-                }
-
-                GeometryReader { geo in
-                    let fillWidth = progression.soilCapacity > 0
-                        ? geo.size.width * min(1.0, progression.soilAvailable / progression.soilCapacity)
-                        : 0.0
-
-                    ZStack(alignment: .leading) {
-                        Rectangle()
-                            .fill(Color.borderSubtle)
-                            .frame(height: 8)
-
-                        Rectangle()
-                            .fill(Color.twig)
-                            .frame(width: max(0, fillWidth), height: 8)
-                    }
-                }
-                .frame(height: 8)
-            }
-
-            // Water and sun
-            HStack(spacing: TrunkTheme.space4) {
-                HStack(spacing: TrunkTheme.space2) {
-                    Text("💧")
-                    Text("\(progression.waterAvailable)/\(progression.waterCapacity)")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.trunkWater)
-                }
-
-                Spacer()
-
-                HStack(spacing: TrunkTheme.space2) {
-                    Text("☀️")
-                    Text("\(progression.canShine ? 1 : 0)/1")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(progression.canShine ? Color.trunkSun : Color.inkFaint)
-                }
-            }
-        }
-        .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
-    }
 
     private var weeklyRhythmSection: some View {
         let dayInitials = ["M", "T", "W", "T", "F", "S", "S"]

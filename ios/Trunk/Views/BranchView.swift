@@ -23,32 +23,15 @@ struct BranchView: View {
     @State private var centerAppeared = false
     @State private var isVisible = false
 
+    // Cached sprout data (updated in .onAppear, not per frame)
+    @State private var cachedBranchActive: Int = 0
+    @State private var cachedTwigActive: [Int] = []
+
     private let twigCount = SharedConstants.Tree.twigCount
 
     // Wind animation
     private let windAmplitude: CGFloat = 8.0
     private let windSpeed: Double = 0.4
-
-    // Derived state from EventStore
-    private var state: DerivedState {
-        EventStore.shared.getState()
-    }
-
-    private var sprouts: [DerivedSprout] {
-        Array(state.sprouts.values)
-    }
-
-    // Pre-computed sprout data hoisted out of TimelineView
-    private var branchActiveCount: Int {
-        sproutsForBranch().filter { $0.state == .active }.count
-    }
-
-    private var twigActiveCounts: [Int] {
-        (0..<twigCount).map { twigIndex in
-            let twigId = "branch-\(branchIndex)-twig-\(twigIndex)"
-            return sproutsForTwig(twigId).filter { $0.state == .active }.count
-        }
-    }
 
     var body: some View {
         ZStack {
@@ -58,17 +41,17 @@ struct BranchView: View {
             GeometryReader { geo in
                 let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
                 let radius = min(geo.size.width, geo.size.height) * 0.34
-                let cachedBranchActive = branchActiveCount
-                let cachedTwigActive = twigActiveCounts
+                let branchActive = cachedBranchActive
+                let twigActive = cachedTwigActive.isEmpty ? Array(repeating: 0, count: twigCount) : cachedTwigActive
 
                 if isVisible {
                     TimelineView(.animation) { timeline in
                         let time = timeline.date.timeIntervalSinceReferenceDate
-                        branchContent(center: center, radius: radius, time: time, branchActive: cachedBranchActive, twigActive: cachedTwigActive)
+                        branchContent(center: center, radius: radius, time: time, branchActive: branchActive, twigActive: twigActive)
                     }
                 } else {
                     let time = Date().timeIntervalSinceReferenceDate
-                    branchContent(center: center, radius: radius, time: time, branchActive: cachedBranchActive, twigActive: cachedTwigActive)
+                    branchContent(center: center, radius: radius, time: time, branchActive: branchActive, twigActive: twigActive)
                 }
             }
         }
@@ -97,6 +80,7 @@ struct BranchView: View {
         }
         .onAppear {
             isVisible = true
+            refreshSproutData()
             withAnimation {
                 centerAppeared = true
             }
@@ -198,12 +182,14 @@ struct BranchView: View {
         return CGPoint(x: x, y: y)
     }
 
-    private func sproutsForBranch() -> [DerivedSprout] {
-        sprouts.filter { $0.twigId.hasPrefix("branch-\(branchIndex)") }
-    }
-
-    private func sproutsForTwig(_ twigId: String) -> [DerivedSprout] {
-        getSproutsForTwig(from: state, twigId: twigId)
+    private func refreshSproutData() {
+        let state = EventStore.shared.getState()
+        let sprouts = Array(state.sprouts.values)
+        cachedBranchActive = sprouts.filter { $0.twigId.hasPrefix("branch-\(branchIndex)") && $0.state == .active }.count
+        cachedTwigActive = (0..<twigCount).map { twigIndex in
+            let twigId = "branch-\(branchIndex)-twig-\(twigIndex)"
+            return getSproutsForTwig(from: state, twigId: twigId).filter { $0.state == .active }.count
+        }
     }
 
     private func labelForTwig(_ twigIndex: Int) -> String {

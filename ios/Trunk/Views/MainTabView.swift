@@ -14,35 +14,43 @@ struct MainTabView: View {
     @State private var hasPendingActions = false
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
-                TodayView(progression: progression)
-            }
-            .tabItem {
-                Label("Today", systemImage: "sun.horizon")
-            }
-            .tag(0)
-            .badge(hasPendingActions ? "!" : nil)
+        VStack(spacing: 0) {
+            // Resource meters - always visible across all tabs
+            ResourceMetersView(progression: progression)
+                .padding(.horizontal, TrunkTheme.space4)
+                .padding(.vertical, TrunkTheme.space2)
+                .background(Color.parchment)
 
-            NavigationStack {
-                OverviewView(progression: progression)
-            }
-            .tabItem {
-                Label("Trunk", systemImage: "tree")
-            }
-            .tag(1)
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    TodayView(progression: progression)
+                }
+                .tabItem {
+                    Label("Today", systemImage: "sun.horizon")
+                }
+                .tag(0)
+                .badge(hasPendingActions ? "!" : nil)
 
-            NavigationStack {
-                SproutsView(progression: progression)
+                NavigationStack {
+                    OverviewView(progression: progression)
+                }
+                .tabItem {
+                    Label("Trunk", systemImage: "tree")
+                }
+                .tag(1)
+
+                NavigationStack {
+                    SproutsView(progression: progression)
+                }
+                .tabItem {
+                    Label("Sprouts", systemImage: "leaf")
+                }
+                .tag(2)
             }
-            .tabItem {
-                Label("Sprouts", systemImage: "leaf")
+            .tint(Color.wood)
+            .transaction { transaction in
+                transaction.animation = nil
             }
-            .tag(2)
-        }
-        .tint(Color.wood)
-        .transaction { transaction in
-            transaction.animation = nil
         }
         .onAppear {
             refreshPendingActions()

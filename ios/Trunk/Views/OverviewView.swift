@@ -14,18 +14,8 @@ struct OverviewView: View {
     @State private var navigateToBranch: Int? = nil
     @State private var navigationCooldown = false
 
-    // Derived state from EventStore
-    private var state: DerivedState {
-        EventStore.shared.getState()
-    }
-
-    private var sprouts: [DerivedSprout] {
-        Array(state.sprouts.values)
-    }
-
-    private var activeSprouts: [DerivedSprout] {
-        getActiveSprouts(from: state)
-    }
+    // Cached state (updated in .onAppear)
+    @State private var cachedSprouts: [DerivedSprout] = []
 
     var body: some View {
         ZStack {
@@ -33,24 +23,16 @@ struct OverviewView: View {
             Color.parchment
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Resource meters at top
-                ResourceMetersView(progression: progression)
-                    .padding(.horizontal, TrunkTheme.space4)
-                    .padding(.top, TrunkTheme.space2)
-
-                // Interactive tree canvas with zoom gestures
-                TreeCanvasView(
-                    sprouts: sprouts,
-                    progression: progression,
-                    onNavigateToBranch: { branchIndex in
-                        guard !navigationCooldown else { return }
-                        navigateToBranch = branchIndex
-                    }
-                )
-                .frame(maxHeight: .infinity)
-
-            }
+            // Interactive tree canvas with zoom gestures
+            TreeCanvasView(
+                sprouts: cachedSprouts,
+                progression: progression,
+                onNavigateToBranch: { branchIndex in
+                    guard !navigationCooldown else { return }
+                    navigateToBranch = branchIndex
+                }
+            )
+            .frame(maxHeight: .infinity)
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -64,6 +46,8 @@ struct OverviewView: View {
         }
         .onAppear {
             progression.refresh()
+            let state = EventStore.shared.getState()
+            cachedSprouts = Array(state.sprouts.values)
         }
         .sheet(item: $sproutToWater) { sprout in
             NavigationStack {
@@ -229,7 +213,7 @@ struct ActiveSproutsSection: View {
             } else {
                 VStack(spacing: 2) {
                     ForEach(Array(sprouts.prefix(5).enumerated()), id: \.element.id) { index, sprout in
-                        ActiveSproutRow(sprout: sprout, progression: progression, onWater: onWater)
+                        ActiveSproutRow(sprout: sprout, progression: progression, onWater: onWater, wasWateredThisWeek: EventStore.shared.checkSproutWateredThisWeek(sproutId: sprout.id))
                             .opacity(contentAppeared ? 1 : 0)
                             .offset(y: contentAppeared ? 0 : 8)
                             .animation(
@@ -267,9 +251,7 @@ struct ActiveSproutRow: View {
     let progression: ProgressionViewModel
     let onWater: (DerivedSprout) -> Void
 
-    private var wasWateredThisWeek: Bool {
-        EventStore.shared.checkSproutWateredThisWeek(sproutId: sprout.id)
-    }
+    let wasWateredThisWeek: Bool
 
     var body: some View {
         HStack(spacing: TrunkTheme.space2) {
