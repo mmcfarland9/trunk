@@ -72,8 +72,7 @@ async function startWithAuth() {
           // Don't reload - use cached data as fallback
         } else if (result.pulled > 0) {
           console.info(`Synced ${result.pulled} events (${result.mode})`)
-          // Reload to reflect new data
-          window.location.reload()
+          refreshUI()
         } else {
           console.info(`Sync complete, no new events (${result.mode})`)
         }
@@ -89,8 +88,7 @@ async function startWithAuth() {
 
         // Subscribe to realtime for instant cross-device sync
         subscribeToRealtime(() => {
-          // Refresh UI when new events arrive from other devices
-          window.location.reload()
+          refreshUI()
         })
       }
 
@@ -310,6 +308,25 @@ const leafView = buildLeafView(mapPanel, {
 // Complete the context with twig and leaf views
 ctx.twigView = twigView
 ctx.leafView = leafView
+
+// Incremental UI refresh — replaces window.location.reload() for realtime events
+function refreshUI(): void {
+  // Re-sync all node DOM elements (labels, filled state from derived state)
+  domResult.allNodes.forEach(node => syncNode(node))
+
+  // Re-derive stats, sidebar sprouts, layout
+  updateStats(ctx)
+  positionNodes(ctx)
+  updateFocus(null, ctx)
+
+  // Re-derive resource meters
+  updateSoilMeter()
+  updateWaterMeter()
+  shineApi.updateSunMeter()
+
+  // Refresh open panels
+  ctx.twigView?.refresh()
+}
 
 domResult.elements.backToTrunkButton.addEventListener('click', () => {
   returnToOverview(ctx, navCallbacks)
