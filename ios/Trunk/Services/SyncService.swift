@@ -212,6 +212,14 @@ final class SyncService: ObservableObject {
         EventStore.shared.clearEvents()
     }
 
+    /// Force a full sync by invalidating cache and re-pulling everything.
+    /// Use for pull-to-refresh to pick up server-side changes (e.g. deleted rows).
+    func forceFullSync() async -> SyncResult {
+        clearLastSync()
+        clearCacheVersion()
+        return await smartSync()
+    }
+
     /// Push a single event to Supabase and update local EventStore
     func pushEvent(type: String, payload: [String: Any]) async throws {
         guard let client = SupabaseClientProvider.shared else {

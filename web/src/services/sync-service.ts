@@ -248,6 +248,16 @@ function setSyncStatus(status: SyncStatus): void {
 }
 
 /**
+ * Force a full sync by invalidating cache and re-pulling everything.
+ * Use to pick up server-side changes (e.g. deleted rows).
+ */
+export async function forceFullSync(): Promise<SyncResult> {
+  localStorage.removeItem(LAST_SYNC_KEY)
+  clearCacheVersion()
+  return smartSync()
+}
+
+/**
  * Smart sync: incremental if cache valid, full otherwise.
  * Uses cached data as fallback if network fails.
  */

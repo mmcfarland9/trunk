@@ -179,6 +179,7 @@ export type AppElements = {
   accountDialogSignOut: HTMLButtonElement
   accountDialogSave: HTMLButtonElement
   accountDialogResetData: HTMLButtonElement
+  accountDialogForceSync: HTMLButtonElement
 }
 
 export type AppContext = {

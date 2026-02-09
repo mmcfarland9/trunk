@@ -25,6 +25,7 @@ struct MainTabView: View {
                 NavigationStack {
                     TodayView(progression: progression)
                 }
+                .refreshable { await fullSync() }
                 .tabItem {
                     Label("Today", systemImage: "sun.horizon")
                 }
@@ -34,6 +35,7 @@ struct MainTabView: View {
                 NavigationStack {
                     OverviewView(progression: progression)
                 }
+                .refreshable { await fullSync() }
                 .tabItem {
                     Label("Trunk", systemImage: "tree")
                 }
@@ -42,6 +44,7 @@ struct MainTabView: View {
                 NavigationStack {
                     SproutsView(progression: progression)
                 }
+                .refreshable { await fullSync() }
                 .tabItem {
                     Label("Sprouts", systemImage: "leaf")
                 }
@@ -55,6 +58,12 @@ struct MainTabView: View {
         .onAppear {
             refreshPendingActions()
         }
+    }
+
+    private func fullSync() async {
+        let _ = await SyncService.shared.forceFullSync()
+        progression.refresh()
+        refreshPendingActions()
     }
 
     private func refreshPendingActions() {

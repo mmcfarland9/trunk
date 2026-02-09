@@ -496,6 +496,7 @@ export function buildApp(
               <span class="account-sync-text">Synced</span>
             </div>
             <p class="account-field-hint">Your data syncs automatically across devices. All activity is stored securely in the cloud.</p>
+            <button type="button" class="action-btn action-btn-passive action-btn-neutral account-force-sync-btn">Force Full Sync</button>
           </div>
 
           <div class="account-section-divider"></div>
@@ -603,6 +604,7 @@ export function buildApp(
     accountDialogSignOut: accountDialog.querySelector<HTMLButtonElement>('.account-sign-out-btn')!,
     accountDialogSave: accountDialog.querySelector<HTMLButtonElement>('.account-save-btn')!,
     accountDialogResetData: accountDialog.querySelector<HTMLButtonElement>('.account-reset-data-btn')!,
+    accountDialogForceSync: accountDialog.querySelector<HTMLButtonElement>('.account-force-sync-btn')!,
   }
 
   return {
