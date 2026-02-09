@@ -315,31 +315,16 @@ struct CreateSproutView: View {
         guard !trimmedName.isEmpty else { return }
 
         let leafId = UUID().uuidString
-        let now = ISO8601DateFormatter().string(from: Date())
         newLeafName = ""
 
-        let payload: [String: Any] = [
-            "leafId": leafId,
-            "name": trimmedName,
-            "twigId": nodeId
-        ]
-
-        // Optimistically append locally so the UI updates immediately
-        let localEvent = SyncEvent(
-            id: UUID(),
-            userId: UUID(),
-            type: "leaf_created",
-            payload: payload.mapValues { AnyCodable($0) },
-            clientId: "\(now)-local",
-            clientTimestamp: now,
-            createdAt: now
-        )
-        EventStore.shared.appendEvent(localEvent)
-        selectedLeafId = leafId
-
-        // Then push to cloud in background
+        // Push to cloud, then select after local state updates
         Task {
-            try? await SyncService.shared.pushEvent(type: "leaf_created", payload: payload)
+            try? await SyncService.shared.pushEvent(type: "leaf_created", payload: [
+                "leafId": leafId,
+                "name": trimmedName,
+                "twigId": nodeId
+            ])
+            selectedLeafId = leafId
         }
     }
 
