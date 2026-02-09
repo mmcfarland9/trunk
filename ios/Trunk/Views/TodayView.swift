@@ -240,27 +240,26 @@ struct TodayView: View {
                             .animatedCard(index: 6)
                     }
 
+                    // Water a sprout
+                    waterSection
+                        .animatedCard(index: 7)
+
                     // Weekly reflection
                     shineSection
-                        .animatedCard(index: 7)
+                        .animatedCard(index: 8)
 
                     // Active Leafs section (only leafs with active sprouts)
                     if !activeLeafs.isEmpty {
                         leafsSection
-                            .animatedCard(index: 8)
+                            .animatedCard(index: 9)
                     }
 
                     // Recent activity
                     if !recentActivity.isEmpty {
                         activitySection
-                            .animatedCard(index: 9)
-                    }
-
-                    // Empty state for brand-new users
-                    if activeSprouts.isEmpty && recentActivity.isEmpty {
-                        getStartedSection
                             .animatedCard(index: 10)
                     }
+
                 }
                 .padding(TrunkTheme.space4)
             }
@@ -583,6 +582,54 @@ struct TodayView: View {
         }
     }
 
+    private var waterSection: some View {
+        let canWater = progression.waterAvailable > 0 && !activeSprouts.isEmpty
+        let nextSprout = activeSprouts.first { !wasWateredToday($0) } ?? activeSprouts.first
+
+        let label: String = {
+            if activeSprouts.isEmpty {
+                return "No sprouts to water"
+            } else if progression.waterAvailable > 0 {
+                return "Water a sprout..."
+            } else {
+                return "All watered today"
+            }
+        }()
+
+        return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("WATER A SPROUT (\(progression.waterAvailable)/\(progression.waterCapacity))")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            Button {
+                HapticManager.tap()
+                selectedSproutForWater = nextSprout
+            } label: {
+                HStack {
+                    Text("💧")
+                    Text(label)
+                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                        .foregroundStyle(canWater ? Color.ink : Color.inkFaint)
+
+                    Spacer()
+
+                    if canWater {
+                        Text(">")
+                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
+                }
+                .padding(TrunkTheme.space3)
+                .background(Color.paper)
+                .overlay(
+                    Rectangle()
+                        .stroke(canWater ? Color.trunkWater : Color.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!canWater)
+        }
+    }
+
     private var shineSection: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
             Text("WEEKLY REFLECTION")
@@ -694,32 +741,14 @@ struct TodayView: View {
         )
     }
 
-    private var getStartedSection: some View {
-        VStack(spacing: TrunkTheme.space3) {
-            Text("( )")
-                .font(.system(size: 24, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-
-            Text("Plant your first sprout")
-                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-
-            Text("Tap Trunk below, pick a branch, then a twig to start growing.")
-                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, TrunkTheme.space6)
-        .padding(.horizontal, TrunkTheme.space4)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
-    }
 
     // MARK: - Helpers
+
+    private func wasWateredToday(_ sprout: DerivedSprout) -> Bool {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: Date())
+        return sprout.waterEntries.contains { $0.timestamp >= startOfDay }
+    }
 
     /// Extract branch index from a twig ID like "branch-2-twig-5"
     private func branchIndex(from twigId: String) -> Int? {

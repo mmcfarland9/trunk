@@ -52,24 +52,10 @@ final class AuthService {
         }
     }
 
-    /// Fetch user profile from Supabase
+    /// Read user profile from auth session metadata (same as web app)
     func fetchProfile() async {
-        guard let client = SupabaseClientProvider.shared,
-              let userId = user?.id else { return }
-
-        do {
-            let response: [String: String?] = try await client
-                .from("profiles")
-                .select("full_name")
-                .eq("id", value: userId.uuidString)
-                .single()
-                .execute()
-                .value
-
-            userFullName = response["full_name"] ?? nil
-        } catch {
-            print("Failed to fetch profile: \(error)")
-        }
+        guard let metadata = user?.userMetadata else { return }
+        userFullName = (metadata["full_name"] as? AnyJSON)?.stringValue
     }
 
     func requestCode(email: String) async throws {
