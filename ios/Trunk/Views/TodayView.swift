@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Charts
 
 struct TodayView: View {
     @Bindable var progression: ProgressionViewModel
@@ -20,13 +21,8 @@ struct TodayView: View {
 
     @State private var activeSprouts: [DerivedSprout] = []
     @State private var readyToHarvest: [DerivedSprout] = []
-    @State private var activeLeafs: [DerivedLeaf] = []
-    @State private var cachedWeeklyActivity: [(waters: Int, shines: Int)] = Array(repeating: (waters: 0, shines: 0), count: 7)
-    @State private var cachedBranchActivity: [Int] = Array(repeating: 0, count: SharedConstants.Tree.branchCount)
-    @State private var cachedWeeklySoilGain: Double = 0
-    @State private var cachedSoilAvailable: Double = 0
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
-    @State private var cachedRecentActivity: [ActivityItem] = []
+    @State private var cachedSoilHistory: [SoilCapacityPoint] = []
 
     // MARK: - Body
 
@@ -45,49 +41,23 @@ struct TodayView: View {
                     )
                     .animatedCard(index: 0)
 
-                    // Weekly rhythm heatmap
-                    weeklyRhythmSection
+                    // Water a sprout
+                    waterSection
                         .animatedCard(index: 1)
 
-                    // Branch balance radar
-                    branchBalanceSection
+                    // Weekly reflection
+                    shineSection
                         .animatedCard(index: 2)
-
-                    // Soil forecast
-                    soilForecastSection
-                        .animatedCard(index: 3)
 
                     // Next harvest countdown
                     if let nextSprout = cachedNextHarvestSprout {
                         nextHarvestSection(sprout: nextSprout)
-                            .animatedCard(index: 4)
+                            .animatedCard(index: 3)
                     }
 
-                    // Ready to harvest
-                    if !readyToHarvest.isEmpty {
-                        harvestSection
-                            .animatedCard(index: 5)
-                    }
-
-                    // Water a sprout
-                    waterSection
-                        .animatedCard(index: 6)
-
-                    // Weekly reflection
-                    shineSection
-                        .animatedCard(index: 7)
-
-                    // Active Leafs section (only leafs with active sprouts)
-                    if !activeLeafs.isEmpty {
-                        leafsSection
-                            .animatedCard(index: 8)
-                    }
-
-                    // Recent activity
-                    if !cachedRecentActivity.isEmpty {
-                        activitySection
-                            .animatedCard(index: 9)
-                    }
+                    // Soil capacity over time
+                    soilCapacitySection
+                        .animatedCard(index: 4)
 
                 }
                 .padding(TrunkTheme.space4)
@@ -128,31 +98,11 @@ struct TodayView: View {
 
     private func refreshCachedState() {
         let state = EventStore.shared.getState()
-        let allSprouts = Array(state.sprouts.values)
-        let allSunEntries = state.sunEntries
-        let allLeaves = Array(state.leaves.values).sorted { $0.createdAt > $1.createdAt }
 
         // Active sprouts & harvest-ready
         let active = getActiveSprouts(from: state)
         activeSprouts = active
         readyToHarvest = active.filter { isSproutReady($0) }
-
-        // Active leafs
-        activeLeafs = allLeaves.filter { leaf in
-            allSprouts.contains { $0.leafId == leaf.id && $0.state == .active }
-        }
-
-        // Soil available for forecast
-        cachedSoilAvailable = state.soilAvailable
-
-        // Weekly activity counts
-        cachedWeeklyActivity = computeWeeklyActivity(sprouts: allSprouts, sunEntries: allSunEntries)
-
-        // Branch activity counts
-        cachedBranchActivity = computeBranchActivity(sprouts: allSprouts, sunEntries: allSunEntries)
-
-        // Weekly soil gain
-        cachedWeeklySoilGain = computeWeeklySoilGain(sprouts: allSprouts, sunEntries: allSunEntries)
 
         // Next harvest sprout
         cachedNextHarvestSprout = active
@@ -164,270 +114,11 @@ struct TodayView: View {
             }
             .first
 
-        // Recent activity
-        cachedRecentActivity = computeRecentActivity(
-            sprouts: allSprouts,
-            sunEntries: allSunEntries.sorted { $0.timestamp > $1.timestamp }
-        )
-    }
-
-    // MARK: - Computation Helpers
-
-    private func computeWeeklyActivity(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> [(waters: Int, shines: Int)] {
-        let calendar = Calendar.current
-        let now = Date()
-
-        let weekday = calendar.component(.weekday, from: now)
-        let daysSinceMonday = (weekday - 2 + 7) % 7
-        guard let mondayStart = calendar.date(byAdding: .day, value: -daysSinceMonday, to: calendar.startOfDay(for: now)) else {
-            return Array(repeating: (waters: 0, shines: 0), count: 7)
-        }
-
-        var counts: [(waters: Int, shines: Int)] = []
-        for dayOffset in 0..<7 {
-            guard let dayStart = calendar.date(byAdding: .day, value: dayOffset, to: mondayStart),
-                  let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
-                counts.append((waters: 0, shines: 0))
-                continue
-            }
-
-            if dayStart > now {
-                counts.append((waters: 0, shines: 0))
-                continue
-            }
-
-            let waterCount = sprouts.flatMap(\.waterEntries).filter { entry in
-                entry.timestamp >= dayStart && entry.timestamp < dayEnd
-            }.count
-
-            let shineCount = sunEntries.filter { entry in
-                entry.timestamp >= dayStart && entry.timestamp < dayEnd
-            }.count
-
-            counts.append((waters: waterCount, shines: shineCount))
-        }
-
-        return counts
-    }
-
-    private func computeBranchActivity(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> [Int] {
-        let now = Date()
-        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
-
-        var counts = Array(repeating: 0, count: SharedConstants.Tree.branchCount)
-
-        for sprout in sprouts {
-            guard let bIndex = branchIndex(from: sprout.twigId) else { continue }
-
-            let recentWaters = sprout.waterEntries.filter { $0.timestamp >= thirtyDaysAgo }.count
-            counts[bIndex] += recentWaters
-
-            if sprout.plantedAt >= thirtyDaysAgo {
-                counts[bIndex] += 1
-            }
-
-            if let harvestedAt = sprout.harvestedAt, harvestedAt >= thirtyDaysAgo {
-                counts[bIndex] += 1
-            }
-        }
-
-        for entry in sunEntries {
-            guard entry.timestamp >= thirtyDaysAgo,
-                  let bIndex = branchIndex(from: entry.twigId) else { continue }
-            counts[bIndex] += 1
-        }
-
-        return counts
-    }
-
-    private func computeWeeklySoilGain(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> Double {
-        let now = Date()
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
-
-        let recentWaterCount = sprouts.flatMap(\.waterEntries).filter { $0.timestamp >= sevenDaysAgo }.count
-        let recentShineCount = sunEntries.filter { $0.timestamp >= sevenDaysAgo }.count
-
-        return Double(recentWaterCount) * SharedConstants.Soil.waterRecovery
-            + Double(recentShineCount) * SharedConstants.Soil.sunRecovery
-    }
-
-    private func computeRecentActivity(sprouts: [DerivedSprout], sunEntries: [DerivedSunEntry]) -> [ActivityItem] {
-        var items: [ActivityItem] = []
-
-        for sprout in sprouts {
-            for entry in sprout.waterEntries {
-                items.append(ActivityItem(
-                    date: entry.timestamp,
-                    icon: "💧",
-                    text: "Watered \"\(sprout.title)\""
-                ))
-            }
-
-            items.append(ActivityItem(
-                date: sprout.plantedAt,
-                icon: "🌱",
-                text: "Planted \"\(sprout.title)\""
-            ))
-
-            if let harvestedAt = sprout.harvestedAt, sprout.state == .completed {
-                let emoji = resultToEmoji(sprout.result ?? 3)
-                items.append(ActivityItem(
-                    date: harvestedAt,
-                    icon: emoji,
-                    text: "Harvested \"\(sprout.title)\""
-                ))
-            }
-        }
-
-        for entry in sunEntries {
-            items.append(ActivityItem(
-                date: entry.timestamp,
-                icon: "☀️",
-                text: "Shined on \(entry.twigLabel)"
-            ))
-        }
-
-        return Array(items.sorted { $0.date > $1.date }.prefix(5))
+        // Soil capacity history
+        cachedSoilHistory = computeSoilCapacityHistory()
     }
 
     // MARK: - Sections
-
-    private var weeklyRhythmSection: some View {
-        let dayInitials = ["M", "T", "W", "T", "F", "S", "S"]
-        let counts = cachedWeeklyActivity
-
-        return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("THIS WEEK")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            HStack(spacing: 0) {
-                ForEach(0..<7, id: \.self) { index in
-                    let total = counts[index].waters + counts[index].shines
-
-                    VStack(spacing: TrunkTheme.space1) {
-                        Text(dayInitials[index])
-                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-
-                        Text(total == 0 ? "\u{00B7}" : total >= 3 ? "\u{25CF}" : "\u{25CB}")
-                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                            .foregroundStyle(total == 0 ? Color.inkFaint : total >= 3 ? Color.twig : Color.inkLight)
-
-                        Text("\(total)")
-                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-        }
-        .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
-    }
-
-    private var branchBalanceSection: some View {
-        let counts = cachedBranchActivity
-        let maxCount = counts.max() ?? 0
-
-        return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("BRANCH BALANCE")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            if maxCount == 0 {
-                Text("No recent activity")
-                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint)
-            } else {
-                ForEach(0..<SharedConstants.Tree.branchCount, id: \.self) { index in
-                    let count = counts[index]
-                    let barLength = maxCount > 0 ? Int(Double(count) / Double(maxCount) * 10.0) : 0
-                    let filled = String(repeating: "\u{2501}", count: barLength)
-                    let empty = String(repeating: "\u{2500}", count: 10 - barLength)
-
-                    HStack(spacing: TrunkTheme.space2) {
-                        Text(SharedConstants.Tree.branchName(index))
-                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                            .foregroundStyle(Color.inkLight)
-                            .frame(width: 52, alignment: .leading)
-
-                        HStack(spacing: 0) {
-                            Text(filled)
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(count > 0 ? Color.twig : Color.inkFaint)
-
-                            Text(empty)
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                        }
-
-                        Text("\(count)")
-                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                            .frame(width: 20, alignment: .trailing)
-                    }
-                }
-            }
-        }
-        .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
-    }
-
-    private var soilForecastSection: some View {
-        let gain = cachedWeeklySoilGain
-        let currentSoil = cachedSoilAvailable
-        let maxSoil = SharedConstants.Soil.maxCapacity
-
-        // ASCII progress bar for current/max
-        let barTotal = 16
-        let filled = Int((currentSoil / maxSoil) * Double(barTotal))
-        let clampedFilled = min(barTotal, max(0, filled))
-        let barFilled = String(repeating: "\u{2501}", count: clampedFilled)
-        let barEmpty = String(repeating: "\u{2500}", count: barTotal - clampedFilled)
-        let progressBar = "[\(barFilled)\(barEmpty)]"
-
-        let forecastText: String = {
-            guard gain > 0 else { return "" }
-            let projected = min(maxSoil, currentSoil + gain * 4.0)
-            let targetDate = Calendar.current.date(byAdding: .day, value: 28, to: Date()) ?? Date()
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d"
-            let dateString = formatter.string(from: targetDate)
-            return "At this pace: \(Int(currentSoil.rounded())) \u{2192} \(Int(projected.rounded())) soil by \(dateString)"
-        }()
-
-        return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("SOIL FORECAST")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            if gain <= 0 {
-                Text("Start watering to see your forecast")
-                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint)
-            } else {
-                Text(forecastText)
-                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                    .foregroundStyle(Color.ink)
-            }
-
-            Text(progressBar)
-                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                .foregroundStyle(Color.twig)
-        }
-        .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
-    }
 
     private func nextHarvestSection(sprout: DerivedSprout) -> some View {
         let harvestDate = ProgressionService.harvestDate(plantedAt: sprout.plantedAt, season: sprout.season)
@@ -480,44 +171,6 @@ struct TodayView: View {
         )
     }
 
-    private var harvestSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("READY TO HARVEST (\(readyToHarvest.count))")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            ForEach(readyToHarvest, id: \.id) { sprout in
-                Button {
-                    HapticManager.tap()
-                    selectedSproutForHarvest = sprout
-                } label: {
-                    HStack {
-                        Text("🌻")
-                        Text(sprout.title)
-                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                            .foregroundStyle(Color.ink)
-
-                        Spacer()
-
-                        Text(sprout.season.label)
-                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-
-                        Text(">")
-                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                    }
-                    .padding(TrunkTheme.space3)
-                    .background(Color.paper)
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.twig, lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
     private var waterSection: some View {
         let canWater = progression.waterAvailable > 0 && !activeSprouts.isEmpty
         let nextSprout = activeSprouts.first { !wasWateredToday($0) } ?? activeSprouts.first
@@ -532,141 +185,110 @@ struct TodayView: View {
             }
         }()
 
-        return VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("WATER A SPROUT (\(progression.waterAvailable)/\(progression.waterCapacity))")
-                .monoLabel(size: TrunkTheme.textXs)
+        return Button {
+            HapticManager.tap()
+            selectedSproutForWater = nextSprout
+        } label: {
+            HStack {
+                Text("💧")
+                Text(label)
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .foregroundStyle(canWater ? Color.ink : Color.inkFaint)
 
-            Button {
-                HapticManager.tap()
-                selectedSproutForWater = nextSprout
-            } label: {
-                HStack {
-                    Text("💧")
-                    Text(label)
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(canWater ? Color.ink : Color.inkFaint)
+                Spacer()
 
-                    Spacer()
-
-                    if canWater {
-                        Text(">")
-                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                    }
-                }
-                .padding(TrunkTheme.space3)
-                .background(Color.paper)
-                .overlay(
-                    Rectangle()
-                        .stroke(canWater ? Color.trunkWater : Color.border, lineWidth: 1)
-                )
+                Text("(\(progression.waterAvailable)/\(progression.waterCapacity))")
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
             }
-            .buttonStyle(.plain)
-            .disabled(!canWater)
+            .padding(TrunkTheme.space3)
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(canWater ? Color.trunkWater : Color.border, lineWidth: 1)
+            )
         }
+        .buttonStyle(.plain)
+        .disabled(!canWater)
     }
 
     private var shineSection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("WEEKLY REFLECTION")
-                .monoLabel(size: TrunkTheme.textXs)
+        let sunUsed = progression.canShine ? 0 : 1
+        let sunCapacity = 1
 
-            Button {
-                HapticManager.tap()
-                showShineSheet = true
-            } label: {
-                HStack {
-                    Text("☀️")
-                    Text(progression.canShine ? "Shine on a twig..." : "Already shined this week")
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(progression.canShine ? Color.ink : Color.inkFaint)
+        return Button {
+            HapticManager.tap()
+            showShineSheet = true
+        } label: {
+            HStack {
+                Text("☀️")
+                Text(progression.canShine ? "Shine on a twig..." : "Already shined this week")
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .foregroundStyle(progression.canShine ? Color.ink : Color.inkFaint)
 
-                    Spacer()
+                Spacer()
 
-                    if progression.canShine {
-                        Text(">")
-                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                    }
-                }
-                .padding(TrunkTheme.space3)
-                .background(Color.paper)
-                .overlay(
-                    Rectangle()
-                        .stroke(progression.canShine ? Color.trunkSun : Color.border, lineWidth: 1)
-                )
+                Text("(\(sunCapacity - sunUsed)/\(sunCapacity))")
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
             }
-            .buttonStyle(.plain)
-            .disabled(!progression.canShine)
+            .padding(TrunkTheme.space3)
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(progression.canShine ? Color.trunkSun : Color.border, lineWidth: 1)
+            )
         }
+        .buttonStyle(.plain)
+        .disabled(!progression.canShine)
     }
 
-    private var leafsSection: some View {
+    private var soilCapacitySection: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("ACTIVE LEAFS (\(activeLeafs.count))")
+            Text("SOIL CAPACITY")
                 .monoLabel(size: TrunkTheme.textXs)
 
-            ForEach(activeLeafs, id: \.id) { leaf in
-                NavigationLink {
-                    SagaDetailView(leaf: leaf, progression: progression)
-                } label: {
-                    HStack(spacing: TrunkTheme.space3) {
-                        // Left border (always twig color since these are active)
-                        Rectangle()
-                            .fill(Color.twig)
-                            .frame(width: 2)
-
-                        VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                            Text(leaf.name)
-                                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                                .foregroundStyle(Color.ink)
-
-                            Text(contextLabel(for: leaf))
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                        }
-
-                        Spacer()
-
-                        Text(">")
-                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                    }
+            if cachedSoilHistory.count < 2 {
+                Text("Harvest sprouts to grow capacity")
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
                     .padding(.vertical, TrunkTheme.space3)
-                    .padding(.horizontal, TrunkTheme.space3)
-                    .background(Color.paper)
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.border, lineWidth: 1)
+            } else {
+                Chart(cachedSoilHistory) { point in
+                    LineMark(
+                        x: .value("Date", point.date),
+                        y: .value("Capacity", point.capacity)
                     )
+                    .foregroundStyle(Color.twig)
+                    .interpolationMethod(.stepEnd)
+
+                    AreaMark(
+                        x: .value("Date", point.date),
+                        y: .value("Capacity", point.capacity)
+                    )
+                    .foregroundStyle(Color.twig.opacity(0.1))
+                    .interpolationMethod(.stepEnd)
                 }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var activitySection: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("RECENT ACTIVITY")
-                .monoLabel(size: TrunkTheme.textXs)
-
-            ForEach(cachedRecentActivity.indices, id: \.self) { index in
-                let item = cachedRecentActivity[index]
-                HStack {
-                    Text(item.icon)
-                        .font(.system(size: TrunkTheme.textSm))
-
-                    Text(item.text)
-                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                        .foregroundStyle(Color.inkLight)
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    Text(relativeTime(item.date))
-                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
+                .chartYScale(domain: 0 ... max(cachedSoilHistory.last?.capacity ?? 10, 15))
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                        AxisGridLine()
+                            .foregroundStyle(Color.border)
+                        AxisValueLabel()
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
                 }
+                .chartYAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                        AxisGridLine()
+                            .foregroundStyle(Color.border)
+                        AxisValueLabel()
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
+                }
+                .frame(height: 140)
             }
         }
         .padding(TrunkTheme.space3)
@@ -677,6 +299,77 @@ struct TodayView: View {
         )
     }
 
+    // MARK: - Computation Helpers
+
+    private func computeSoilCapacityHistory() -> [SoilCapacityPoint] {
+        let events = EventStore.shared.events
+        var capacity = SharedConstants.Soil.startingCapacity
+        var history: [SoilCapacityPoint] = []
+
+        // Track planted sprouts so we can compute harvest rewards
+        var sproutInfo: [String: (season: String, environment: String)] = [:]
+
+        // Find earliest event for starting point
+        if let firstEvent = events.first {
+            let date = Self.parseISO8601(firstEvent.clientTimestamp)
+            history.append(SoilCapacityPoint(date: date, capacity: capacity))
+        }
+
+        for event in events {
+            let date = Self.parseISO8601(event.clientTimestamp)
+
+            switch event.type {
+            case "sprout_planted":
+                if let sproutId = event.payload["sproutId"]?.value as? String,
+                   let season = event.payload["season"]?.value as? String,
+                   let environment = event.payload["environment"]?.value as? String {
+                    sproutInfo[sproutId] = (season: season, environment: environment)
+                }
+
+            case "sprout_harvested":
+                if let sproutId = event.payload["sproutId"]?.value as? String,
+                   let result = event.payload["result"]?.value as? Int,
+                   let info = sproutInfo[sproutId],
+                   let season = Season(rawValue: info.season),
+                   let environment = SproutEnvironment(rawValue: info.environment) {
+                    let reward = ProgressionService.capacityReward(
+                        season: season,
+                        environment: environment,
+                        result: result,
+                        currentCapacity: capacity
+                    )
+                    capacity += reward
+                    history.append(SoilCapacityPoint(date: date, capacity: capacity))
+                }
+
+            default:
+                break
+            }
+        }
+
+        // Add current date as final point
+        history.append(SoilCapacityPoint(date: Date(), capacity: capacity))
+
+        return history
+    }
+
+    private static let iso8601Fractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    private static let iso8601Standard: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
+    private static func parseISO8601(_ timestamp: String) -> Date {
+        iso8601Fractional.date(from: timestamp)
+            ?? iso8601Standard.date(from: timestamp)
+            ?? Date.distantPast
+    }
 
     // MARK: - Helpers
 
@@ -685,38 +378,14 @@ struct TodayView: View {
         let startOfDay = calendar.startOfDay(for: Date())
         return sprout.waterEntries.contains { $0.timestamp >= startOfDay }
     }
-
-    /// Extract branch index from a twig ID like "branch-2-twig-5"
-    private func branchIndex(from twigId: String) -> Int? {
-        let parts = twigId.split(separator: "-")
-        guard parts.count >= 2, let index = Int(parts[1]) else { return nil }
-        return index
-    }
-
-    private func relativeTime(_ date: Date) -> String {
-        let interval = Date().timeIntervalSince(date)
-
-        if interval < 60 {
-            return "just now"
-        } else if interval < 3600 {
-            let minutes = Int(interval / 60)
-            return "\(minutes)m ago"
-        } else if interval < 86400 {
-            let hours = Int(interval / 3600)
-            return "\(hours)h ago"
-        } else {
-            let days = Int(interval / 86400)
-            return "\(days)d ago"
-        }
-    }
 }
 
-// MARK: - Activity Item
+// MARK: - Soil Capacity Point
 
-struct ActivityItem {
+struct SoilCapacityPoint: Identifiable {
+    let id = UUID()
     let date: Date
-    let icon: String
-    let text: String
+    let capacity: Double
 }
 
 #Preview {
