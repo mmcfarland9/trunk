@@ -318,15 +318,17 @@ struct CreateSproutView: View {
         let leafId = UUID().uuidString
         newLeafName = ""
 
-        // Push to cloud, then select after local state updates
+        // pushEvent is local-first — leaf lands in EventStore immediately
         Task {
             try? await SyncService.shared.pushEvent(type: "leaf_created", payload: [
                 "leafId": leafId,
                 "name": trimmedName,
                 "twigId": nodeId
             ])
-            selectedLeafId = leafId
         }
+
+        // Select immediately — the optimistic event is already in EventStore
+        selectedLeafId = leafId
     }
 
     private func plantSprout() {
@@ -350,14 +352,15 @@ struct CreateSproutView: View {
                     "bloomBudding": bloomBudding,
                     "bloomFlourish": bloomFlourish
                 ])
-                HapticManager.success()
-                dismiss()
             } catch {
-                isPlanting = false
-                errorMessage = "Failed to save. Check your connection and try again."
-                HapticManager.error()
+                print("Plant push failed (rolled back): \(error)")
             }
         }
+
+        // Dismiss immediately — optimistic update already in EventStore
+        progression.refresh()
+        HapticManager.success()
+        dismiss()
     }
 }
 

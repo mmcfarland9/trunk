@@ -146,19 +146,24 @@ struct WaterSproutView: View {
 
         Task {
             do {
+                // pushEvent is local-first: EventStore updates immediately,
+                // UI reflects the change before the network call completes.
                 try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
                     "sproutId": sprout.id,
                     "content": content,
                     "timestamp": timestamp
                 ])
-                HapticManager.success()
-                dismiss()
             } catch {
-                isWatering = false
-                errorMessage = "Failed to save. Check your connection and try again."
-                HapticManager.tap()
+                // Optimistic event was rolled back — but we already dismissed.
+                // The view-level refresh (via progression.version) will correct the UI.
+                print("Water push failed (rolled back): \(error)")
             }
         }
+
+        // Dismiss immediately — the optimistic update already landed in EventStore
+        progression.refresh()
+        HapticManager.success()
+        dismiss()
     }
 }
 

@@ -110,6 +110,9 @@ struct TodayView: View {
             progression.refresh()
             refreshCachedState()
         }
+        .onChange(of: progression.version) {
+            refreshCachedState()
+        }
     }
 
     // MARK: - State Refresh

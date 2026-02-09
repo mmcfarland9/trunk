@@ -91,6 +91,9 @@ struct BranchView: View {
                 }
             }
         }
+        .onChange(of: progression.version) {
+            refreshSproutData()
+        }
         .onDisappear {
             isVisible = false
             // Reset so re-entry re-animates

@@ -139,6 +139,9 @@ struct SproutsView: View {
         .onAppear {
             refreshCachedState()
         }
+        .onChange(of: progression.version) {
+            refreshCachedState()
+        }
     }
 
     private func refreshCachedState() {

@@ -291,16 +291,20 @@ struct HarvestSproutView: View {
                     "capacityGained": capacityGained,
                     "timestamp": timestamp
                 ])
-                HapticManager.success()
-                try? await Task.sleep(nanoseconds: 150_000_000)
-                HapticManager.impact()
-                try? await Task.sleep(nanoseconds: 150_000_000)
-                dismiss()
             } catch {
-                isHarvesting = false
-                errorMessage = "Failed to save. Check your connection and try again."
-                HapticManager.error()
+                print("Harvest push failed (rolled back): \(error)")
             }
+        }
+
+        // Dismiss immediately — optimistic update already in EventStore
+        progression.refresh()
+        HapticManager.success()
+        // Brief haptic flourish before dismiss
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            HapticManager.impact()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            dismiss()
         }
     }
 }

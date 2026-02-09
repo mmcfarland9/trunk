@@ -17,6 +17,10 @@ final class ProgressionViewModel {
     private(set) var waterAvailable: Int = SharedConstants.Water.dailyCapacity
     private(set) var sunAvailable: Int = SharedConstants.Sun.weeklyCapacity
 
+    /// Monotonically increasing counter that views can observe via .onChange
+    /// to know when to refresh their local @State caches.
+    private(set) var version: Int = 0
+
     init() {
         recompute()
     }
@@ -53,10 +57,13 @@ final class ProgressionViewModel {
 
     // MARK: - Refresh
 
-    /// Refresh state (invalidate caches and recompute stored values)
+    /// Refresh state (invalidate caches and recompute stored values).
+    /// Bumps `version` so views observing it via .onChange can refresh
+    /// their local @State caches.
     func refresh() {
         EventStore.shared.refresh()
         recompute()
+        version += 1
     }
 
     private func recompute() {

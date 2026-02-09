@@ -14,8 +14,13 @@ struct OverviewView: View {
     @State private var navigateToBranch: Int? = nil
     @State private var navigationCooldown = false
 
-    // Cached state (updated in .onAppear)
+    // Cached state (updated in .onAppear and .onChange)
     @State private var cachedSprouts: [DerivedSprout] = []
+
+    private func refreshCachedState() {
+        let state = EventStore.shared.getState()
+        cachedSprouts = Array(state.sprouts.values)
+    }
 
     var body: some View {
         ZStack {
@@ -46,8 +51,10 @@ struct OverviewView: View {
         }
         .onAppear {
             progression.refresh()
-            let state = EventStore.shared.getState()
-            cachedSprouts = Array(state.sprouts.values)
+            refreshCachedState()
+        }
+        .onChange(of: progression.version) {
+            refreshCachedState()
         }
         .sheet(item: $sproutToWater) { sprout in
             NavigationStack {

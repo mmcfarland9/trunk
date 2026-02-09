@@ -58,6 +58,9 @@ struct MainTabView: View {
         .onAppear {
             refreshPendingActions()
         }
+        .onChange(of: progression.version) {
+            refreshPendingActions()
+        }
     }
 
     private func fullSync() async {

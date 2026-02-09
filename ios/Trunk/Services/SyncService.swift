@@ -220,7 +220,11 @@ final class SyncService: ObservableObject {
         return await smartSync()
     }
 
-    /// Push a single event to Supabase and update local EventStore
+    /// Push a single event to Supabase with optimistic local-first update.
+    /// The local EventStore is updated immediately so the UI reflects the
+    /// action without waiting for a network round-trip. The cloud push
+    /// happens in the background; on failure the optimistic event is rolled
+    /// back and the error is thrown.
     func pushEvent(type: String, payload: [String: Any]) async throws {
         guard let client = SupabaseClientProvider.shared else {
             throw SyncError.notConfigured
@@ -233,6 +237,19 @@ final class SyncService: ObservableObject {
         let clientId = "\(ISO8601DateFormatter().string(from: Date()))-\(randomString(length: 6))"
         let clientTimestamp = ISO8601DateFormatter().string(from: Date())
 
+        // 1. Optimistic local update — user sees the result immediately
+        let optimisticEvent = SyncEvent(
+            id: UUID(),
+            userId: userId,
+            type: type,
+            payload: payload.mapValues { AnyCodable($0) },
+            clientId: clientId,
+            clientTimestamp: clientTimestamp,
+            createdAt: clientTimestamp // placeholder until server confirms
+        )
+        EventStore.shared.appendEvent(optimisticEvent)
+
+        // 2. Push to cloud in background
         let eventInsert = SyncEventInsert(
             userId: userId.uuidString,
             type: type,
@@ -241,19 +258,19 @@ final class SyncService: ObservableObject {
             clientTimestamp: clientTimestamp
         )
 
-        // Push to cloud and get returned event with server-generated fields
-        let response: [SyncEvent] = try await client
-            .from("events")
-            .insert(eventInsert)
-            .select()
-            .execute()
-            .value
-
-        // Append returned event to local store
-        if let event = response.first {
-            await MainActor.run {
-                EventStore.shared.appendEvent(event)
-            }
+        do {
+            let _: [SyncEvent] = try await client
+                .from("events")
+                .insert(eventInsert)
+                .select()
+                .execute()
+                .value
+            // Server confirmed — the optimistic event stays in the store.
+            // On next sync, dedup by clientTimestamp prevents duplicates.
+        } catch {
+            // Rollback the optimistic event so state is consistent
+            EventStore.shared.removeEvent(withClientId: clientId)
+            throw error
         }
     }
 
@@ -280,13 +297,18 @@ final class SyncService: ObservableObject {
                     do {
                         let event = try insertion.decodeRecord(as: SyncEvent.self, decoder: JSONDecoder())
 
-                        // Append to local EventStore
-                        await MainActor.run {
-                            EventStore.shared.appendEvent(event)
+                        // Dedup: skip if we already have this event (e.g. we pushed it ourselves)
+                        let isDuplicate = await MainActor.run {
+                            EventStore.shared.events.contains { $0.clientTimestamp == event.clientTimestamp }
                         }
 
-                        onRealtimeEvent?(event)
-                        print("Realtime: received event - \(event.type)")
+                        if !isDuplicate {
+                            await MainActor.run {
+                                EventStore.shared.appendEvent(event)
+                            }
+                            onRealtimeEvent?(event)
+                            print("Realtime: received event from another device - \(event.type)")
+                        }
                     } catch {
                         print("Realtime: failed to decode - \(error)")
                     }

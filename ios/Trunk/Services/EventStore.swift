@@ -44,6 +44,12 @@ final class EventStore: ObservableObject {
         invalidateCache()
     }
 
+    /// Remove a single event by clientId (used to rollback optimistic updates on push failure)
+    func removeEvent(withClientId clientId: String) {
+        events.removeAll { $0.clientId == clientId }
+        invalidateCache()
+    }
+
     /// Clear all events (for logout)
     func clearEvents() {
         events = []

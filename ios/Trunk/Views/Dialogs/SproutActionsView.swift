@@ -316,14 +316,15 @@ struct SproutActionsView: View {
                     "sproutId": sprout.id,
                     "soilReturned": soilReturned
                 ])
-                HapticManager.impact()
-                dismiss()
             } catch {
-                isUprooting = false
-                errorMessage = "Failed to save. Check your connection and try again."
-                HapticManager.error()
+                print("Uproot push failed (rolled back): \(error)")
             }
         }
+
+        // Dismiss immediately — optimistic update already in EventStore
+        progression.refresh()
+        HapticManager.impact()
+        dismiss()
     }
 }
 

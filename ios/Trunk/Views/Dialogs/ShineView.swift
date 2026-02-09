@@ -194,14 +194,15 @@ struct ShineView: View {
                     "prompt": selectedPrompt,
                     "timestamp": timestamp
                 ])
-                HapticManager.success()
-                dismiss()
             } catch {
-                isShining = false
-                errorMessage = "Failed to save. Check your connection and try again."
-                HapticManager.tap()
+                print("Shine push failed (rolled back): \(error)")
             }
         }
+
+        // Dismiss immediately — optimistic update already in EventStore
+        progression.refresh()
+        HapticManager.success()
+        dismiss()
     }
 
 }
