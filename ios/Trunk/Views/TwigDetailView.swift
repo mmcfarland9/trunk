@@ -66,10 +66,6 @@ struct TwigDetailView: View {
                     // Empty state
                     if sprouts.isEmpty {
                         VStack(spacing: TrunkTheme.space3) {
-                            Text("( )")
-                                .font(.system(size: 24, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-
                             Text("No sprouts yet")
                                 .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                                 .foregroundStyle(Color.inkFaint)
@@ -166,6 +162,11 @@ struct SproutSection: View {
 struct SproutRow: View {
     let sprout: DerivedSprout
 
+    private var leafName: String? {
+        guard let leafId = sprout.leafId else { return nil }
+        return EventStore.shared.getState().leaves[leafId]?.name
+    }
+
     var body: some View {
         HStack(spacing: TrunkTheme.space3) {
             // State indicator
@@ -174,6 +175,13 @@ struct SproutRow: View {
                 .frame(width: 2)
 
             VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                if let leafName {
+                    Text(leafName)
+                        .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.wood)
+                        .lineLimit(1)
+                }
+
                 Text(sprout.title)
                     .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                     .foregroundStyle(Color.ink)

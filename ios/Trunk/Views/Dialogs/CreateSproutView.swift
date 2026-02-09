@@ -108,10 +108,11 @@ struct CreateSproutView: View {
                     }
 
                     // Sprout title
+                    // Convention: sprout titles should start with a verb (e.g. "Run 3x/week", "Read 20 pages daily")
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
                         LabelWithHint(label: "SPROUT", hint: "(task)")
 
-                        TextField("Describe this sprout.", text: $title)
+                        TextField("Start with a verb...", text: $title)
                             .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                             .foregroundStyle(Color.ink)
                             .padding(TrunkTheme.space3)

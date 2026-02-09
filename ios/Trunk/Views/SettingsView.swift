@@ -416,23 +416,19 @@ struct SproutListRow: View {
                         .foregroundStyle(Color.inkFaint)
                 }
 
-                // Location row
-                HStack(spacing: TrunkTheme.space2) {
-                    Text(locationLabel)
-                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
+                // Leaf name (prominent)
+                if let leafName {
+                    Text(leafName)
+                        .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.wood)
                         .lineLimit(1)
-
-                    if let leafName {
-                        Text("·")
-                            .foregroundStyle(Color.inkFaint)
-
-                        Text(leafName)
-                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint)
-                            .lineLimit(1)
-                    }
                 }
+
+                // Location row
+                Text(locationLabel)
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+                    .lineLimit(1)
             }
 
             Text(">")
