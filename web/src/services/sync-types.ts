@@ -15,7 +15,7 @@ export type SyncEvent = {
  * Generate a unique client ID for an event.
  * Uses timestamp + type + key details to create uniqueness.
  */
-function generateClientId(event: TrunkEvent): string {
+export function generateClientId(event: TrunkEvent): string {
   const parts = [event.timestamp, event.type]
 
   // Add unique identifiers based on event type

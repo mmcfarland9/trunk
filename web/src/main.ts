@@ -2,7 +2,7 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
-import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncStatus } from './services/sync-service'
+import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncMetadata, startVisibilitySync } from './services/sync-service'
 import { initEventStore, setEventSyncCallback, setEventStoreErrorCallbacks } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, getSoilAvailable, getSoilCapacity, getWaterAvailable } from './state'
@@ -90,6 +90,9 @@ async function startWithAuth() {
         subscribeToRealtime(() => {
           refreshUI()
         })
+
+        // Sync when tab regains visibility (e.g. user switches back)
+        startVisibilitySync()
       }
 
       // Disable sync callback and realtime when logged out
@@ -161,19 +164,32 @@ function handleNodeClick(
 
 const domResult = buildApp(app, handleNodeClick)
 
-// Subscribe to sync status changes
-subscribeSyncStatus((status) => {
-  domResult.elements.syncIndicator.dataset.status = status
-  domResult.elements.syncIndicator.title = `Sync: ${status}`
-  // Update the text label based on status
-  const textMap: Record<string, string> = {
-    idle: 'Synced',
-    syncing: 'Syncing...',
-    success: 'Synced',
-    error: 'Sync error'
+// Subscribe to detailed sync metadata
+subscribeSyncMetadata((meta) => {
+  const tsEl = domResult.elements.syncTimestamp
+  const stateEl = domResult.elements.syncState
+
+  if (meta.lastConfirmedTimestamp) {
+    tsEl.textContent = formatTimestampUTC(meta.lastConfirmedTimestamp)
+  } else {
+    tsEl.textContent = ''
   }
-  domResult.elements.syncText.textContent = textMap[status] || 'Synced'
+
+  const stateMap: Record<string, string> = {
+    synced: '\u2713 Synced',
+    syncing: 'Syncing...',
+    loading: 'Syncing...',
+    pendingUpload: '\u2191 Pushing...',
+    offline: '\u2717 Offline',
+  }
+  stateEl.textContent = stateMap[meta.status] || ''
+  stateEl.dataset.status = meta.status
 })
+
+/** Format ISO 8601 timestamp to UTC seconds precision: yyyy-MM-ddTHH:mm:ssZ */
+function formatTimestampUTC(ts: string): string {
+  return new Date(ts).toISOString().replace(/\.\d{3}Z$/, 'Z')
+}
 
 // Soil meter update function
 function updateSoilMeter(): void {
