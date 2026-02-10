@@ -52,6 +52,10 @@ Pods/
 
 # Test artifacts
 web/test-results/
+web/coverage/
+
+# Generated reports
+web/.reports/
 
 # MCP config (contains tokens)
 .mcp.json
