@@ -32,6 +32,9 @@ struct ContentView: View {
                 Task {
                     await syncOnOpen()
                 }
+            } else if newPhase == .background {
+                // Flush any pending cache writes before backgrounding
+                EventStore.shared.flushToDisk()
             }
         }
     }
