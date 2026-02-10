@@ -100,6 +100,7 @@ struct TodayView: View {
             NavigationStack {
                 WaterSproutPickerView(
                     sprouts: activeSprouts,
+                    wateredTodayIds: Set(activeSprouts.filter { wasWateredToday($0) }.map(\.id)),
                     onSelect: { sprout in
                         showWaterPicker = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -498,9 +499,18 @@ struct TodayView: View {
         }
     }
 
+    private func isRangeAvailable(_ range: SoilChartRange) -> Bool {
+        guard let rangeStart = range.startDate,
+              let earliest = cachedSoilHistory.first?.date else {
+            return true // ALL is always available; no data = nothing to disable
+        }
+        return earliest <= rangeStart
+    }
+
     private var soilRangePicker: some View {
         HStack(spacing: 0) {
             ForEach(SoilChartRange.allCases, id: \.self) { range in
+                let available = isRangeAvailable(range)
                 Button {
                     scrubIndex = nil
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -509,17 +519,22 @@ struct TodayView: View {
                 } label: {
                     Text(range.rawValue)
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .foregroundStyle(selectedSoilRange == range ? Color.ink : Color.inkFaint)
+                        .foregroundStyle(
+                            !available ? Color.inkFaint.opacity(0.35)
+                            : selectedSoilRange == range ? Color.ink
+                            : Color.inkFaint
+                        )
                         .padding(.horizontal, 6)
                         .padding(.vertical, 4)
                         .background(
-                            selectedSoilRange == range
+                            selectedSoilRange == range && available
                                 ? Color.border
                                 : Color.clear
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 3))
                 }
                 .buttonStyle(.plain)
+                .disabled(!available)
 
                 if range != SoilChartRange.allCases.last {
                     Spacer(minLength: 0)
@@ -628,9 +643,8 @@ struct TodayView: View {
     // MARK: - Helpers
 
     private func wasWateredToday(_ sprout: DerivedSprout) -> Bool {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: Date())
-        return sprout.waterEntries.contains { $0.timestamp >= startOfDay }
+        let resetTime = getTodayResetTime()
+        return sprout.waterEntries.contains { $0.timestamp >= resetTime }
     }
 }
 
@@ -672,6 +686,7 @@ enum SoilChartRange: String, CaseIterable {
 
 struct WaterSproutPickerView: View {
     let sprouts: [DerivedSprout]
+    let wateredTodayIds: Set<String>
     let onSelect: (DerivedSprout) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -684,28 +699,30 @@ struct WaterSproutPickerView: View {
             ScrollView {
                 VStack(spacing: TrunkTheme.space2) {
                     ForEach(sprouts, id: \.id) { sprout in
+                        let alreadyWatered = wateredTodayIds.contains(sprout.id)
                         Button {
                             onSelect(sprout)
                         } label: {
                             HStack(spacing: TrunkTheme.space3) {
                                 Rectangle()
-                                    .fill(Color.twig)
+                                    .fill(alreadyWatered ? Color.inkFaint.opacity(0.3) : Color.twig)
                                     .frame(width: 2)
 
                                 VStack(alignment: .leading, spacing: TrunkTheme.space1) {
                                     Text(sprout.title)
                                         .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                                        .foregroundStyle(Color.ink)
+                                        .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.ink)
                                         .lineLimit(1)
 
-                                    Text(sprout.season.label)
+                                    Text(alreadyWatered ? "Watered today" : sprout.season.label)
                                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                                         .foregroundStyle(Color.inkFaint)
                                 }
 
                                 Spacer()
 
-                                Text("💧")
+                                Text(alreadyWatered ? "✓" : "💧")
+                                    .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.ink)
                             }
                             .padding(TrunkTheme.space3)
                             .background(Color.paper)
@@ -715,6 +732,7 @@ struct WaterSproutPickerView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .disabled(alreadyWatered)
                     }
                 }
                 .padding(TrunkTheme.space4)

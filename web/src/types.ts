@@ -115,8 +115,8 @@ export type AppElements = {
   cultivatedSproutsList: HTMLDivElement
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
-  syncIndicator: HTMLSpanElement
-  syncText: HTMLSpanElement
+  syncTimestamp: HTMLSpanElement
+  syncState: HTMLSpanElement
   sproutsDialog: HTMLDivElement
   sproutsDialogContent: HTMLDivElement
   sproutsDialogClose: HTMLButtonElement

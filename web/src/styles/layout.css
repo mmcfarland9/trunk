@@ -123,52 +123,29 @@
   white-space: nowrap;
 }
 
-/* Sync status indicator */
-.sync-indicator {
-  display: flex;
+/* Sync status text indicator */
+.sync-status-line {
+  display: inline-flex;
   align-items: center;
-  position: relative;
-  margin-left: var(--space-1);
+  gap: 6px;
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
 }
 
-.sync-cloud {
-  color: var(--ink-faint);
-  opacity: 0.7;
+.sync-timestamp {
+  color: #e6b800;
+  font-variant-numeric: tabular-nums;
 }
 
-.sync-dot {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ink-faint);
-  border: 1px solid var(--paper);
+.sync-state {
+  white-space: nowrap;
 }
 
-/* Sync status states - clear traffic light colors */
-.sync-indicator[data-status="idle"] .sync-dot {
-  background: #888;
-}
-
-.sync-indicator[data-status="syncing"] .sync-dot {
-  background: #e6b800;
-  animation: sync-pulse 1s ease-in-out infinite;
-}
-
-.sync-indicator[data-status="success"] .sync-dot {
-  background: #22a522;
-}
-
-.sync-indicator[data-status="error"] .sync-dot {
-  background: #d9534f;
-}
-
-@keyframes sync-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+.sync-state[data-status="synced"] { color: #22a522; }
+.sync-state[data-status="syncing"],
+.sync-state[data-status="loading"] { color: #e6b800; }
+.sync-state[data-status="pendingUpload"] { color: #d4880a; }
+.sync-state[data-status="offline"] { color: #d9534f; }
 
 .app-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 
