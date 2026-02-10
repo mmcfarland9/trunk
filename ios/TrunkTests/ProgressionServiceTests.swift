@@ -245,65 +245,10 @@ struct CapacityRewardTests {
     }
 }
 
-// MARK: - Reset Logic Tests
+// MARK: - Timeline Tests
 
-@Suite("Reset Logic")
-struct ResetLogicTests {
-
-    @Test("Water should reset after 6 AM on new day")
-    func shouldResetWater_afterSixAM() {
-        // Create a date from yesterday at 5 AM
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.day! -= 1
-        components.hour = 5
-        components.minute = 0
-        components.second = 0
-        let lastReset = calendar.date(from: components)!
-
-        #expect(ProgressionService.shouldResetWater(lastReset: lastReset) == true)
-    }
-
-    @Test("Water should not reset before 6 AM same effective day")
-    func shouldResetWater_sameDay() {
-        // This test depends on current time, so we'll test the logic differently
-        // If last reset was within the current day's reset period, should not reset
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.hour = 6
-        components.minute = 0
-        components.second = 0
-        let todayReset = calendar.date(from: components)!
-
-        // If we're after 6 AM today, a reset at 7 AM today should not trigger reset
-        if Date() > todayReset {
-            let recentReset = todayReset.addingTimeInterval(3600) // 7 AM
-            #expect(ProgressionService.shouldResetWater(lastReset: recentReset) == false)
-        }
-    }
-
-    @Test("Sun should reset on new week after 6 AM Monday")
-    func shouldResetSun_newWeekAfterSixAM() {
-        // Create a date from last week
-        let calendar = Calendar.current
-        let lastWeek = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
-
-        // This should trigger a reset (assuming we're past Monday 6 AM)
-        let weekday = calendar.component(.weekday, from: Date())
-        let hour = calendar.component(.hour, from: Date())
-
-        if weekday > 2 || (weekday == 2 && hour >= 6) {
-            #expect(ProgressionService.shouldResetSun(lastReset: lastWeek) == true)
-        }
-    }
-
-    @Test("Sun should not reset within same week")
-    func shouldResetSun_sameWeek() {
-        // Create a date from 1 hour ago (same week)
-        let recentReset = Date().addingTimeInterval(-3600)
-
-        #expect(ProgressionService.shouldResetSun(lastReset: recentReset) == false)
-    }
+@Suite("Sprout Timeline")
+struct TimelineTests {
 
     @Test("Harvest date adds season duration to planted date")
     func harvestDate_addsDuration() {

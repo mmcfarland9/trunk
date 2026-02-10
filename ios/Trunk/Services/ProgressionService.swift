@@ -70,62 +70,6 @@ struct ProgressionService {
         SharedConstants.Soil.sunRecovery
     }
 
-    // MARK: - Reset Time Calculations
-
-    /// Check if water should be reset (daily at 6 AM)
-    /// - Parameter lastReset: The last reset timestamp
-    /// - Returns: True if water should be reset
-    static func shouldResetWater(lastReset: Date) -> Bool {
-        let calendar = Calendar.current
-        let now = Date()
-
-        // Get the most recent 6 AM
-        var components = calendar.dateComponents([.year, .month, .day], from: now)
-        components.hour = SharedConstants.Water.resetHour
-        components.minute = 0
-        components.second = 0
-
-        guard let todayReset = calendar.date(from: components) else { return false }
-
-        // If it's before 6 AM today, use yesterday's 6 AM
-        let effectiveReset: Date
-        if now < todayReset {
-            effectiveReset = calendar.date(byAdding: .day, value: -1, to: todayReset) ?? todayReset
-        } else {
-            effectiveReset = todayReset
-        }
-
-        return lastReset < effectiveReset
-    }
-
-    /// Check if sun should be reset (weekly on Monday at 6 AM)
-    /// - Parameter lastReset: The last reset timestamp
-    /// - Returns: True if sun should be reset
-    static func shouldResetSun(lastReset: Date) -> Bool {
-        let calendar = Calendar.current
-        let now = Date()
-
-        // Get the ISO week number for both dates
-        let lastWeek = calendar.component(.weekOfYear, from: lastReset)
-        let lastYear = calendar.component(.yearForWeekOfYear, from: lastReset)
-        let thisWeek = calendar.component(.weekOfYear, from: now)
-        let thisYear = calendar.component(.yearForWeekOfYear, from: now)
-
-        // Different week = reset
-        if thisYear > lastYear || thisWeek > lastWeek {
-            // Also check if we've passed 6 AM on Monday
-            let weekday = calendar.component(.weekday, from: now)
-            let hour = calendar.component(.hour, from: now)
-
-            // Sunday=1, Monday=2 in Calendar
-            if weekday > 2 || (weekday == 2 && hour >= SharedConstants.Sun.resetHour) {
-                return true
-            }
-        }
-
-        return false
-    }
-
     // MARK: - Sprout Timeline
 
     /// Calculate when a sprout will be ready for harvest

@@ -1,5 +1,5 @@
 //
-//  SettingsView.swift
+//  SproutsView.swift
 //  Trunk
 //
 //  Sprouts panel: browse, search, and filter all sprouts.
