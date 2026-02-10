@@ -3,11 +3,12 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { calculateCapacityReward, getMaxSoilCapacity } from '../state'
+import { calculateCapacityReward } from '../state'
 import type { SproutSeason, SproutEnvironment } from '../types'
+import constants from '../../../shared/constants.json'
 
 describe('Capacity Reward Calculation', () => {
-  const MAX_CAPACITY = getMaxSoilCapacity()
+  const MAX_CAPACITY = constants.soil.maxCapacity
 
   describe('Base Rewards by Season', () => {
     // Test at capacity 0, fertile, result 5 to isolate base reward

@@ -8,6 +8,7 @@
 import type { TrunkEvent } from './types'
 import type { SproutSeason, SproutEnvironment, Sprout, WaterEntry, SunEntry } from '../types'
 import constants from '../../../shared/constants.json'
+import { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity
@@ -181,41 +182,8 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
   }
 }
 
-/**
- * Get reset time for daily water (6am local time)
- */
-export function getTodayResetTime(now: Date = new Date()): Date {
-  const reset = new Date(now)
-  reset.setHours(6, 0, 0, 0)
-
-  // If before 6am, reset was yesterday
-  if (now < reset) {
-    reset.setDate(reset.getDate() - 1)
-  }
-  return reset
-}
-
-/**
- * Get reset time for weekly sun (Monday 6am local time)
- */
-export function getWeekResetTime(now: Date = new Date()): Date {
-  const reset = new Date(now)
-  reset.setHours(6, 0, 0, 0)
-
-  // Find most recent Monday
-  // getDay(): Sunday=0, Monday=1, Tuesday=2, ..., Saturday=6
-  // We want days since Monday: Monday=0, Tuesday=1, ..., Sunday=6
-  const dayOfWeek = reset.getDay()
-  const daysSinceMonday = (dayOfWeek + 6) % 7 // Convert: Mon=0, Tue=1, ..., Sun=6
-  reset.setDate(reset.getDate() - daysSinceMonday)
-
-  // If today is Monday but before 6am, go back a week
-  if (dayOfWeek === 1 && now < reset) {
-    reset.setDate(reset.getDate() - 7)
-  }
-
-  return reset
-}
+// Re-export from calculations (single source of truth for reset times)
+export { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 
 /**
  * Derive water available from events.

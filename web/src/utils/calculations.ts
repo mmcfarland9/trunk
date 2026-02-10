@@ -48,10 +48,6 @@ export function getCapacityReward(environment: SproutEnvironment, season: Sprout
   return SEASONS[season].baseReward * ENVIRONMENT_MULTIPLIERS[environment]
 }
 
-export function getMaxSoilCapacity(): number {
-  return MAX_SOIL_CAPACITY
-}
-
 export function getSoilRecoveryRate(): number {
   return SOIL_RECOVERY_PER_WATER
 }

@@ -196,11 +196,6 @@
   border-left-color: #4a7;
 }
 
-.sprout-item.is-failed {
-  border-left-color: #a54;
-  opacity: 0.5;
-}
-
 .sprout-item-info {
   display: flex;
   align-items: center;

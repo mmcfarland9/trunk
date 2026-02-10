@@ -601,11 +601,6 @@
   border-left: 2px solid var(--twig);
 }
 
-.sprout-history-card.is-failed {
-  border-left: 2px solid var(--error-tone);
-  opacity: 0.7;
-}
-
 /* === Stacked Leaf Cards === */
 /* When a leaf has multiple active sprouts, show them as stacked rows */
 
