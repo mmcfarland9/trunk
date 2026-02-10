@@ -35,17 +35,18 @@ struct DataInfoSheet: View {
         state.leaves.count
     }
 
+    private static let memberSinceFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f
+    }()
+
     private var memberSince: String? {
         guard let firstEvent = EventStore.shared.events.first else { return nil }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let date = formatter.date(from: firstEvent.clientTimestamp)
-            ?? ISO8601DateFormatter().date(from: firstEvent.clientTimestamp)
-        guard let date else { return nil }
-        let display = DateFormatter()
-        display.dateStyle = .medium
-        display.timeStyle = .none
-        return display.string(from: date)
+        let date = ISO8601.parse(firstEvent.clientTimestamp)
+        guard date != .distantPast else { return nil }
+        return Self.memberSinceFormatter.string(from: date)
     }
 
     var body: some View {
@@ -181,25 +182,11 @@ struct DataInfoSheet: View {
 
     /// Parse ISO 8601 string, output as yyyy-MM-dd'T'HH:mm:ssZ (UTC, no fractional seconds).
     private func formatTimestamp(_ iso: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        if let date = formatter.date(from: iso) {
-            let output = ISO8601DateFormatter()
-            output.formatOptions = [.withInternetDateTime]
-            output.timeZone = TimeZone(identifier: "UTC")
-            return output.string(from: date)
+        let date = ISO8601.parse(iso)
+        if date != .distantPast {
+            return ISO8601.format(date)
         }
-
-        let fallback = ISO8601DateFormatter()
-        fallback.formatOptions = [.withInternetDateTime]
-        if let date = fallback.date(from: iso) {
-            let output = ISO8601DateFormatter()
-            output.formatOptions = [.withInternetDateTime]
-            output.timeZone = TimeZone(identifier: "UTC")
-            return output.string(from: date)
-        }
-
+        // Fallback: strip fractional seconds manually
         if let dotIndex = iso.firstIndex(of: ".") {
             return String(iso[..<dotIndex]) + "Z"
         }

@@ -77,21 +77,8 @@ struct SunLogView: View {
         .padding(TrunkTheme.space4)
     }
 
-    private static let dateGroupFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d, yyyy"
-        return f
-    }()
-
     private func dateGroupKey(_ date: Date) -> String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return "Today"
-        } else if calendar.isDateInYesterday(date) {
-            return "Yesterday"
-        } else {
-            return Self.dateGroupFormatter.string(from: date)
-        }
+        LogFormatting.dateGroupKey(date)
     }
 }
 
@@ -100,14 +87,8 @@ struct SunLogView: View {
 struct SunLogRow: View {
     let entry: DerivedSunEntry
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
     private var formattedTime: String {
-        Self.timeFormatter.string(from: entry.timestamp)
+        LogFormatting.timeFormatter.string(from: entry.timestamp)
     }
 
     var body: some View {

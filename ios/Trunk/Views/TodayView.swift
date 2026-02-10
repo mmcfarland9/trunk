@@ -627,22 +627,8 @@ struct TodayView: View {
         return history
     }
 
-    private static let iso8601Fractional: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
-
-    private static let iso8601Standard: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
-        return f
-    }()
-
     private static func parseISO8601(_ timestamp: String) -> Date {
-        iso8601Fractional.date(from: timestamp)
-            ?? iso8601Standard.date(from: timestamp)
-            ?? Date.distantPast
+        ISO8601.parse(timestamp)
     }
 
     // MARK: - Helpers

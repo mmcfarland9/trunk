@@ -463,24 +463,8 @@ func contextLabel(for leaf: DerivedLeaf) -> String {
 
 // MARK: - Payload Parsing Helpers
 
-/// Parse ISO8601 timestamp string to Date
-private let iso8601WithFractional: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter
-}()
-
-private let iso8601WithoutFractional: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter
-}()
-
 private func parseTimestamp(_ timestamp: String) -> Date {
-    if let date = iso8601WithFractional.date(from: timestamp) {
-        return date
-    }
-    return iso8601WithoutFractional.date(from: timestamp) ?? Date.distantPast
+    ISO8601.parse(timestamp)
 }
 
 /// Safely get a string value from payload

@@ -127,21 +127,8 @@ struct SoilLogView: View {
         .padding(TrunkTheme.space4)
     }
 
-    private static let dateGroupFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d, yyyy"
-        return f
-    }()
-
     private func dateGroupKey(_ date: Date) -> String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return "Today"
-        } else if calendar.isDateInYesterday(date) {
-            return "Yesterday"
-        } else {
-            return Self.dateGroupFormatter.string(from: date)
-        }
+        LogFormatting.dateGroupKey(date)
     }
 }
 
@@ -160,14 +147,8 @@ struct SoilTransaction: Identifiable {
 struct SoilLogRow: View {
     let transaction: SoilTransaction
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
     private var formattedTime: String {
-        Self.timeFormatter.string(from: transaction.date)
+        LogFormatting.timeFormatter.string(from: transaction.date)
     }
 
     private var amountText: String {

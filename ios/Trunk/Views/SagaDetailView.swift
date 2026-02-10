@@ -156,18 +156,12 @@ struct TimelineRow: View {
         return f
     }()
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
     private var formattedDate: String {
         Self.dateFormatter.string(from: event.date)
     }
 
     private var formattedTime: String {
-        Self.timeFormatter.string(from: event.date)
+        LogFormatting.timeFormatter.string(from: event.date)
     }
 
     var body: some View {
