@@ -11,6 +11,7 @@ import Auth
 struct DataInfoSheet: View {
     @Bindable var progression: ProgressionViewModel
 
+    @ObservedObject var syncService = SyncService.shared
     @Environment(AuthService.self) private var authService
     @Environment(\.dismiss) private var dismiss
 
@@ -97,6 +98,25 @@ struct DataInfoSheet: View {
                             }
                         }
 
+                        // Sync section
+                        dataCard {
+                            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                                Text("SYNC")
+                                    .monoLabel(size: TrunkTheme.textXs)
+
+                                dataRow(label: "Status", value: syncStatusText)
+                                if let ts = syncService.lastConfirmedTimestamp {
+                                    dataRow(label: "Last sync", value: formatTimestamp(ts))
+                                }
+                                if EventStore.shared.hasPendingUploads {
+                                    dataRow(
+                                        label: "Pending",
+                                        value: "\(EventStore.shared.pendingUploadCount)"
+                                    )
+                                }
+                            }
+                        }
+
                         // Account section
                         if authService.isAuthenticated {
                             dataCard {
@@ -147,6 +167,43 @@ struct DataInfoSheet: View {
                 Rectangle()
                     .stroke(Color.border, lineWidth: 1)
             )
+    }
+
+    private var syncStatusText: String {
+        switch syncService.detailedSyncStatus {
+        case .synced: return "Synced"
+        case .syncing: return "Syncing\u{2026}"
+        case .loading: return "Loading\u{2026}"
+        case .pendingUpload: return "Pushing\u{2026}"
+        case .offline: return "Offline"
+        }
+    }
+
+    /// Parse ISO 8601 string, output as yyyy-MM-dd'T'HH:mm:ssZ (UTC, no fractional seconds).
+    private func formatTimestamp(_ iso: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        if let date = formatter.date(from: iso) {
+            let output = ISO8601DateFormatter()
+            output.formatOptions = [.withInternetDateTime]
+            output.timeZone = TimeZone(identifier: "UTC")
+            return output.string(from: date)
+        }
+
+        let fallback = ISO8601DateFormatter()
+        fallback.formatOptions = [.withInternetDateTime]
+        if let date = fallback.date(from: iso) {
+            let output = ISO8601DateFormatter()
+            output.formatOptions = [.withInternetDateTime]
+            output.timeZone = TimeZone(identifier: "UTC")
+            return output.string(from: date)
+        }
+
+        if let dotIndex = iso.firstIndex(of: ".") {
+            return String(iso[..<dotIndex]) + "Z"
+        }
+        return iso
     }
 
     private func dataRow(label: String, value: String) -> some View {

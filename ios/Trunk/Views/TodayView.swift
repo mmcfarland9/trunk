@@ -22,6 +22,7 @@ struct TodayView: View {
     // MARK: - Cached State (updated in .task / .onAppear)
 
     @State private var activeSprouts: [DerivedSprout] = []
+    @State private var cachedLeafNames: [String: String] = [:]
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
     @State private var cachedSoilHistory: [SoilChartPoint] = []
     @State private var selectedSoilRange: SoilChartRange = .inception
@@ -101,6 +102,7 @@ struct TodayView: View {
                 WaterSproutPickerView(
                     sprouts: activeSprouts,
                     wateredTodayIds: Set(activeSprouts.filter { wasWateredToday($0) }.map(\.id)),
+                    leafNames: cachedLeafNames,
                     onSelect: { sprout in
                         showWaterPicker = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -125,9 +127,12 @@ struct TodayView: View {
     private func refreshCachedState() {
         let state = EventStore.shared.getState()
 
-        // Active sprouts
+        // Active sprouts + leaf names (from same snapshot)
         let active = getActiveSprouts(from: state)
         activeSprouts = active
+        cachedLeafNames = state.leaves.reduce(into: [:]) { map, pair in
+            map[pair.key] = pair.value.name
+        }
 
         // Next harvest sprout
         cachedNextHarvestSprout = active
@@ -687,9 +692,24 @@ enum SoilChartRange: String, CaseIterable {
 struct WaterSproutPickerView: View {
     let sprouts: [DerivedSprout]
     let wateredTodayIds: Set<String>
+    let leafNames: [String: String]
     let onSelect: (DerivedSprout) -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    /// Un-watered sprouts first (sorted by longest since last watering),
+    /// watered-today sprouts at the bottom.
+    private var sortedSprouts: [DerivedSprout] {
+        sprouts.sorted { a, b in
+            let aWatered = wateredTodayIds.contains(a.id)
+            let bWatered = wateredTodayIds.contains(b.id)
+            if aWatered != bWatered { return !aWatered }
+            // Within each group, oldest last-watered first (never watered = distant past)
+            let aLast = a.waterEntries.map(\.timestamp).max() ?? .distantPast
+            let bLast = b.waterEntries.map(\.timestamp).max() ?? .distantPast
+            return aLast < bLast
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -698,7 +718,7 @@ struct WaterSproutPickerView: View {
 
             ScrollView {
                 VStack(spacing: TrunkTheme.space2) {
-                    ForEach(sprouts, id: \.id) { sprout in
+                    ForEach(sortedSprouts, id: \.id) { sprout in
                         let alreadyWatered = wateredTodayIds.contains(sprout.id)
                         Button {
                             onSelect(sprout)
@@ -709,19 +729,39 @@ struct WaterSproutPickerView: View {
                                     .frame(width: 2)
 
                                 VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                    // Leaf name (prominent, above title)
+                                    if let leafId = sprout.leafId,
+                                       let leafName = leafNames[leafId] {
+                                        Text(leafName)
+                                            .font(.system(size: TrunkTheme.textBase, weight: .medium, design: .monospaced))
+                                            .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.wood)
+                                            .lineLimit(1)
+                                    }
+
                                     Text(sprout.title)
-                                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                                         .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.ink)
                                         .lineLimit(1)
 
-                                    Text(alreadyWatered ? "Watered today" : sprout.season.label)
-                                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                        .foregroundStyle(Color.inkFaint)
+                                    HStack(spacing: TrunkTheme.space2) {
+                                        Text(alreadyWatered ? "Watered today" : sprout.season.label)
+                                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                            .foregroundStyle(Color.inkFaint)
+
+                                        if !alreadyWatered {
+                                            Text("\u{00B7}")
+                                                .foregroundStyle(Color.inkFaint)
+
+                                            Text(sprout.environment.label)
+                                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                                .foregroundStyle(Color.inkFaint)
+                                        }
+                                    }
                                 }
 
                                 Spacer()
 
-                                Text(alreadyWatered ? "✓" : "💧")
+                                Text(alreadyWatered ? "\u{2713}" : "\u{1F4A7}")
                                     .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.ink)
                             }
                             .padding(TrunkTheme.space3)

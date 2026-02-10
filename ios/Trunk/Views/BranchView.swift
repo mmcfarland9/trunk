@@ -58,6 +58,7 @@ struct BranchView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .swipeBackEnabled()
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 BackButton()
