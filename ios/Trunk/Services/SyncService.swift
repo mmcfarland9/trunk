@@ -401,7 +401,7 @@ final class SyncService: ObservableObject {
 
         let insertions = channel.postgresChange(InsertAction.self, table: "events", filter: .eq("user_id", value: userId.uuidString))
 
-        try await channel.subscribe()
+        try await channel.subscribeWithError()
 
         for await insertion in insertions {
           do {

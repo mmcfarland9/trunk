@@ -55,7 +55,7 @@ final class AuthService {
     /// Read user profile from auth session metadata (same as web app)
     func fetchProfile() async {
         guard let metadata = user?.userMetadata else { return }
-        userFullName = (metadata["full_name"] as? AnyJSON)?.stringValue
+        userFullName = metadata["full_name"]?.stringValue
     }
 
     func requestCode(email: String) async throws {

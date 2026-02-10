@@ -208,7 +208,7 @@ final class EventStore: ObservableObject {
     writeTask = Task { [weak self] in
       try? await Task.sleep(nanoseconds: UInt64(Self.writeDebounceInterval * 1_000_000_000))
       guard !Task.isCancelled else { return }
-      await self?.writeToDisk()
+      self?.writeToDisk()
     }
   }
 
