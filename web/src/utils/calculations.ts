@@ -8,7 +8,6 @@ import constants from '../../../shared/constants.json'
 
 // Constants
 const MAX_SOIL_CAPACITY = constants.soil.maxCapacity
-const SOIL_RECOVERY_PER_WATER = constants.soil.recoveryRates.waterUse
 const PLANTING_COSTS = constants.soil.plantingCosts
 const ENVIRONMENT_MULTIPLIERS = constants.soil.environmentMultipliers
 const RESULT_MULTIPLIERS = constants.soil.resultMultipliers
@@ -39,17 +38,6 @@ export function calculateCapacityReward(
   const diminishingFactor = Math.max(0, Math.pow(1 - (currentCapacity / MAX_SOIL_CAPACITY), 1.5))
 
   return base * envMult * resultMult * diminishingFactor
-}
-
-/**
- * Legacy function for backwards compatibility - returns base reward without diminishing
- */
-export function getCapacityReward(environment: SproutEnvironment, season: SproutSeason): number {
-  return SEASONS[season].baseReward * ENVIRONMENT_MULTIPLIERS[environment]
-}
-
-export function getSoilRecoveryRate(): number {
-  return SOIL_RECOVERY_PER_WATER
 }
 
 // --- Reset Time Calculations ---

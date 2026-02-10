@@ -1,5 +1,5 @@
 import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
-import { getCapacityReward, calculateCapacityReward, getSoilCapacity } from '../state'
+import { calculateCapacityReward, getSoilCapacity } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { getResultEmoji } from '../utils/sprout-labels'
 import sharedConstants from '../../../shared/constants.json'
@@ -48,7 +48,7 @@ export function initHarvestDialog(
     // All harvests return full soil + some capacity (no "failed" state)
     if (currentHarvestSprout) {
       const resultMultiplier = sharedConstants.soil.resultMultipliers[String(result) as keyof typeof sharedConstants.soil.resultMultipliers] ?? 0.7
-      const baseReward = getCapacityReward(currentHarvestSprout.environment, currentHarvestSprout.season)
+      const baseReward = sharedConstants.seasons[currentHarvestSprout.season].baseReward * sharedConstants.soil.environmentMultipliers[currentHarvestSprout.environment]
       const capGain = baseReward * resultMultiplier
       harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${currentHarvestSprout.soilCost.toFixed(1)}, +${capGain.toFixed(2)} cap)</span>`
     }

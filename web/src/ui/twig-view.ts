@@ -13,7 +13,6 @@ import {
   calculateSoilCost,
   getSoilAvailable,
   canAffordSoil,
-  getSoilRecoveryRate,
   getPresetLabel,
 } from '../state'
 import {
@@ -28,6 +27,7 @@ import {
   checkSproutWateredThisWeek,
   type DerivedLeaf,
 } from '../events'
+import sharedConstants from '../../../shared/constants.json'
 
 type TwigViewCallbacks = {
   onClose: () => void
@@ -352,7 +352,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         ` : `
           <div class="sprout-growing-footer">
             <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
-            <button type="button" class="action-btn ${watered ? 'action-btn-passive' : 'action-btn-progress'} action-btn-water sprout-water-btn" data-action="water" ${watered ? 'disabled' : ''}>${watered ? 'Watered' : `Water <span class="btn-soil-gain">(+${getSoilRecoveryRate().toFixed(2)})</span>`}</button>
+            <button type="button" class="action-btn ${watered ? 'action-btn-passive' : 'action-btn-progress'} action-btn-water sprout-water-btn" data-action="water" ${watered ? 'disabled' : ''}>${watered ? 'Watered' : `Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span>`}</button>
           </div>
         `}
       </div>

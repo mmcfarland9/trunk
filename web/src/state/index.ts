@@ -40,8 +40,6 @@ export {
 export {
   calculateSoilCost,
   calculateCapacityReward,
-  getCapacityReward,
-  getSoilRecoveryRate,
   getTodayResetTime,
   getWeekResetTime,
   getNextWaterReset,
