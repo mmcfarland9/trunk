@@ -331,24 +331,8 @@ type SyncResult = {
 }
 
 let currentSyncStatus: SyncStatus = 'idle'
-type SyncStatusListener = (status: SyncStatus) => void
-const syncStatusListeners: SyncStatusListener[] = []
-
-/**
- * Subscribe to sync status changes
- */
-export function subscribeSyncStatus(listener: SyncStatusListener): () => void {
-  syncStatusListeners.push(listener)
-  listener(currentSyncStatus) // Immediate callback with current status
-  return () => {
-    const index = syncStatusListeners.indexOf(listener)
-    if (index > -1) syncStatusListeners.splice(index, 1)
-  }
-}
-
 function setSyncStatus(status: SyncStatus): void {
   currentSyncStatus = status
-  syncStatusListeners.forEach(l => l(status))
   notifyMetadataListeners()
 }
 
@@ -510,11 +494,7 @@ function notifyMetadataListeners(): void {
 export function startVisibilitySync(): void {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      smartSync().then(result => {
-        if (result.pulled > 0) {
-          syncStatusListeners.forEach(l => l('success'))
-        }
-      })
+      smartSync()
     }
   })
 }
