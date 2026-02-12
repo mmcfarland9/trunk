@@ -191,31 +191,17 @@ struct TodayView: View {
     private var waterSection: some View {
         let canWater = progression.waterAvailable > 0 && !activeSprouts.isEmpty
 
-        let label: String = {
-            if activeSprouts.isEmpty {
-                return "No sprouts to water"
-            } else if progression.waterAvailable > 0 {
-                return "Water a sprout..."
-            } else {
-                return "All watered today"
-            }
-        }()
-
         return Button {
             HapticManager.tap()
             showWaterSheet = true
         } label: {
             HStack {
                 Text("💧")
-                Text(label)
+                Text("Water your sprouts")
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .foregroundStyle(canWater ? Color.ink : Color.inkFaint)
 
                 Spacer()
-
-                Text("(\(progression.waterAvailable)/\(progression.waterCapacity))")
-                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint)
             }
             .padding(TrunkTheme.space3)
             .background(Color.paper)
@@ -229,24 +215,17 @@ struct TodayView: View {
     }
 
     private var shineSection: some View {
-        let sunUsed = progression.canShine ? 0 : 1
-        let sunCapacity = 1
-
         return Button {
             HapticManager.tap()
             showShineSheet = true
         } label: {
             HStack {
                 Text("☀️")
-                Text(progression.canShine ? "Shine on a twig..." : "Already shined this week")
+                Text("Shine on your garden")
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .foregroundStyle(progression.canShine ? Color.ink : Color.inkFaint)
 
                 Spacer()
-
-                Text("(\(sunCapacity - sunUsed)/\(sunCapacity))")
-                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint)
             }
             .padding(TrunkTheme.space3)
             .background(Color.paper)
