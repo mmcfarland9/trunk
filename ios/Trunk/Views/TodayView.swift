@@ -24,7 +24,7 @@ struct TodayView: View {
     @State private var activeSprouts: [DerivedSprout] = []
     @State private var cachedLeafNames: [String: String] = [:]
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
-    @State private var cachedSoilHistory: [SoilChartPoint] = []
+    @State private var cachedRawSoilHistory: [RawSoilSnapshot] = []
     @State private var selectedSoilRange: SoilChartRange = .inception
     @State private var scrubIndex: Int? = nil
 
@@ -144,8 +144,8 @@ struct TodayView: View {
             }
             .first
 
-        // Soil capacity history
-        cachedSoilHistory = computeSoilHistory()
+        // Soil capacity history (raw snapshots before bucketing)
+        cachedRawSoilHistory = computeSoilHistory()
     }
 
     // MARK: - Sections
@@ -273,23 +273,7 @@ struct TodayView: View {
     }
 
     private var filteredSoilHistory: [SoilChartPoint] {
-        guard let rangeStart = selectedSoilRange.startDate else {
-            return cachedSoilHistory
-        }
-
-        let inRange = cachedSoilHistory.filter { $0.date >= rangeStart }
-
-        // Interpolate a boundary point from the last value before the range
-        if let lastBefore = cachedSoilHistory.last(where: { $0.date < rangeStart }) {
-            let boundary = SoilChartPoint(
-                date: rangeStart,
-                capacity: lastBefore.capacity,
-                available: lastBefore.available
-            )
-            return [boundary] + inRange
-        }
-
-        return inRange
+        bucketSoilHistory(cachedRawSoilHistory, range: selectedSoilRange, now: Date())
     }
 
     private var soilCapacitySection: some View {
@@ -506,7 +490,7 @@ struct TodayView: View {
 
     private func isRangeAvailable(_ range: SoilChartRange) -> Bool {
         guard let rangeStart = range.startDate,
-              let earliest = cachedSoilHistory.first?.date else {
+              let earliest = cachedRawSoilHistory.first?.date else {
             return true // ALL is always available; no data = nothing to disable
         }
         return earliest <= rangeStart
@@ -550,11 +534,11 @@ struct TodayView: View {
 
     // MARK: - Computation Helpers
 
-    private func computeSoilHistory() -> [SoilChartPoint] {
+    private func computeSoilHistory() -> [RawSoilSnapshot] {
         let events = EventStore.shared.events
         var capacity = SharedConstants.Soil.startingCapacity
         var available = SharedConstants.Soil.startingCapacity
-        var history: [SoilChartPoint] = []
+        var history: [RawSoilSnapshot] = []
 
         // Track planted sprouts for harvest/uproot reward calculation
         var sproutInfo: [String: (season: String, environment: String, soilCost: Int)] = [:]
@@ -562,7 +546,7 @@ struct TodayView: View {
         // Starting point from first event
         if let firstEvent = events.first {
             let date = Self.parseISO8601(firstEvent.clientTimestamp)
-            history.append(SoilChartPoint(date: date, capacity: capacity, available: available))
+            history.append(RawSoilSnapshot(date: date, capacity: capacity, available: available))
         }
 
         for event in events {
@@ -617,14 +601,123 @@ struct TodayView: View {
             }
 
             if changed {
-                history.append(SoilChartPoint(date: date, capacity: capacity, available: available))
+                history.append(RawSoilSnapshot(date: date, capacity: capacity, available: available))
             }
         }
 
         // Add current date as final point
-        history.append(SoilChartPoint(date: Date(), capacity: capacity, available: available))
+        history.append(RawSoilSnapshot(date: Date(), capacity: capacity, available: available))
 
         return history
+    }
+
+    private func bucketSoilHistory(
+        _ rawHistory: [RawSoilSnapshot],
+        range: SoilChartRange,
+        now: Date
+    ) -> [SoilChartPoint] {
+        guard !rawHistory.isEmpty else { return [] }
+
+        let calendar = Calendar.current
+        let rangeStart = range.startDate ?? rawHistory[0].date
+        let rangeEnd = now
+
+        // Generate bucket boundaries based on the range's bucket strategy
+        let boundaries: [Date]
+        let bucketKey = range.bucketKey
+
+        if let intervalSeconds = SharedConstants.Chart.fixedIntervalBuckets[bucketKey] {
+            // Fixed interval: floor start to appropriate unit, then step by interval
+            let flooredStart: Date
+            if intervalSeconds <= 21600 {
+                // 1d (3600s) and 1w (21600s): floor to hour
+                flooredStart = calendar.dateInterval(of: .hour, for: rangeStart)?.start ?? rangeStart
+            } else {
+                // 1m (86400s) and 3m (604800s): floor to midnight
+                flooredStart = calendar.startOfDay(for: rangeStart)
+            }
+
+            let interval = TimeInterval(intervalSeconds)
+            var dates: [Date] = []
+            var cursor = flooredStart
+            while cursor <= rangeEnd {
+                dates.append(cursor)
+                cursor = cursor.addingTimeInterval(interval)
+            }
+            boundaries = dates
+
+        } else if SharedConstants.Chart.semimonthlyRanges.contains(bucketKey) {
+            // Semimonthly: 1st and 15th of each month
+            var dates: [Date] = []
+            var components = calendar.dateComponents([.year, .month], from: rangeStart)
+            components.hour = 0
+            components.minute = 0
+            components.second = 0
+
+            while true {
+                // 1st of the month
+                components.day = 1
+                if let first = calendar.date(from: components) {
+                    if first >= rangeStart && first <= rangeEnd {
+                        dates.append(first)
+                    }
+                }
+
+                // 15th of the month
+                components.day = 15
+                if let fifteenth = calendar.date(from: components) {
+                    if fifteenth >= rangeStart && fifteenth <= rangeEnd {
+                        dates.append(fifteenth)
+                    }
+                    if fifteenth > rangeEnd { break }
+                }
+
+                // Advance to next month
+                if let nextMonth = calendar.date(byAdding: .month, value: 1, to: calendar.date(from: components) ?? rangeEnd) {
+                    components = calendar.dateComponents([.year, .month], from: nextMonth)
+                    components.hour = 0
+                    components.minute = 0
+                    components.second = 0
+                } else {
+                    break
+                }
+            }
+            boundaries = dates
+
+        } else {
+            // Adaptive (ALL): uniform spacing targeting adaptiveTargetNodes points
+            let totalSpan = rangeEnd.timeIntervalSince(rangeStart)
+            let targetNodes = Double(SharedConstants.Chart.adaptiveTargetNodes)
+            var intervalSeconds = totalSpan / targetNodes
+
+            // If span < 1 day, fall back to hourly
+            if totalSpan < 86400 {
+                intervalSeconds = 3600
+            }
+
+            var dates: [Date] = []
+            var cursor = rangeStart
+            while cursor <= rangeEnd {
+                dates.append(cursor)
+                cursor = cursor.addingTimeInterval(intervalSeconds)
+            }
+            boundaries = dates
+        }
+
+        guard !boundaries.isEmpty else { return [] }
+
+        let startingCapacity = SharedConstants.Soil.startingCapacity
+
+        // For each bucket boundary, find the last raw snapshot with date <= boundary
+        var result: [SoilChartPoint] = []
+        for boundary in boundaries {
+            let snapshot = rawHistory.last { $0.date <= boundary }
+            let cap = snapshot?.capacity ?? startingCapacity
+            let avail = snapshot?.available ?? startingCapacity
+            result.append(SoilChartPoint(date: boundary, capacity: cap, available: avail))
+        }
+
+        return result
     }
 
     private static func parseISO8601(_ timestamp: String) -> Date {
@@ -648,6 +741,12 @@ struct SoilChartPoint: Identifiable {
     let available: Double
 }
 
+struct RawSoilSnapshot {
+    let date: Date
+    let capacity: Double
+    let available: Double
+}
+
 enum SoilChartRange: String, CaseIterable {
     case oneDay = "1D"
     case oneWeek = "1W"
@@ -656,6 +755,18 @@ enum SoilChartRange: String, CaseIterable {
     case sixMonths = "6M"
     case yearToDate = "YTD"
     case inception = "ALL"
+
+    var bucketKey: String {
+        switch self {
+        case .oneDay: return "1d"
+        case .oneWeek: return "1w"
+        case .oneMonth: return "1m"
+        case .threeMonths: return "3m"
+        case .sixMonths: return "6m"
+        case .yearToDate: return "ytd"
+        case .inception: return "all"
+        }
+    }
 
     var startDate: Date? {
         let calendar = Calendar.current

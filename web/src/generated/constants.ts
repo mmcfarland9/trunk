@@ -219,3 +219,22 @@ export const STORAGE_KEYS = {
 } as const
 
 export const EXPORT_REMINDER_DAYS = 7
+
+// =============================================================================
+// Chart Bucket Config
+// =============================================================================
+
+export type ChartBucketConfig =
+  | { intervalSeconds: number }
+  | { calendarSnap: 'semimonthly' }
+  | { adaptive: true; targetNodes: number }
+
+export const CHART_BUCKETS: Record<string, ChartBucketConfig> = {
+  '1d': { intervalSeconds: 3600 },
+  '1w': { intervalSeconds: 21600 },
+  '1m': { intervalSeconds: 86400 },
+  '3m': { intervalSeconds: 604800 },
+  '6m': { calendarSnap: 'semimonthly' },
+  'ytd': { calendarSnap: 'semimonthly' },
+  'all': { adaptive: true, targetNodes: 24 }
+}

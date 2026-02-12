@@ -189,4 +189,22 @@ enum SharedConstants {
             return branchNames[index]
         }
     }
+
+    // MARK: - Chart
+
+    enum Chart {
+        /// Fixed-interval bucket sizes in seconds, keyed by range ID
+        static let fixedIntervalBuckets: [String: Int] = [
+            "1d": 3600,
+            "1w": 21600,
+            "1m": 86400,
+            "3m": 604800
+        ]
+
+        /// Ranges that use calendar-snapped semimonthly bucketing (1st & 15th of each month)
+        static let semimonthlyRanges: Set<String> = ["6m", "ytd"]
+
+        /// Target node count for adaptive (ALL) range
+        static let adaptiveTargetNodes: Int = 24
+    }
 }

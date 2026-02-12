@@ -160,6 +160,25 @@ ${storageKeysEntries}
 } as const
 
 export const EXPORT_REMINDER_DAYS = ${constants.storage.exportReminderDays}
+
+// =============================================================================
+// Chart Bucket Config
+// =============================================================================
+
+export type ChartBucketConfig =
+  | { intervalSeconds: number }
+  | { calendarSnap: 'semimonthly' }
+  | { adaptive: true; targetNodes: number }
+
+export const CHART_BUCKETS: Record<string, ChartBucketConfig> = {
+${Object.entries(constants.chart.buckets)
+  .map(([range, config]) => {
+    if (config.intervalSeconds) return `  '${range}': { intervalSeconds: ${config.intervalSeconds} }`
+    if (config.calendarSnap) return `  '${range}': { calendarSnap: '${config.calendarSnap}' }`
+    return `  '${range}': { adaptive: true, targetNodes: ${config.targetNodes} }`
+  })
+  .join(',\n')}
+}
 `
 }
 
@@ -330,6 +349,27 @@ ${constants.tree.branches
             }
             return branchNames[index]
         }
+    }
+
+    // MARK: - Chart
+
+    enum Chart {
+        /// Fixed-interval bucket sizes in seconds, keyed by range ID
+        static let fixedIntervalBuckets: [String: Int] = [
+${Object.entries(constants.chart.buckets)
+  .filter(([, config]) => config.intervalSeconds)
+  .map(([range, config]) => `            "${range}": ${config.intervalSeconds}`)
+  .join(',\n')}
+        ]
+
+        /// Ranges that use calendar-snapped semimonthly bucketing (1st & 15th of each month)
+        static let semimonthlyRanges: Set<String> = [${Object.entries(constants.chart.buckets)
+  .filter(([, config]) => config.calendarSnap)
+  .map(([range]) => `"${range}"`)
+  .join(', ')}]
+
+        /// Target node count for adaptive (ALL) range
+        static let adaptiveTargetNodes: Int = ${constants.chart.buckets.all.targetNodes}
     }
 }
 `

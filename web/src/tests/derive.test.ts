@@ -18,7 +18,10 @@ import {
   wasShoneThisWeek,
   getAllWaterEntries,
   deriveSoilLog,
+  computeRawSoilHistory,
+  bucketSoilData,
 } from '../events/derive'
+import type { SoilChartRange } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
 describe('Derive State - Soil Capacity', () => {
@@ -842,5 +845,285 @@ describe('deriveSoilLog', () => {
     expect(log[1].reason).toBe('Watered sprout')
     expect(log[2].reason).toBe('Sun reflection')
     expect(log[3].reason).toBe('Harvested (5/5)')
+  })
+})
+
+// ============================================================================
+// Soil Chart Bucketing
+// ============================================================================
+
+describe('computeRawSoilHistory', () => {
+  it('returns empty array for no events', () => {
+    expect(computeRawSoilHistory([])).toHaveLength(0)
+  })
+
+  it('tracks soil changes from plant/water/harvest events', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_watered',
+        timestamp: '2026-01-02T10:00:00Z',
+        sproutId: 's1',
+        content: 'Hi',
+      },
+    ]
+
+    const history = computeRawSoilHistory(events)
+
+    expect(history).toHaveLength(2)
+    // After planting: capacity=10, available=8
+    expect(history[0].capacity).toBe(10)
+    expect(history[0].available).toBe(8)
+    // After watering: capacity=10, available=8.05
+    expect(history[1].capacity).toBe(10)
+    expect(history[1].available).toBeCloseTo(8.05)
+  })
+
+  it('handles harvest with capacity gain and soil return', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+      {
+        type: 'sprout_harvested',
+        timestamp: '2026-01-15T10:00:00Z',
+        sproutId: 's1',
+        result: 5,
+        capacityGained: 0.5,
+      },
+    ]
+
+    const history = computeRawSoilHistory(events)
+
+    expect(history).toHaveLength(2)
+    // After harvest: capacity=10.5, available=min(8+2, 10.5)=10
+    expect(history[1].capacity).toBe(10.5)
+    expect(history[1].available).toBe(10)
+  })
+})
+
+describe('bucketSoilData', () => {
+  it('returns empty array for empty history', () => {
+    const result = bucketSoilData([], '1d', new Date('2026-01-15T12:00:00'))
+    expect(result).toHaveLength(0)
+  })
+
+  it('generates hourly buckets for 1d range', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-14T16:12:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-15T12:00:00Z')
+    const points = bucketSoilData(rawHistory, '1d', now)
+
+    // Should have ~24 hourly buckets (from Jan 14 12:00 to Jan 15 12:00)
+    expect(points.length).toBeGreaterThanOrEqual(23)
+    expect(points.length).toBeLessThanOrEqual(26)
+
+    // All points should be evenly spaced (1 hour apart, except possibly the last)
+    for (let i = 1; i < points.length - 1; i++) {
+      const diff = points[i].timestamp.getTime() - points[i - 1].timestamp.getTime()
+      expect(diff).toBe(3600000) // 1 hour in ms
+    }
+  })
+
+  it('carries forward values for empty buckets', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-14T08:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-15T12:00:00Z')
+    const points = bucketSoilData(rawHistory, '1d', now)
+
+    // The event is within the 1d window, so after it all points should show
+    // capacity=10, available=8
+    const pointsAfterEvent = points.filter(
+      (p) => p.timestamp.getTime() >= new Date('2026-01-14T09:00:00Z').getTime()
+    )
+    for (const p of pointsAfterEvent) {
+      expect(p.capacity).toBe(10)
+      expect(p.available).toBe(8)
+    }
+  })
+
+  it('generates daily buckets for 1m range', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-31T12:00:00Z')
+    const points = bucketSoilData(rawHistory, '1m', now)
+
+    // Should have ~30-32 daily buckets
+    expect(points.length).toBeGreaterThanOrEqual(28)
+    expect(points.length).toBeLessThanOrEqual(33)
+  })
+
+  it('generates semimonthly buckets for 6m range', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2025-08-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-31T12:00:00Z')
+    const points = bucketSoilData(rawHistory, '6m', now)
+
+    // 6 months ~ 12 semimonthly periods + final = ~13 points
+    expect(points.length).toBeGreaterThanOrEqual(10)
+    expect(points.length).toBeLessThanOrEqual(16)
+  })
+
+  it('uses adaptive bucketing for "all" range', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2025-01-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-31T12:00:00Z')
+    const points = bucketSoilData(rawHistory, 'all', now)
+
+    // Should aim for ~24 nodes (+/- final boundary)
+    expect(points.length).toBeGreaterThanOrEqual(20)
+    expect(points.length).toBeLessThanOrEqual(28)
+  })
+
+  it('initializes carry-forward from events before range window', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2025-12-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-15T12:00:00Z')
+    // 1d range: Jan 14 12:00 to Jan 15 12:00 — event is before the window
+    const points = bucketSoilData(rawHistory, '1d', now)
+
+    // All points should carry forward the post-plant state (capacity=10, available=8)
+    for (const p of points) {
+      expect(p.capacity).toBe(10)
+      expect(p.available).toBe(8)
+    }
+  })
+
+  it('uses starting capacity when no events precede range', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2026-01-15T16:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-15T20:00:00Z')
+    const points = bucketSoilData(rawHistory, '1d', now)
+
+    // First point (before the event) should show starting capacity
+    expect(points[0].capacity).toBe(10)
+    expect(points[0].available).toBe(10)
+
+    // Later points after the event should show reduced available
+    const lastPoint = points[points.length - 1]
+    expect(lastPoint.available).toBe(8)
+  })
+
+  it('generates weekly buckets for 3m range', () => {
+    const events: TrunkEvent[] = [
+      {
+        type: 'sprout_planted',
+        timestamp: '2025-11-01T10:00:00Z',
+        sproutId: 's1',
+        twigId: 'branch-0-twig-0',
+        title: 'Test',
+        season: '2w',
+        environment: 'fertile',
+        soilCost: 2,
+      },
+    ]
+
+    const rawHistory = computeRawSoilHistory(events)
+    const now = new Date('2026-01-31T12:00:00Z')
+    const points = bucketSoilData(rawHistory, '3m', now)
+
+    // 3 months ~ 13 weeks + final
+    expect(points.length).toBeGreaterThanOrEqual(12)
+    expect(points.length).toBeLessThanOrEqual(16)
   })
 })

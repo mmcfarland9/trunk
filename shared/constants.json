@@ -101,6 +101,17 @@
       }
     ]
   },
+  "chart": {
+    "buckets": {
+      "1d": { "intervalSeconds": 3600 },
+      "1w": { "intervalSeconds": 21600 },
+      "1m": { "intervalSeconds": 86400 },
+      "3m": { "intervalSeconds": 604800 },
+      "6m": { "calendarSnap": "semimonthly" },
+      "ytd": { "calendarSnap": "semimonthly" },
+      "all": { "adaptive": true, "targetNodes": 24 }
+    }
+  },
   "storage": {
     "keys": {
       "nodeData": "trunk-notes-v1",
