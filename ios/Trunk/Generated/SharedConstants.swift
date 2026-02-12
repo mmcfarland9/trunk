@@ -207,4 +207,29 @@ enum SharedConstants {
         /// Target node count for adaptive (ALL) range
         static let adaptiveTargetNodes: Int = 24
     }
+
+    // MARK: - Watering Prompts
+
+    enum WateringPrompts {
+        static let prompts: [String] = [
+            "How do you feel about this today?",
+            "What did you actually do today?",
+            "Where's your energy with this right now?",
+            "What blocked you today?",
+            "What tiny step did you take?",
+            "What's the single next step?",
+            "Are you avoiding something?",
+            "What's working in your approach?",
+            "What do you need to keep going?",
+            "Are you still committed to this?",
+            "What moment stands out from today?",
+            "What part still excites you?",
+            "What went right today?",
+            "What would make this feel easier?",
+            "What resistance showed up?",
+            "Should you try something different?",
+            "What would you do if no one was watching?",
+            "Why did you start this?"
+        ]
+    }
 }

@@ -124,12 +124,8 @@ describe('DOM Builder Integration', () => {
   describe('AppElements - Water Dialog', () => {
     it('has water dialog elements', () => {
       expect(result.elements.waterDialog).toBeInstanceOf(HTMLDivElement)
-      expect(result.elements.waterDialogTitle).toBeInstanceOf(HTMLParagraphElement)
-      expect(result.elements.waterDialogMeta).toBeInstanceOf(HTMLParagraphElement)
-      expect(result.elements.waterDialogJournal).toBeInstanceOf(HTMLTextAreaElement)
       expect(result.elements.waterDialogClose).toBeInstanceOf(HTMLButtonElement)
-      expect(result.elements.waterDialogCancel).toBeInstanceOf(HTMLButtonElement)
-      expect(result.elements.waterDialogSave).toBeInstanceOf(HTMLButtonElement)
+      expect(result.elements.waterDialogBody).toBeInstanceOf(HTMLDivElement)
     })
   })
 

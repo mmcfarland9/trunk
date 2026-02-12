@@ -283,23 +283,17 @@ export function buildApp(
   `
 
 
-  // Water journaling dialog
+  // Water journaling dialog (multi-sprout)
   const waterDialog = document.createElement('div')
   waterDialog.className = 'water-dialog hidden'
   waterDialog.innerHTML = `
     <div class="water-dialog-box" role="dialog" aria-modal="true" aria-labelledby="water-dialog-title">
       <div class="water-dialog-header">
-        <h2 id="water-dialog-title" class="water-dialog-title">Water Sprout</h2>
-        <button type="button" class="water-dialog-close" aria-label="Close dialog">×</button>
+        <h2 id="water-dialog-title" class="water-dialog-title">Water Your Sprouts</h2>
+        <button type="button" class="water-dialog-close" aria-label="Close dialog">&times;</button>
       </div>
       <div class="water-dialog-body">
-        <p class="water-dialog-sprout-title"></p>
-        <p class="water-dialog-sprout-meta"></p>
-        <textarea class="water-dialog-journal" placeholder="How is this sprout growing? Reflect on your progress..."></textarea>
-        <div class="water-dialog-actions">
-          <button type="button" class="action-btn action-btn-passive action-btn-neutral water-dialog-cancel">Cancel</button>
-          <button type="button" class="action-btn action-btn-progress action-btn-water water-dialog-save">Pour</button>
-        </div>
+        <!-- Sections are dynamically populated -->
       </div>
     </div>
   `
@@ -543,12 +537,8 @@ export function buildApp(
     sproutsDialogContent: sproutsDialog.querySelector<HTMLDivElement>('.sprouts-dialog-content')!,
     sproutsDialogClose: sproutsDialog.querySelector<HTMLButtonElement>('.sprouts-dialog-close')!,
     waterDialog,
-    waterDialogTitle: waterDialog.querySelector<HTMLParagraphElement>('.water-dialog-sprout-title')!,
-    waterDialogMeta: waterDialog.querySelector<HTMLParagraphElement>('.water-dialog-sprout-meta')!,
-    waterDialogJournal: waterDialog.querySelector<HTMLTextAreaElement>('.water-dialog-journal')!,
     waterDialogClose: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-close')!,
-    waterDialogCancel: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-cancel')!,
-    waterDialogSave: waterDialog.querySelector<HTMLButtonElement>('.water-dialog-save')!,
+    waterDialogBody: waterDialog.querySelector<HTMLDivElement>('.water-dialog-body')!,
     harvestDialog,
     harvestDialogTitle: harvestDialog.querySelector<HTMLParagraphElement>('.harvest-dialog-sprout-title')!,
     harvestDialogMeta: harvestDialog.querySelector<HTMLParagraphElement>('.harvest-dialog-sprout-meta')!,

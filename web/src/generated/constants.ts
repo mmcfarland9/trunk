@@ -238,3 +238,28 @@ export const CHART_BUCKETS: Record<string, ChartBucketConfig> = {
   'ytd': { calendarSnap: 'semimonthly' },
   'all': { adaptive: true, targetNodes: 24 }
 }
+
+// =============================================================================
+// Watering Prompts
+// =============================================================================
+
+export const WATERING_PROMPTS: readonly string[] = [
+  'How do you feel about this today?',
+  'What did you actually do today?',
+  'Where\'s your energy with this right now?',
+  'What blocked you today?',
+  'What tiny step did you take?',
+  'What\'s the single next step?',
+  'Are you avoiding something?',
+  'What\'s working in your approach?',
+  'What do you need to keep going?',
+  'Are you still committed to this?',
+  'What moment stands out from today?',
+  'What part still excites you?',
+  'What went right today?',
+  'What would make this feel easier?',
+  'What resistance showed up?',
+  'Should you try something different?',
+  'What would you do if no one was watching?',
+  'Why did you start this?'
+] as const

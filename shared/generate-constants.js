@@ -179,6 +179,14 @@ ${Object.entries(constants.chart.buckets)
   })
   .join(',\n')}
 }
+
+// =============================================================================
+// Watering Prompts
+// =============================================================================
+
+export const WATERING_PROMPTS: readonly string[] = [
+${constants.wateringPrompts.map((p) => `  '${p.replace(/'/g, "\\'")}'`).join(',\n')}
+] as const
 `
 }
 
@@ -370,6 +378,14 @@ ${Object.entries(constants.chart.buckets)
 
         /// Target node count for adaptive (ALL) range
         static let adaptiveTargetNodes: Int = ${constants.chart.buckets.all.targetNodes}
+    }
+
+    // MARK: - Watering Prompts
+
+    enum WateringPrompts {
+        static let prompts: [String] = [
+${constants.wateringPrompts.map((p) => `            "${p.replace(/"/g, '\\"')}"`).join(',\n')}
+        ]
     }
 }
 `

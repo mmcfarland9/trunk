@@ -13,11 +13,10 @@ struct TodayView: View {
 
     @Environment(AuthService.self) private var authService
 
-    @State private var selectedSproutForWater: DerivedSprout?
     @State private var selectedSproutForHarvest: DerivedSprout?
     @State private var showShineSheet = false
     @State private var showDataInfo = false
-    @State private var showWaterPicker = false
+    @State private var showWaterSheet = false
 
     // MARK: - Cached State (updated in .task / .onAppear)
 
@@ -79,9 +78,13 @@ struct TodayView: View {
                     .foregroundStyle(Color.wood)
             }
         }
-        .sheet(item: $selectedSproutForWater) { sprout in
+        .sheet(isPresented: $showWaterSheet) {
             NavigationStack {
-                WaterSproutView(sprout: sprout, progression: progression)
+                WaterDailySproutsView(
+                    sprouts: selectDailySprouts(),
+                    progression: progression,
+                    wateredTodayIds: Set(activeSprouts.filter { wasWateredToday($0) }.map(\.id))
+                )
             }
         }
         .sheet(item: $selectedSproutForHarvest) { sprout in
@@ -96,22 +99,6 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showDataInfo) {
             DataInfoSheet(progression: progression)
-        }
-        .sheet(isPresented: $showWaterPicker) {
-            NavigationStack {
-                WaterSproutPickerView(
-                    sprouts: activeSprouts,
-                    wateredTodayIds: Set(activeSprouts.filter { wasWateredToday($0) }.map(\.id)),
-                    leafNames: cachedLeafNames,
-                    onSelect: { sprout in
-                        showWaterPicker = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            selectedSproutForWater = sprout
-                        }
-                    }
-                )
-            }
-            .presentationDetents([.medium])
         }
         .onAppear {
             progression.refresh()
@@ -216,7 +203,7 @@ struct TodayView: View {
 
         return Button {
             HapticManager.tap()
-            showWaterPicker = true
+            showWaterSheet = true
         } label: {
             HStack {
                 Text("💧")
@@ -726,6 +713,16 @@ struct TodayView: View {
 
     // MARK: - Helpers
 
+    /// Select up to 3 active sprouts, sorted by least recently watered (oldest first).
+    private func selectDailySprouts() -> [DerivedSprout] {
+        let sorted = activeSprouts.sorted { a, b in
+            let aLast = a.waterEntries.map(\.timestamp).max() ?? .distantPast
+            let bLast = b.waterEntries.map(\.timestamp).max() ?? .distantPast
+            return aLast < bLast
+        }
+        return Array(sorted.prefix(3))
+    }
+
     private func wasWateredToday(_ sprout: DerivedSprout) -> Bool {
         let resetTime = getTodayResetTime()
         return sprout.waterEntries.contains { $0.timestamp >= resetTime }
@@ -780,117 +777,6 @@ enum SoilChartRange: String, CaseIterable {
         case .yearToDate:
             return calendar.date(from: calendar.dateComponents([.year], from: now))
         case .inception: return nil
-        }
-    }
-}
-
-// MARK: - Water Sprout Picker
-
-struct WaterSproutPickerView: View {
-    let sprouts: [DerivedSprout]
-    let wateredTodayIds: Set<String>
-    let leafNames: [String: String]
-    let onSelect: (DerivedSprout) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-
-    /// Un-watered sprouts first (sorted by longest since last watering),
-    /// watered-today sprouts at the bottom.
-    private var sortedSprouts: [DerivedSprout] {
-        sprouts.sorted { a, b in
-            let aWatered = wateredTodayIds.contains(a.id)
-            let bWatered = wateredTodayIds.contains(b.id)
-            if aWatered != bWatered { return !aWatered }
-            // Within each group, oldest last-watered first (never watered = distant past)
-            let aLast = a.waterEntries.map(\.timestamp).max() ?? .distantPast
-            let bLast = b.waterEntries.map(\.timestamp).max() ?? .distantPast
-            return aLast < bLast
-        }
-    }
-
-    var body: some View {
-        ZStack {
-            Color.parchment
-                .ignoresSafeArea()
-
-            ScrollView {
-                VStack(spacing: TrunkTheme.space2) {
-                    ForEach(sortedSprouts, id: \.id) { sprout in
-                        let alreadyWatered = wateredTodayIds.contains(sprout.id)
-                        Button {
-                            onSelect(sprout)
-                        } label: {
-                            HStack(spacing: TrunkTheme.space3) {
-                                Rectangle()
-                                    .fill(alreadyWatered ? Color.inkFaint.opacity(0.3) : Color.twig)
-                                    .frame(width: 2)
-
-                                VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                                    // Leaf name (prominent, above title)
-                                    if let leafId = sprout.leafId,
-                                       let leafName = leafNames[leafId] {
-                                        Text(leafName)
-                                            .font(.system(size: TrunkTheme.textBase, weight: .medium, design: .monospaced))
-                                            .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.wood)
-                                            .lineLimit(1)
-                                    }
-
-                                    Text(sprout.title)
-                                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                        .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.ink)
-                                        .lineLimit(1)
-
-                                    HStack(spacing: TrunkTheme.space2) {
-                                        Text(alreadyWatered ? "Watered today" : sprout.season.label)
-                                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                            .foregroundStyle(Color.inkFaint)
-
-                                        if !alreadyWatered {
-                                            Text("\u{00B7}")
-                                                .foregroundStyle(Color.inkFaint)
-
-                                            Text(sprout.environment.label)
-                                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                                .foregroundStyle(Color.inkFaint)
-                                        }
-                                    }
-                                }
-
-                                Spacer()
-
-                                Text(alreadyWatered ? "\u{2713}" : "\u{1F4A7}")
-                                    .foregroundStyle(alreadyWatered ? Color.inkFaint : Color.ink)
-                            }
-                            .padding(TrunkTheme.space3)
-                            .background(Color.paper)
-                            .overlay(
-                                Rectangle()
-                                    .stroke(Color.border, lineWidth: 1)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(alreadyWatered)
-                    }
-                }
-                .padding(TrunkTheme.space4)
-            }
-        }
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
-                }
-                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-            }
-            ToolbarItem(placement: .principal) {
-                Text("CHOOSE SPROUT")
-                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                    .tracking(2)
-                    .foregroundStyle(Color.trunkWater)
-            }
         }
     }
 }

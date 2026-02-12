@@ -3,7 +3,7 @@ import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
 import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncMetadata, startVisibilitySync } from './services/sync-service'
-import { initEventStore, setEventSyncCallback, setEventStoreErrorCallbacks } from './events/store'
+import { initEventStore, setEventSyncCallback, setEventStoreErrorCallbacks, getState } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, getSoilAvailable, getSoilCapacity, getWaterAvailable } from './state'
 import { updateFocus, setFocusedNode, syncNode } from './ui/node-ui'
@@ -238,6 +238,12 @@ const waterDialogApi = initWaterDialog(ctx, {
     navCallbacks.onUpdateStats()
     ctx.twigView?.refresh()
   },
+  getActiveSprouts: () => {
+    const state = getState()
+    return [...state.sprouts.values()]
+      .filter(s => s.state === 'active')
+      .map(s => ({ id: s.id, title: s.title, waterEntries: s.waterEntries }))
+  },
 })
 
 const harvestDialogApi = initHarvestDialog(ctx, {
@@ -298,7 +304,7 @@ const twigView = buildTwigView(mapPanel, {
     }
     return newTwig ?? null
   },
-  onWaterClick: (sprout) => waterDialogApi.openWaterDialog(sprout),
+  onWaterClick: () => waterDialogApi.openWaterDialog(),
   onHarvestClick: (sprout) => harvestDialogApi.openHarvestDialog(sprout),
 })
 
@@ -355,7 +361,7 @@ domResult.elements.backToBranchButton.addEventListener('click', () => {
 // Initialize sidebar sprout sections with branch hover/click callbacks
 initSidebarSprouts(
   ctx,
-  (sprout) => waterDialogApi.openWaterDialog(sprout),
+  () => waterDialogApi.openWaterDialog(),
   {
     onClick: (index) => enterBranchView(index, ctx, navCallbacks)
   },
