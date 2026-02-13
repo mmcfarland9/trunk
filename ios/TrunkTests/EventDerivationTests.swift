@@ -91,12 +91,12 @@ struct SoilCapacityTests {
             ]),
             makeEvent(type: "sprout_watered", timestamp: "2026-01-02T10:00:00Z", payload: [
                 "sproutId": "sprout-1",
-                "note": "Progress"
+                "content": "Progress"
             ]),
             makeEvent(type: "sun_shone", timestamp: "2026-01-03T10:00:00Z", payload: [
                 "twigId": "branch-0-twig-0",
                 "twigLabel": "Test",
-                "note": "Reflection"
+                "content": "Reflection"
             ])
         ]
 
@@ -122,11 +122,11 @@ struct WaterAvailableTests {
         let events: [SyncEvent] = [
             makeEvent(type: "sprout_watered", timestamp: formatISO8601(calendar.date(from: DateComponents(year: 2026, month: 1, day: 30, hour: 9))!), payload: [
                 "sproutId": "sprout-1",
-                "note": "First"
+                "content": "First"
             ]),
             makeEvent(type: "sprout_watered", timestamp: formatISO8601(calendar.date(from: DateComponents(year: 2026, month: 1, day: 30, hour: 11))!), payload: [
                 "sproutId": "sprout-2",
-                "note": "Second"
+                "content": "Second"
             ])
         ]
 
@@ -145,12 +145,12 @@ struct WaterAvailableTests {
             // Watered yesterday at 10pm
             makeEvent(type: "sprout_watered", timestamp: formatISO8601(calendar.date(from: DateComponents(year: 2026, month: 1, day: 29, hour: 22))!), payload: [
                 "sproutId": "sprout-1",
-                "note": "Yesterday late"
+                "content": "Yesterday late"
             ]),
             // Watered yesterday at 3am
             makeEvent(type: "sprout_watered", timestamp: formatISO8601(calendar.date(from: DateComponents(year: 2026, month: 1, day: 29, hour: 3))!), payload: [
                 "sproutId": "sprout-2",
-                "note": "Very early"
+                "content": "Very early"
             ])
         ]
 
@@ -173,7 +173,7 @@ struct SunAvailableTests {
             makeEvent(type: "sun_shone", timestamp: "2026-01-27T10:00:00Z", payload: [ // Monday
                 "twigId": "branch-0-twig-0",
                 "twigLabel": "Test",
-                "note": "Reflection"
+                "content": "Reflection"
             ])
         ]
 
@@ -191,7 +191,7 @@ struct SunAvailableTests {
             makeEvent(type: "sun_shone", timestamp: "2026-01-25T10:00:00Z", payload: [
                 "twigId": "branch-0-twig-0",
                 "twigLabel": "Test",
-                "note": "Last week"
+                "content": "Last week"
             ])
         ]
 

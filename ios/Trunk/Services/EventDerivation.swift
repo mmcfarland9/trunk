@@ -207,8 +207,7 @@ private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double,
         return
     }
 
-    // Event payloads use "note" for content
-    let content = getString(payload, "note") ?? getString(payload, "content") ?? ""
+    let content = getString(payload, "content") ?? ""
     let prompt = getString(payload, "prompt")
     let timestamp = parseTimestamp(event.clientTimestamp)
 
@@ -235,7 +234,7 @@ private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double
     }
 
     let result = getInt(payload, "result")
-    let reflection = getString(payload, "reflection") ?? getString(payload, "note")
+    let reflection = getString(payload, "reflection")
     let capacityGained = getDouble(payload, "capacityGained") ?? 0
     let timestamp = parseTimestamp(event.clientTimestamp)
 
@@ -274,8 +273,7 @@ private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double
 private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sunEntries: inout [DerivedSunEntry]) {
     let payload = event.payload
 
-    // Event payloads use "note" for content
-    let content = getString(payload, "note") ?? getString(payload, "content") ?? ""
+    let content = getString(payload, "content") ?? ""
     let prompt = getString(payload, "prompt")
     let twigId = getString(payload, "twigId") ?? ""
     let twigLabel = getString(payload, "twigLabel") ?? ""

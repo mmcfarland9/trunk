@@ -168,7 +168,7 @@ struct DataExportService {
             bloomWither: getString(payload, "bloomWither"),
             bloomBudding: getString(payload, "bloomBudding"),
             bloomFlourish: getString(payload, "bloomFlourish"),
-            content: getString(payload, "note") ?? getString(payload, "content"),
+            content: getString(payload, "content"),
             prompt: getString(payload, "prompt"),
             result: getInt(payload, "result"),
             reflection: getString(payload, "reflection"),

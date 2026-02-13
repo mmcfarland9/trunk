@@ -139,7 +139,7 @@ func convertToSyncEvents(_ events: [ParityEvent]) -> [SyncEvent] {
         if let v = event.season { payload["season"] = AnyCodable(v) }
         if let v = event.environment { payload["environment"] = AnyCodable(v) }
         if let v = event.soilCost { payload["soilCost"] = AnyCodable(v) }
-        if let v = event.content { payload["note"] = AnyCodable(v) }
+        if let v = event.content { payload["content"] = AnyCodable(v) }
         if let v = event.prompt { payload["prompt"] = AnyCodable(v) }
         if let v = event.result { payload["result"] = AnyCodable(v) }
         if let v = event.capacityGained { payload["capacityGained"] = AnyCodable(v) }

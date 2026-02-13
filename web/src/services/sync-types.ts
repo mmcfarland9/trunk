@@ -77,12 +77,6 @@ export function syncToLocalEvent(sync: SyncEvent): TrunkEvent | null {
     timestamp: sync.payload.timestamp ?? sync.client_timestamp,
   }
 
-  // Normalize field names: iOS uses "note", web uses "content"
-  if ('note' in merged && !('content' in merged)) {
-    merged.content = merged.note
-    delete merged.note
-  }
-
   if (!validateSyncPayload(merged)) {
     console.warn('Sync: rejected invalid event payload', merged)
     return null
