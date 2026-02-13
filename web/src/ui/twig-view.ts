@@ -34,7 +34,7 @@ type TwigViewCallbacks = {
   onSoilChange?: () => void
   onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
-  onWaterClick?: () => void
+  onWaterClick?: (sprout: { id: string, title: string }) => void
   onHarvestClick?: (sprout: {
     id: string
     title: string
@@ -519,10 +519,17 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     }
   }
 
-  function handleWaterAction(): void {
-    if (callbacks.onWaterClick) {
-      callbacks.onWaterClick()
-    }
+  function handleWaterAction(actionEl: HTMLElement): void {
+    if (!callbacks.onWaterClick) return
+    const card = actionEl.closest('.sprout-card') as HTMLElement
+    const id = card?.dataset.id
+    if (!id) return
+
+    const sprouts = getSprouts()
+    const sprout = sprouts.find(s => s.id === id)
+    if (!sprout) return
+
+    callbacks.onWaterClick({ id: sprout.id, title: sprout.title })
   }
 
   function handleHarvestAction(actionEl: HTMLElement): void {
@@ -569,7 +576,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       }
       case 'water': {
         e.stopPropagation()
-        handleWaterAction()
+        handleWaterAction(actionEl)
         break
       }
       case 'harvest': {

@@ -20,7 +20,7 @@ type WaterDialogCallbacks = {
 }
 
 type WaterDialogApi = {
-  openWaterDialog: () => void
+  openWaterDialog: (sprout?: ActiveSproutInfo) => void
   closeWaterDialog: () => void
   isOpen: () => boolean
 }
@@ -81,8 +81,10 @@ export function initWaterDialog(
     })
   }
 
-  function openWaterDialog(): void {
-    const sprouts = selectDailySprouts(callbacks.getActiveSprouts())
+  function openWaterDialog(targetSprout?: ActiveSproutInfo): void {
+    const sprouts = targetSprout
+      ? [targetSprout]
+      : selectDailySprouts(callbacks.getActiveSprouts())
     if (sprouts.length === 0) return
 
     const prompts = getUniquePrompts(sprouts.length)

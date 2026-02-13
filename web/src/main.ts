@@ -324,7 +324,7 @@ const twigView = buildTwigView(mapPanel, {
     }
     return newTwig ?? null
   },
-  onWaterClick: () => waterDialogApi.openWaterDialog(),
+  onWaterClick: (sprout) => waterDialogApi.openWaterDialog(sprout),
   onHarvestClick: (sprout) => harvestDialogApi.openHarvestDialog(sprout),
 })
 
@@ -381,7 +381,7 @@ domResult.elements.backToBranchButton.addEventListener('click', () => {
 // Initialize sidebar sprout sections with branch hover/click callbacks
 initSidebarSprouts(
   ctx,
-  () => waterDialogApi.openWaterDialog(),
+  (sprout) => waterDialogApi.openWaterDialog(sprout),
   {
     onClick: (index) => enterBranchView(index, ctx, navCallbacks)
   },
