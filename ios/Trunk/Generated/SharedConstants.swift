@@ -130,6 +130,14 @@ enum SharedConstants {
             4: "Exceeded expectations",
             5: "Fully achieved and then some"
         ]
+
+        static let emojis: [Int: String] = [
+            1: "🥀",
+            2: "🌱",
+            3: "🌿",
+            4: "🌳",
+            5: "🌲"
+        ]
     }
 
     // MARK: - Tree

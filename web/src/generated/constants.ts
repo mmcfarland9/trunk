@@ -135,23 +135,28 @@ export const ENVIRONMENTS = {
 export const RESULTS = {
   1: {
     label: 'Minimal',
-    description: 'Showed up but little progress'
+    description: 'Showed up but little progress',
+    emoji: '🥀'
   },
   2: {
     label: 'Partial',
-    description: 'Made some progress'
+    description: 'Made some progress',
+    emoji: '🌱'
   },
   3: {
     label: 'Good',
-    description: 'Met most expectations'
+    description: 'Met most expectations',
+    emoji: '🌿'
   },
   4: {
     label: 'Strong',
-    description: 'Exceeded expectations'
+    description: 'Exceeded expectations',
+    emoji: '🌳'
   },
   5: {
     label: 'Exceptional',
-    description: 'Fully achieved and then some'
+    description: 'Fully achieved and then some',
+    emoji: '🌲'
   }
 } as const
 

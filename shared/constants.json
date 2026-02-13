@@ -49,11 +49,11 @@
     "barren": { "label": "Barren", "description": "Very difficult", "formHint": "[Hostile conditions · +2 soil capacity]" }
   },
   "results": {
-    "1": { "label": "Minimal", "description": "Showed up but little progress" },
-    "2": { "label": "Partial", "description": "Made some progress" },
-    "3": { "label": "Good", "description": "Met most expectations" },
-    "4": { "label": "Strong", "description": "Exceeded expectations" },
-    "5": { "label": "Exceptional", "description": "Fully achieved and then some" }
+    "1": { "label": "Minimal", "description": "Showed up but little progress", "emoji": "🥀" },
+    "2": { "label": "Partial", "description": "Made some progress", "emoji": "🌱" },
+    "3": { "label": "Good", "description": "Met most expectations", "emoji": "🌿" },
+    "4": { "label": "Strong", "description": "Exceeded expectations", "emoji": "🌳" },
+    "5": { "label": "Exceptional", "description": "Fully achieved and then some", "emoji": "🌲" }
   },
   "tree": {
     "branchCount": 8,

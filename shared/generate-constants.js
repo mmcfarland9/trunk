@@ -67,7 +67,7 @@ function generateTypeScript() {
 
   const resultsEntries = Object.entries(constants.results)
     .map(([result, data]) => {
-      return `  ${result}: {\n    label: '${data.label}',\n    description: '${data.description}'\n  }`
+      return `  ${result}: {\n    label: '${data.label}',\n    description: '${data.description}',\n    emoji: '${data.emoji}'\n  }`
     })
     .join(',\n')
 
@@ -363,6 +363,12 @@ ${Object.entries(constants.results)
         static let descriptions: [Int: String] = [
 ${Object.entries(constants.results)
   .map(([result, data]) => `            ${result}: "${data.description}"`)
+  .join(',\n')}
+        ]
+
+        static let emojis: [Int: String] = [
+${Object.entries(constants.results)
+  .map(([result, data]) => `            ${result}: "${data.emoji}"`)
   .join(',\n')}
         ]
     }
