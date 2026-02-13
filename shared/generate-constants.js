@@ -14,10 +14,22 @@ const fs = require('fs')
 const path = require('path')
 
 const constantsPath = path.join(__dirname, 'constants.json')
+const wateringPromptsPath = path.join(__dirname, 'assets/watering-prompts.txt')
+const sunPromptsPath = path.join(__dirname, 'assets/sun-prompts.json')
 const tsOutputPath = path.join(__dirname, '../web/src/generated/constants.ts')
 const swiftOutputPath = path.join(__dirname, '../ios/Trunk/Generated/SharedConstants.swift')
 
 const constants = JSON.parse(fs.readFileSync(constantsPath, 'utf8'))
+
+// Parse watering prompts from .txt file (skip # comments and blank lines)
+const wateringPrompts = fs
+  .readFileSync(wateringPromptsPath, 'utf8')
+  .split('\n')
+  .map((line) => line.trim())
+  .filter((line) => line.length > 0 && !line.startsWith('#'))
+
+// Read sun prompts JSON (generic + specific)
+const sunPrompts = JSON.parse(fs.readFileSync(sunPromptsPath, 'utf8'))
 
 // =============================================================================
 // TypeScript Generation
@@ -162,6 +174,14 @@ ${storageKeysEntries}
 export const EXPORT_REMINDER_DAYS = ${constants.storage.exportReminderDays}
 
 // =============================================================================
+// Validation
+// =============================================================================
+
+export const MAX_TITLE_LENGTH = ${constants.validation.maxTitleLength}
+export const MAX_LEAF_NAME_LENGTH = ${constants.validation.maxLeafNameLength}
+export const MAX_BLOOM_LENGTH = ${constants.validation.maxBloomLength}
+
+// =============================================================================
 // Chart Bucket Config
 // =============================================================================
 
@@ -185,8 +205,19 @@ ${Object.entries(constants.chart.buckets)
 // =============================================================================
 
 export const WATERING_PROMPTS: readonly string[] = [
-${constants.wateringPrompts.map((p) => `  '${p.replace(/'/g, "\\'")}'`).join(',\n')}
+${wateringPrompts.map((p) => `  '${p.replace(/'/g, "\\'")}'`).join(',\n')}
 ] as const
+
+// =============================================================================
+// Sun Prompts
+// =============================================================================
+
+export type SunPrompts = {
+  generic: readonly string[]
+  specific: Readonly<Record<string, readonly string[]>>
+}
+
+export const SUN_PROMPTS: SunPrompts = ${JSON.stringify(sunPrompts, null, 2).replace(/^/gm, '  ').trim()} as const
 `
 }
 
@@ -384,8 +415,60 @@ ${Object.entries(constants.chart.buckets)
 
     enum WateringPrompts {
         static let prompts: [String] = [
-${constants.wateringPrompts.map((p) => `            "${p.replace(/"/g, '\\"')}"`).join(',\n')}
+${wateringPrompts.map((p) => `            "${p.replace(/"/g, '\\"')}"`).join(',\n')}
         ]
+    }
+
+    // MARK: - Sun Prompts
+
+    enum SunPrompts {
+        static let generic: [String] = [
+${sunPrompts.generic.map((p) => `            "${p.replace(/"/g, '\\"')}"`).join(',\n')}
+        ]
+
+        static let specific: [String: [String]] = [
+${Object.entries(sunPrompts.specific)
+  .map(
+    ([twigId, prompts]) =>
+      `            "${twigId}": [\n${prompts.map((p) => `                "${p.replace(/"/g, '\\"')}"`).join(',\n')}\n            ]`
+  )
+  .join(',\n')}
+        ]
+
+        /// Get a random prompt for a twig, replacing {twig} token with the label
+        static func randomPrompt(twigId: String, twigLabel: String, excluding: Set<String> = []) -> String {
+            let allGeneric = generic.filter { !excluding.contains($0) }
+            let allSpecific = (specific[twigId] ?? []).filter { !excluding.contains($0) }
+
+            let hasGeneric = !allGeneric.isEmpty
+            let hasSpecific = !allSpecific.isEmpty
+
+            guard hasGeneric || hasSpecific else {
+                return generic.randomElement()?.replacingOccurrences(of: "{twig}", with: twigLabel)
+                    ?? "What are you reflecting on today?"
+            }
+
+            let selected: String
+            if !hasGeneric {
+                selected = allSpecific.randomElement()!
+            } else if !hasSpecific {
+                selected = allGeneric.randomElement()!
+            } else {
+                selected = Double.random(in: 0...1) < 0.75
+                    ? allGeneric.randomElement()!
+                    : allSpecific.randomElement()!
+            }
+
+            return selected.replacingOccurrences(of: "{twig}", with: twigLabel)
+        }
+    }
+
+    // MARK: - Validation
+
+    enum Validation {
+        static let maxTitleLength: Int = ${constants.validation.maxTitleLength}
+        static let maxLeafNameLength: Int = ${constants.validation.maxLeafNameLength}
+        static let maxBloomLength: Int = ${constants.validation.maxBloomLength}
     }
 }
 `

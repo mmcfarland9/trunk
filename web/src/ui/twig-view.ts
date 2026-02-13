@@ -10,6 +10,11 @@ import {
   getResultEmoji,
 } from '../utils/sprout-labels'
 import {
+  MAX_TITLE_LENGTH,
+  MAX_LEAF_NAME_LENGTH,
+  MAX_BLOOM_LENGTH,
+} from '../generated/constants'
+import {
   calculateSoilCost,
   getSoilAvailable,
   canAffordSoil,
@@ -236,11 +241,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   function filterSproutsByLeaf(sprouts: Sprout[], leafId: string): Sprout[] {
     return sprouts.filter(s => s.leafId === leafId)
   }
-
-  // Max lengths for form fields
-  const MAX_TITLE_LENGTH = 60
-  const MAX_LEAF_NAME_LENGTH = 40
-  const MAX_BLOOM_LENGTH = 60
 
   function updateFormState(): void {
     const title = sproutTitleInput.value.trim()
