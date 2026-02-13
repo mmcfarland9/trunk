@@ -13,24 +13,21 @@ struct SunPromptsTests {
 
     @Test("randomPrompt replaces {twig} with label")
     func randomPrompt_replacesTwig() {
-        let prompt = SunPrompts.randomPrompt(twigLabel: "Movement")
+        let prompt = SharedConstants.SunPrompts.randomPrompt(twigId: "branch-0-twig-0", twigLabel: "Movement")
 
         // Prompt should not contain {twig} placeholder
         #expect(!prompt.contains("{twig}"))
-
-        // If prompt was about a specific twig, it should contain "Movement"
-        // (Some prompts are generic and won't have the twig name)
     }
 
     @Test("randomPrompt excludes previous prompts")
     func randomPrompt_excludesPrevious() {
-        let firstPrompt = SunPrompts.randomPrompt(twigLabel: "Test")
-        var attempts = 0
+        let firstPrompt = SharedConstants.SunPrompts.randomPrompt(twigId: "branch-0-twig-0", twigLabel: "Test")
         var gotDifferent = false
 
         // Try several times to get a different prompt
         for _ in 0..<20 {
-            let nextPrompt = SunPrompts.randomPrompt(
+            let nextPrompt = SharedConstants.SunPrompts.randomPrompt(
+                twigId: "branch-0-twig-0",
                 twigLabel: "Test",
                 excluding: [firstPrompt]
             )
@@ -38,21 +35,20 @@ struct SunPromptsTests {
                 gotDifferent = true
                 break
             }
-            attempts += 1
         }
 
         // Should eventually get a different prompt
-        // (Unless there's only one prompt, which is unlikely)
         #expect(gotDifferent == true)
     }
 
     @Test("randomPrompt returns something when all excluded")
     func randomPrompt_fallsBackToGeneric() {
         // Exclude a huge list of prompts
-        let manyExclusions = (0..<100).map { "Fake prompt \($0)" }
+        let manyExclusions: Set<String> = Set((0..<100).map { "Fake prompt \($0)" })
 
         // Should still return something
-        let prompt = SunPrompts.randomPrompt(
+        let prompt = SharedConstants.SunPrompts.randomPrompt(
+            twigId: "branch-0-twig-0",
             twigLabel: "Test",
             excluding: manyExclusions
         )
@@ -62,7 +58,7 @@ struct SunPromptsTests {
 
     @Test("randomPrompt handles empty twig label")
     func randomPrompt_emptyLabel() {
-        let prompt = SunPrompts.randomPrompt(twigLabel: "")
+        let prompt = SharedConstants.SunPrompts.randomPrompt(twigId: "branch-0-twig-0", twigLabel: "")
 
         // Should still return a prompt
         #expect(!prompt.isEmpty)
@@ -70,9 +66,31 @@ struct SunPromptsTests {
 
     @Test("randomPrompt handles special characters in label")
     func randomPrompt_specialCharacters() {
-        let prompt = SunPrompts.randomPrompt(twigLabel: "Test & <More>")
+        let prompt = SharedConstants.SunPrompts.randomPrompt(twigId: "branch-0-twig-0", twigLabel: "Test & <More>")
 
         // Should not crash and should return something
         #expect(!prompt.isEmpty)
+    }
+
+    @Test("randomPrompt uses specific prompts for known twig IDs")
+    func randomPrompt_usesSpecificPrompts() {
+        // branch-0-twig-0 has specific prompts, verify we get prompts
+        var prompts: Set<String> = []
+        for _ in 0..<50 {
+            let prompt = SharedConstants.SunPrompts.randomPrompt(twigId: "branch-0-twig-0", twigLabel: "Movement")
+            prompts.insert(prompt)
+        }
+
+        // Should get multiple different prompts
+        #expect(prompts.count > 1)
+    }
+
+    @Test("randomPrompt works for unknown twig IDs")
+    func randomPrompt_unknownTwigId() {
+        let prompt = SharedConstants.SunPrompts.randomPrompt(twigId: "branch-99-twig-99", twigLabel: "Unknown")
+
+        // Should return a generic prompt
+        #expect(!prompt.isEmpty)
+        #expect(!prompt.contains("{twig}"))
     }
 }

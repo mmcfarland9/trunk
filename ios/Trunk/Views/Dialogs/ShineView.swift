@@ -173,7 +173,7 @@ struct ShineView: View {
         // Select random twig and generate prompt with twig label
         if let twig = candidates.randomElement() {
             selectedTwig = twig
-            selectedPrompt = SunPrompts.randomPrompt(twigLabel: twig.label)
+            selectedPrompt = SharedConstants.SunPrompts.randomPrompt(twigId: twig.nodeId, twigLabel: twig.label)
         }
     }
 

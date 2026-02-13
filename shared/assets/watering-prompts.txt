@@ -1,0 +1,230 @@
+# Watering Prompts
+# One prompt per line. Lines starting with # are ignored.
+# Focus: daily check-ins, feelings, actionable steps for the current goal.
+
+# Gut Check
+Where's your head at with this — honestly?
+What hit you today that you didn't expect to feel?
+Does this still feel like yours?
+What's your gut saying?
+Dread or drive — which one showed up today?
+
+# What Actually Happened
+What did you actually do today?
+Walk me through your last session. No editing.
+What happened the moment you started?
+One moment from today. The first one that comes to mind.
+Was today's time well spent, or just spent?
+
+# Fuel
+On a tank of gas — how full are you for this right now?
+What's making this harder than it needs to be?
+Where's the energy leak?
+What part of this still has a pulse for you?
+Are you running on fumes or fire?
+
+# Friction
+What got in the way today — and was it real or invented?
+What pulled you off course?
+Where did the wheels come off?
+Where did you feel the drag?
+What blindsided you?
+
+# Proof
+What moved, even a little?
+What actually landed today?
+What worked — and do you know why it worked?
+What would you point to as evidence you're not wasting your time?
+Name one thing you nailed.
+
+# Next Move
+What's the next move — just one?
+What could you do in 10 minutes?
+What's the laziest possible thing you could do that still counts?
+What would unblock you right now?
+If you had 30 minutes tomorrow, what would you do?
+
+# Cards on the Table
+What are you dodging?
+What have you been putting off that you know matters?
+Forget the good reasons — what's the real reason you're stuck?
+What's the thing you don't want to say out loud?
+What would you do if no one was watching?
+
+# Your System
+What part of your approach would you defend to someone?
+What's broken in your process that you keep tolerating?
+If this method was someone else's idea, would you still follow it?
+Could you keep doing this for three more months without burning out?
+What's the one tweak that would change the most?
+
+# Pressure Check
+What do you actually need right now — not what you think you should need?
+Are you grinding yourself down, or just uncomfortable because the work is real?
+What weight could you put down for a day?
+Where's the line between discipline and punishment for you right now?
+What would change if you asked for help?
+
+# Still In It?
+Are you in this, or going through the motions?
+What would make you care about this again?
+Remember why you started. Is that reason still alive?
+If you had to re-choose this today, would you?
+What's the thread you're holding onto?
+
+# ──────────────────────────────────────────────
+# Additional Prompts
+# All general-purpose — applicable to any sprout on any branch.
+# ──────────────────────────────────────────────
+
+# Hard Truths
+If you're being honest — are you doing enough?
+What are you pretending is fine that isn't?
+What would someone who doesn't care about your feelings say about your progress?
+Where are you being lazy and calling it strategic?
+If someone was paying you to do this, would your effort be acceptable?
+What are you protecting yourself from by not going harder?
+Is this goal still right for you, or are you too stubborn to quit?
+What would it take for you to admit this approach isn't working?
+
+# Patterns
+What pattern keeps repeating that you haven't addressed?
+Are you building a habit or just having a good week?
+What do you do right before you skip or give up?
+When do you tend to lose momentum — what triggers the drop?
+How many times have you restarted this versus actually pushed through?
+What's the first thing that slips when life gets stressful?
+What keeps tripping you up that you keep pretending won't?
+
+# Pace & Time
+Are you moving too fast, too slow, or about right — how do you actually know?
+What would change if you had half the time left?
+Are you spending time on this or investing time in this?
+What's the difference between patience and procrastination for you right now?
+If someone watched how you spent today, would they guess this was a priority?
+How much time do you spend thinking about this versus doing something about it?
+Are you being patient or making excuses for being slow?
+
+# Standards & Quality
+Are you aiming for good enough or great — and which does this actually need?
+What standard are you holding yourself to, and where did it come from?
+What would done well actually look like? Be specific.
+When did you last raise the bar on yourself for this?
+Are you cutting corners or being efficient — where's the line?
+Are you settling for progress when you should be demanding growth?
+
+# Risk & Avoidance
+What's the scariest next step?
+What are you avoiding because it might not work?
+What's the worst that actually happens if you just go for it?
+Where are you playing it safe and calling it a strategy?
+What risk are you not taking that you probably should?
+What conversation, action, or decision would move this the most — that you keep deferring?
+Are you avoiding the hard part or genuinely working up to it?
+
+# Method & Approach
+Is your current approach the best one, or just the first one you tried?
+What would you change about your method if you started over tomorrow?
+Are you doing what works, or what you've always done?
+What's one thing you could try differently tomorrow?
+What would someone who's already succeeded at this tell you to stop doing?
+If you zoomed way out on your approach, what would you see that you're missing up close?
+Are you optimizing the right variable?
+Is your system set up for the person you actually are, or the person you wish you were?
+
+# Motivation & Discipline
+Did you show up today because you wanted to or because you told yourself you had to?
+Are you relying on motivation when you need a system?
+What would discipline look like on your absolute worst day?
+Are you waiting to feel like it?
+What's keeping you going right now — desire, fear, habit, or obligation?
+If nobody was watching or tracking, would you still do this?
+When the resistance hits, what do you actually do?
+
+# Accountability & Evidence
+What evidence of progress could you show someone right now?
+When did you last tell someone the honest truth about where you are with this?
+Are you tracking anything, or just hoping?
+What would your weekly progress report say if you had to write one tonight?
+Who would notice if you quietly gave up?
+What would it take to convince a skeptic that you're serious about this?
+
+# Looking Back
+What's the best decision you've made about this so far?
+What mistake taught you the most?
+How far have you come from where you started — does it feel like enough?
+What would past-you think about where you are now?
+What worked this week that you should do more of?
+What's one thing you've learned about this that you didn't expect?
+If you only got credit for what you've done — not what you've planned — where would you stand?
+
+# Looking Ahead
+What's the one thing that would make the biggest difference this week?
+If this goes perfectly from here, what does that actually look like?
+What's the next real milestone — not a vague goal, a concrete one?
+What are you going to wish you'd started sooner?
+What would make tomorrow the best day you've had for this?
+How will you know when this is done — what's the actual finish line?
+What's the version of this you'd be proud of a year from now?
+
+# Trade-offs & Cost
+What are you saying no to by saying yes to this?
+What is this costing you that you haven't accounted for?
+Is the sacrifice still worth it?
+What else is suffering because of the time you spend here?
+What would you give up to guarantee this succeeds?
+What are you neglecting that you'll eventually have to deal with?
+
+# Identity & Alignment
+Is this changing who you are, or just what you do?
+What kind of person do you need to become to finish this?
+Does this still align with what you actually want?
+Are you doing this for who you are, or who you think you should be?
+What would walking away say about you? What would finishing say?
+If you stripped away obligation and expectation, would you still choose this?
+
+# The Uncomfortable Question
+What aren't you saying about this, even to yourself?
+What would you do right now if you stopped overthinking?
+What's the real reason you might quit?
+Is this the hard part, or have you not gotten there yet?
+What are you pretending doesn't bother you about this?
+If you could see yourself from the outside, what would concern you?
+What question about this do you not want to answer right now?
+
+# Environment & Conditions
+What part of your environment is helping this, and what part is fighting it?
+Are you waiting for conditions to be right, or making them right?
+What trigger in your daily life keeps pulling you off track?
+What would you need to rearrange to make this easier?
+Who in your life makes this harder without meaning to?
+Are your surroundings set up for this to succeed or for you to get distracted?
+
+# Resistance & Friction
+Where exactly does the resistance kick in — what's the specific moment?
+What excuse have you used more than once?
+What does your avoidance actually look like? Describe it.
+What would happen if you just sat with the discomfort instead of escaping it?
+What's the minimum you could do today and still look yourself in the mirror?
+What barrier have you accepted that you could actually remove?
+
+# Effort & Consistency
+Rate your effort this week 1-10. Now subtract 2 for bias. How does that number feel?
+When was the last time you gave this your genuine best?
+What does a perfect day for this goal look like — and when did you last have one?
+Are you coasting on early momentum?
+What would it mean to take this more seriously than you are right now?
+
+# Perspective
+Will this matter in five years? Does the answer change what you do today?
+What would a complete stranger think watching you work on this?
+If you had to teach someone how to do what you're doing, what would you say first?
+What would you do differently if this was the last time you could try?
+What's the most honest thing you could say about where you are right now?
+
+# The Gap
+What's the gap between your intention and your action today?
+Where's the disconnect between what you say you want and what you're actually doing?
+What's the difference between your plan and your reality right now?
+Are you where you expected to be at this point? If not — why not?
+What would actually close the gap between where you are and where you want to be?
