@@ -198,6 +198,14 @@ export const MAX_LEAF_NAME_LENGTH = ${constants.validation.maxLeafNameLength}
 export const MAX_BLOOM_LENGTH = ${constants.validation.maxBloomLength}
 
 // =============================================================================
+// Prompt Config
+// =============================================================================
+
+export const RECENT_WATER_LIMIT = ${constants.prompts.recentWaterLimit}
+export const RECENT_SHINE_LIMIT = ${constants.prompts.recentShineLimit}
+export const GENERIC_WEIGHT = ${constants.prompts.genericWeight}
+
+// =============================================================================
 // Chart Bucket Config
 // =============================================================================
 
@@ -483,6 +491,14 @@ ${Object.entries(sunPrompts.specific)
 
             return selected.replacingOccurrences(of: "{twig}", with: twigLabel)
         }
+    }
+
+    // MARK: - Prompt Config
+
+    enum Prompts {
+        static let recentWaterLimit: Int = ${constants.prompts.recentWaterLimit}
+        static let recentShineLimit: Int = ${constants.prompts.recentShineLimit}
+        static let genericWeight: Double = ${constants.prompts.genericWeight}
     }
 
     // MARK: - Event Types

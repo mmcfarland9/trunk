@@ -1,6 +1,6 @@
 import type { AppContext, SunEntry } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
-import sunPromptsData from '../assets/sun-prompts.json'
+import { SUN_PROMPTS, RECENT_SHINE_LIMIT, GENERIC_WEIGHT } from '../generated/constants'
 import { canAffordSun, getSunAvailable, getPresetLabel, getNextSunReset, formatResetTime } from '../state'
 import { appendEvent, getEvents, wasShoneThisWeek as wasShoneThisWeekFromEvents } from '../events'
 
@@ -10,20 +10,10 @@ type ShineCallbacks = {
   onShineComplete: () => void
 }
 
-// Type for the prompts JSON structure
-type SunPrompts = {
-  generic: string[]
-  specific: Record<string, string[]>
-}
-
-const sunPrompts = sunPromptsData as SunPrompts
+const sunPrompts = SUN_PROMPTS
 
 // Track recently shown prompts globally to avoid quick repeats
 const recentPrompts: string[] = []
-const RECENT_PROMPT_LIMIT = 15
-
-// Selection weight: 75% generic, 25% specific
-const GENERIC_WEIGHT = 0.75
 
 function getRandomPrompt(twigId: string, twigLabel: string): string {
   const genericPrompts = sunPrompts.generic
@@ -67,7 +57,7 @@ function getRandomPrompt(twigId: string, twigLabel: string): string {
 
   // Track this prompt as recently shown
   recentPrompts.push(selectedPrompt)
-  if (recentPrompts.length > RECENT_PROMPT_LIMIT) {
+  if (recentPrompts.length > RECENT_SHINE_LIMIT) {
     recentPrompts.shift()
   }
 

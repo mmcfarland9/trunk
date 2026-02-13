@@ -255,6 +255,14 @@ export const MAX_LEAF_NAME_LENGTH = 40
 export const MAX_BLOOM_LENGTH = 60
 
 // =============================================================================
+// Prompt Config
+// =============================================================================
+
+export const RECENT_WATER_LIMIT = 10
+export const RECENT_SHINE_LIMIT = 15
+export const GENERIC_WEIGHT = 0.75
+
+// =============================================================================
 // Chart Bucket Config
 // =============================================================================
 

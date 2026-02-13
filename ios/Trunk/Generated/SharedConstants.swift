@@ -845,6 +845,14 @@ enum SharedConstants {
         }
     }
 
+    // MARK: - Prompt Config
+
+    enum Prompts {
+        static let recentWaterLimit: Int = 10
+        static let recentShineLimit: Int = 15
+        static let genericWeight: Double = 0.75
+    }
+
     // MARK: - Event Types
 
     enum EventTypes {

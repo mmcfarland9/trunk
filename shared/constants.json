@@ -112,6 +112,11 @@
       "all": { "adaptive": true, "targetNodes": 24 }
     }
   },
+  "prompts": {
+    "recentWaterLimit": 10,
+    "recentShineLimit": 15,
+    "genericWeight": 0.75
+  },
   "eventTypes": [
     "sprout_planted",
     "sprout_watered",

@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { WATERING_PROMPTS } from '../generated/constants'
+import { WATERING_PROMPTS, RECENT_WATER_LIMIT } from '../generated/constants'
 import { canAffordWater } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { appendEvent, getWaterAvailable } from '../events'
@@ -27,7 +27,7 @@ type WaterDialogApi = {
 
 // Track recently shown prompts to avoid quick repeats
 const recentPrompts: string[] = []
-const RECENT_PROMPT_LIMIT = Math.min(10, Math.floor(WATERING_PROMPTS.length / 3))
+const RECENT_PROMPT_LIMIT = Math.min(RECENT_WATER_LIMIT, Math.floor(WATERING_PROMPTS.length / 3))
 
 function getUniquePrompts(count: number): string[] {
   const available = WATERING_PROMPTS.filter(p => !recentPrompts.includes(p))
