@@ -123,12 +123,18 @@
   white-space: nowrap;
 }
 
+/* Profile group - wraps badge + sync so sync stretches to badge height */
+.profile-group {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
 /* Sync button - square icon matching profile badge height */
 .sync-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: stretch;
   aspect-ratio: 1;
   flex-shrink: 0;
   padding: 0;
@@ -137,11 +143,6 @@
   color: var(--ink-faint);
   cursor: pointer;
   transition: border-color 150ms ease, color 150ms ease;
-}
-
-.sync-button .sync-icon {
-  width: 11px;
-  height: 11px;
 }
 
 .sync-button:hover {

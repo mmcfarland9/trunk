@@ -60,9 +60,14 @@ export function buildApp(
   syncButton.type = 'button'
   syncButton.className = 'sync-button hidden'
   syncButton.setAttribute('aria-label', 'Sync data')
-  syncButton.innerHTML = '<svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>'
+  syncButton.innerHTML = '<svg class="sync-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>'
 
-  actions.append(profileBadge, syncButton)
+  // Wrap badge + sync in a stretch group so sync button matches badge height
+  const profileGroup = document.createElement('div')
+  profileGroup.className = 'profile-group'
+  profileGroup.append(profileBadge, syncButton)
+
+  actions.append(profileGroup)
 
   // Global Soil meter
   const soilMeter = document.createElement('div')
