@@ -105,6 +105,11 @@ async function startWithAuth() {
       if (state.user) {
         domResult.elements.profileBadge.classList.remove('hidden')
         domResult.elements.syncButton.classList.remove('hidden')
+        // Force square: CSS aspect-ratio unreliable in flex stretch context
+        requestAnimationFrame(() => {
+          const btn = domResult.elements.syncButton
+          btn.style.width = `${btn.offsetHeight}px`
+        })
         domResult.elements.profileEmail.textContent = state.user.email || ''
         // Update trunk label with user's full_name from profile
         syncNode(domResult.elements.trunk)
