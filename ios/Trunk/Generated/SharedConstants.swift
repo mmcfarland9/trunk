@@ -837,6 +837,19 @@ enum SharedConstants {
         }
     }
 
+    // MARK: - Event Types
+
+    enum EventTypes {
+        static let all: [String] = [
+            "sprout_planted",
+            "sprout_watered",
+            "sprout_harvested",
+            "sprout_uprooted",
+            "sun_shone",
+            "leaf_created"
+        ]
+    }
+
     // MARK: - Validation
 
     enum Validation {

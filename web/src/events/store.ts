@@ -19,6 +19,7 @@ import {
 } from './derive'
 import { safeSetItem } from '../utils/safe-storage'
 import sharedConstants from '../../../shared/constants.json'
+import { VALID_EVENT_TYPES } from '../generated/constants'
 
 const STORAGE_KEY = sharedConstants.storage.keys.events
 
@@ -40,15 +41,6 @@ let onSaveError: ((error: unknown) => void) | null = null
 
 // Sync callback - called when events are appended
 let onEventAppended: ((event: TrunkEvent) => void) | null = null
-
-const VALID_EVENT_TYPES = new Set([
-  'sprout_planted',
-  'sprout_watered',
-  'sprout_harvested',
-  'sprout_uprooted',
-  'sun_shone',
-  'leaf_created',
-])
 
 /**
  * Validate that a value has the required shape of a TrunkEvent.

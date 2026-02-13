@@ -224,6 +224,27 @@ export const EXPORT_REMINDER_DAYS = 7
 // Validation
 // =============================================================================
 
+// =============================================================================
+// Event Types
+// =============================================================================
+
+export const EVENT_TYPES = [
+  'sprout_planted',
+  'sprout_watered',
+  'sprout_harvested',
+  'sprout_uprooted',
+  'sun_shone',
+  'leaf_created'
+] as const
+
+export type EventType = typeof EVENT_TYPES[number]
+
+export const VALID_EVENT_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES)
+
+// =============================================================================
+// Validation
+// =============================================================================
+
 export const MAX_TITLE_LENGTH = 60
 export const MAX_LEAF_NAME_LENGTH = 40
 export const MAX_BLOOM_LENGTH = 60

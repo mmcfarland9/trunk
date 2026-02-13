@@ -1,4 +1,5 @@
 import type { TrunkEvent } from '../events/types'
+import { VALID_EVENT_TYPES } from '../generated/constants'
 
 // Event format for Supabase storage
 export type SyncEvent = {
@@ -48,15 +49,6 @@ export function localToSyncPayload(
     client_timestamp: event.timestamp,
   }
 }
-
-const VALID_EVENT_TYPES = new Set([
-  'sprout_planted',
-  'sprout_watered',
-  'sprout_harvested',
-  'sprout_uprooted',
-  'sun_shone',
-  'leaf_created',
-])
 
 function validateSyncPayload(payload: unknown): payload is TrunkEvent {
   if (typeof payload !== 'object' || payload === null) return false

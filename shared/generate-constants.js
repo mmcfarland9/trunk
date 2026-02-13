@@ -177,6 +177,22 @@ export const EXPORT_REMINDER_DAYS = ${constants.storage.exportReminderDays}
 // Validation
 // =============================================================================
 
+// =============================================================================
+// Event Types
+// =============================================================================
+
+export const EVENT_TYPES = [
+${constants.eventTypes.map((t) => `  '${t}'`).join(',\n')}
+] as const
+
+export type EventType = typeof EVENT_TYPES[number]
+
+export const VALID_EVENT_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES)
+
+// =============================================================================
+// Validation
+// =============================================================================
+
 export const MAX_TITLE_LENGTH = ${constants.validation.maxTitleLength}
 export const MAX_LEAF_NAME_LENGTH = ${constants.validation.maxLeafNameLength}
 export const MAX_BLOOM_LENGTH = ${constants.validation.maxBloomLength}
@@ -461,6 +477,14 @@ ${Object.entries(sunPrompts.specific)
 
             return selected.replacingOccurrences(of: "{twig}", with: twigLabel)
         }
+    }
+
+    // MARK: - Event Types
+
+    enum EventTypes {
+        static let all: [String] = [
+${constants.eventTypes.map((t) => `            "${t}"`).join(',\n')}
+        ]
     }
 
     // MARK: - Validation
