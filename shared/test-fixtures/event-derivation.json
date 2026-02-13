@@ -1,0 +1,380 @@
+{
+  "_version": 1,
+  "_description": "Cross-platform test scenarios for event derivation. Both web and iOS must derive identical state from these event sequences.",
+
+  "scenarios": [
+    {
+      "description": "Empty event log starts at default state",
+      "events": [],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 10,
+        "sproutCount": 0,
+        "leafCount": 0,
+        "sunEntryCount": 0
+      }
+    },
+    {
+      "description": "Single plant reduces available soil",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Run 5K",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 8,
+        "sproutCount": 1,
+        "activeSproutCount": 1,
+        "completedSproutCount": 0,
+        "sproutDetails": {
+          "sprout-1": { "state": "active", "waterEntryCount": 0 }
+        }
+      }
+    },
+    {
+      "description": "Planting beyond available soil clamps to zero",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Big Goal",
+          "season": "1y",
+          "environment": "barren",
+          "soilCost": 24
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 0,
+        "_note": "max(0, 10 - 24) = 0, clamped"
+      }
+    },
+    {
+      "description": "Water recovers soil and adds entry to sprout",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Test",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        },
+        {
+          "type": "sprout_watered",
+          "timestamp": "2026-01-02T09:00:00Z",
+          "sproutId": "sprout-1",
+          "content": "Ran 2K today",
+          "prompt": "How did it go?"
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 8.05,
+        "sproutDetails": {
+          "sprout-1": { "state": "active", "waterEntryCount": 1 }
+        },
+        "_note": "8 + 0.05 = 8.05"
+      }
+    },
+    {
+      "description": "Sun recovers soil and creates sun entry",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Test",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 5
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-03T10:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "movement",
+          "content": "Good week of movement"
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 5.35,
+        "sunEntryCount": 1,
+        "_note": "5 + 0.35 = 5.35"
+      }
+    },
+    {
+      "description": "Harvest returns soil cost, gains capacity, completes sprout",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Run 5K",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        },
+        {
+          "type": "sprout_harvested",
+          "timestamp": "2026-01-15T10:00:00Z",
+          "sproutId": "sprout-1",
+          "result": 5,
+          "capacityGained": 0.251,
+          "reflection": "Ran the full 5K!"
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10.251,
+        "soilAvailable": 10,
+        "sproutCount": 1,
+        "activeSproutCount": 0,
+        "completedSproutCount": 1,
+        "sproutDetails": {
+          "sprout-1": {
+            "state": "completed",
+            "result": 5,
+            "reflection": "Ran the full 5K!",
+            "waterEntryCount": 0
+          }
+        },
+        "_note": "cap: 10 + 0.251 = 10.251. avail: min(8 + 2, 10.251) = 10 (returned cost restores to original spent amount)"
+      }
+    },
+    {
+      "description": "Uproot returns partial soil and removes sprout",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Abandoned goal",
+          "season": "3m",
+          "environment": "barren",
+          "soilCost": 10
+        },
+        {
+          "type": "sprout_uprooted",
+          "timestamp": "2026-01-05T10:00:00Z",
+          "sproutId": "sprout-1",
+          "soilReturned": 5
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 5,
+        "sproutCount": 0,
+        "_note": "avail: min(0 + 5, 10) = 5. Sprout removed from map."
+      }
+    },
+    {
+      "description": "Leaf creation does not affect soil",
+      "events": [
+        {
+          "type": "leaf_created",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "leafId": "leaf-1",
+          "twigId": "branch-0-twig-0",
+          "name": "Fitness Journey"
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 10,
+        "leafCount": 1,
+        "sproutCount": 0
+      }
+    },
+    {
+      "description": "Full lifecycle: plant, water, harvest, uproot, sun, leaf",
+      "_testDate": "2026-02-15T14:00:00Z",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-a",
+          "twigId": "branch-0-twig-0",
+          "title": "Run 5K",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 2
+        },
+        {
+          "type": "sprout_watered",
+          "timestamp": "2026-01-02T09:00:00Z",
+          "sproutId": "sprout-a",
+          "content": "Ran 2K today"
+        },
+        {
+          "type": "sprout_harvested",
+          "timestamp": "2026-01-15T10:00:00Z",
+          "sproutId": "sprout-a",
+          "result": 5,
+          "capacityGained": 0.251,
+          "reflection": "Achieved my goal"
+        },
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-16T10:00:00Z",
+          "sproutId": "sprout-b",
+          "twigId": "branch-1-twig-0",
+          "title": "Learn scales",
+          "season": "3m",
+          "environment": "barren",
+          "soilCost": 10
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-20T10:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "movement",
+          "content": "Feeling strong after the 5K"
+        },
+        {
+          "type": "sprout_uprooted",
+          "timestamp": "2026-01-25T10:00:00Z",
+          "sproutId": "sprout-b",
+          "soilReturned": 5
+        },
+        {
+          "type": "leaf_created",
+          "timestamp": "2026-01-26T10:00:00Z",
+          "leafId": "leaf-1",
+          "twigId": "branch-0-twig-0",
+          "name": "Fitness Journey"
+        },
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-27T10:00:00Z",
+          "sproutId": "sprout-c",
+          "twigId": "branch-0-twig-0",
+          "title": "Run 10K",
+          "season": "1m",
+          "environment": "firm",
+          "soilCost": 5,
+          "leafId": "leaf-1"
+        },
+        {
+          "type": "sprout_watered",
+          "timestamp": "2026-01-28T09:00:00Z",
+          "sproutId": "sprout-c",
+          "content": "Ran 6K today"
+        },
+        {
+          "type": "sprout_watered",
+          "timestamp": "2026-01-29T09:00:00Z",
+          "sproutId": "sprout-c",
+          "content": "Ran 7K today"
+        },
+        {
+          "type": "sprout_harvested",
+          "timestamp": "2026-02-10T10:00:00Z",
+          "sproutId": "sprout-c",
+          "result": 3,
+          "capacityGained": 0.6,
+          "reflection": "Hit 8K but not 10K"
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10.851,
+        "soilAvailable": 5.5,
+        "sproutCount": 2,
+        "activeSproutCount": 0,
+        "completedSproutCount": 2,
+        "leafCount": 1,
+        "sunEntryCount": 1,
+        "sproutDetails": {
+          "sprout-a": {
+            "state": "completed",
+            "result": 5,
+            "waterEntryCount": 1,
+            "reflection": "Achieved my goal"
+          },
+          "sprout-c": {
+            "state": "completed",
+            "result": 3,
+            "waterEntryCount": 2,
+            "reflection": "Hit 8K but not 10K",
+            "leafId": "leaf-1"
+          }
+        },
+        "_note": "sprout-b was uprooted and removed from map"
+      },
+      "soilCalculation": {
+        "_note": "Step-by-step soil derivation",
+        "steps": [
+          { "event": "initial", "capacity": 10, "available": 10 },
+          { "event": "plant sprout-a (cost 2)", "capacity": 10, "available": 8 },
+          { "event": "water sprout-a (+0.05)", "capacity": 10, "available": 8.05 },
+          { "event": "harvest sprout-a (cap+0.251, return 2)", "capacity": 10.251, "available": 10.05 },
+          { "event": "plant sprout-b (cost 10)", "capacity": 10.251, "available": 0.05, "_note": "clamped from 0.05" },
+          { "event": "sun (+0.35)", "capacity": 10.251, "available": 0.4 },
+          { "event": "uproot sprout-b (return 5)", "capacity": 10.251, "available": 5.4 },
+          { "event": "leaf created (no change)", "capacity": 10.251, "available": 5.4 },
+          { "event": "plant sprout-c (cost 5)", "capacity": 10.251, "available": 0.4 },
+          { "event": "water sprout-c (+0.05)", "capacity": 10.251, "available": 0.45 },
+          { "event": "water sprout-c (+0.05)", "capacity": 10.251, "available": 0.5 },
+          { "event": "harvest sprout-c (cap+0.6, return 5)", "capacity": 10.851, "available": 5.5 }
+        ]
+      }
+    },
+    {
+      "description": "Soil recovery is clamped at capacity",
+      "events": [
+        {
+          "type": "sprout_planted",
+          "timestamp": "2026-01-01T10:00:00Z",
+          "sproutId": "sprout-1",
+          "twigId": "branch-0-twig-0",
+          "title": "Test",
+          "season": "2w",
+          "environment": "fertile",
+          "soilCost": 1
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-06T10:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "movement",
+          "content": "Week 1"
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-13T10:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "movement",
+          "content": "Week 2"
+        },
+        {
+          "type": "sun_shone",
+          "timestamp": "2026-01-20T10:00:00Z",
+          "twigId": "branch-0-twig-0",
+          "twigLabel": "movement",
+          "content": "Week 3"
+        }
+      ],
+      "expected": {
+        "soilCapacity": 10,
+        "soilAvailable": 10,
+        "sunEntryCount": 3,
+        "_note": "9 + 0.35 = 9.35, 9.35 + 0.35 = 9.7, 9.7 + 0.35 = 10.05 clamped to 10"
+      }
+    }
+  ]
+}

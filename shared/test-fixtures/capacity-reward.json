@@ -1,0 +1,138 @@
+{
+  "_version": 1,
+  "_description": "Cross-platform test cases for capacity reward calculation. Both web and iOS must produce identical results.",
+  "_formula": "reward = seasons[season].baseReward * soil.environmentMultipliers[env] * soil.resultMultipliers[result] * max(0, (1 - currentCapacity / soil.maxCapacity) ^ 1.5)",
+
+  "cases": [
+    {
+      "description": "Base case: 1m fertile result=5 at capacity 0 (no diminishing)",
+      "input": {
+        "season": "1m",
+        "environment": "fertile",
+        "result": 5,
+        "currentCapacity": 0
+      },
+      "expected": {
+        "reward": 0.616,
+        "_breakdown": "0.56 * 1.1 * 1.0 * 1.0 = 0.616"
+      }
+    },
+    {
+      "description": "Maximum reward: 1y barren result=5 at capacity 0",
+      "input": {
+        "season": "1y",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 0
+      },
+      "expected": {
+        "reward": 21.216,
+        "_breakdown": "8.84 * 2.4 * 1.0 * 1.0 = 21.216"
+      }
+    },
+    {
+      "description": "Minimum reward: 2w fertile result=1 at capacity 0",
+      "input": {
+        "season": "2w",
+        "environment": "fertile",
+        "result": 1,
+        "currentCapacity": 0
+      },
+      "expected": {
+        "reward": 0.1144,
+        "_breakdown": "0.26 * 1.1 * 0.4 * 1.0 = 0.1144"
+      }
+    },
+    {
+      "description": "Mid-range: 3m firm result=4 at capacity 50",
+      "input": {
+        "season": "3m",
+        "environment": "firm",
+        "result": 4,
+        "currentCapacity": 50
+      },
+      "expected": {
+        "reward": 1.2923,
+        "_breakdown": "1.95 * 1.75 * 0.85 * (1 - 50/120)^1.5 = 2.900625 * 0.44553 = 1.2923"
+      }
+    },
+    {
+      "description": "High base with diminishing: 6m barren result=5 at capacity 50",
+      "input": {
+        "season": "6m",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 50
+      },
+      "expected": {
+        "reward": 4.4482,
+        "_breakdown": "4.16 * 2.4 * 1.0 * (1 - 50/120)^1.5 = 9.984 * 0.44553 = 4.4482"
+      }
+    },
+    {
+      "description": "Late game: 1y barren result=5 at capacity 90",
+      "input": {
+        "season": "1y",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 90
+      },
+      "expected": {
+        "reward": 2.652,
+        "_breakdown": "8.84 * 2.4 * 1.0 * (1 - 90/120)^1.5 = 21.216 * 0.125 = 2.652"
+      }
+    },
+    {
+      "description": "Near max capacity: 6m firm result=3 at capacity 110",
+      "input": {
+        "season": "6m",
+        "environment": "firm",
+        "result": 3,
+        "currentCapacity": 110
+      },
+      "expected": {
+        "reward": 0.1226,
+        "_breakdown": "4.16 * 1.75 * 0.7 * (1 - 110/120)^1.5 = 5.096 * 0.02406 = 0.1226"
+      }
+    },
+    {
+      "description": "At max capacity: reward is zero",
+      "input": {
+        "season": "1y",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 120
+      },
+      "expected": {
+        "reward": 0,
+        "_breakdown": "Any * (1 - 120/120)^1.5 = 0"
+      }
+    },
+    {
+      "description": "Zero capacity gives full reward: 6m firm result=3 at capacity 0",
+      "input": {
+        "season": "6m",
+        "environment": "firm",
+        "result": 3,
+        "currentCapacity": 0
+      },
+      "expected": {
+        "reward": 5.096,
+        "_breakdown": "4.16 * 1.75 * 0.7 * 1.0 = 5.096"
+      }
+    },
+    {
+      "description": "Low result with diminishing: 2w barren result=2 at capacity 30",
+      "input": {
+        "season": "2w",
+        "environment": "barren",
+        "result": 2,
+        "currentCapacity": 30
+      },
+      "expected": {
+        "reward": 0.2229,
+        "_breakdown": "0.26 * 2.4 * 0.55 * (1 - 30/120)^1.5 = 0.3432 * 0.6495 = 0.2229"
+      }
+    }
+  ]
+}
