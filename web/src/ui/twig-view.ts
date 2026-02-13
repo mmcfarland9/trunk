@@ -24,7 +24,6 @@ import {
   toSprout,
   generateSproutId,
   generateLeafId,
-  checkSproutWateredThisWeek,
   type DerivedLeaf,
 } from '../events'
 import sharedConstants from '../../../shared/constants.json'
@@ -84,7 +83,6 @@ function getDaysRemaining(sprout: Sprout): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
-// wasWateredThisWeek uses checkSproutWateredThisWeek from events
 
 export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallbacks): TwigViewApi {
   const container = document.createElement('div')
@@ -324,8 +322,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const ready = isReady(s)
     const daysLeft = getDaysRemaining(s)
     const hasLeaf = !!s.leafId
-    const watered = checkSproutWateredThisWeek(s.id)
-
     const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
     const bloomHtml = hasBloom ? `
       <p class="sprout-card-bloom">
@@ -352,7 +348,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         ` : `
           <div class="sprout-growing-footer">
             <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
-            <button type="button" class="action-btn ${watered ? 'action-btn-passive' : 'action-btn-progress'} action-btn-water sprout-water-btn" data-action="water" ${watered ? 'disabled' : ''}>${watered ? 'Watered' : `Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span>`}</button>
+            <button type="button" class="action-btn action-btn-progress action-btn-water sprout-water-btn" data-action="water">Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span></button>
           </div>
         `}
       </div>

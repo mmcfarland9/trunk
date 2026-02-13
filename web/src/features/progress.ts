@@ -2,7 +2,7 @@ import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
 import { getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getPresetLabel } from '../state'
 import type { DerivedState } from '../events'
-import { getState, getSproutsForTwig, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById, checkSproutWateredThisWeek } from '../events'
+import { getState, getSproutsForTwig, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById } from '../events'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -481,19 +481,11 @@ function createStackedLeafCard(
       })
       row.append(title, harvestBtn)
     } else if (onWaterClick) {
-      // Water button
-      const watered = checkSproutWateredThisWeek(sprout.id)
+      // Water button — always enabled; daily availability is checked in the dialog
       const waterBtn = document.createElement('button')
       waterBtn.type = 'button'
-
-      if (watered) {
-        waterBtn.className = 'action-btn action-btn-passive action-btn-water sidebar-stacked-action'
-        waterBtn.textContent = 'watered'
-        waterBtn.disabled = true
-      } else {
-        waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
-        waterBtn.textContent = 'water'
-      }
+      waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
+      waterBtn.textContent = 'water'
 
       waterBtn.addEventListener('click', (e) => {
         e.stopPropagation()
