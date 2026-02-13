@@ -1,6 +1,6 @@
 import type { AppElements } from '../types'
 import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
-import { deleteAllEvents, forceFullSync } from '../services/sync-service'
+import { deleteAllEvents } from '../services/sync-service'
 
 // --- Account Dialog ---
 
@@ -20,7 +20,6 @@ type AccountElements = Pick<
   | 'accountDialogSignOut'
   | 'accountDialogSave'
   | 'accountDialogResetData'
-  | 'accountDialogForceSync'
   | 'profileBadge'
 >
 
@@ -188,31 +187,6 @@ export function initAccountDialog(
     if (error) {
       console.error('Failed to delete data:', error)
       alert('Failed to delete data: ' + error)
-    } else {
-      closeDialog()
-      window.location.reload()
-    }
-  })
-
-  // Force full sync with confirmation
-  elements.accountDialogForceSync.addEventListener('click', async () => {
-    const confirmed = window.confirm(
-      'Force a full sync from the cloud?\n\n' +
-      'This will re-download all your data from the server, picking up any changes made directly in the database.'
-    )
-
-    if (!confirmed) return
-
-    elements.accountDialogForceSync.disabled = true
-    elements.accountDialogForceSync.textContent = 'Syncing...'
-
-    const result = await forceFullSync()
-
-    elements.accountDialogForceSync.disabled = false
-    elements.accountDialogForceSync.textContent = 'Force Full Sync'
-
-    if (result.error) {
-      alert('Sync failed: ' + result.error)
     } else {
       closeDialog()
       window.location.reload()

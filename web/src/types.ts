@@ -115,6 +115,7 @@ export type AppElements = {
   cultivatedSproutsList: HTMLDivElement
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
+  syncButton: HTMLButtonElement
   syncTimestamp: HTMLSpanElement
   syncState: HTMLSpanElement
   sproutsDialog: HTMLDivElement
@@ -175,7 +176,6 @@ export type AppElements = {
   accountDialogSignOut: HTMLButtonElement
   accountDialogSave: HTMLButtonElement
   accountDialogResetData: HTMLButtonElement
-  accountDialogForceSync: HTMLButtonElement
 }
 
 export type AppContext = {

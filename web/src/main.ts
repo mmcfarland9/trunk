@@ -2,7 +2,7 @@ import './styles/index.css'
 import { initAuth, subscribeToAuth } from './services/auth-service'
 import { createLoginView, destroyLoginView } from './ui/login-view'
 import { isSupabaseConfigured } from './lib/supabase'
-import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncMetadata, startVisibilitySync } from './services/sync-service'
+import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, subscribeSyncMetadata, startVisibilitySync, forceFullSync } from './services/sync-service'
 import { initEventStore, setEventSyncCallback, setEventStoreErrorCallbacks, getState } from './events/store'
 import type { AppContext } from './types'
 import { getViewMode, getActiveBranchIndex, getActiveTwigId, setViewModeState, getSoilAvailable, getSoilCapacity, getWaterAvailable } from './state'
@@ -101,15 +101,17 @@ async function startWithAuth() {
         unsubscribeFromRealtime()
       }
 
-      // Update profile badge based on auth state
+      // Update profile badge and sync button based on auth state
       if (state.user) {
         domResult.elements.profileBadge.classList.remove('hidden')
+        domResult.elements.syncButton.classList.remove('hidden')
         domResult.elements.profileEmail.textContent = state.user.email || ''
         // Update trunk label with user's full_name from profile
         syncNode(domResult.elements.trunk)
         updateFocus(null, ctx)
       } else {
         domResult.elements.profileBadge.classList.add('hidden')
+        domResult.elements.syncButton.classList.add('hidden')
         domResult.elements.profileEmail.textContent = ''
       }
     }
@@ -184,6 +186,24 @@ subscribeSyncMetadata((meta) => {
   }
   stateEl.textContent = stateMap[meta.status] || ''
   stateEl.dataset.status = meta.status
+})
+
+// Sync button — spinning icon next to profile badge
+domResult.elements.syncButton.addEventListener('click', async () => {
+  const btn = domResult.elements.syncButton
+  btn.disabled = true
+  btn.classList.add('is-syncing')
+
+  const result = await forceFullSync()
+
+  btn.disabled = false
+  btn.classList.remove('is-syncing')
+
+  if (result.error) {
+    alert('Sync failed: ' + result.error)
+  } else {
+    window.location.reload()
+  }
 })
 
 /** Format ISO 8601 timestamp to UTC seconds precision: yyyy-MM-ddTHH:mm:ssZ */

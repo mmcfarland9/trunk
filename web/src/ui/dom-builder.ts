@@ -54,7 +54,15 @@ export function buildApp(
   profileEmail.textContent = ''
 
   profileBadge.append(profileIcon, profileEmail)
-  actions.append(profileBadge)
+
+  // Sync button (shown next to profile badge when authenticated)
+  const syncButton = document.createElement('button')
+  syncButton.type = 'button'
+  syncButton.className = 'sync-button hidden'
+  syncButton.setAttribute('aria-label', 'Sync data')
+  syncButton.innerHTML = '<svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>'
+
+  actions.append(profileBadge, syncButton)
 
   // Global Soil meter
   const soilMeter = document.createElement('div')
@@ -487,7 +495,6 @@ export function buildApp(
               </span>
             </div>
             <p class="account-field-hint">Your data syncs automatically across devices. All activity is stored securely in the cloud.</p>
-            <button type="button" class="action-btn action-btn-passive action-btn-neutral account-force-sync-btn">Force Full Sync</button>
           </div>
 
           <div class="account-section-divider"></div>
@@ -531,6 +538,7 @@ export function buildApp(
     cultivatedSproutsList: sidePanel.querySelector<HTMLDivElement>('.sprouts-list[data-section="cultivated"]')!,
     profileBadge,
     profileEmail,
+    syncButton,
     syncTimestamp: accountDialog.querySelector<HTMLSpanElement>('.sync-timestamp')!,
     syncState: accountDialog.querySelector<HTMLSpanElement>('.sync-state')!,
     sproutsDialog,
@@ -591,7 +599,6 @@ export function buildApp(
     accountDialogSignOut: accountDialog.querySelector<HTMLButtonElement>('.account-sign-out-btn')!,
     accountDialogSave: accountDialog.querySelector<HTMLButtonElement>('.account-save-btn')!,
     accountDialogResetData: accountDialog.querySelector<HTMLButtonElement>('.account-reset-data-btn')!,
-    accountDialogForceSync: accountDialog.querySelector<HTMLButtonElement>('.account-force-sync-btn')!,
   }
 
   return {
