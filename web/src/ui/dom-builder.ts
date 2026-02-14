@@ -2,7 +2,7 @@ import type { AppElements, BranchGroup } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import { syncNode } from './node-ui'
 import { getSoilAvailable, getSoilCapacity, getWaterAvailable } from '../state'
-import ampersandImage from '../../assets/ampersand_alpha.png'
+import trunkLogo from '../../assets/tree_icon_circle.png'
 
 type DomBuilderResult = {
   elements: AppElements
@@ -38,8 +38,8 @@ export function buildApp(
 
   const logo = document.createElement('img')
   logo.className = 'header-logo'
-  logo.src = ampersandImage
-  logo.alt = 'Trunk mark'
+  logo.src = trunkLogo
+  logo.alt = 'Trunk logo'
 
   // Profile badge (shown when authenticated)
   const profileBadge = document.createElement('div')
@@ -165,7 +165,7 @@ export function buildApp(
   trunk.dataset.defaultLabel = 'Trunk'
   trunk.dataset.placeholder = 'Trunk'
   trunk.setAttribute('aria-label', 'Trunk - your core purpose')
-  trunk.style.setProperty('--ampersand', `url(${ampersandImage})`)
+  trunk.style.setProperty('--ampersand', `url(${trunkLogo})`)
 
   const trunkLabel = document.createElement('span')
   trunkLabel.className = 'trunk-title node-label'
