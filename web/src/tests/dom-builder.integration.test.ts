@@ -21,7 +21,7 @@ vi.mock('../ui/node-ui', () => ({
 }))
 
 // Mock image import
-vi.mock('../../assets/tree_icon_circle.png', () => ({
+vi.mock('../../assets/tree_icon_transp.png', () => ({
   default: 'mock-image.png',
 }))
 

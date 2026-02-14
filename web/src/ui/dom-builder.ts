@@ -2,7 +2,7 @@ import type { AppElements, BranchGroup } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import { syncNode } from './node-ui'
 import { getSoilAvailable, getSoilCapacity, getWaterAvailable } from '../state'
-import trunkLogo from '../../assets/tree_icon_circle.png'
+import trunkLogo from '../../assets/tree_icon_transp.png'
 
 type DomBuilderResult = {
   elements: AppElements
