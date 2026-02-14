@@ -2,7 +2,7 @@ import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
 import { getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getPresetLabel } from '../state'
 import type { DerivedState } from '../events'
-import { getState, getSproutsForTwig, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById } from '../events'
+import { getState, getSproutsForTwig, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById, checkSproutWateredToday } from '../events'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -481,17 +481,25 @@ function createStackedLeafCard(
       })
       row.append(title, harvestBtn)
     } else if (onWaterClick) {
-      // Water button — always enabled; daily availability is checked in the dialog
-      const waterBtn = document.createElement('button')
-      waterBtn.type = 'button'
-      waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
-      waterBtn.textContent = 'water'
+      const wateredToday = checkSproutWateredToday(sprout.id)
+      if (wateredToday) {
+        // Show "watered" badge instead of water button
+        const badge = document.createElement('span')
+        badge.className = 'action-btn action-btn-progress sidebar-stacked-action is-watered-badge'
+        badge.textContent = 'watered'
+        row.append(title, badge)
+      } else {
+        const waterBtn = document.createElement('button')
+        waterBtn.type = 'button'
+        waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
+        waterBtn.textContent = 'water'
 
-      waterBtn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        onWaterClick(sprout)
-      })
-      row.append(title, waterBtn)
+        waterBtn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          onWaterClick(sprout)
+        })
+        row.append(title, waterBtn)
+      }
     } else {
       row.append(title)
     }

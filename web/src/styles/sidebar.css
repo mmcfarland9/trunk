@@ -380,6 +380,14 @@
   opacity: 0.5;
 }
 
+/* Watered badge in sidebar - always visible, muted */
+.sidebar-stacked-action.is-watered-badge {
+  opacity: 0.6;
+  pointer-events: none;
+  color: var(--twig);
+  font-style: italic;
+}
+
 /* Indentation for nested elements inside folders */
 .twig-folder .sidebar-stacked-card,
 .twig-folder .sprout-item {

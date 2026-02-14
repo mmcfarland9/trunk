@@ -29,6 +29,7 @@ import {
   toSprout,
   generateSproutId,
   generateLeafId,
+  checkSproutWateredToday,
   type DerivedLeaf,
 } from '../events'
 import sharedConstants from '../../../shared/constants.json'
@@ -348,7 +349,10 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         ` : `
           <div class="sprout-growing-footer">
             <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
-            <button type="button" class="action-btn action-btn-progress action-btn-water sprout-water-btn" data-action="water">Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span></button>
+            ${checkSproutWateredToday(s.id)
+              ? `<span class="is-watered-badge">watered</span>`
+              : `<button type="button" class="action-btn action-btn-progress action-btn-water sprout-water-btn" data-action="water">Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span></button>`
+            }
           </div>
         `}
       </div>

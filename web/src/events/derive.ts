@@ -232,6 +232,24 @@ export function wasSproutWateredThisWeek(
 }
 
 /**
+ * Check if a sprout was watered today (since 6am reset)
+ */
+export function wasSproutWateredToday(
+  events: readonly TrunkEvent[],
+  sproutId: string,
+  now: Date = new Date()
+): boolean {
+  const resetTime = getTodayResetTime(now)
+
+  return events.some(
+    (e) =>
+      e.type === 'sprout_watered' &&
+      e.sproutId === sproutId &&
+      new Date(e.timestamp) >= resetTime
+  )
+}
+
+/**
  * Get all sprouts for a specific twig
  */
 export function getSproutsForTwig(state: DerivedState, twigId: string): DerivedSprout[] {

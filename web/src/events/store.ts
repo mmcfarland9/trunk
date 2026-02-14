@@ -14,6 +14,7 @@ import {
   deriveWaterAvailable,
   deriveSunAvailable,
   wasSproutWateredThisWeek,
+  wasSproutWateredToday,
   getTodayResetTime,
   getWeekResetTime,
 } from './derive'
@@ -209,6 +210,13 @@ export function getSunAvailable(now: Date = new Date()): number {
  */
 export function checkSproutWateredThisWeek(sproutId: string, now: Date = new Date()): boolean {
   return wasSproutWateredThisWeek(events, sproutId, now)
+}
+
+/**
+ * Check if sprout was watered today (since 6am reset)
+ */
+export function checkSproutWateredToday(sproutId: string, now: Date = new Date()): boolean {
+  return wasSproutWateredToday(events, sproutId, now)
 }
 
 // ============================================================================

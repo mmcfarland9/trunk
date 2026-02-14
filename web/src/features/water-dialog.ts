@@ -2,7 +2,7 @@ import type { AppContext } from '../types'
 import { WATERING_PROMPTS, RECENT_WATER_LIMIT } from '../generated/constants'
 import { canAffordWater } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
-import { appendEvent, getWaterAvailable } from '../events'
+import { appendEvent, getWaterAvailable, checkSproutWateredToday } from '../events'
 import { escapeHtml } from '../utils/escape-html'
 import sharedConstants from '../../../shared/constants.json'
 
@@ -49,10 +49,12 @@ function getUniquePrompts(count: number): string[] {
 }
 
 /**
- * Select up to 3 active sprouts, sorted by least-recently-watered first.
+ * Select up to 3 active sprouts that haven't been watered today,
+ * sorted by least-recently-watered first.
  */
 function selectDailySprouts(sprouts: ActiveSproutInfo[]): ActiveSproutInfo[] {
   return [...sprouts]
+    .filter(s => !checkSproutWateredToday(s.id))
     .sort((a, b) => {
       const aLast = a.waterEntries?.map(e => e.timestamp).sort().pop() ?? ''
       const bLast = b.waterEntries?.map(e => e.timestamp).sort().pop() ?? ''
@@ -82,6 +84,9 @@ export function initWaterDialog(
   }
 
   function openWaterDialog(targetSprout?: ActiveSproutInfo): void {
+    // If targeting a specific sprout that's already watered today, don't open
+    if (targetSprout && checkSproutWateredToday(targetSprout.id)) return
+
     const sprouts = targetSprout
       ? [targetSprout]
       : selectDailySprouts(callbacks.getActiveSprouts())

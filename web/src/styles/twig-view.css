@@ -596,6 +596,15 @@
   opacity: 0.4;
 }
 
+/* Watered-today badge (replaces water button when already watered) */
+.is-watered-badge {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--twig);
+  font-style: italic;
+  opacity: 0.7;
+}
+
 /* History card states */
 .sprout-history-card.is-completed {
   border-left: 2px solid var(--twig);
