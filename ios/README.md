@@ -2,71 +2,217 @@
 
 Native iOS application for Trunk personal growth tracking.
 
-**Status:** Initial setup - development not started
+**Status:** Fully implemented with feature parity to web app
 
-## Planned Structure
+---
+
+## Structure
 
 ```
 ios/
-├── Trunk.xcodeproj/         # Xcode project
-├── Trunk/                   # App source code
-│   ├── TrunkApp.swift       # App entry point
-│   ├── Models/              # Data models
-│   ├── Views/               # SwiftUI views
-│   ├── ViewModels/          # MVVM view models
-│   ├── Services/            # Business logic
-│   └── Resources/           # Assets, constants
-├── TrunkTests/              # Unit tests
-└── TrunkUITests/            # UI tests
+├── Trunk.xcodeproj/            # Xcode project
+├── Trunk/                      # App source code
+│   ├── TrunkApp.swift          # App entry point
+│   │
+│   ├── Models/                 # (Inline in types)
+│   │
+│   ├── Views/                  # SwiftUI views
+│   │   ├── ContentView.swift
+│   │   ├── LoginView.swift
+│   │   ├── MainTabView.swift
+│   │   ├── OverviewView.swift
+│   │   ├── BranchView.swift
+│   │   ├── TwigDetailView.swift
+│   │   ├── TreeCanvasView.swift
+│   │   ├── TodayView.swift
+│   │   ├── SproutsView.swift
+│   │   │
+│   │   ├── Dialogs/            # Modal views
+│   │   │   ├── CreateSproutView.swift
+│   │   │   ├── WaterSproutView.swift
+│   │   │   ├── WaterDailySproutsView.swift
+│   │   │   ├── HarvestSproutView.swift
+│   │   │   ├── ShineView.swift
+│   │   │   └── SproutActionsView.swift
+│   │   │
+│   │   ├── Sprouts/            # Sprout list views
+│   │   │   ├── SproutsListView.swift
+│   │   │   ├── SproutListRow.swift
+│   │   │   ├── SproutDetailView.swift
+│   │   │   └── SproutFilterBar.swift
+│   │   │
+│   │   └── Today/              # Today tab components
+│   │       ├── WaterSectionView.swift
+│   │       ├── ShineSectionView.swift
+│   │       ├── NextHarvestView.swift
+│   │       └── SoilChartView.swift
+│   │
+│   ├── ViewModels/             # MVVM view models
+│   │   ├── ProgressionViewModel.swift
+│   │   └── SproutsViewModel.swift
+│   │
+│   ├── Services/               # Business logic
+│   │   ├── AuthService.swift
+│   │   ├── EventStore.swift
+│   │   ├── EventDerivation.swift
+│   │   ├── ProgressionService.swift
+│   │   ├── SoilHistoryService.swift
+│   │   ├── DataExportService.swift
+│   │   ├── SupabaseClient.swift
+│   │   ├── SyncEvent.swift
+│   │   ├── SyncService.swift
+│   │   │
+│   │   └── Sync/               # Sync module (split)
+│   │       ├── SyncCache.swift
+│   │       ├── SyncOperations.swift
+│   │       ├── SyncRealtime.swift
+│   │       ├── SyncStatus.swift
+│   │       └── PendingUploads.swift
+│   │
+│   ├── Components/             # Reusable components
+│   │   ├── GreetingHeader.swift
+│   │   ├── SyncIndicatorView.swift
+│   │   ├── DataInfoSheet.swift
+│   │   └── HapticManager.swift
+│   │
+│   ├── Extensions/             # Swift extensions
+│   │   ├── View+SwipeBack.swift
+│   │   ├── View+Animations.swift
+│   │   └── DateFormatting.swift
+│   │
+│   ├── Resources/              # Assets, constants
+│   │   └── Theme.swift
+│   │
+│   ├── Generated/              # Auto-generated code
+│   │   └── SharedConstants.swift
+│   │
+│   ├── Config/                 # Configuration
+│   │   └── Secrets.swift
+│   │
+│   └── Utils/                  # Utilities
+│       └── ErrorCodes.swift
+│
+├── TrunkTests/                 # Unit tests
+└── TrunkUITests/               # UI tests
 ```
+
+---
+
+## Tech Stack
+
+- **Language:** Swift 5.9+
+- **UI Framework:** SwiftUI
+- **Architecture:** MVVM
+- **Storage:** UserDefaults + JSON files (event-sourced)
+- **Networking:** Supabase Swift SDK (realtime + auth)
+- **Minimum iOS:** 17.0
+
+---
 
 ## Shared Dependencies
 
-The iOS app will use shared specifications from `../shared/`:
+The iOS app uses shared specifications from `../shared/`:
 
-- `constants.json` - Numeric constants and configuration
-- `schemas/*.schema.json` - Data structure contracts
-- `formulas.md` - Progression system formulas
-- `assets/trunk-map-preset.json` - Default tree labels
+- `constants.json` — Numeric constants, formulas (parsed to Swift)
+- `schemas/*.schema.json` — Data structure contracts
+- `formulas.md` — Progression system formulas
+- `assets/trunk-map-preset.json` — Default tree labels
 
-Constants will be parsed from JSON or generated as Swift code.
+Constants are generated as Swift code in `Trunk/Generated/SharedConstants.swift`.
 
-## Tech Stack (Planned)
-
-- **Language:** Swift
-- **UI Framework:** SwiftUI
-- **Architecture:** MVVM
-- **Storage:** SwiftData or CoreData
-- **Minimum iOS:** 17.0
+---
 
 ## Design Principles
 
-**Touch-first:** No hover effects, large tap targets, swipe gestures
+**Touch-first:** No hover effects, large tap targets, swipe gestures for navigation
 
-**Feature parity:** Match web app features but optimize for mobile UX:
+**Feature parity:** Matches web app features with mobile-optimized UX:
 - Tree navigation optimized for smaller screens
-- Simplified menus for tap interaction
-- Native iOS patterns (sheets, navigation, etc.)
+- Swipe gestures for back navigation
+- Native iOS patterns (sheets, navigation stacks, etc.)
+- Pull-to-refresh for sync
 
-**Offline-first:** All data stored locally, no cloud sync initially
+**Event-sourced:** Fully implements event sourcing with Supabase sync parity
+
+**Offline-first:** All data stored locally, optimistic updates, resilient sync
+
+---
+
+## Key Services
+
+### EventStore
+Manages the event log and derived state cache. Implements event sourcing with caching and persistence.
+
+### EventDerivation
+Replays events to compute current state (soil, sprouts, leaves). Matches web's `derive.ts` logic exactly.
+
+### ProgressionService
+Soil cost calculations, capacity rewards, diminishing returns. Implements `shared/formulas.md`.
+
+### SyncService
+Supabase sync: optimistic push, incremental pull, realtime subscription, pending upload retry.
+
+### AuthService
+Supabase authentication with email OTP.
+
+---
 
 ## Development
 
-Not yet started. When ready:
+### Prerequisites
 
-1. Create Xcode project
-2. Set up folder structure
-3. Generate Swift types from JSON schemas
-4. Implement progression system (verify against formulas.md)
-5. Build UI layer
+- Xcode 15+
+- iOS 17+ device or simulator
+- Supabase account (for sync features)
+
+### Setup
+
+1. Open `Trunk.xcodeproj` in Xcode
+2. Configure secrets in `Config/Secrets.swift`:
+   ```swift
+   enum Secrets {
+       static let supabaseURL = "https://your-project.supabase.co"
+       static let supabaseAnonKey = "your-anon-key"
+   }
+   ```
+3. Build and run (⌘R)
+
+---
 
 ## Testing
 
-Cross-platform validation tests will ensure iOS matches web behavior:
+Cross-platform validation tests ensure iOS matches web behavior:
 
 ```
 Input: 3m season, firm environment, result=4, currentCapacity=50
-Expected: soilCost=8, capacityReward≈3.18
+Expected: soilCost=8, capacityReward=2.975
 ```
 
-Both platforms must produce identical results.
+Both platforms must produce identical results for all formulas.
+
+---
+
+## Cross-Platform Parity
+
+The iOS app implements the same event-sourced architecture as the web app:
+
+| Feature | Web | iOS | Status |
+|---------|-----|-----|--------|
+| Event sourcing | ✅ | ✅ | Complete |
+| Supabase sync | ✅ | ✅ | Complete |
+| Realtime updates | ✅ | ✅ | Complete |
+| Offline mode | ✅ | ✅ | Complete |
+| Tree navigation | ✅ | ✅ | Complete |
+| Sprout CRUD | ✅ | ✅ | Complete |
+| Water/Sun/Harvest | ✅ | ✅ | Complete |
+| Soil charting | ✅ | ✅ | Complete |
+| Authentication | ✅ | ✅ | Complete |
+
+---
+
+## Related Documentation
+
+- [../CLAUDE.md](../CLAUDE.md) — Monorepo overview
+- [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — Event sourcing architecture
+- [../shared/sync-protocol.md](../shared/sync-protocol.md) — Sync protocol specification
+- [../shared/formulas.md](../shared/formulas.md) — Progression formulas

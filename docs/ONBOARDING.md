@@ -24,6 +24,24 @@ npm run test:e2e      # E2E tests (Playwright)
 
 ---
 
+## Available Scripts
+
+All scripts run from `web/` directory:
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| **generate** | `npm run generate` | Regenerate constants from shared/constants.json |
+| **dev** | `npm run dev` | Start Vite development server with HMR |
+| **build** | `npm run build` | TypeScript compile + production build |
+| **preview** | `npm run preview` | Preview production build locally |
+| **test** | `npm test` | Run unit tests (Vitest) |
+| **test:watch** | `npm run test:watch` | Run tests in watch mode |
+| **test:coverage** | `npm run test:coverage` | Run tests with coverage report |
+| **test:e2e** | `npm run test:e2e` | Run E2E tests (Playwright) |
+| **test:mutation** | `npm run test:mutation` | Run mutation tests (Stryker) |
+
+---
+
 ## Project Layout Cheat Sheet
 
 | Path | What's There |
@@ -62,6 +80,29 @@ To enable Claude Code integration with Supabase via MCP (Model Context Protocol)
 
 ---
 
+## Environment Variables
+
+Copy `.env.example` to `.env` for local development with cloud sync:
+
+```bash
+cp .env.example .env
+# Edit .env with your Supabase credentials
+```
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `VITE_SUPABASE_URL` | Supabase project URL | For cloud sync |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | For cloud sync |
+
+**Note**: The app works offline without these variables — cloud sync is optional.
+
+Additional configuration lives in:
+- `shared/constants.json` — Application constants (run `npm run generate` after changes)
+- `vite.config.ts` — Build configuration
+- `tsconfig.json` — TypeScript settings
+
+---
+
 ## Common Tasks
 
 ### Adding a New Feature
@@ -92,6 +133,30 @@ To enable Claude Code integration with Supabase via MCP (Model Context Protocol)
 2. Add styles to `web/src/styles/dialogs.css`
 3. Add DOM structure in `web/src/ui/dom-builder.ts`
 4. Wire callbacks in `web/src/main.ts`
+
+### Running Tests
+
+**Unit tests:**
+```bash
+cd web
+npm test                    # Run all tests once
+npm run test:watch          # Watch mode
+npm run test:coverage       # With coverage report (target: 80%+)
+```
+
+**E2E tests:**
+```bash
+cd web
+npx playwright install      # First time only
+npm run test:e2e            # Run all E2E tests
+npm run test:e2e -- --ui    # Interactive mode
+```
+
+**Mutation tests:**
+```bash
+cd web
+npm run test:mutation       # Verify test quality
+```
 
 ### Debugging State Issues
 
@@ -151,11 +216,28 @@ function doSomething(ctx: AppContext) {
 
 ---
 
+## Commit Guidelines
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Prefix | Use For |
+|--------|---------|
+| `feat:` | New features |
+| `fix:` | Bug fixes |
+| `docs:` | Documentation changes |
+| `refactor:` | Code restructuring |
+| `test:` | Test additions/changes |
+| `chore:` | Build/tooling changes |
+
+Example: `feat: add harvest dialog animation`
+
+---
+
 ## Related Documentation
 
-- [CLAUDE.md](../CLAUDE.md) — Detailed codebase guide
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — System overview and diagrams
-- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships and storage
-- [INTERFACES.md](./INTERFACES.md) — Module APIs and extension points
-- [CONTRIB.md](./CONTRIB.md) — Contributing guide and scripts reference
-- [RUNBOOK.md](./RUNBOOK.md) — Deployment and operations
+- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
+- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships, event types, storage
+- [INTERFACES.md](./INTERFACES.md) — Module APIs, extension points
+- [RUNBOOK.md](./RUNBOOK.md) — Deployment, common issues
+- [VERSIONING.md](./VERSIONING.md) — Version strategy, release process

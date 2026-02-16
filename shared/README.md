@@ -1,6 +1,6 @@
 # Shared Specifications
 
-This folder contains platform-agnostic specifications shared between the web app (`../web`) and iOS app (`../app`).
+This folder contains platform-agnostic specifications shared between the web app (`../web`) and iOS app (`../ios`).
 
 ## Contents
 
@@ -17,7 +17,7 @@ const maxSoil = constants.soil.maxCapacity
 ```swift
 // Parse JSON or generate Swift constants from this file
 struct Constants {
-    static let maxSoilCapacity = 100
+    static let maxSoilCapacity = 120
 }
 ```
 
@@ -104,7 +104,7 @@ To ensure cross-platform consistency:
 Example test case:
 ```
 Input: 3m season, firm environment, result=4, currentCapacity=50
-Expected: soilCost=8, capacityReward≈3.18
+Expected: soilCost=8, capacityReward=2.975
 ```
 
 Both web and iOS should pass this test.

@@ -456,7 +456,9 @@ Error code utilities are infrastructure-only. Existing error handling call sites
 
 ## Related Documentation
 
-- [CLAUDE.md](../CLAUDE.md) — Detailed codebase guide
-- [ONBOARDING.md](./ONBOARDING.md) — Quick start and common tasks
-- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships and storage
-- [INTERFACES.md](./INTERFACES.md) — Module APIs and extension points
+- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
+- [ONBOARDING.md](./ONBOARDING.md) — Quick start, common tasks, contributing
+- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships, event types, storage
+- [INTERFACES.md](./INTERFACES.md) — Module APIs, extension points
+- [RUNBOOK.md](./RUNBOOK.md) — Deployment, common issues
+- [VERSIONING.md](./VERSIONING.md) — Version strategy, release process

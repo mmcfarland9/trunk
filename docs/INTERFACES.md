@@ -1,131 +1,182 @@
 # Interfaces & APIs
 
-## State API (web/src/events/index.ts)
+## Event Store API (web/src/events/)
 
-### Reading State
+### Public API (web/src/events/index.ts)
 
+**Event Log Access:**
 ```typescript
-// Node data
-getNodeData(nodeId: string): NodeData
-getAllSprouts(): Sprout[]
-getActiveSprouts(): Sprout[]
-getSproutsForTwig(twigId: string): Sprout[]
+getEvents(): readonly TrunkEvent[]
+getState(): DerivedState
+```
 
-// Resources (derived from logs)
+**Event Mutations:**
+```typescript
+appendEvent(event: TrunkEvent): void
+appendEvents(events: TrunkEvent[]): void
+replaceEvents(events: TrunkEvent[]): void  // For import
+```
+
+**Resource Getters:**
+```typescript
 getSoilAvailable(): number
 getSoilCapacity(): number
-getWaterAvailable(): number
+getWaterAvailable(now?: Date): number
+getSunAvailable(now?: Date): number
 getWaterCapacity(): number
-getSunAvailable(): number
 
-// Logs
-getSunLog(): SunEntry[]
-getSoilLog(): SoilEntry[]
+canAffordSoil(cost: number): boolean
+canAffordWater(cost?: number): boolean
+canAffordSun(cost?: number): boolean
 ```
 
-### Mutating State
-
+**Query Helpers:**
 ```typescript
-// Node data
-updateNodeData(nodeId: string, data: Partial<NodeData>): void
-saveState(): void  // Persist to localStorage
+getSproutsForTwig(state: DerivedState, twigId: string): DerivedSprout[]
+getLeavesForTwig(state: DerivedState, twigId: string): DerivedLeaf[]
+getActiveSprouts(state: DerivedState): DerivedSprout[]
+getCompletedSprouts(state: DerivedState): DerivedSprout[]
+getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSprout[]
+getLeafById(state: DerivedState, leafId: string): DerivedLeaf | undefined
+getAllWaterEntries(state: DerivedState, getTwigLabel?: (twigId: string) => string): ExtendedWaterEntry[]
+```
 
-// Sprout operations
-addSprout(twigId: string, sprout: Sprout): void
-updateSprout(twigId: string, sproutId: string, updates: Partial<Sprout>): void
-removeSprout(twigId: string, sproutId: string): void
+**Time Queries:**
+```typescript
+checkSproutWateredToday(sproutId: string, now?: Date): boolean
+checkSproutWateredThisWeek(sproutId: string, now?: Date): boolean
+wasSproutWateredThisWeek(events: readonly TrunkEvent[], sproutId: string, now?: Date): boolean
+wasSproutWateredToday(events: readonly TrunkEvent[], sproutId: string, now?: Date): boolean
+wasShoneThisWeek(events: readonly TrunkEvent[], now?: Date): boolean
+getTodayResetTime(now?: Date): Date
+getWeekResetTime(now?: Date): Date
+```
 
-// Resource operations
-spendSoil(amount: number, reason: string): void
-earnSoilCapacity(amount: number, reason: string): void
-useWater(sproutId: string, note: string): void
-useSun(twigId: string, note: string): void
+**ID Generation:**
+```typescript
+generateSproutId(): string  // Returns "sprout-{uuid}"
+generateLeafId(): string    // Returns "leaf-{uuid}"
+```
+
+**Event Store Setup:**
+```typescript
+initEventStore(): void
+setEventStoreErrorCallbacks(quotaCallback: () => void, errorCallback?: (error: unknown) => void): void
+setEventSyncCallback(callback: ((event: TrunkEvent) => void) | null): void
+```
+
+**Event Validation:**
+```typescript
+validateEvent(event: unknown): event is TrunkEvent
 ```
 
 ---
 
-## View State API (web/src/state.ts)
+## Derivation API (web/src/events/derive.ts)
+
+**Core Derivation:**
+```typescript
+deriveState(events: readonly TrunkEvent[]): DerivedState
+deriveWaterAvailable(events: readonly TrunkEvent[], now?: Date): number
+deriveSunAvailable(events: readonly TrunkEvent[], now?: Date): number
+```
+
+**Legacy Conversion:**
+```typescript
+toSprout(derived: DerivedSprout): Sprout  // Convert to legacy format
+```
+
+**Soil History:**
+```typescript
+deriveSoilLog(events: readonly TrunkEvent[]): SoilLogEntry[]
+computeRawSoilHistory(events: readonly TrunkEvent[]): SoilHistoryPoint[]
+bucketSoilData(
+  points: SoilHistoryPoint[],
+  range: SoilChartRange,
+  now?: Date
+): SoilChartPoint[]
+```
+
+---
+
+## View State API (web/src/state/view-state.ts)
 
 ```typescript
-getViewMode(): 'overview' | 'branch' | 'twig' | 'leaf'
-setViewMode(mode: ViewMode): void
+getViewMode(): ViewMode  // 'overview' | 'branch' | 'twig' | 'leaf'
+setViewModeState(mode: ViewMode, branchIndex?: number, twigId?: string): void
 
 getActiveBranchIndex(): number | null
-setActiveBranchIndex(idx: number | null): void
-
 getActiveTwigId(): string | null
-setActiveTwigId(id: string | null): void
-
 getHoveredBranchIndex(): number | null
-setHoveredBranchIndex(idx: number | null): void
+setHoveredBranchIndex(index: number | null): void
+getHoveredTwigId(): string | null
+setHoveredTwigId(id: string | null): void
 
-getFocusedNode(): HTMLElement | null
-setFocusedNode(el: HTMLElement | null): void
+getFocusedNode(): HTMLButtonElement | null
+setFocusedNodeState(node: HTMLButtonElement | null): void
+getActiveNode(): HTMLButtonElement | null
+setActiveNode(node: HTMLButtonElement | null): void
+
+isBranchView(): boolean
+isTwigView(): boolean
 ```
 
 ---
 
-## Navigation API (web/src/features/navigation.ts)
+## Twig View API (web/src/ui/twig-view/index.ts)
 
 ```typescript
-setupNavigation(ctx: AppContext, callbacks: NavCallbacks): void
+buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallbacks): TwigViewApi
 
-interface NavCallbacks {
-  onPositionNodes: () => void
-  onUpdateStats: () => void
-  onFocusTrunk: () => void
-  onFocusBranch: (index: number) => void
-  onFocusTwig: (twigId: string) => void
+interface TwigViewApi {
+  container: HTMLDivElement
+  open: (twigNode: HTMLButtonElement) => void
+  close: () => void
+  isOpen: () => boolean
+  refresh: () => void
 }
 
-// Programmatic navigation
-zoomToBranch(ctx: AppContext, branchIndex: number): void
-zoomToTwig(ctx: AppContext, twigId: string): void
-zoomOut(ctx: AppContext): void
-```
-
----
-
-## Twig View API (web/src/ui/twig-view.ts)
-
-```typescript
-createTwigView(ctx: AppContext): TwigViewAPI
-
-interface TwigViewAPI {
-  show(twigId: string): void
-  hide(): void
-  refresh(): void
-  getCurrentTwigId(): string | null
+interface TwigViewCallbacks {
+  onClose: () => void
+  onSave: () => void
+  onSoilChange?: () => void
+  onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
+  onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
+  onWaterClick?: (sprout: { id: string, title: string }) => void
+  onHarvestClick?: (sprout: { /* sprout details */ }) => void
 }
 ```
 
 ---
 
-## Editor API (web/src/ui/editor.ts)
+## Sync API (web/src/services/sync/)
 
+### Public API (web/src/services/sync/index.ts)
+
+**Operations:**
 ```typescript
-createEditor(elements: Elements): EditorAPI
-
-interface EditorAPI {
-  open(nodeId: string, field: 'label' | 'note'): void
-  close(): void
-  isOpen(): boolean
-}
+pushEvent(event: TrunkEvent): Promise<{ error: string | null }>
+smartSync(): Promise<SyncResult>
+forceFullSync(): Promise<SyncResult>
+deleteAllEvents(): Promise<{ error: string | null }>
+startVisibilitySync(): void  // Auto-sync on tab visibility change
 ```
 
----
-
-## Dialog APIs
-
-All dialogs follow this pattern:
-
+**Realtime Subscription:**
 ```typescript
-setupXxxDialog(ctx: AppContext, callbacks: XxxCallbacks): void
+subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void
+unsubscribeFromRealtime(): void
+```
 
-// Example: Water Dialog
-interface WaterCallbacks {
-  onWaterUsed: () => void
-  onSproutUpdated: () => void
+**Status & Metadata:**
+```typescript
+getDetailedSyncStatus(): DetailedSyncStatus  // 'synced' | 'syncing' | 'pendingUpload' | 'offline'
+subscribeSyncMetadata(callback: (meta: SyncMetadata) => void): void
+
+interface SyncMetadata {
+  status: DetailedSyncStatus
+  lastConfirmedTimestamp: string | null
+  pendingCount: number
 }
 ```
 
@@ -136,13 +187,7 @@ interface WaterCallbacks {
 ```typescript
 interface AppContext {
   // DOM references (from dom-builder.ts)
-  elements: {
-    app: HTMLElement
-    canvas: HTMLElement
-    sidebar: HTMLElement
-    trunk: HTMLButtonElement
-    // ... all named elements
-  }
+  elements: AppElements
 
   // Branch/twig hierarchy
   branchGroups: Array<{
@@ -156,54 +201,84 @@ interface AppContext {
   nodeLookup: Map<string, HTMLButtonElement>
 
   // Sub-APIs
-  editor: EditorAPI
-  twigView: TwigViewAPI
-  leafView: LeafViewAPI
+  twigView?: TwigViewApi
+  leafView?: LeafViewApi
 }
+```
+
+---
+
+## Legacy State API (web/src/state/index.ts)
+
+**Note:** Most of these are deprecated in favor of event-sourced APIs above.
+
+```typescript
+// Node data (labels, notes)
+getNodeData(nodeId: string): NodeData
+updateNodeData(nodeId: string, updates: Partial<NodeData>): void
+saveState(): void
+
+// Preset labels
+getPresetLabel(nodeId: string): string
+
+// Utility
+canAffordSoil(cost: number): boolean
+calculateSoilCost(season: SproutSeason, environment: SproutEnvironment): number
 ```
 
 ---
 
 ## Extension Points
 
+### Adding a New Event Type
+
+1. **Define event type** in `web/src/events/types.ts`:
+```typescript
+export interface MyNewEvent extends BaseEvent {
+  type: 'my_new_event'
+  myField: string
+}
+
+export type TrunkEvent = ... | MyNewEvent
+```
+
+2. **Add derivation logic** in `web/src/events/derive.ts`:
+```typescript
+case 'my_new_event': {
+  // Update derived state based on event
+  break
+}
+```
+
+3. **Add to validation** in `web/src/generated/constants.ts`:
+```typescript
+export const VALID_EVENT_TYPES = new Set([
+  ...,
+  'my_new_event'
+])
+```
+
+4. **Update `shared/constants.json`** eventTypes array.
+
 ### Adding a New Dialog
 
-1. Create feature file with setup function:
+1. **Create feature file** with setup function:
 ```typescript
 export function setupMyDialog(
   ctx: AppContext,
   callbacks: MyCallbacks
 ): void {
-  // Get trigger element from ctx.elements
-  // Add event listeners
-  // Call callbacks on completion
+  // Wire up dialog logic
 }
 ```
 
-2. Add DOM in `dom-builder.ts`:
-```typescript
-const myDialog = createElement('dialog', 'my-dialog')
-// ... build structure
-return { ...elements, myDialog }
-```
+2. **Add DOM elements** in `web/src/ui/dom-builder.ts`.
 
-3. Wire in `main.ts`:
+3. **Wire in `web/src/bootstrap/ui.ts`**:
 ```typescript
 setupMyDialog(ctx, {
   onComplete: () => updateStats(ctx)
 })
-```
-
-### Adding a New Derived Value
-
-In `web/src/events/derive.ts`:
-```typescript
-export function getMyDerivedValue(): number {
-  const events = getEventLog()
-  return events
-    .filter(e => e.type === 'relevant')
-    .reduce((acc, e) => /* compute */, 0)
-}
 ```
 
 ---
@@ -213,61 +288,63 @@ export function getMyDerivedValue(): number {
 ```swift
 class ProgressionService {
   // Soil costs
-  func plantingCost(season: Season, environment: Environment) -> Int
+  static func plantingCost(season: Season, environment: Environment) -> Int
 
   // Capacity rewards
-  func harvestReward(
+  static func harvestReward(
     season: Season,
     environment: Environment,
     result: Int,
     currentCapacity: Double
   ) -> Double
 
-  // Resource checks
-  func waterAvailable(entries: [WaterEntry], capacity: Int) -> Int
-  func sunAvailable(entries: [SunEntry], capacity: Int) -> Int
+  // Diminishing returns curve
+  static func diminishingReturns(capacity: Double) -> Double
 }
 ```
 
 ---
 
-## Shared Schemas (shared/schemas/)
+## iOS EventDerivation (ios/Trunk/Services/EventDerivation.swift)
 
-JSON Schema files for validation:
+```swift
+struct EventDerivation {
+  // Core derivation
+  static func deriveState(from events: [TrunkEvent]) -> DerivedState
 
-| Schema | Validates |
-|--------|-----------|
-| `sprout.schema.json` | Sprout object structure |
-| `leaf.schema.json` | Leaf object structure |
-| `node-data.schema.json` | NodeData structure |
-| `events.schema.json` | Event log entries |
+  // Resource availability
+  static func deriveWaterAvailable(from events: [TrunkEvent], now: Date) -> Int
+  static func deriveSunAvailable(from events: [TrunkEvent], now: Date) -> Int
 
-Use for:
-- Import validation (`web/src/utils/validate-import.ts`)
-- Type generation (if using json-schema-to-typescript)
-- Cross-platform contract enforcement
+  // Time resets
+  static func getTodayResetTime(now: Date) -> Date
+  static func getWeekResetTime(now: Date) -> Date
+}
+```
 
 ---
 
-## Test Fixtures (shared/test-fixtures/)
+## iOS SyncService (ios/Trunk/Services/SyncService.swift)
 
-| Fixture | Purpose |
-|---------|---------|
-| `minimal-state.json` | Bare minimum valid state |
-| `full-state.json` | Comprehensive example |
-| `edge-cases.json` | Boundary conditions |
-| `legacy-v1.json` | Migration testing |
+```swift
+class SyncService: ObservableObject {
+  @Published var metadata: SyncMetadata
 
-Import in tests:
-```typescript
-import minimalState from '../../../shared/test-fixtures/minimal-state.json'
+  func pushEvent(_ event: TrunkEvent) async -> SyncError?
+  func smartSync() async -> SyncResult
+  func forceFullSync() async -> SyncResult
+  func subscribeToRealtime()
+  func unsubscribeFromRealtime()
+}
 ```
 
 ---
 
 ## Related Documentation
 
-- [CLAUDE.md](../CLAUDE.md) — Detailed codebase guide
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — System overview and diagrams
-- [ONBOARDING.md](./ONBOARDING.md) — Quick start and common tasks
-- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships and storage
+- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
+- [ONBOARDING.md](./ONBOARDING.md) — Quick start, common tasks, contributing
+- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships, event types, storage
+- [RUNBOOK.md](./RUNBOOK.md) — Deployment, common issues
+- [VERSIONING.md](./VERSIONING.md) — Version strategy, release process

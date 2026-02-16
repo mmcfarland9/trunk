@@ -26,9 +26,9 @@ This file provides guidance to Claude Code when working with this repository.
 - Default map: `shared/assets/trunk-map-preset.json`
 
 **Related documentation:**
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — System diagrams, event sourcing, module relationships
-- [ONBOARDING.md](docs/ONBOARDING.md) — Quick start, common tasks, gotchas
-- [DATA_MODEL.md](docs/DATA_MODEL.md) — Entity relationships, storage keys, constants
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
+- [ONBOARDING.md](docs/ONBOARDING.md) — Quick start, common tasks, contributing
+- [DATA_MODEL.md](docs/DATA_MODEL.md) — Entity relationships, event types, storage
 - [INTERFACES.md](docs/INTERFACES.md) — Module APIs, extension points
 
 ---
@@ -90,11 +90,11 @@ A **sprout** is a goal you're cultivating. Key properties:
 | **Title** | What you're trying to accomplish |
 | **Season** | Duration: 2w, 1m, 3m, 6m, 1y |
 | **Environment** | Difficulty: fertile (easy), firm (stretch), barren (hard) |
-| **State** | draft → active → completed/failed |
+| **State** | active → completed or uprooted |
 | **Bloom** | Success criteria at 1/5, 3/5, 5/5 outcomes |
 | **Result** | 1-5 scale when harvested |
 
-**Lifecycle**: Draft → Plant (costs soil) → Grow (water daily) → Harvest (gain capacity)
+**Lifecycle**: Plant (costs soil) → Grow (water daily) → Harvest (gain capacity) or Uproot (partial refund)
 
 ### Leaves (Sagas)
 
@@ -151,298 +151,38 @@ Visual keyboard hints appear in the sidebar when shortcuts are available for the
 
 ## Progression System
 
-### Soil Economy
-
-**Starting capacity**: 10 (enough for a few concurrent goals)
-**Maximum capacity**: 120 (mythical ceiling after ~50 years; realistic limit ~100)
-
-**Planting costs** (soil spent):
-
-| Season | Fertile | Firm | Barren |
-|--------|---------|------|--------|
-| 2 weeks | 2 | 3 | 4 |
-| 1 month | 3 | 5 | 6 |
-| 3 months | 5 | 8 | 10 |
-| 6 months | 8 | 12 | 16 |
-| 1 year | 12 | 18 | 24 |
-
-**Capacity rewards** when harvesting: `base × environment × result × diminishing`
-
-- **Environment multipliers**: Fertile 1.1x, Firm 1.75x, Barren 2.4x (risk rewarded)
-- **Result multipliers**: 1→0.4, 2→0.55, 3→0.7, 4→0.85, 5→1.0 (showing up counts)
-- **Diminishing returns**: `(1 - capacity/120)^1.5` — growth slows dramatically near max
-
-**Recovery rates**:
-- Water: +0.05 soil per use (3/day max = ~1.05/week)
-- Sun: +0.35 soil per use (1/week)
-
-See `shared/formulas.md` for full formulas (both platforms must implement identically).
+Soil capacity grows from 10 to ~100 over years of consistent goal completion. Planting costs and capacity rewards scale with season length and difficulty. See `shared/formulas.md` for complete formulas (both platforms must implement identically).
 
 ---
 
 ## Data Model
 
-### Storage
-
-All data persists to localStorage:
-
-| Key | Contents |
-|-----|----------|
-| `trunk-events-v1` | Event log (event-sourced actions: plant, water, harvest, etc.) |
-| `trunk-notes-v1` | Legacy node data (labels, notes, sprouts, leaves), sun log, soil log |
-| `trunk-resources-v1` | Legacy resource state (being deprecated, resources now derived) |
-| `trunk-notifications-v1` | Email notification preferences |
-| `trunk-last-export` | Timestamp of last JSON export |
-
-**Note**: The system is transitioning to event sourcing. New actions append to `trunk-events-v1`, and state is derived from the event log rather than stored directly.
-
-### Key Types (src/types.ts)
-
-```typescript
-// The main data for each node (trunk, branch, or twig)
-type NodeData = {
-  label: string
-  note: string
-  sprouts?: Sprout[]
-  leaves?: Leaf[]
-}
-
-// A goal being cultivated
-type Sprout = {
-  id: string
-  title: string
-  season: '2w' | '1m' | '3m' | '6m' | '1y'
-  environment: 'fertile' | 'firm' | 'barren'
-  state: 'draft' | 'active' | 'completed' | 'failed'
-  soilCost: number
-  result?: number  // 1-5 when harvested
-  leafId?: string  // if part of a leaf saga
-  waterEntries?: WaterEntry[]
-  // ... bloom descriptions, dates, etc.
-}
-
-// A saga of related sprouts
-type Leaf = {
-  id: string
-  name: string     // User-provided name for the saga
-  createdAt: string
-}
-```
-
-### Node IDs
-
-- Trunk: `trunk`
-- Branches: `branch-0` through `branch-7`
-- Twigs: `branch-{branchIdx}-twig-{twigIdx}` (e.g., `branch-2-twig-5`)
-
-### Preset Labels
-
-Default twig labels come from `shared/assets/trunk-map-preset.json`. Each twig has a default label that shows if the user hasn't customized it.
+State is fully event-sourced. See [docs/DATA_MODEL.md](docs/DATA_MODEL.md) for entity relationships, event types, and storage details.
 
 ---
 
 ## Module Architecture
 
-```
-src/
-├── main.ts              # Entry point, wires everything together
-├── types.ts             # All TypeScript type definitions
-├── constants.ts         # BRANCH_COUNT, TWIG_COUNT, STORAGE_KEY, etc.
-│
-├── state/               # State management
-│   ├── index.ts         # Re-exports, legacy nodeState, migrations, persistence
-│   └── view-state.ts    # In-memory view/navigation state (mode, focus, hover)
-│
-├── events/              # Event-sourced state (new architecture)
-│   ├── index.ts         # Public API exports
-│   ├── types.ts         # Event type definitions
-│   ├── store.ts         # Event persistence (localStorage)
-│   └── derive.ts        # State derivation from events
-│
-├── generated/           # Auto-generated code (do not edit)
-│   └── constants.ts     # Generated from shared/constants.json
-│
-├── lib/                 # Third-party client setup
-│   └── supabase.ts      # Supabase client initialization
-│
-├── services/            # Cloud services
-│   ├── auth-service.ts  # Authentication (Supabase auth, OTP)
-│   ├── sync-service.ts  # Event sync with Supabase
-│   └── sync-types.ts    # Sync event type definitions
-│
-├── features/            # Feature modules (business logic)
-│   ├── navigation.ts    # View switching, zoom transitions
-│   ├── progress.ts      # Stats calculation, sidebar sprout lists
-│   ├── hover-branch.ts  # Branch/twig hover detection
-│   ├── account-dialog.ts # Account settings modal
-│   ├── water-dialog.ts  # Water journaling modal
-│   ├── harvest-dialog.ts # Harvest sprout modal
-│   ├── shine-dialog.ts  # Sun reflection modal
-│   └── log-dialogs.ts   # History view modals (water can, sun ledge, soil bag)
-│
-├── ui/                  # UI construction and rendering
-│   ├── dom-builder.ts   # Builds entire DOM tree, exports elements
-│   ├── node-ui.ts       # Node rendering, focus updates
-│   ├── layout.ts        # Positioning, SVG guides, wind animation
-│   ├── twig-view.ts     # Twig detail panel (sprout management)
-│   ├── leaf-view.ts     # Leaf saga panel
-│   └── login-view.ts    # Login/authentication UI
-│
-├── utils/               # Utility functions
-│   ├── calculations.ts  # Pure soil/water/sun math functions
-│   ├── debounce.ts      # Debounce helper
-│   ├── escape-html.ts   # XSS prevention
-│   ├── presets.ts       # Default tree labels from shared constants
-│   ├── safe-storage.ts  # localStorage wrapper with error handling
-│   ├── sprout-labels.ts # Season/environment label helpers
-│   └── validate-import.ts # Import validation
-│
-├── tests/               # Unit and integration tests
-│   ├── setup.ts         # Test utilities
-│   └── *.test.ts        # Test files (20+)
-│
-└── styles/              # Modular CSS
-    ├── index.css        # Imports all other CSS
-    ├── base.css         # Reset, CSS variables, foundational styles
-    ├── layout.css       # App shell grid/flexbox
-    ├── buttons.css      # Button component styles
-    ├── cards.css        # Card component styles
-    ├── nodes.css        # Trunk/branch/twig node styles
-    ├── login.css        # Login/authentication styles
-    ├── sidebar.css      # Side panel styles
-    ├── dialogs.css      # All dialog modals
-    └── twig-view.css    # Twig detail panel styles
-```
+Key directories (full architecture in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
-### Key File Responsibilities
-
-| File | Purpose |
-|------|---------|
-| `main.ts` | Initializes app, wires up all event listeners, coordinates features |
-| `state/index.ts` | Legacy state management: nodeState, migrations, persistence |
-| `events/store.ts` | Event log: append, get, export events |
-| `events/derive.ts` | Derives current state by replaying events |
-| `dom-builder.ts` | Constructs entire DOM, returns `elements` object and `branchGroups` |
-| `twig-view.ts` | Complex panel for sprout CRUD: create, edit, plant, harvest, uproot |
-| `leaf-view.ts` | Leaf saga view: chronological history of related sprouts |
-| `navigation.ts` | View transitions with CSS class changes and callbacks |
-| `layout.ts` | Calculates node positions, draws SVG guide lines, wind animation |
+- `bootstrap/` — App initialization (auth, events, sync, ui)
+- `events/` — Event sourcing core (store, derive, soil-charting)
+- `services/sync/` — Cloud sync modules (operations, cache, pending-uploads, realtime, status)
+- `features/` — Business logic (navigation, dialogs, progress)
+- `ui/` — DOM construction (dom-builder/, twig-view/, layout, node-ui)
+- `state/` — View state (in-memory navigation)
+- `utils/` — Pure utilities
 
 ---
 
-## State Management
-
-Trunk uses a **dual state system** during transition to event sourcing:
-
-### Legacy State (`state/index.ts`)
-
-The `nodeState` object holds node data (labels, notes), keyed by node ID:
-
-```typescript
-const nodeState: Record<string, NodeData> = {
-  'trunk': { label: 'My Life', note: '...' },
-  'branch-0': { label: 'Health', note: '...' },
-  'branch-0-twig-0': { label: 'Movement', note: '...', sprouts: [...], leaves: [...] },
-  // ...
-}
-```
-
-Changes auto-persist to localStorage via `saveState()`.
-
-### Event-Sourced State (`events/`)
-
-The new architecture stores actions as immutable events. State is derived by replaying the log:
-
-```typescript
-// Append events (never modify)
-appendEvent({ type: 'sprout-planted', sproutId, twigId, ... })
-appendEvent({ type: 'sprout-watered', sproutId, note, ... })
-appendEvent({ type: 'sprout-harvested', sproutId, result, ... })
-
-// Derive current state
-const state = deriveState(getEvents())
-// state.soilCapacity, state.soilAvailable, state.sprouts, state.leaves
-```
-
-**Anti-cheat benefit**: Resources are derived from logs, not stored counters:
-
-```typescript
-// Water/sun availability derived from action timestamps
-getWaterAvailable()  // = capacity - countWaterEntriesSince(6amToday)
-getSunAvailable()    // = capacity - countSunEntriesSince(6amMonday)
-```
-
-### View State (in-memory)
-
-```typescript
-getViewMode()           // 'overview' | 'branch' | 'twig' | 'leaf'
-getActiveBranchIndex()  // Which branch is zoomed into (null if overview)
-getActiveTwigId()       // Which twig is open (null if not in twig/leaf view)
-getHoveredBranchIndex() // Which branch is being hovered (overview only)
-getFocusedNode()        // Currently focused DOM element for sidebar display
-```
-
-### Logs (legacy, in nodeState)
-
-```typescript
-sunLog: SunEntry[]   // All sun reflections with timestamps
-soilLog: SoilEntry[] // All soil gains/losses with reasons
-```
-
-Full history is preserved for accurate state reconstruction from exports.
 
 ---
 
 ## Key Patterns
 
-### Callback Objects
+**AppContext**: Central context object passed to most functions, contains all DOM element references, node lookup maps, and feature APIs (twigView, leafView, etc.).
 
-Features receive callback objects to communicate with other parts of the app:
-
-```typescript
-const navCallbacks = {
-  onPositionNodes: () => positionNodes(ctx),
-  onUpdateStats: () => { updateStats(ctx); updateSidebarSprouts(ctx) },
-  onFocusTrunk: () => { /* ... */ },
-}
-
-setupHoverBranch(ctx, navCallbacks)
-```
-
-### AppContext
-
-Central context object passed to most functions:
-
-```typescript
-const ctx: AppContext = {
-  elements,      // All DOM element references
-  branchGroups,  // Array of { group, branch, twigs[] } for each branch
-  allNodes,      // All clickable node buttons
-  nodeLookup,    // Map<nodeId, HTMLButtonElement>
-  editor,        // Editor API
-  twigView,      // Twig panel API
-  leafView,      // Leaf panel API
-}
-```
-
-### CSS State Classes
-
-- `.is-active` - Active/selected state
-- `.is-expanded` - Expanded sections
-- `.is-collapsed` - Collapsed sections
-- `.hidden` - Display none
-- `.is-hovered` - Hover state
-- `.is-ready` - Sprout ready to harvest
-
-### View Mode CSS
-
-The canvas element gets classes for zoom state:
-
-```css
-.canvas.is-overview { /* all branches visible */ }
-.canvas.is-branch { /* zoomed to single branch */ }
-.canvas.is-twig { /* twig panel open */ }
-```
+**Callback Objects**: Features receive callbacks to coordinate with other modules without direct imports. See [docs/INTERFACES.md](docs/INTERFACES.md) for module APIs.
 
 ---
 
@@ -492,10 +232,9 @@ Use Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test
 
 | Document | Purpose |
 |----------|---------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, event sourcing, cross-platform parity |
-| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, debugging tips |
-| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Entity relationships, storage keys, constants reference |
-| [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs, extension points, test fixtures |
-| [docs/CONTRIB.md](docs/CONTRIB.md) | Contributing guide, scripts reference, testing |
-| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deployment, common issues, rollback procedures |
-| [docs/future-ideas-archive.md](docs/future-ideas-archive.md) | Archived feature designs (Flowerdex, etc.) |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, event sourcing, sync architecture |
+| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, contributing |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Entity relationships, event types, storage |
+| [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs, extension points |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deployment, common issues |
+| [docs/VERSIONING.md](docs/VERSIONING.md) | Version strategy, release process |

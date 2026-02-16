@@ -850,7 +850,7 @@ SyncService.shared.clearLocalCache()
 
 ## References
 
-- **Web Implementation**: `web/src/services/sync-service.ts`, `web/src/services/sync-types.ts`
-- **iOS Implementation**: `ios/Trunk/Services/SyncService.swift`, `ios/Trunk/Services/SyncEvent.swift`, `ios/Trunk/Services/EventStore.swift`
+- **Web Implementation**: `web/src/services/sync/operations.ts`, `web/src/services/sync/realtime.ts`, `web/src/services/sync/status.ts`, `web/src/bootstrap/sync.ts`
+- **iOS Implementation**: `ios/Trunk/Services/SyncService.swift`, `ios/Trunk/Services/Sync/*.swift`, `ios/Trunk/Services/SyncEvent.swift`, `ios/Trunk/Services/EventStore.swift`
 - **Supabase Docs**: https://supabase.com/docs/guides/realtime
 - **Postgres Error Codes**: https://www.postgresql.org/docs/current/errcodes-appendix.html (23505 = unique_violation)

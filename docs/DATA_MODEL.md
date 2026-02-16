@@ -1,36 +1,90 @@
 # Data Model
 
-## Entity Relationship Diagram
+## Event-Sourced Architecture
+
+Trunk uses **event sourcing** as its primary data model. All state is derived by replaying an immutable event log. There is no stored mutable state—everything is computed from events.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         NodeData                            │
-│  (trunk, branch-*, branch-*-twig-*)                        │
-├─────────────────────────────────────────────────────────────┤
-│  label: string                                              │
-│  note: string                                               │
-│  sprouts?: Sprout[]    ←─── only on twigs                  │
-│  leaves?: Leaf[]       ←─── only on twigs                  │
-└─────────────────────────────────────────────────────────────┘
-            │
-            │ contains
-            ▼
-┌─────────────────────┐         ┌─────────────────────┐
-│       Sprout        │         │        Leaf         │
-├─────────────────────┤         ├─────────────────────┤
-│  id: string         │         │  id: string         │
-│  title: string      │         │  name: string       │
-│  season: Season     │    ┌───►│  createdAt: string  │
-│  environment: Env   │    │    └─────────────────────┘
-│  state: State       │    │
-│  soilCost: number   │    │    Leaf = named saga
-│  result?: 1-5       │    │    (chain of related sprouts)
-│  leafId?: string ───┼────┘
-│  waterEntries?: []  │
-│  bloom1/3/5: string │
-│  plantedAt?: string │
-│  harvestedAt?: str  │
-└─────────────────────┘
+Event Log (immutable) → deriveState() → DerivedState (ephemeral)
+```
+
+---
+
+## Event Types
+
+All events are stored in the `trunk-events-v1` log with a `type` discriminator and `timestamp`:
+
+| Event Type | Key Fields | Description |
+|------------|-----------|-------------|
+| `sprout_planted` | sproutId, twigId, title, season, environment, soilCost, leafId?, bloom* | User plants a new sprout (goal) |
+| `sprout_watered` | sproutId, content, prompt? | Daily engagement with an active sprout |
+| `sprout_harvested` | sproutId, result (1-5), reflection?, capacityGained | Sprout completed, capacity gained |
+| `sprout_uprooted` | sproutId, soilReturned | Sprout abandoned, partial soil returned |
+| `sun_shone` | twigId, twigLabel, content, prompt? | Weekly reflection on a twig |
+| `leaf_created` | leafId, twigId, name | New saga (leaf) started |
+
+---
+
+## Derived State Shape
+
+The `deriveState()` function replays all events to produce the current state:
+
+```typescript
+DerivedState {
+  // Resources (computed from events)
+  soilCapacity: number       // Grows over lifetime (starts at 10, max 120)
+  soilAvailable: number      // Currently available soil
+
+  // Entities (maps for O(1) lookup)
+  sprouts: Map<string, DerivedSprout>
+  leaves: Map<string, DerivedLeaf>
+
+  // Logs (for display)
+  sunEntries: SunEntry[]
+
+  // Indexes (built during derivation for fast queries)
+  activeSproutsByTwig: Map<string, DerivedSprout[]>  // Active sprouts per twig
+  sproutsByTwig: Map<string, DerivedSprout[]>        // All sprouts per twig
+  sproutsByLeaf: Map<string, DerivedSprout[]>        // Sprouts per leaf saga
+  leavesByTwig: Map<string, DerivedLeaf[]>           // Leaves per twig
+}
+```
+
+### DerivedSprout
+
+```typescript
+DerivedSprout {
+  id: string
+  twigId: string
+  title: string
+  season: '2w' | '1m' | '3m' | '6m' | '1y'
+  environment: 'fertile' | 'firm' | 'barren'
+  soilCost: number
+  leafId?: string              // Optional link to leaf saga
+  bloomWither?: string         // 1/5 outcome description
+  bloomBudding?: string        // 3/5 outcome description
+  bloomFlourish?: string       // 5/5 outcome description
+
+  // Derived state
+  state: 'active' | 'completed' | 'uprooted'  // Simplified lifecycle
+  plantedAt: string            // ISO8601 timestamp
+  harvestedAt?: string         // ISO8601 when completed
+  result?: number              // 1-5 when harvested
+  reflection?: string          // Harvest reflection
+  uprootedAt?: string          // ISO8601 when uprooted
+  waterEntries: WaterEntry[]   // All water journal entries
+}
+```
+
+### DerivedLeaf
+
+```typescript
+DerivedLeaf {
+  id: string
+  twigId: string
+  name: string        // User-provided saga name
+  createdAt: string   // ISO8601 timestamp
+}
 ```
 
 ---
@@ -38,73 +92,80 @@
 ## Sprout Lifecycle
 
 ```
-draft ──► active ──► completed
-  │          │
-  │          └──► failed
+active ──► completed
   │
-  └── (never planted, can be deleted)
+  └──► uprooted
 ```
 
-| State | Soil Spent | Can Water | Can Harvest |
+**No draft or failed states** — sprouts are planted immediately (active), then either harvested (completed) or abandoned (uprooted). The result (1-5) indicates outcome quality, so "showing up counts" — all harvests are completions.
+
+| State | Soil Status | Can Water | Can Harvest |
 |-------|------------|-----------|-------------|
-| draft | No | No | No |
-| active | Yes (at plant) | Yes | Yes (when ready) |
-| completed | — | No | — |
-| failed | — | No | — |
+| active | Spent at plant | Yes | Yes (when ready) |
+| completed | Returned + capacity gained | No | — |
+| uprooted | Partial return (25%) | No | — |
 
 ---
 
-## localStorage Keys (Web)
+## Storage Keys
 
-| Key | Contents | Schema |
-|-----|----------|--------|
-| `trunk-events-v1` | Event log (event-sourced actions) | TrunkEvent[] |
-| `trunk-notes-v1` | Legacy node data, sun log, soil log | See below |
-| `trunk-resources-v1` | Legacy resource state (deprecated) | — |
-| `trunk-notifications-v1` | Email preferences | — |
-| `trunk-last-export` | Timestamp (ms) | number |
+### Web (localStorage)
 
-**Note**: The system is transitioning to event sourcing. `trunk-events-v1` is the new source of truth for sprout actions.
+| Key | Contents | Type |
+|-----|----------|------|
+| `trunk-events-v1` | Event log (source of truth) | TrunkEvent[] |
+| `trunk-last-sync` | Most recent server timestamp | ISO8601 string |
+| `trunk-cache-version` | Cache schema version | "1" |
+| `trunk-pending-uploads` | Events awaiting server sync | string[] (client_ids) |
+| `trunk-last-export` | Last export timestamp | number (ms) |
 
-### trunk-notes-v1 Structure
+**Legacy keys** (deprecated, for migration only):
+- `trunk-notes-v1` — Old node data, sun log, soil log
+- `trunk-resources-v1` — Old resource counters
 
-```typescript
+### iOS (UserDefaults + File)
+
+**UserDefaults:**
+- `trunk-last-sync` → ISO8601 string
+- `trunk-cache-version` → Int (1)
+
+**File:** `ApplicationSupport/Trunk/events-cache.json`
+
+```json
 {
-  nodes: Record<string, NodeData>,
-  sunLog: SunEntry[],
-  soilLog: SoilEntry[],
-  version: number
+  "events": [...],
+  "pendingUploadClientIds": ["2024-01-15T10:30:00Z-abc123", ...],
+  "lastSyncTimestamp": "2024-01-15T10:30:00Z",
+  "cacheVersion": 1,
+  "lastWrittenAt": "2024-01-15T10:30:05Z"
 }
 ```
 
 ---
 
-## Event Log Entries
+## Log Entry Types
 
-### WaterEntry (per sprout)
+### WaterEntry
+
 ```typescript
 {
-  date: string,      // ISO date
-  note: string       // Journal entry
+  timestamp: string,    // ISO8601
+  content: string,      // Journal entry
+  prompt?: string       // AI prompt used (if any)
 }
 ```
 
-### SunEntry (global log)
-```typescript
-{
-  date: string,      // ISO date
-  twigId: string,    // Which twig was shined on
-  note: string       // Reflection text
-}
-```
+### SunEntry
 
-### SoilEntry (global log)
 ```typescript
 {
-  date: string,
-  delta: number,     // + or - amount
-  reason: string,    // 'harvest', 'plant', 'water', 'sun'
-  details?: string   // Sprout title, etc.
+  timestamp: string,    // ISO8601
+  content: string,      // Reflection text
+  prompt?: string,      // AI prompt used (if any)
+  context: {
+    twigId: string,
+    twigLabel: string
+  }
 }
 ```
 
@@ -113,13 +174,19 @@ draft ──► active ──► completed
 ## Enums
 
 ### Season
-`'2w' | '1m' | '3m' | '6m' | '1y'`
+```typescript
+'2w' | '1m' | '3m' | '6m' | '1y'
+```
 
 ### Environment
-`'fertile' | 'firm' | 'barren'`
+```typescript
+'fertile' | 'firm' | 'barren'
+```
 
 ### Sprout State
-`'draft' | 'active' | 'completed' | 'failed'`
+```typescript
+'active' | 'completed' | 'uprooted'
+```
 
 ---
 
@@ -131,12 +198,14 @@ draft ──► active ──► completed
 - Total twigs: 64
 
 ### Soil
+
 | Property | Value |
 |----------|-------|
 | Starting capacity | 10 |
 | Max capacity | 120 |
 | Recovery per water | 0.05 |
 | Recovery per sun | 0.35 |
+| Uproot refund rate | 0.25 (25%) |
 
 ### Planting Costs (soil)
 
@@ -154,21 +223,23 @@ draft ──► active ──► completed
 - Barren: 2.4×
 
 ### Result Multipliers (reward)
-- 1 → 0.4×
-- 2 → 0.55×
-- 3 → 0.7×
-- 4 → 0.85×
-- 5 → 1.0×
+- 1 → 0.4× (showed up but minimal progress)
+- 2 → 0.55× (partial progress)
+- 3 → 0.7× (met expectations)
+- 4 → 0.85× (exceeded expectations)
+- 5 → 1.0× (exceptional outcome)
 
 ### Resource Resets
-- Water: 3/day, resets 6:00 AM local
-- Sun: 1/week, resets 6:00 AM Monday
+- Water: 3/day, resets 6:00 AM local time
+- Sun: 1/week, resets 6:00 AM Monday local time
 
 ---
 
 ## Related Documentation
 
-- [CLAUDE.md](../CLAUDE.md) — Detailed codebase guide
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — System overview and diagrams
-- [ONBOARDING.md](./ONBOARDING.md) — Quick start and common tasks
-- [INTERFACES.md](./INTERFACES.md) — Module APIs and extension points
+- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
+- [ONBOARDING.md](./ONBOARDING.md) — Quick start, common tasks, contributing
+- [INTERFACES.md](./INTERFACES.md) — Module APIs, extension points
+- [RUNBOOK.md](./RUNBOOK.md) — Deployment, common issues
+- [VERSIONING.md](./VERSIONING.md) — Version strategy, release process

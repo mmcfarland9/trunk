@@ -210,7 +210,42 @@ FOR event IN sortedEvents:
             }
 ```
 
-### Step 4: Return State
+### Step 4: Build Indexes
+
+After replaying all events, build O(1) lookup indexes:
+
+```
+activeSproutsByTwig = empty Map
+sproutsByTwig       = empty Map
+sproutsByLeaf       = empty Map
+leavesByTwig        = empty Map
+
+FOR sprout IN sprouts.values():
+    // Index all sprouts by twig
+    IF NOT sproutsByTwig[sprout.twigId]:
+        sproutsByTwig[sprout.twigId] = []
+    APPEND sprout TO sproutsByTwig[sprout.twigId]
+
+    // Index active sprouts by twig
+    IF sprout.state == "active":
+        IF NOT activeSproutsByTwig[sprout.twigId]:
+            activeSproutsByTwig[sprout.twigId] = []
+        APPEND sprout TO activeSproutsByTwig[sprout.twigId]
+
+    // Index sprouts by leaf
+    IF sprout.leafId:
+        IF NOT sproutsByLeaf[sprout.leafId]:
+            sproutsByLeaf[sprout.leafId] = []
+        APPEND sprout TO sproutsByLeaf[sprout.leafId]
+
+FOR leaf IN leaves.values():
+    // Index leaves by twig
+    IF NOT leavesByTwig[leaf.twigId]:
+        leavesByTwig[leaf.twigId] = []
+    APPEND leaf TO leavesByTwig[leaf.twigId]
+```
+
+### Step 5: Return State
 
 ```
 RETURN DerivedState {
@@ -218,9 +253,15 @@ RETURN DerivedState {
     soilAvailable,
     sprouts,
     leaves,
-    sunEntries
+    sunEntries,
+    activeSproutsByTwig,
+    sproutsByTwig,
+    sproutsByLeaf,
+    leavesByTwig
 }
 ```
+
+**Note**: The indexes enable fast queries like "get all active sprouts for this twig" without scanning all sprouts.
 
 ---
 
@@ -380,15 +421,20 @@ FUNCTION calculateEndDate(plantedAt, season):
 
 ## ID Generation
 
-Both platforms use the same format for generating unique IDs:
+Both platforms use UUID-based generation with prefixes:
 
 ```
 FUNCTION generateSproutId():
-    RETURN "sprout-" + currentTimeMs + "-" + random7chars
+    RETURN "sprout-" + crypto.randomUUID()
+    // Example: "sprout-a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
 FUNCTION generateLeafId():
-    RETURN "leaf-" + currentTimeMs + "-" + random7chars
+    RETURN "leaf-" + crypto.randomUUID()
+    // Example: "leaf-a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 ```
+
+**Web**: Uses `crypto.randomUUID()` (browser API)
+**iOS**: Uses `UUID().uuidString.lowercased()` (Swift Foundation)
 
 ---
 

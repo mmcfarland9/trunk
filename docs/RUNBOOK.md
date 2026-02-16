@@ -246,3 +246,15 @@ For static hosting, standard CDN health checks apply.
 - All user input escaped via `escapeHtml()` utility
 - No `innerHTML` with raw user data
 - Content Security Policy recommended for hosting
+
+
+---
+
+## Related Documentation
+
+- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
+- [ONBOARDING.md](./ONBOARDING.md) — Quick start, common tasks, contributing
+- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships, event types, storage
+- [INTERFACES.md](./INTERFACES.md) — Module APIs, extension points
+- [VERSIONING.md](./VERSIONING.md) — Version strategy, release process

@@ -91,3 +91,15 @@ The `shared/` directory contains platform-agnostic specifications:
 - `shared/formulas.md` - Game mechanics formulas
 
 Changes to `shared/` should be coordinated across platforms but don't have their own version number.
+
+
+---
+
+## Related Documentation
+
+- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
+- [ONBOARDING.md](./ONBOARDING.md) — Quick start, common tasks, contributing
+- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships, event types, storage
+- [INTERFACES.md](./INTERFACES.md) — Module APIs, extension points
+- [RUNBOOK.md](./RUNBOOK.md) — Deployment, common issues
