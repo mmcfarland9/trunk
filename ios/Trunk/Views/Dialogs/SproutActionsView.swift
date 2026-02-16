@@ -112,6 +112,12 @@ struct SproutActionsView: View {
                                         Text(entry.timestamp, style: .date)
                                             .trunkFont(size: TrunkTheme.textXs)
                                             .foregroundStyle(Color.inkFaint)
+                                        if let prompt = entry.prompt, !prompt.isEmpty {
+                                            Text("\"\(prompt)\"")
+                                                .trunkFont(size: TrunkTheme.textXs)
+                                                .italic()
+                                                .foregroundStyle(Color.inkFaint)
+                                        }
                                         if !entry.content.isEmpty {
                                             Text(entry.content)
                                                 .trunkFont(size: TrunkTheme.textSm)

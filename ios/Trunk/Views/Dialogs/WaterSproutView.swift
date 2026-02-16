@@ -16,6 +16,7 @@ struct WaterSproutView: View {
     @State private var note = ""
     @State private var isWatering = false
     @State private var errorMessage: String?
+    @State private var prompt = ""
     @FocusState private var isNoteFocused: Bool
 
     private var hasNote: Bool {
@@ -43,12 +44,27 @@ struct WaterSproutView: View {
                         }
                     }
 
+                    // Prompt
+                    if !prompt.isEmpty {
+                        Text("\"\(prompt)\"")
+                            .trunkFont(size: TrunkTheme.textSm)
+                            .italic()
+                            .foregroundStyle(Color.inkLight)
+                            .padding(TrunkTheme.space3)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                    }
+
                     // Journal entry
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
                         Text("JOURNAL ENTRY")
                             .monoLabel(size: TrunkTheme.textXs)
 
-                        TextField("What did you do today?", text: $note, axis: .vertical)
+                        TextField("Write something...", text: $note, axis: .vertical)
                             .trunkFont(size: TrunkTheme.textBase)
                             .foregroundStyle(Color.ink)
                             .lineLimit(3...6)
@@ -132,6 +148,7 @@ struct WaterSproutView: View {
             }
         }
         .onAppear {
+            prompt = SharedConstants.WateringPrompts.prompts.randomElement() ?? ""
             isNoteFocused = true
         }
     }
@@ -151,6 +168,7 @@ struct WaterSproutView: View {
                 try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
                     "sproutId": sprout.id,
                     "content": content,
+                    "prompt": prompt,
                     "timestamp": timestamp
                 ])
             } catch {

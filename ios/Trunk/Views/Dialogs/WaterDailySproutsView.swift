@@ -155,6 +155,7 @@ struct WaterDailySproutsView: View {
                 try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
                     "sproutId": sprout.id,
                     "content": content,
+                    "prompt": prompts[sprout.id] ?? "",
                     "timestamp": timestamp
                 ])
             } catch {
