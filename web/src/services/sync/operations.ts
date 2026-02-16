@@ -1,81 +1,45 @@
-import { supabase } from '../lib/supabase'
-import { getAuthState } from './auth-service'
-import { getEvents, appendEvents, replaceEvents } from '../events/store'
-import type { TrunkEvent } from '../events/types'
-import type { SyncEvent } from './sync-types'
-import { localToSyncPayload, syncToLocalEvent, generateClientId } from './sync-types'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import { supabase } from '../../lib/supabase'
+import { getAuthState } from '../auth-service'
+import { getEvents, appendEvents, replaceEvents } from '../../events/store'
+import type { TrunkEvent } from '../../events/types'
+import type { SyncEvent } from '../sync-types'
+import { localToSyncPayload, syncToLocalEvent, generateClientId } from '../sync-types'
+import { isCacheValid, setCacheVersion, clearCacheVersion } from './cache'
+import { getPendingCount, getPendingIds, addPendingId, removePendingId, savePendingIds } from './pending-uploads'
+import { notifyMetadataListeners, setStatusDependencies } from './status'
 
 const LAST_SYNC_KEY = 'trunk-last-sync'
-const CACHE_VERSION = 1
-const CACHE_VERSION_KEY = 'trunk-cache-version'
-
-/**
- * Check if cache version matches current version
- */
-function isCacheValid(): boolean {
-  const stored = localStorage.getItem(CACHE_VERSION_KEY)
-  return stored === String(CACHE_VERSION)
-}
-
-/**
- * Update stored cache version to current
- */
-function setCacheVersion(): void {
-  localStorage.setItem(CACHE_VERSION_KEY, String(CACHE_VERSION))
-}
-
-/**
- * Clear cache version (forces full sync on next load)
- */
-function clearCacheVersion(): void {
-  localStorage.removeItem(CACHE_VERSION_KEY)
-}
-
-// ============================================================================
-// Pending upload tracking
-// ============================================================================
-
-const PENDING_KEY = 'trunk-pending-uploads'
-
-/** Set of client_id values for events that failed to push */
-const pendingUploadIds: Set<string> = new Set()
-
-function loadPendingIds(): void {
-  try {
-    const raw = localStorage.getItem(PENDING_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) {
-        parsed.forEach((id: string) => pendingUploadIds.add(id))
-      }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-}
-
-function savePendingIds(): void {
-  try {
-    localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingUploadIds]))
-  } catch {
-    // Ignore storage errors for metadata
-  }
-}
-
-// Load pending IDs eagerly on module init
-loadPendingIds()
-
-// ============================================================================
-// Last confirmed timestamp
-// ============================================================================
 
 /** The created_at of the most recently confirmed server event */
 let lastConfirmedTimestamp: string | null = localStorage.getItem(LAST_SYNC_KEY)
 
-// Track the current realtime subscription
-let realtimeChannel: RealtimeChannel | null = null
-let onRealtimeEvent: ((event: TrunkEvent) => void) | null = null
+type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
+
+export type SyncResult = {
+  status: SyncStatus
+  pulled: number
+  error: string | null
+  mode: 'incremental' | 'full'
+}
+
+let currentSyncStatus: SyncStatus = 'idle'
+
+function setSyncStatus(status: SyncStatus): void {
+  currentSyncStatus = status
+  notifyMetadataListeners()
+}
+
+// Export these for status.ts to read (avoid circular dependency)
+export function getCurrentSyncStatus(): string {
+  return currentSyncStatus
+}
+
+export function getLastConfirmedTimestamp(): string | null {
+  return lastConfirmedTimestamp
+}
+
+// Initialize status dependencies
+setStatusDependencies(getCurrentSyncStatus, getLastConfirmedTimestamp)
 
 /**
  * Pull events from Supabase since last sync
@@ -146,7 +110,7 @@ export async function pushEvent(event: TrunkEvent): Promise<{ error: string | nu
   const clientId = generateClientId(event)
 
   // Track as pending before attempting push
-  pendingUploadIds.add(clientId)
+  addPendingId(clientId)
   savePendingIds()
   notifyMetadataListeners()
 
@@ -163,7 +127,7 @@ export async function pushEvent(event: TrunkEvent): Promise<{ error: string | nu
     }
 
     // Success or duplicate — remove from pending
-    pendingUploadIds.delete(clientId)
+    removePendingId(clientId)
     savePendingIds()
     notifyMetadataListeners()
     return { error: null }
@@ -174,13 +138,12 @@ export async function pushEvent(event: TrunkEvent): Promise<{ error: string | nu
   }
 }
 
-
 /**
  * Retry pushing events that previously failed to sync.
  * Iterates through pendingUploadIds, finds matching local events, and re-pushes.
  */
 async function retryPendingUploads(): Promise<number> {
-  if (pendingUploadIds.size === 0) return 0
+  if (getPendingCount() === 0) return 0
   if (!supabase) return 0
 
   const { user } = getAuthState()
@@ -189,12 +152,12 @@ async function retryPendingUploads(): Promise<number> {
   const events = getEvents()
   let pushed = 0
 
-  for (const clientId of [...pendingUploadIds]) {
+  for (const clientId of getPendingIds()) {
     // Find the local event whose generated clientId matches
     const event = events.find(e => generateClientId(e) === clientId)
     if (!event) {
       // Event no longer in local store — remove stale pending ID
-      pendingUploadIds.delete(clientId)
+      removePendingId(clientId)
       continue
     }
 
@@ -204,7 +167,7 @@ async function retryPendingUploads(): Promise<number> {
 
       if (!error || error.code === '23505') {
         // Success or already on server — remove from pending
-        pendingUploadIds.delete(clientId)
+        removePendingId(clientId)
         pushed++
       }
       // Other errors: leave in pendingUploadIds for next retry
@@ -218,68 +181,6 @@ async function retryPendingUploads(): Promise<number> {
     notifyMetadataListeners()
   }
   return pushed
-}
-
-/**
- * Subscribe to realtime events from other devices
- */
-export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void {
-  if (!supabase) return
-
-  const { user } = getAuthState()
-  if (!user) return
-
-  // Store callback for later use
-  onRealtimeEvent = onEvent
-
-  // Unsubscribe from any existing channel
-  unsubscribeFromRealtime()
-
-  // Subscribe to INSERT events on the events table for this user
-  realtimeChannel = supabase
-    .channel('events-realtime')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'events',
-        filter: `user_id=eq.${user.id}`,
-      },
-      (payload) => {
-        const syncEvent = payload.new as SyncEvent
-        const localEvent = syncToLocalEvent(syncEvent)
-        if (!localEvent) return
-
-        // Check if we already have this event (we pushed it ourselves)
-        const existingEvents = getEvents()
-        const alreadyExists = existingEvents.some(e => e.timestamp === localEvent.timestamp)
-
-        if (!alreadyExists) {
-          // New event from another device - apply it
-          appendEvents([localEvent])
-          onRealtimeEvent?.(localEvent)
-          console.info('Realtime: received event from another device', localEvent.type)
-        }
-      }
-    )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.info('Realtime: connected')
-      }
-    })
-}
-
-/**
- * Unsubscribe from realtime events
- */
-export function unsubscribeFromRealtime(): void {
-  if (realtimeChannel) {
-    supabase?.removeChannel(realtimeChannel)
-    realtimeChannel = null
-    console.info('Realtime: disconnected')
-  }
-  onRealtimeEvent = null
 }
 
 /**
@@ -319,21 +220,6 @@ export async function deleteAllEvents(): Promise<{ error: string | null }> {
   } catch (err) {
     return { error: String(err) }
   }
-}
-
-type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
-
-type SyncResult = {
-  status: SyncStatus
-  pulled: number
-  error: string | null
-  mode: 'incremental' | 'full'
-}
-
-let currentSyncStatus: SyncStatus = 'idle'
-function setSyncStatus(status: SyncStatus): void {
-  currentSyncStatus = status
-  notifyMetadataListeners()
 }
 
 /**
@@ -416,7 +302,7 @@ export async function smartSync(): Promise<SyncResult> {
     }
 
     console.info(
-      `Sync: Fetched ${result.pulled} remote changes, pushed ${retried} local changes, ${pendingUploadIds.size} pending uploads remaining.`
+      `Sync: Fetched ${result.pulled} remote changes, pushed ${retried} local changes, ${getPendingCount()} pending uploads remaining.`
     )
 
     setSyncStatus('success')
@@ -428,56 +314,6 @@ export async function smartSync(): Promise<SyncResult> {
     return { status: 'error', pulled: 0, error: String(err), mode }
   }
 }
-
-// ============================================================================
-// Detailed sync status & metadata subscribers
-// ============================================================================
-
-type DetailedSyncStatus = 'synced' | 'syncing' | 'pendingUpload' | 'offline' | 'loading'
-
-export function getDetailedSyncStatus(): DetailedSyncStatus {
-  if (currentSyncStatus === 'syncing') return 'syncing'
-  if (currentSyncStatus === 'error') return 'offline'
-  if (pendingUploadIds.size > 0) return 'pendingUpload'
-  if (currentSyncStatus === 'success' || currentSyncStatus === 'idle') return 'synced'
-  return 'loading'
-}
-
-export type SyncMetadata = {
-  status: DetailedSyncStatus
-  lastConfirmedTimestamp: string | null
-  pendingCount: number
-}
-
-type SyncMetadataListener = (meta: SyncMetadata) => void
-const metadataListeners: SyncMetadataListener[] = []
-
-export function subscribeSyncMetadata(listener: SyncMetadataListener): () => void {
-  metadataListeners.push(listener)
-  // Immediate callback with current state
-  listener({
-    status: getDetailedSyncStatus(),
-    lastConfirmedTimestamp,
-    pendingCount: pendingUploadIds.size,
-  })
-  return () => {
-    const index = metadataListeners.indexOf(listener)
-    if (index > -1) metadataListeners.splice(index, 1)
-  }
-}
-
-function notifyMetadataListeners(): void {
-  const meta: SyncMetadata = {
-    status: getDetailedSyncStatus(),
-    lastConfirmedTimestamp,
-    pendingCount: pendingUploadIds.size,
-  }
-  metadataListeners.forEach(l => l(meta))
-}
-
-// ============================================================================
-// Visibility change handler
-// ============================================================================
 
 /**
  * Sync when tab becomes visible again.

@@ -1,6 +1,6 @@
 import type { AppElements } from '../types'
 import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
-import { deleteAllEvents } from '../services/sync-service'
+import { deleteAllEvents } from '../services/sync'
 
 // --- Account Dialog ---
 

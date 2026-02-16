@@ -1,7 +1,7 @@
 import type { AppContext } from '../types'
 import { getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
 import { getUserProfile } from '../services/auth-service'
-import { getState, getSproutsForTwig, getLeavesForTwig } from '../events'
+import { getState } from '../events'
 
 function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')
@@ -167,8 +167,8 @@ export function syncNode(element: HTMLButtonElement): void {
   // Has content if there's a preset label/note, or sprouts/leaves in this twig
   const hasPresetContent = Boolean(presetLabel || presetNote)
   const state = getState()
-  const hasSprouts = getSproutsForTwig(state, nodeId).length > 0
-  const hasLeaves = getLeavesForTwig(state, nodeId).length > 0
+  const hasSprouts = (state.sproutsByTwig.get(nodeId)?.length ?? 0) > 0
+  const hasLeaves = (state.leavesByTwig.get(nodeId)?.length ?? 0) > 0
   element.dataset.filled = (hasPresetContent || hasSprouts || hasLeaves) ? 'true' : 'false'
 }
 

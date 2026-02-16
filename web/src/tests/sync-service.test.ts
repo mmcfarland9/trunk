@@ -100,7 +100,7 @@ describe('sync-service array bounds safety', () => {
         })),
       }))
 
-      const { smartSync } = await import('../services/sync-service')
+      const { smartSync } = await import('../services/sync')
       const result = await smartSync()
 
       // Should succeed without accessing array indices
@@ -143,7 +143,7 @@ describe('sync-service array bounds safety', () => {
         })),
       }))
 
-      const { smartSync } = await import('../services/sync-service')
+      const { smartSync } = await import('../services/sync')
       const result = await smartSync()
 
       // Should access last item (index 0) safely
@@ -218,7 +218,7 @@ describe('sync-service array bounds safety', () => {
         })),
       }))
 
-      const { smartSync } = await import('../services/sync-service')
+      const { smartSync } = await import('../services/sync')
       const result = await smartSync()
 
       // Should access last item (index 2) safely
@@ -245,7 +245,7 @@ describe('sync-service array bounds safety', () => {
         })),
       }))
 
-      const { forceFullSync } = await import('../services/sync-service')
+      const { forceFullSync } = await import('../services/sync')
       const result = await forceFullSync()
 
       expect(result.status).toBe('success')
@@ -261,7 +261,7 @@ describe('sync-service array bounds safety', () => {
         isSupabaseConfigured: () => false,
       }))
 
-      const { subscribeSyncMetadata } = await import('../services/sync-service')
+      const { subscribeSyncMetadata } = await import('../services/sync')
 
       let receivedMeta: any = null
       const unsubscribe = subscribeSyncMetadata((meta) => {
@@ -283,7 +283,7 @@ describe('sync-service array bounds safety', () => {
         isSupabaseConfigured: () => false,
       }))
 
-      const { subscribeSyncMetadata } = await import('../services/sync-service')
+      const { subscribeSyncMetadata } = await import('../services/sync')
 
       const calls: any[] = []
       const unsubscribe = subscribeSyncMetadata((meta) => {
@@ -302,7 +302,7 @@ describe('sync-service array bounds safety', () => {
         isSupabaseConfigured: () => false,
       }))
 
-      const { subscribeSyncMetadata } = await import('../services/sync-service')
+      const { subscribeSyncMetadata } = await import('../services/sync')
 
       const calls1: any[] = []
       const calls2: any[] = []
@@ -337,7 +337,7 @@ describe('sync-service array bounds safety', () => {
         isSupabaseConfigured: () => true,
       }))
 
-      const { smartSync } = await import('../services/sync-service')
+      const { smartSync } = await import('../services/sync')
       const result = await smartSync()
 
       expect(result.status).toBe('error')
@@ -352,7 +352,7 @@ describe('sync-service array bounds safety', () => {
         isSupabaseConfigured: () => false,
       }))
 
-      const { smartSync } = await import('../services/sync-service')
+      const { smartSync } = await import('../services/sync')
       const result = await smartSync()
 
       expect(result.status).toBe('error')

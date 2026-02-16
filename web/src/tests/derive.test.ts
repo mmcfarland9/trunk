@@ -17,11 +17,13 @@ import {
   getSproutsByLeaf,
   wasShoneThisWeek,
   getAllWaterEntries,
+} from '../events/derive'
+import {
   deriveSoilLog,
   computeRawSoilHistory,
   bucketSoilData,
-} from '../events/derive'
-import type { SoilChartRange } from '../events/derive'
+} from '../events/soil-charting'
+import type { SoilChartRange } from '../events/soil-charting'
 import type { TrunkEvent } from '../events/types'
 
 describe('Derive State - Soil Capacity', () => {

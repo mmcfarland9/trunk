@@ -2,7 +2,7 @@ import type { AppContext, Sprout } from '../types'
 import { TWIG_COUNT } from '../constants'
 import { getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getPresetLabel } from '../state'
 import type { DerivedState } from '../events'
-import { getState, getSproutsForTwig, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById, checkSproutWateredToday } from '../events'
+import { getState, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById, checkSproutWateredToday } from '../events'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -13,8 +13,7 @@ function countActiveSproutsForTwigs(twigs: HTMLButtonElement[]): number {
   const state = getState()
   return twigs.reduce((sum, twig) => {
     const nodeId = twig.dataset.nodeId || ''
-    const derivedSprouts = getSproutsForTwig(state, nodeId)
-    return sum + derivedSprouts.filter(s => s.state === 'active').length
+    return sum + (state.activeSproutsByTwig.get(nodeId)?.length ?? 0)
   }, 0)
 }
 

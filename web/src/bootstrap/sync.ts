@@ -1,4 +1,4 @@
-import { subscribeSyncMetadata, forceFullSync } from '../services/sync-service'
+import { subscribeSyncMetadata, forceFullSync } from '../services/sync'
 import type { AppElements } from '../types'
 
 /** Format ISO 8601 timestamp to UTC seconds precision: yyyy-MM-ddTHH:mm:ssZ */

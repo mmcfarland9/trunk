@@ -17,7 +17,7 @@ export type {
 } from './types'
 
 // Derivation
-export type { DerivedState, DerivedSprout, DerivedLeaf, SoilChartRange, SoilChartPoint } from './derive'
+export type { DerivedState, DerivedSprout, DerivedLeaf } from './derive'
 export {
   deriveState,
   deriveWaterAvailable,
@@ -37,10 +37,15 @@ export {
   generateSproutId,
   generateLeafId,
   getAllWaterEntries,
+} from './derive'
+
+// Soil charting
+export type { SoilChartRange, SoilChartPoint } from './soil-charting'
+export {
   deriveSoilLog,
   computeRawSoilHistory,
   bucketSoilData,
-} from './derive'
+} from './soil-charting'
 // Store
 export {
   validateEvent,
