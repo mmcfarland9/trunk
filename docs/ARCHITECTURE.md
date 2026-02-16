@@ -79,27 +79,56 @@ getSoilCapacity()   = startingCapacity + sumAllCapacityRewards()
 ## Web App Module Graph
 
 ```
-main.ts (entry)
-    │
-    ├── dom-builder.ts ──► Returns elements{} + branchGroups[]
-    │
-    ├── state.ts / events/ ──► State management
-    │       │
-    │       └── derive.ts ──► Computes current state from logs
-    │
-    ├── features/
-    │   ├── navigation.ts ──► View transitions
-    │   ├── progress.ts ──► Stats calculation
-    │   ├── water-dialog.ts ──► Watering modal
-    │   ├── harvest-dialog.ts ──► Harvest modal
-    │   ├── shine-dialog.ts ──► Sun reflection modal
-    │   └── import-export.ts ──► Backup/restore
-    │
-    └── ui/
-        ├── layout.ts ──► Node positioning, SVG guides
-        ├── node-ui.ts ──► Node state sync
-        ├── twig-view.ts ──► Sprout CRUD panel
-        └── leaf-view.ts ──► Saga history view
+bootstrap/ (app initialization - split from main.ts)
+    ├── auth.ts ──► Authentication setup
+    ├── events.ts ──► Event listener wiring
+    ├── sync.ts ──► Sync initialization
+    └── ui.ts ──► DOM construction & feature setup
+         │
+         ├── ui/dom-builder/ ──► Returns elements{} + branchGroups[]
+         │   ├── index.ts ──► Main builder orchestration
+         │   ├── build-dialogs.ts ──► All dialog modals
+         │   ├── build-header.ts ──► Header & sync badge
+         │   ├── build-sidebar.ts ──► Sidebar container
+         │   └── build-tree-nodes.ts ──► Trunk/branch/twig nodes
+         │
+         ├── state/ / events/ ──► State management
+         │   ├── state/index.ts ──► Legacy view state
+         │   └── events/ ──► Event sourcing core
+         │       ├── store.ts ──► Event log persistence
+         │       ├── derive.ts ──► Computes current state
+         │       └── soil-charting.ts ──► Capacity tracking
+         │
+         ├── services/sync/ ──► Cloud sync (split from sync-service.ts)
+         │   ├── index.ts ──► Public API
+         │   ├── operations.ts ──► Push/pull logic
+         │   ├── cache.ts ──► Local cache management
+         │   ├── pending-uploads.ts ──► Retry queue
+         │   ├── realtime.ts ──► Supabase subscriptions
+         │   └── status.ts ──► Sync status tracking
+         │
+         ├── features/
+         │   ├── navigation.ts ──► View transitions
+         │   ├── progress.ts ──► Stats calculation
+         │   ├── water-dialog.ts ──► Watering modal
+         │   ├── harvest-dialog.ts ──► Harvest modal
+         │   ├── shine-dialog.ts ──► Sun reflection modal
+         │   ├── log-dialogs.ts ──► History views
+         │   ├── account-dialog.ts ──► Account settings
+         │   └── hover-branch.ts ──► Branch hover detection
+         │
+         └── ui/
+             ├── layout.ts ──► Node positioning, SVG guides
+             ├── node-ui.ts ──► Node state sync
+             ├── twig-view/ ──► Sprout CRUD panel (split from twig-view.ts)
+             │   ├── index.ts ──► Main orchestration
+             │   ├── sprout-cards.ts ──► Card rendering
+             │   ├── event-handlers.ts ──► User interactions
+             │   ├── form-validation.ts ──► Input validation
+             │   ├── build-panel.ts ──► Panel construction
+             │   └── sprout-form.ts ──► Form state
+             ├── leaf-view.ts ──► Saga history view
+             └── login-view.ts ──► Authentication UI
 ```
 
 ### Callback Pattern
@@ -114,6 +143,27 @@ setupWaterDialog(ctx, {
 ```
 
 This keeps modules decoupled and testable.
+
+### Module Boundary Conventions
+
+Each top-level directory in `web/src/` has a specific responsibility:
+
+| Directory | Responsibility | Imports From | Exports |
+|-----------|---------------|--------------|---------|
+| **bootstrap/** | App initialization and wiring | All modules | Initialization functions |
+| **ui/** | DOM construction, rendering, layout | state/, utils/ | Element references, render functions |
+| **features/** | Orchestration and dialog management | ui/, state/, events/, services/ | Feature setup functions |
+| **events/** | Event sourcing core | utils/, types | Event types, derivation, store |
+| **services/** | Cloud services (auth, sync) | events/, lib/ | Service APIs |
+| **state/** | Legacy view state (in-memory) | types | View mode, navigation state |
+| **utils/** | Pure utility functions | None (leaf nodes) | Helper functions |
+
+**Key principles:**
+- **features/** orchestrates but doesn't render—calls ui/ modules for DOM updates
+- **ui/** renders but doesn't orchestrate—receives callbacks for coordination
+- **events/** is the source of truth—never imports from features/ or ui/
+- **services/** only depends on events/ and lib/—never imports features/
+- **utils/** has zero dependencies—pure functions only
 
 ---
 
@@ -137,7 +187,15 @@ TrunkApp.swift (entry)
     │
     └── Services/
         ├── ProgressionService.swift ──► Formulas from shared/
-        └── DataExportService.swift ──► JSON export/import
+        ├── DataExportService.swift ──► JSON export/import
+        ├── AuthService.swift ──► Authentication
+        └── SyncService.swift (thin facade)
+            └── Sync/ ──► Sync implementation (mirrors web's services/sync/)
+                ├── SyncCache.swift ──► Local cache management
+                ├── PendingUploads.swift ──► Retry queue
+                ├── SyncOperations.swift ──► Push/pull logic
+                ├── SyncRealtime.swift ──► Supabase subscriptions
+                └── SyncStatus.swift ──► Sync status tracking
 ```
 
 Storage: SwiftData (on-device, mirrors web's event model)
