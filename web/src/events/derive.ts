@@ -350,14 +350,14 @@ export function wasShoneThisWeek(events: readonly TrunkEvent[], now: Date = new 
  * Generate a unique sprout ID
  */
 export function generateSproutId(): string {
-  return `sprout-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  return `sprout-${crypto.randomUUID()}`
 }
 
 /**
  * Generate a unique leaf ID
  */
 export function generateLeafId(): string {
-  return `leaf-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  return `leaf-${crypto.randomUUID()}`
 }
 
 /**

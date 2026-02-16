@@ -77,3 +77,65 @@ Reference test fixture: `shared/test-fixtures/timestamp-validation.json`
 - **Compatibility**: Parsers must handle both formats
 - **Going forward**: All new events MUST use millisecond-precision timestamps
 - **No retroactive fixes**: Do not modify existing event timestamps
+
+---
+
+## ID Generation
+
+**Standard**: All entity IDs use prefix-UUID format for uniqueness and type safety.
+
+**Format Pattern**: `{prefix}-{uuid-v4-lowercase}`
+
+**Prefixes**:
+- `sprout-` for sprout (goal) entities
+- `leaf-` for leaf (saga) entities
+
+**Examples**:
+- `sprout-a1b2c3d4-e5f6-4789-a012-3456789abcde` ✅
+- `leaf-f9e8d7c6-b5a4-4321-9876-543210fedcba` ✅
+- `sprout-A1B2C3D4-E5F6-4789-A012-3456789ABCDE` ❌ (uppercase)
+- `a1b2c3d4-e5f6-4789-a012-3456789abcde` ❌ (missing prefix)
+
+**Rationale**:
+- Type-safe IDs prevent mixing different entity types
+- UUID v4 guarantees global uniqueness across devices
+- Lowercase format ensures consistent string comparison
+- Prefix enables quick entity type identification in logs/debugging
+
+### Platform Implementation
+
+**Web (JavaScript/TypeScript)**:
+```typescript
+function generateSproutId(): string {
+  return `sprout-${crypto.randomUUID()}`
+}
+
+function generateLeafId(): string {
+  return `leaf-${crypto.randomUUID()}`
+}
+```
+
+**iOS (Swift)**:
+```swift
+let sproutId = "sprout-\(UUID().uuidString.lowercased())"
+let leafId = "leaf-\(UUID().uuidString.lowercased())"
+```
+
+### Validation
+
+**Regex pattern**: `^(sprout|leaf)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`
+
+**Schema validation** (JSON Schema):
+```json
+{
+  "type": "string",
+  "pattern": "^(sprout|leaf)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+}
+```
+
+### Backward Compatibility
+
+- **Old data**: Entities created before this standard may have different ID formats (e.g., `sprout-{timestamp}-{random}`)
+- **Compatibility**: ID validation should accept legacy formats when reading existing data
+- **Going forward**: All new IDs MUST use prefix-UUID format
+- **No retroactive fixes**: Do not modify existing entity IDs in event logs

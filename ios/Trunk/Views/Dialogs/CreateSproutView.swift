@@ -315,7 +315,7 @@ struct CreateSproutView: View {
         let trimmedName = newLeafName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
 
-        let leafId = UUID().uuidString
+        let leafId = "leaf-\(UUID().uuidString.lowercased())"
         newLeafName = ""
 
         // pushEvent is local-first — leaf lands in EventStore immediately
@@ -335,7 +335,7 @@ struct CreateSproutView: View {
         isPlanting = true
         errorMessage = nil
 
-        let sproutId = UUID().uuidString
+        let sproutId = "sprout-\(UUID().uuidString.lowercased())"
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
 
         Task {

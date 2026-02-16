@@ -1,0 +1,68 @@
+{
+  "auth": {
+    "NOT_CONFIGURED": {
+      "code": "AUTH_001",
+      "defaultMessage": "Supabase is not configured",
+      "userMessage": "Unable to connect to authentication service. Please check your configuration."
+    },
+    "INVALID_CODE": {
+      "code": "AUTH_002",
+      "defaultMessage": "Invalid verification code",
+      "userMessage": "The code you entered is incorrect. Please check and try again."
+    },
+    "CODE_EXPIRED": {
+      "code": "AUTH_003",
+      "defaultMessage": "Verification code has expired",
+      "userMessage": "Your code has expired. Please request a new one."
+    },
+    "RATE_LIMITED": {
+      "code": "AUTH_004",
+      "defaultMessage": "Too many authentication attempts",
+      "userMessage": "Too many attempts. Please wait a few minutes before trying again."
+    }
+  },
+  "sync": {
+    "NOT_CONFIGURED": {
+      "code": "SYNC_001",
+      "defaultMessage": "Supabase sync is not configured",
+      "userMessage": "Unable to sync your data. Please check your configuration."
+    },
+    "NOT_AUTHENTICATED": {
+      "code": "SYNC_002",
+      "defaultMessage": "User is not authenticated",
+      "userMessage": "You must be signed in to sync your data."
+    },
+    "NETWORK_ERROR": {
+      "code": "SYNC_003",
+      "defaultMessage": "Network connection failed",
+      "userMessage": "Unable to reach the server. Check your internet connection and try again."
+    },
+    "CONFLICT": {
+      "code": "SYNC_004",
+      "defaultMessage": "Data conflict detected during sync",
+      "userMessage": "Your data conflicts with server data. Please try refreshing."
+    }
+  },
+  "validation": {
+    "TITLE_TOO_LONG": {
+      "code": "VAL_001",
+      "defaultMessage": "Title exceeds maximum length",
+      "userMessage": "Title is too long. Please keep it under 100 characters."
+    },
+    "INSUFFICIENT_SOIL": {
+      "code": "VAL_002",
+      "defaultMessage": "Not enough soil available",
+      "userMessage": "You don't have enough soil to plant this sprout. Harvest other sprouts to gain more capacity."
+    },
+    "NO_WATER": {
+      "code": "VAL_003",
+      "defaultMessage": "No water available today",
+      "userMessage": "You've used all your water for today. Water refills daily at 6:00 AM."
+    },
+    "NO_SUN": {
+      "code": "VAL_004",
+      "defaultMessage": "No sun available this week",
+      "userMessage": "You've used your sun for this week. Sun refills weekly on Monday at 6:00 AM."
+    }
+  }
+}

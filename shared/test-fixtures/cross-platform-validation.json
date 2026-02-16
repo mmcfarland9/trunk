@@ -1,0 +1,600 @@
+{
+  "_version": 1,
+  "_description": "Comprehensive cross-platform validation tests. All formulas must match exactly between web and iOS.",
+  "_constants_source": "shared/constants.json",
+  "_formula_source": "shared/formulas.md",
+
+  "soilCostTests": {
+    "_description": "All 15 season × environment combinations. Expected values from shared/constants.json plantingCosts.",
+    "cases": [
+      { "season": "2w", "environment": "fertile", "expected": 2 },
+      { "season": "2w", "environment": "firm", "expected": 3 },
+      { "season": "2w", "environment": "barren", "expected": 4 },
+      { "season": "1m", "environment": "fertile", "expected": 3 },
+      { "season": "1m", "environment": "firm", "expected": 5 },
+      { "season": "1m", "environment": "barren", "expected": 6 },
+      { "season": "3m", "environment": "fertile", "expected": 5 },
+      { "season": "3m", "environment": "firm", "expected": 8 },
+      { "season": "3m", "environment": "barren", "expected": 10 },
+      { "season": "6m", "environment": "fertile", "expected": 8 },
+      { "season": "6m", "environment": "firm", "expected": 12 },
+      { "season": "6m", "environment": "barren", "expected": 16 },
+      { "season": "1y", "environment": "fertile", "expected": 12 },
+      { "season": "1y", "environment": "firm", "expected": 18 },
+      { "season": "1y", "environment": "barren", "expected": 24 }
+    ]
+  },
+
+  "capacityRewardTests": {
+    "_description": "Capacity reward calculation with diminishing returns. Formula: baseReward × envMult × resultMult × (1 - capacity/120)^1.5",
+    "cases": [
+      {
+        "description": "Edge case: capacity 0 (no diminishing)",
+        "season": "1m",
+        "environment": "fertile",
+        "result": 5,
+        "currentCapacity": 0,
+        "expected": 0.616,
+        "_calculation": "0.56 * 1.1 * 1.0 * 1.0 = 0.616"
+      },
+      {
+        "description": "Edge case: at max capacity (reward is zero)",
+        "season": "1y",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 120,
+        "expected": 0,
+        "_calculation": "8.84 * 2.4 * 1.0 * 0.0 = 0.0"
+      },
+      {
+        "description": "Edge case: near max capacity (119.5)",
+        "season": "6m",
+        "environment": "firm",
+        "result": 5,
+        "currentCapacity": 119.5,
+        "expected": 0.00196,
+        "_calculation": "4.16 * 1.75 * 1.0 * (0.5/120)^1.5 = 7.28 * 0.000269 ≈ 0.00196"
+      },
+      {
+        "description": "Maximum possible reward: 1y barren result=5 at capacity 0",
+        "season": "1y",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 0,
+        "expected": 21.216,
+        "_calculation": "8.84 * 2.4 * 1.0 * 1.0 = 21.216"
+      },
+      {
+        "description": "Minimum non-zero reward: 2w fertile result=1 at capacity 0",
+        "season": "2w",
+        "environment": "fertile",
+        "result": 1,
+        "currentCapacity": 0,
+        "expected": 0.1144,
+        "_calculation": "0.26 * 1.1 * 0.4 * 1.0 = 0.1144"
+      },
+      {
+        "description": "Mid-range: 3m firm result=4 at capacity 50",
+        "season": "3m",
+        "environment": "firm",
+        "result": 4,
+        "currentCapacity": 50,
+        "expected": 1.2923,
+        "_calculation": "1.95 * 1.75 * 0.85 * (70/120)^1.5 = 2.900625 * 0.445526 ≈ 1.2923"
+      },
+      {
+        "description": "Mid-range: 6m barren result=5 at capacity 50",
+        "season": "6m",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 50,
+        "expected": 4.4482,
+        "_calculation": "4.16 * 2.4 * 1.0 * (70/120)^1.5 = 9.984 * 0.445526 ≈ 4.4482"
+      },
+      {
+        "description": "Late game: 1y barren result=5 at capacity 90",
+        "season": "1y",
+        "environment": "barren",
+        "result": 5,
+        "currentCapacity": 90,
+        "expected": 2.652,
+        "_calculation": "8.84 * 2.4 * 1.0 * (30/120)^1.5 = 21.216 * 0.125 = 2.652"
+      },
+      {
+        "description": "Low result with diminishing: 2w barren result=2 at capacity 30",
+        "season": "2w",
+        "environment": "barren",
+        "result": 2,
+        "currentCapacity": 30,
+        "expected": 0.2229,
+        "_calculation": "0.26 * 2.4 * 0.55 * (90/120)^1.5 = 0.3432 * 0.649519 ≈ 0.2229"
+      },
+      {
+        "description": "All result levels: 3m fertile result=1 at capacity 10",
+        "season": "3m",
+        "environment": "fertile",
+        "result": 1,
+        "currentCapacity": 10,
+        "expected": 0.7530,
+        "_calculation": "1.95 * 1.1 * 0.4 * (110/120)^1.5 = 0.7530"
+      },
+      {
+        "description": "All result levels: 3m fertile result=2 at capacity 10",
+        "season": "3m",
+        "environment": "fertile",
+        "result": 2,
+        "currentCapacity": 10,
+        "expected": 1.0354,
+        "_calculation": "1.95 * 1.1 * 0.55 * (110/120)^1.5 = 1.0354"
+      },
+      {
+        "description": "All result levels: 3m fertile result=3 at capacity 10",
+        "season": "3m",
+        "environment": "fertile",
+        "result": 3,
+        "currentCapacity": 10,
+        "expected": 1.3178,
+        "_calculation": "1.95 * 1.1 * 0.7 * (110/120)^1.5 = 1.3178"
+      },
+      {
+        "description": "All result levels: 3m fertile result=4 at capacity 10",
+        "season": "3m",
+        "environment": "fertile",
+        "result": 4,
+        "currentCapacity": 10,
+        "expected": 1.6002,
+        "_calculation": "1.95 * 1.1 * 0.85 * (110/120)^1.5 = 1.6002"
+      },
+      {
+        "description": "All result levels: 3m fertile result=5 at capacity 10",
+        "season": "3m",
+        "environment": "fertile",
+        "result": 5,
+        "currentCapacity": 10,
+        "expected": 1.8825,
+        "_calculation": "1.95 * 1.1 * 1.0 * (110/120)^1.5 = 1.8825"
+      },
+      {
+        "description": "All environments: 6m fertile result=3 at capacity 40",
+        "season": "6m",
+        "environment": "fertile",
+        "result": 3,
+        "currentCapacity": 40,
+        "expected": 1.7436,
+        "_calculation": "4.16 * 1.1 * 0.7 * (80/120)^1.5 = 1.7436"
+      },
+      {
+        "description": "All environments: 6m firm result=3 at capacity 40",
+        "season": "6m",
+        "environment": "firm",
+        "result": 3,
+        "currentCapacity": 40,
+        "expected": 2.7739,
+        "_calculation": "4.16 * 1.75 * 0.7 * (80/120)^1.5 = 2.7739"
+      },
+      {
+        "description": "All environments: 6m barren result=3 at capacity 40",
+        "season": "6m",
+        "environment": "barren",
+        "result": 3,
+        "currentCapacity": 40,
+        "expected": 3.8042,
+        "_calculation": "4.16 * 2.4 * 0.7 * (80/120)^1.5 = 3.8042"
+      },
+      {
+        "description": "Early game: 2w firm result=3 at capacity 10",
+        "season": "2w",
+        "environment": "firm",
+        "result": 3,
+        "currentCapacity": 10,
+        "expected": 0.2795,
+        "_calculation": "0.26 * 1.75 * 0.7 * (110/120)^1.5 = 0.2795"
+      },
+      {
+        "description": "Late game near max: 1y firm result=4 at capacity 115",
+        "season": "1y",
+        "environment": "firm",
+        "result": 4,
+        "currentCapacity": 115,
+        "expected": 0.1118,
+        "_calculation": "8.84 * 1.75 * 0.85 * (5/120)^1.5 = 0.1118"
+      }
+    ]
+  },
+
+  "resetTimeTests": {
+    "_description": "NOTE: Reset time tests are timezone-dependent and covered by existing week-boundary.json fixture. Omitted here to avoid timezone issues in cross-platform tests."
+  },
+
+  "resourceAvailabilityTests": {
+    "_description": "Water and sun availability derived from event counts since last reset",
+    "waterCases": [
+      {
+        "description": "No waters today: full capacity",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [],
+        "expectedAvailable": 3
+      },
+      {
+        "description": "One water today: 2 remaining",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T10:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "title": "Test",
+            "season": "2w",
+            "environment": "fertile",
+            "soilCost": 2
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-30T14:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Today's water"
+          }
+        ],
+        "expectedAvailable": 2
+      },
+      {
+        "description": "Two waters today: 1 remaining",
+        "now": "2026-01-30T20:00:00Z",
+        "events": [
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T15:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "title": "Test",
+            "season": "2w",
+            "environment": "fertile",
+            "soilCost": 2
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-30T15:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "First water"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-30T18:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Second water"
+          }
+        ],
+        "expectedAvailable": 1
+      },
+      {
+        "description": "Three waters today: 0 remaining",
+        "now": "2026-01-30T20:00:00Z",
+        "events": [
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T15:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "title": "Test",
+            "season": "2w",
+            "environment": "fertile",
+            "soilCost": 2
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-30T15:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "First"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-30T17:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Second"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-30T19:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Third"
+          }
+        ],
+        "expectedAvailable": 0
+      },
+      {
+        "description": "Yesterday's waters don't count",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T10:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "title": "Test",
+            "season": "2w",
+            "environment": "fertile",
+            "soilCost": 2
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-29T12:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Yesterday"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-29T16:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Yesterday again"
+          }
+        ],
+        "expectedAvailable": 3
+      }
+    ],
+    "sunCases": [
+      {
+        "description": "No sun this week: full capacity",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [],
+        "expectedAvailable": 1
+      },
+      {
+        "description": "One sun this week: 0 remaining",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [
+          {
+            "type": "sun_shone",
+            "timestamp": "2026-01-29T12:00:00Z",
+            "twigId": "branch-0-twig-0",
+            "twigLabel": "Test",
+            "content": "This week"
+          }
+        ],
+        "expectedAvailable": 0
+      },
+      {
+        "description": "Last week's sun doesn't count",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [
+          {
+            "type": "sun_shone",
+            "timestamp": "2026-01-22T12:00:00Z",
+            "twigId": "branch-0-twig-0",
+            "twigLabel": "Test",
+            "content": "Last week"
+          }
+        ],
+        "expectedAvailable": 1,
+        "_note": "Jan 22 is in previous week (Mon Jan 19 - Sun Jan 25)"
+      },
+      {
+        "description": "Mix of old and current week sun",
+        "now": "2026-01-30T18:00:00Z",
+        "events": [
+          {
+            "type": "sun_shone",
+            "timestamp": "2026-01-15T12:00:00Z",
+            "twigId": "branch-0-twig-0",
+            "twigLabel": "Test",
+            "content": "Two weeks ago"
+          },
+          {
+            "type": "sun_shone",
+            "timestamp": "2026-01-22T12:00:00Z",
+            "twigId": "branch-0-twig-0",
+            "twigLabel": "Test",
+            "content": "Last week"
+          },
+          {
+            "type": "sun_shone",
+            "timestamp": "2026-01-29T12:00:00Z",
+            "twigId": "branch-0-twig-0",
+            "twigLabel": "Test",
+            "content": "This week"
+          }
+        ],
+        "expectedAvailable": 0,
+        "_note": "Only Jan 29 sun counts (current week: Mon Jan 26 - Sun Feb 1)"
+      }
+    ]
+  },
+
+  "eventDerivationTests": {
+    "_description": "Full lifecycle event scenarios with expected derived state",
+    "scenarios": [
+      {
+        "name": "plant_water_harvest",
+        "description": "Complete lifecycle: plant → water → harvest",
+        "events": [
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T10:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "title": "Test Goal",
+            "season": "2w",
+            "environment": "fertile",
+            "soilCost": 2,
+            "bloomWither": "Minimal",
+            "bloomBudding": "Partial",
+            "bloomFlourish": "Full"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-02T10:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Day 1 progress",
+            "prompt": "How did it go?"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-03T10:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Day 2 progress"
+          },
+          {
+            "type": "sprout_harvested",
+            "timestamp": "2026-01-15T10:00:00Z",
+            "sproutId": "sprout-1",
+            "result": 4,
+            "capacityGained": 0.2448,
+            "reflection": "Went well overall"
+          }
+        ],
+        "expectedState": {
+          "soilCapacity": 10.2448,
+          "soilAvailable": 10.1,
+          "_soilBreakdown": "start:10, plant:-2=8, water1:+0.05=8.05, water2:+0.05=8.1, harvest:+0.2448cap+2return→min(10.1,10.2448)=10.1",
+          "sproutCount": 1,
+          "activeSproutCount": 0,
+          "completedSproutCount": 1,
+          "sprouts": {
+            "sprout-1": {
+              "state": "completed",
+              "result": 4,
+              "waterEntryCount": 2,
+              "reflection": "Went well overall"
+            }
+          }
+        }
+      },
+      {
+        "name": "uproot_scenario",
+        "description": "Plant and uproot (25% soil refund, no capacity change)",
+        "events": [
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T10:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "title": "Abandoned Goal",
+            "season": "3m",
+            "environment": "barren",
+            "soilCost": 10
+          },
+          {
+            "type": "sprout_uprooted",
+            "timestamp": "2026-01-10T10:00:00Z",
+            "sproutId": "sprout-1",
+            "soilReturned": 2.5
+          }
+        ],
+        "expectedState": {
+          "soilCapacity": 10,
+          "soilAvailable": 2.5,
+          "_soilBreakdown": "start:10, plant:-10=0, uproot:+2.5=2.5",
+          "sproutCount": 1,
+          "activeSproutCount": 0,
+          "completedSproutCount": 0,
+          "uprootedSproutCount": 1,
+          "sprouts": {
+            "sprout-1": {
+              "state": "uprooted",
+              "uprootedAt": "2026-01-10T10:00:00Z"
+            }
+          }
+        }
+      },
+      {
+        "name": "multiple_concurrent_sprouts",
+        "description": "Multiple active sprouts with leaf grouping",
+        "events": [
+          {
+            "type": "leaf_created",
+            "timestamp": "2026-01-01T09:00:00Z",
+            "leafId": "leaf-1",
+            "twigId": "branch-0-twig-0",
+            "name": "Fitness Journey"
+          },
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T10:00:00Z",
+            "sproutId": "sprout-1",
+            "twigId": "branch-0-twig-0",
+            "leafId": "leaf-1",
+            "title": "Run 5K",
+            "season": "2w",
+            "environment": "fertile",
+            "soilCost": 2
+          },
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T11:00:00Z",
+            "sproutId": "sprout-2",
+            "twigId": "branch-0-twig-0",
+            "leafId": "leaf-1",
+            "title": "Stretch daily",
+            "season": "1m",
+            "environment": "firm",
+            "soilCost": 5
+          },
+          {
+            "type": "sprout_planted",
+            "timestamp": "2026-01-01T12:00:00Z",
+            "sproutId": "sprout-3",
+            "twigId": "branch-1-twig-0",
+            "title": "Learn piano",
+            "season": "3m",
+            "environment": "barren",
+            "soilCost": 10
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-02T10:00:00Z",
+            "sproutId": "sprout-1",
+            "content": "Ran 1K today"
+          },
+          {
+            "type": "sprout_watered",
+            "timestamp": "2026-01-02T11:00:00Z",
+            "sproutId": "sprout-2",
+            "content": "Stretched 10 mins"
+          },
+          {
+            "type": "sun_shone",
+            "timestamp": "2026-01-06T10:00:00Z",
+            "twigId": "branch-0-twig-0",
+            "twigLabel": "movement",
+            "content": "Good first week",
+            "prompt": "Weekly reflection"
+          }
+        ],
+        "expectedState": {
+          "soilCapacity": 10,
+          "soilAvailable": 0.45,
+          "_soilBreakdown": "start:10, plant1:-2=8, plant2:-5=3, plant3:-10=0(clamped), water1:+0.05=0.05, water2:+0.05=0.1, sun:+0.35=0.45",
+          "sproutCount": 3,
+          "activeSproutCount": 3,
+          "completedSproutCount": 0,
+          "leafCount": 1,
+          "sunEntryCount": 1,
+          "sprouts": {
+            "sprout-1": {
+              "state": "active",
+              "leafId": "leaf-1",
+              "waterEntryCount": 1
+            },
+            "sprout-2": {
+              "state": "active",
+              "leafId": "leaf-1",
+              "waterEntryCount": 1
+            },
+            "sprout-3": {
+              "state": "active",
+              "waterEntryCount": 0
+            }
+          },
+          "sproutsForTwig": {
+            "branch-0-twig-0": 2,
+            "branch-1-twig-0": 1
+          },
+          "leavesForTwig": {
+            "branch-0-twig-0": 1,
+            "branch-1-twig-0": 0
+          }
+        }
+      }
+    ]
+  }
+}
