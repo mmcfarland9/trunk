@@ -30,10 +30,10 @@ enum ISO8601 {
             ?? Date.distantPast
     }
 
-    /// Format a Date as ISO8601 without fractional seconds, in UTC.
+    /// Format a Date as ISO8601 with fractional seconds (milliseconds), in UTC.
     static func format(_ date: Date) -> String {
         let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         f.timeZone = TimeZone(identifier: "UTC")
         return f.string(from: date)
     }

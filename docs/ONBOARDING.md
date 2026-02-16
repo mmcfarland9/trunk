@@ -39,6 +39,29 @@ npm run test:e2e      # E2E tests (Playwright)
 
 ---
 
+## MCP Setup
+
+To enable Claude Code integration with Supabase via MCP (Model Context Protocol):
+
+1. **Copy the example configuration:**
+   ```bash
+   cp .mcp.example.json .mcp.json
+   ```
+
+2. **Get your Supabase credentials:**
+   - Log into the [Supabase console](https://supabase.com/dashboard)
+   - Navigate to your project settings
+   - Copy your **Project Reference ID** (found in Project Settings → General)
+   - Generate an **Access Token** (found in Project Settings → API → Service Role Key or create a new one)
+
+3. **Fill in the values in `.mcp.json`:**
+   - Replace `YOUR_PROJECT_REF` with your project reference ID
+   - Replace `YOUR_ACCESS_TOKEN_HERE` with your access token
+
+**Important:** `.mcp.json` is already in `.gitignore` and will not be committed. Never commit actual credentials to version control.
+
+---
+
 ## Common Tasks
 
 ### Adding a New Feature

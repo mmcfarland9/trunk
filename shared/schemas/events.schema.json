@@ -11,12 +11,18 @@
     { "$ref": "#/definitions/LeafCreatedEvent" }
   ],
   "definitions": {
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
+      "description": "ISO 8601 timestamp with milliseconds precision in UTC (YYYY-MM-DDTHH:mm:ss.SSSZ)"
+    },
     "SproutPlantedEvent": {
       "type": "object",
       "description": "Sprout planted - soil spent, sprout becomes active",
       "properties": {
         "type": { "const": "sprout_planted" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
         "sproutId": { "type": "string" },
         "twigId": { "type": "string" },
         "title": { "type": "string", "maxLength": 60 },
@@ -35,7 +41,7 @@
       "description": "Sprout watered - daily engagement recorded",
       "properties": {
         "type": { "const": "sprout_watered" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
         "sproutId": { "type": "string" },
         "content": { "type": "string" },
         "prompt": { "type": "string" }
@@ -47,7 +53,7 @@
       "description": "Sprout harvested - completed with result 1-5",
       "properties": {
         "type": { "const": "sprout_harvested" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
         "sproutId": { "type": "string" },
         "result": { "type": "integer", "minimum": 1, "maximum": 5 },
         "reflection": { "type": "string" },
@@ -60,7 +66,7 @@
       "description": "Sprout uprooted - abandoned, partial soil returned",
       "properties": {
         "type": { "const": "sprout_uprooted" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
         "sproutId": { "type": "string" },
         "soilReturned": { "type": "number", "minimum": 0 }
       },
@@ -71,7 +77,7 @@
       "description": "Sun shone - weekly reflection on a twig",
       "properties": {
         "type": { "const": "sun_shone" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
         "twigId": { "type": "string" },
         "twigLabel": { "type": "string" },
         "content": { "type": "string" },
@@ -84,7 +90,7 @@
       "description": "Leaf created - new saga started",
       "properties": {
         "type": { "const": "leaf_created" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
         "leafId": { "type": "string" },
         "twigId": { "type": "string" },
         "name": { "type": "string", "maxLength": 40 }
