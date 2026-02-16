@@ -1,0 +1,48 @@
+appId: mpmcf.Trunk
+name: Login - Email OTP Authentication
+---
+
+# Launch the app fresh (clear keychain to remove any auth session)
+- launchApp:
+    clearState: false
+    clearKeychain: true
+
+# Should see login screen branding
+- assertVisible: "TRUNK"
+- assertVisible: "Reap what you sow"
+
+# Email field should be visible
+- assertVisible: "Email address"
+
+# Enter test email
+- tapOn: "Email address"
+- inputText: "test@trunk.michaelpmcfarland.com"
+
+# Send code button should be enabled
+- tapOn: "SEND CODE"
+
+# Should transition to code entry screen
+- extendedWaitUntil:
+    visible: "Code sent to test@trunk.michaelpmcfarland.com"
+    timeout: 10000
+
+# Verify code entry UI elements
+- assertVisible: "6-digit code"
+- assertVisible: "VERIFY"
+- assertVisible: "BACK"
+
+# Tap BACK to return to email entry
+- tapOn: "BACK"
+- assertVisible: "Email address"
+
+# Now relaunch with test-auth to actually authenticate
+- launchApp:
+    clearState: false
+    arguments:
+      testAuth: "true"
+      testEmail: "test@trunk.michaelpmcfarland.com"
+
+# Verify we get past login to main app
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 15000

@@ -2,23 +2,36 @@ appId: mpmcf.Trunk
 name: Sprout Lifecycle - Create, Water, Harvest
 ---
 
-# Launch the app
+# Launch with test auth
 - launchApp:
     clearState: false
+    arguments:
+      testAuth: "true"
+      testEmail: "test@trunk.michaelpmcfarland.com"
 
 # Wait for app to load
 - extendedWaitUntil:
     visible: "Today"
-    timeout: 10000
+    timeout: 15000
 
 # Navigate to Trunk tab
 - tapOn: "Trunk"
 
 # Navigate to a branch
-- tapOn: "CORE"
+- extendedWaitUntil:
+    visible:
+      id: "branch-CORE"
+    timeout: 5000
+- tapOn:
+    id: "branch-CORE"
 
 # Navigate to a twig
-- tapOn: "movement"
+- extendedWaitUntil:
+    visible:
+      id: "twig-movement"
+    timeout: 5000
+- tapOn:
+    id: "twig-movement"
 
 # Tap to create a new sprout
 - tapOn:

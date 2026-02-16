@@ -9,12 +9,6 @@
 
 import SwiftUI
 
-/// Zoom levels for the tree canvas
-enum ZoomLevel: Equatable {
-    case overview
-    case branch(Int)
-}
-
 struct TreeCanvasView: View {
     let sprouts: [DerivedSprout]
     @Bindable var progression: ProgressionViewModel
@@ -24,7 +18,6 @@ struct TreeCanvasView: View {
 
     // MARK: - State
 
-    @State private var currentZoom: ZoomLevel = .overview
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
@@ -222,7 +215,6 @@ struct TreeCanvasView: View {
     // MARK: - Helpers
 
     private func resetToOverview() {
-        currentZoom = .overview
         scale = 1.0
         lastScale = 1.0
         offset = .zero
@@ -382,6 +374,7 @@ struct InteractiveBranchNode: View {
             isPressed = pressing
         }, perform: {})
         .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
+        .accessibilityIdentifier("branch-\(label)")
     }
 
     private var borderColor: Color {

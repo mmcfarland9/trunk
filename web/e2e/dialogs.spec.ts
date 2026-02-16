@@ -118,9 +118,12 @@ test.describe('Water Dialog', () => {
     const title = page.locator('.water-dialog-title')
     await expect(title).toBeVisible()
 
-    // Check meta info is present
-    const meta = page.locator('.water-dialog-sprout-meta')
-    await expect(meta).toBeVisible()
+    // Check sprout section is present with sprout name
+    const section = page.locator('.water-dialog-section')
+    await expect(section).toBeVisible()
+    const sproutName = page.locator('.water-dialog-sprout-name')
+    await expect(sproutName).toBeVisible()
+    await expect(sproutName).toContainText('My Test Sprout')
   })
 
   test('save button is disabled until content is entered', async ({ page }) => {
@@ -167,15 +170,15 @@ test.describe('Water Dialog', () => {
     await page.locator('.sprout-water-btn').first().click()
     await page.waitForSelector('.water-dialog:not(.hidden)')
 
-    // Save button should be disabled initially
-    const saveBtn = page.locator('.water-dialog-save')
-    await expect(saveBtn).toBeDisabled()
+    // Pour button should be disabled initially
+    const pourBtn = page.locator('.water-dialog-pour').first()
+    await expect(pourBtn).toBeDisabled()
 
     // Type some content
     await page.fill('.water-dialog-journal', 'Made progress today')
 
-    // Save button should be enabled
-    await expect(saveBtn).toBeEnabled()
+    // Pour button should be enabled
+    await expect(pourBtn).toBeEnabled()
   })
 
   test('watering sprout saves entry and closes dialog', async ({ page }) => {
@@ -222,11 +225,16 @@ test.describe('Water Dialog', () => {
     await page.locator('.sprout-water-btn').first().click()
     await page.waitForSelector('.water-dialog:not(.hidden)')
 
-    // Fill journal and save
+    // Fill journal and pour
     await page.fill('.water-dialog-journal', 'Made progress today')
-    await page.click('.water-dialog-save')
+    await page.click('.water-dialog-pour')
 
-    // Verify dialog closes after save
+    // Verify section becomes watered
+    const section = page.locator('.water-dialog-section')
+    await expect(section).toHaveClass(/is-watered/)
+
+    // Close dialog manually
+    await page.click('.water-dialog-close')
     await page.waitForFunction(() => document.querySelector('.water-dialog')?.classList.contains('hidden'))
 
     // Verify we're back in twig view
@@ -292,7 +300,7 @@ test.describe('Water Dialog', () => {
     expect(filled).toBe(3)
   })
 
-  test('cancel button closes dialog without saving', async ({ page }) => {
+  test('close button closes dialog without saving', async ({ page }) => {
     // Set up a sprout
     await page.evaluate(() => {
       const now = new Date()
@@ -336,8 +344,8 @@ test.describe('Water Dialog', () => {
     await page.locator('.sprout-water-btn').first().click()
     await page.waitForSelector('.water-dialog:not(.hidden)')
 
-    // Click cancel
-    await page.click('.water-dialog-cancel')
+    // Click close (X button in header)
+    await page.click('.water-dialog-close')
     await page.waitForTimeout(200)
 
     // Dialog should be closed
@@ -389,9 +397,9 @@ test.describe('Water Dialog', () => {
     await page.locator('.sprout-water-btn').first().click()
     await page.waitForSelector('.water-dialog:not(.hidden)')
 
-    // Fill and save
+    // Fill and pour
     await page.fill('.water-dialog-journal', 'My journal entry')
-    await page.click('.water-dialog-save')
+    await page.click('.water-dialog-pour')
     await page.waitForTimeout(300)
 
     // Check event was created

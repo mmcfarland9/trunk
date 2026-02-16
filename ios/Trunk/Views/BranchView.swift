@@ -284,6 +284,7 @@ struct TwigNode: View {
             isPressed = pressing
         }, perform: {})
         .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
+        .accessibilityIdentifier("twig-\(label)")
     }
 }
 

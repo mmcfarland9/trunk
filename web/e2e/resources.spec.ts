@@ -11,7 +11,7 @@ test.describe('Resource Management', () => {
       localStorage.clear()
     })
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
   })
 
   test('displays initial soil capacity of 10', async ({ page }) => {
@@ -112,7 +112,7 @@ test.describe('Resource Management', () => {
     })
 
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
 
     // Check initial water (3 filled circles)
     const filledBefore = await page.locator('.water-circle.is-filled').count()
@@ -136,9 +136,9 @@ test.describe('Resource Management', () => {
       await waterBtn.click()
       await page.waitForSelector('.water-dialog:not(.hidden)')
 
-      // Fill in reflection and save
+      // Fill in reflection and pour
       await page.fill('.water-dialog-journal', 'Made progress today')
-      await page.click('.water-dialog-save')
+      await page.click('.water-dialog-pour')
       await page.waitForTimeout(300)
 
       // Check water count decreased (2 filled circles now)

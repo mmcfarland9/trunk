@@ -2,14 +2,17 @@ appId: mpmcf.Trunk
 name: Data Sync - Export and Import
 ---
 
-# Launch the app
+# Launch with test auth
 - launchApp:
     clearState: false
+    arguments:
+      testAuth: "true"
+      testEmail: "test@trunk.michaelpmcfarland.com"
 
 # Wait for app to load
 - extendedWaitUntil:
     visible: "Today"
-    timeout: 10000
+    timeout: 15000
 
 # Look for settings or export button
 # This might be in different places depending on UI

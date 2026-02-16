@@ -2,53 +2,68 @@ appId: mpmcf.Trunk
 name: Navigation - Tab Bar and Tree Navigation
 ---
 
-# Launch the app
+# Launch with test auth
 - launchApp:
     clearState: false
+    arguments:
+      testAuth: "true"
+      testEmail: "test@trunk.michaelpmcfarland.com"
 
 # Wait for app to load
 - extendedWaitUntil:
     visible: "Today"
-    timeout: 10000
+    timeout: 15000
 
 # Verify Today tab is visible and selected
 - assertVisible: "Today"
 
-# Navigate to Log tab
-- tapOn: "Log"
+# Navigate to Sprouts tab
+- tapOn: "Sprouts"
 - extendedWaitUntil:
-    visible: "Activity Log"
+    visible: "SPROUTS"
     timeout: 5000
 
 # Navigate back to Today
 - tapOn: "Today"
 - extendedWaitUntil:
-    visible: "Today"
+    visible: "TODAY"
     timeout: 5000
 
 # Navigate to Trunk tab
 - tapOn: "Trunk"
-- assertVisible: "CORE"
-- assertVisible: "BRAIN"
+- extendedWaitUntil:
+    visible:
+      id: "branch-CORE"
+    timeout: 5000
+- assertVisible:
+    id: "branch-BRAIN"
 
-# Navigate through branches
-- tapOn: "CORE"
-- assertVisible: "movement"
-- assertVisible: "nutrition"
+# Navigate into CORE branch
+- tapOn:
+    id: "branch-CORE"
+- extendedWaitUntil:
+    visible:
+      id: "twig-movement"
+    timeout: 5000
+- assertVisible:
+    id: "twig-nutrition"
 
 # Go back to trunk overview
 - tapOn:
-    text: "Trunk"
-    index: 0
+    text: "Back to trunk"
 
 # Navigate to a different branch
-- tapOn: "BRAIN"
-- assertVisible: "learning"
-
-# Navigate to twig
-- tapOn: "learning"
-
-# Go back
+- extendedWaitUntil:
+    visible:
+      id: "branch-BRAIN"
+    timeout: 5000
 - tapOn:
-    text: "BRAIN"
-    optional: true
+    id: "branch-BRAIN"
+- extendedWaitUntil:
+    visible:
+      id: "twig-reading"
+    timeout: 5000
+
+# Navigate to twig (opens sheet)
+- tapOn:
+    id: "twig-reading"

@@ -31,6 +31,28 @@ final class AuthService {
             return
         }
 
+        // Maestro E2E test auth: sign in with password via launch arguments.
+        // Password is compiled into debug builds only — Maestro just passes testAuth + testEmail.
+        #if DEBUG
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: "testAuth") {
+            let email = defaults.string(forKey: "testEmail") ?? ""
+            let testPassword = "trunk-e2e-test-2026!"
+            if !email.isEmpty {
+                do {
+                    let authSession = try await client.auth.signIn(email: email, password: testPassword)
+                    self.session = authSession
+                    self.user = authSession.user
+                    await fetchProfile()
+                } catch {
+                    print("[TestAuth] Password sign-in failed: \(error)")
+                }
+                isLoading = false
+                return
+            }
+        }
+        #endif
+
         do {
             session = try await client.auth.session
             user = session?.user

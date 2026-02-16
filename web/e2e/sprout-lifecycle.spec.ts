@@ -13,7 +13,7 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
       localStorage.clear()
     })
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
   })
 
   test('creating a sprout goes directly to ACTIVE, not draft', async ({ page }) => {
@@ -63,69 +63,61 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await expect(activeCard).toBeVisible()
     await expect(activeCard).toContainText('Test Sprout')
 
-    // Verify it's NOT in any draft state - check localStorage
-    const state = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-notes-v1')
-      return raw ? JSON.parse(raw) : null
+    // Verify event-sourced state: a sprout_planted event should exist
+    const events = await page.evaluate(() => {
+      const raw = localStorage.getItem('trunk-events-v1')
+      return raw ? JSON.parse(raw) : []
     })
 
-    console.log('Stored state:', JSON.stringify(state, null, 2))
+    const plantedEvent = events.find((e: any) => e.type === 'sprout_planted')
+    expect(plantedEvent).toBeDefined()
+    expect(plantedEvent.title).toBe('Test Sprout')
+    expect(plantedEvent.season).toBe('2w')
+    expect(plantedEvent.environment).toBe('fertile')
 
-    // Find the sprout in state and verify its state is 'active'
-    const nodes = state?.nodes || state
-    let foundSprout = null
-    for (const [, nodeData] of Object.entries(nodes)) {
-      const nd = nodeData as any
-      if (nd.sprouts) {
-        foundSprout = nd.sprouts.find((s: any) => s.title === 'Test Sprout')
-        if (foundSprout) break
-      }
-    }
+    // Active state is implied by sprout_planted without a subsequent
+    // sprout_harvested or sprout_uprooted event
+    const terminalEvent = events.find(
+      (e: any) =>
+        (e.type === 'sprout_harvested' || e.type === 'sprout_uprooted') &&
+        e.sproutId === plantedEvent.sproutId
+    )
+    expect(terminalEvent).toBeUndefined()
 
-    expect(foundSprout).not.toBeNull()
-    expect(foundSprout.state).toBe('active') // NOT 'draft'!
-
-    console.log('Sprout state after creation:', foundSprout.state)
+    console.log('Sprout planted event:', plantedEvent)
   })
 
   test('harvesting with result 1 sets state to COMPLETED (no failed state)', async ({ page }) => {
-    // Set up a sprout that's ready to harvest via localStorage
+    // Set up a sprout that's ready to harvest via event-sourced localStorage
     await page.evaluate(() => {
       const now = new Date()
       const pastDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000) // 15 days ago
-      const endDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000) // Yesterday
 
-      const state = {
-        _version: 2,
-        nodes: {
-          'branch-0-twig-0': {
-            label: 'Test Twig',
-            note: '',
-            sprouts: [{
-              id: 'test-sprout-1',
-              title: 'Ready to Harvest',
-              season: '2w',
-              environment: 'fertile',
-              state: 'active',
-              soilCost: 2,
-              createdAt: pastDate.toISOString(),
-              activatedAt: pastDate.toISOString(),
-              endDate: endDate.toISOString(),
-              leafId: 'test-leaf-1',
-            }],
-            leaves: [{
-              id: 'test-leaf-1',
-              name: 'Test Saga',
-              createdAt: pastDate.toISOString(),
-            }],
-          },
+      const events = [
+        {
+          type: 'leaf_created',
+          timestamp: pastDate.toISOString(),
+          leafId: 'test-leaf-1',
+          twigId: 'branch-0-twig-0',
+          name: 'Test Saga',
         },
-      }
-      localStorage.setItem('trunk-notes-v1', JSON.stringify(state))
+        {
+          type: 'sprout_planted',
+          timestamp: pastDate.toISOString(),
+          sproutId: 'test-sprout-1',
+          twigId: 'branch-0-twig-0',
+          leafId: 'test-leaf-1',
+          title: 'Ready to Harvest',
+          season: '2w',
+          environment: 'fertile',
+          soilCost: 2,
+        },
+      ]
+      localStorage.setItem('trunk-events-v1', JSON.stringify(events))
     })
 
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
 
     // Navigate to the twig
     await page.click('.node.branch', { force: true })
@@ -172,64 +164,57 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     // Screenshot after harvest
     await page.screenshot({ path: 'e2e/screenshots/07-after-harvest-result-1.png' })
 
-    // Check the stored state
-    const state = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-notes-v1')
-      return raw ? JSON.parse(raw) : null
+    // Check the event-sourced state
+    const events = await page.evaluate(() => {
+      const raw = localStorage.getItem('trunk-events-v1')
+      return raw ? JSON.parse(raw) : []
     })
 
-    const nodes = state?.nodes || state
-    const twigData = nodes['branch-0-twig-0']
-    const harvestedSprout = twigData?.sprouts?.find((s: any) => s.id === 'test-sprout-1')
+    const harvestEvent = events.find(
+      (e: any) => e.type === 'sprout_harvested' && e.sproutId === 'test-sprout-1'
+    )
 
-    console.log('Sprout after harvest with result 1:', harvestedSprout)
+    console.log('Harvest event with result 1:', harvestEvent)
 
-    expect(harvestedSprout).not.toBeNull()
-    expect(harvestedSprout.result).toBe(1)
-    // Key assertion: even result 1 is 'completed', not 'failed'
+    expect(harvestEvent).toBeDefined()
+    expect(harvestEvent.result).toBe(1)
+    // Key assertion: even result 1 produces a sprout_harvested event, not a "failed" event
     // "Showing up counts" - all harvests are completions
-    expect(harvestedSprout.state).toBe('completed')
-    console.log('STATE AFTER HARVEST WITH RESULT 1:', harvestedSprout.state)
+    expect(harvestEvent.type).toBe('sprout_harvested')
+    console.log('EVENT TYPE AFTER HARVEST WITH RESULT 1:', harvestEvent.type)
   })
 
   test('harvesting with result 5 sets state to COMPLETED', async ({ page }) => {
-    // Set up a sprout that's ready to harvest
+    // Set up a sprout that's ready to harvest via event-sourced localStorage
     await page.evaluate(() => {
       const now = new Date()
-      const pastDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
-      const endDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
+      const pastDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000) // 15 days ago
 
-      const state = {
-        _version: 2,
-        nodes: {
-          'branch-0-twig-0': {
-            label: 'Test Twig',
-            note: '',
-            sprouts: [{
-              id: 'test-sprout-2',
-              title: 'Ready to Harvest High',
-              season: '2w',
-              environment: 'fertile',
-              state: 'active',
-              soilCost: 2,
-              createdAt: pastDate.toISOString(),
-              activatedAt: pastDate.toISOString(),
-              endDate: endDate.toISOString(),
-              leafId: 'test-leaf-2',
-            }],
-            leaves: [{
-              id: 'test-leaf-2',
-              name: 'Test Saga 2',
-              createdAt: pastDate.toISOString(),
-            }],
-          },
+      const events = [
+        {
+          type: 'leaf_created',
+          timestamp: pastDate.toISOString(),
+          leafId: 'test-leaf-2',
+          twigId: 'branch-0-twig-0',
+          name: 'Test Saga 2',
         },
-      }
-      localStorage.setItem('trunk-notes-v1', JSON.stringify(state))
+        {
+          type: 'sprout_planted',
+          timestamp: pastDate.toISOString(),
+          sproutId: 'test-sprout-2',
+          twigId: 'branch-0-twig-0',
+          leafId: 'test-leaf-2',
+          title: 'Ready to Harvest High',
+          season: '2w',
+          environment: 'fertile',
+          soilCost: 2,
+        },
+      ]
+      localStorage.setItem('trunk-events-v1', JSON.stringify(events))
     })
 
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
 
     // Navigate to the twig
     await page.click('.node.branch', { force: true })
@@ -260,21 +245,21 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await page.click('.harvest-dialog-save')
     await page.waitForTimeout(300)
 
-    // Check the stored state
-    const state = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-notes-v1')
-      return raw ? JSON.parse(raw) : null
+    // Check the event-sourced state
+    const events = await page.evaluate(() => {
+      const raw = localStorage.getItem('trunk-events-v1')
+      return raw ? JSON.parse(raw) : []
     })
 
-    const nodes = state?.nodes || state
-    const twigData = nodes['branch-0-twig-0']
-    const harvestedSprout = twigData?.sprouts?.find((s: any) => s.id === 'test-sprout-2')
+    const harvestEvent = events.find(
+      (e: any) => e.type === 'sprout_harvested' && e.sproutId === 'test-sprout-2'
+    )
 
-    console.log('Sprout after harvest with result 5:', harvestedSprout)
+    console.log('Harvest event with result 5:', harvestEvent)
 
-    expect(harvestedSprout).not.toBeNull()
-    expect(harvestedSprout.result).toBe(5)
-    expect(harvestedSprout.state).toBe('completed')
-    console.log('STATE AFTER HARVEST WITH RESULT 5:', harvestedSprout.state)
+    expect(harvestEvent).toBeDefined()
+    expect(harvestEvent.result).toBe(5)
+    expect(harvestEvent.type).toBe('sprout_harvested')
+    console.log('EVENT TYPE AFTER HARVEST WITH RESULT 5:', harvestEvent.type)
   })
 })

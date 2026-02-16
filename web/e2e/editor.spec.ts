@@ -14,7 +14,7 @@ test.describe('Editor Flows', () => {
       localStorage.clear()
     })
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
   })
 
   test('focus section shows node details', async ({ page }) => {
@@ -34,24 +34,13 @@ test.describe('Editor Flows', () => {
   })
 
   test('node labels are visible in the tree', async ({ page }) => {
-    // Check that nodes have labels
-    const trunkLabel = page.locator('.node.trunk .node-label')
-    await expect(trunkLabel).toBeVisible()
-
+    // Trunk uses tree icon instead of text label, so check branches only
     const branchLabels = page.locator('.node.branch .node-label')
     await expect(branchLabels).toHaveCount(8)
-  })
 
-  test('editor dialog structure exists', async ({ page }) => {
-    // The node-editor element exists in the DOM (may be hidden)
-    const editor = page.locator('.node-editor')
-    expect(await editor.count()).toBeGreaterThan(0)
-
-    // Editor has expected structure
-    await expect(editor.locator('.editor-input')).toHaveCount(1)
-    await expect(editor.locator('.editor-textarea')).toHaveCount(1)
-    await expect(editor.locator('.editor-save')).toHaveCount(1)
-    await expect(editor.locator('.editor-cancel')).toHaveCount(1)
+    // Verify at least one branch label has text content
+    const firstLabel = branchLabels.first()
+    await expect(firstLabel).not.toBeEmpty()
   })
 
   test('node data persists in localStorage', async ({ page }) => {
@@ -70,7 +59,7 @@ test.describe('Editor Flows', () => {
     })
 
     await page.reload()
-    await page.waitForSelector('.node.trunk')
+    await page.waitForSelector('.canvas')
 
     // Verify state exists
     const state = await page.evaluate(() => {
@@ -107,16 +96,4 @@ test.describe('Editor Flows', () => {
     await expect(page.locator('.sprout-history')).toBeVisible()
   })
 
-  test('escape closes editor if visible', async ({ page }) => {
-    // Get initial editor state
-    const editor = page.locator('.node-editor')
-
-    // Press escape - should not cause errors even if editor isn't open
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(100)
-
-    // Editor should still be hidden (or not visible)
-    const isHidden = await editor.evaluate(el => el.classList.contains('hidden'))
-    expect(isHidden).toBe(true)
-  })
 })

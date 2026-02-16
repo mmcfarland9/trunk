@@ -2,24 +2,35 @@ appId: mpmcf.Trunk
 name: Smoke Test - Basic Navigation
 ---
 
-# Launch the app (don't clear state - it corrupts SwiftData)
+# Launch with test auth (don't clear state - it corrupts SwiftData)
 - launchApp:
     clearState: false
+    arguments:
+      testAuth: "true"
+      testEmail: "test@trunk.michaelpmcfarland.com"
 
 # Wait for app to fully load
 - extendedWaitUntil:
     visible: "Today"
-    timeout: 10000
+    timeout: 15000
 
 # Navigate to Trunk tab
 - tapOn: "Trunk"
 
-# Verify we see branches
-- assertVisible: "CORE"
-- assertVisible: "BRAIN"
+# Wait for tree to render, then verify branches (use accessibilityIdentifier)
+- extendedWaitUntil:
+    visible:
+      id: "branch-CORE"
+    timeout: 5000
+- assertVisible:
+    id: "branch-BRAIN"
 
 # Navigate to CORE branch
-- tapOn: "CORE"
+- tapOn:
+    id: "branch-CORE"
 
-# Verify we see twigs
-- assertVisible: "movement"
+# Wait for twigs to render
+- extendedWaitUntil:
+    visible:
+      id: "twig-movement"
+    timeout: 5000
