@@ -18,7 +18,7 @@ type LeafViewCallbacks = {
 }
 
 // Unified log entry types
-type LogEntryType = 'sprout-start' | 'watering' | 'completion'
+type LogEntryType = 'sprout-start' | 'watering' | 'completion' | 'uprooted'
 
 type LogEntry = {
   type: LogEntryType
@@ -127,6 +127,17 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
           }
         })
       }
+
+      // Uprooted event
+      if (sprout.state === 'uprooted' && sprout.uprootedAt) {
+        entries.push({
+          type: 'uprooted',
+          timestamp: sprout.uprootedAt,
+          sproutId: sprout.id,
+          sproutTitle: sprout.title,
+          data: {}
+        })
+      }
     }
 
     // Sort by timestamp descending (most recent first)
@@ -189,6 +200,17 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
           </div>
         `
       }
+
+      case 'uprooted':
+        return `
+          <div class="log-entry log-entry-uprooted" data-sprout-id="${escapeHtml(entry.sproutId)}">
+            <div class="log-entry-header">
+              <span class="log-entry-type">Uprooted</span>
+              <span class="log-entry-time">${timeStr}</span>
+            </div>
+            <p class="log-entry-title">${escapeHtml(entry.sproutTitle)}</p>
+          </div>
+        `
 
       default:
         return ''

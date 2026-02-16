@@ -6,9 +6,9 @@ export type BranchGroup = {
 
 // Sprout types (replacing goal system)
 export type SproutSeason = '2w' | '1m' | '3m' | '6m' | '1y'
-// Simplified state machine: active → completed (no draft, no failed)
+// Simplified state machine: active → completed or uprooted (no draft, no failed)
 // "Showing up counts" - all harvests are completions, result (1-5) indicates outcome
-export type SproutState = 'active' | 'completed'
+export type SproutState = 'active' | 'completed' | 'uprooted'
 export type SproutEnvironment = 'fertile' | 'firm' | 'barren'
 
 // Water entry - journal entries when watering a sprout
@@ -53,6 +53,7 @@ export type Sprout = {
   reflection?: string
   completedAt?: string
   harvestedAt?: string    // Alias for completedAt (gardening metaphor)
+  uprootedAt?: string
   // Bloom: describes what each outcome looks like (60 char max each)
   bloomWither?: string    // 1/5 - failure
   bloomBudding?: string   // 3/5 - moderate success
@@ -62,9 +63,6 @@ export type Sprout = {
   waterEntries?: WaterEntry[]
 }
 
-// Legacy goal type (for migration)
-export type GoalType = 'binary' | 'continuous'
-
 export type NodeData = {
   label: string
   note: string
@@ -72,7 +70,6 @@ export type NodeData = {
   sprouts?: Sprout[]
   leaves?: Leaf[]
   // Legacy fields (for migration, will be converted to sprouts)
-  goalType?: GoalType
   goalValue?: number
   goalTitle?: string
 }

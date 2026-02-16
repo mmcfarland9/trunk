@@ -67,34 +67,6 @@ extension View {
         modifier(AnimatedCardModifier(index: index))
     }
 
-    /// Radial bloom entrance: scales up from center with fade
-    func radialEntrance(appeared: Bool, index: Int, totalCount: Int = 8) -> some View {
-        let angle = -Double.pi / 2 + (2 * Double.pi / Double(totalCount)) * Double(index)
-        let offset = appeared ? 0.0 : -20.0
-        return self
-            .opacity(appeared ? 1 : 0)
-            .scaleEffect(appeared ? 1 : 0.3)
-            .offset(x: cos(angle) * offset, y: sin(angle) * offset)
-            .animation(.trunkSpring.delay(Double(index) * 0.04), value: appeared)
-    }
-
-    /// Smooth number/value transition for meters and counters
-    func smoothValue<V: Equatable>(_ value: V) -> some View {
-        self.animation(.trunkSpring, value: value)
-    }
-}
-
-// MARK: - Branch Zoom Transition
-
-struct BranchZoomTransition: ViewModifier {
-    let isActive: Bool
-
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(isActive ? 1.0 : 0.85)
-            .opacity(isActive ? 1.0 : 0.0)
-            .animation(.trunkSpring, value: isActive)
-    }
 }
 
 // MARK: - Staggered Radial Modifier

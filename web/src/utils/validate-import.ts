@@ -4,7 +4,7 @@ const VALID_SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
 const VALID_ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
 // Accept legacy states for backwards compatibility during import
 // (converted to active/completed during sanitization)
-const LEGACY_STATES = ['draft', 'active', 'completed', 'failed']
+const LEGACY_STATES = ['draft', 'active', 'completed', 'failed', 'uprooted']
 
 type ValidationResult = {
   valid: boolean
@@ -133,6 +133,8 @@ export function sanitizeSprout(raw: unknown): Sprout | null {
   let state: SproutState = 'active'
   if (s.state === 'completed' || s.state === 'failed') {
     state = 'completed'
+  } else if (s.state === 'uprooted') {
+    state = 'uprooted'
   } else if (s.state === 'active' || s.state === 'draft') {
     state = 'active'
   }

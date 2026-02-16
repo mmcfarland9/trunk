@@ -46,6 +46,7 @@ enum SharedConstants {
         /// Recovery rates
         static let waterRecovery: Double = 0.05
         static let sunRecovery: Double = 0.35
+        static let uprootRefundRate: Double = 0.25
     }
 
     // MARK: - Water

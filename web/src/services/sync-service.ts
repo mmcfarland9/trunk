@@ -433,7 +433,7 @@ export async function smartSync(): Promise<SyncResult> {
 // Detailed sync status & metadata subscribers
 // ============================================================================
 
-export type DetailedSyncStatus = 'synced' | 'syncing' | 'pendingUpload' | 'offline' | 'loading'
+type DetailedSyncStatus = 'synced' | 'syncing' | 'pendingUpload' | 'offline' | 'loading'
 
 export function getDetailedSyncStatus(): DetailedSyncStatus {
   if (currentSyncStatus === 'syncing') return 'syncing'
@@ -441,14 +441,6 @@ export function getDetailedSyncStatus(): DetailedSyncStatus {
   if (pendingUploadIds.size > 0) return 'pendingUpload'
   if (currentSyncStatus === 'success' || currentSyncStatus === 'idle') return 'synced'
   return 'loading'
-}
-
-export function getLastConfirmedTimestamp(): string | null {
-  return lastConfirmedTimestamp
-}
-
-export function getPendingUploadCount(): number {
-  return pendingUploadIds.size
 }
 
 export type SyncMetadata = {

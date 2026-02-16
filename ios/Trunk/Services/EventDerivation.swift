@@ -51,6 +51,7 @@ enum SproutEnvironment: String, Codable, CaseIterable {
 enum SproutState: String, Codable {
     case active
     case completed
+    case uprooted
 }
 
 // MARK: - Derived State Types
@@ -80,6 +81,7 @@ struct DerivedSprout: Identifiable {
     var harvestedAt: Date?
     var result: Int?
     var reflection: String?
+    var uprootedAt: Date? = nil
     var waterEntries: [DerivedWaterEntry]
 }
 
@@ -266,8 +268,12 @@ private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double
     // Return partial soil
     soilAvailable = min(soilAvailable + soilReturned, soilCapacity)
 
-    // Remove sprout from active tracking
-    sprouts.removeValue(forKey: sproutId)
+    // Transition sprout to uprooted state (preserve all data)
+    if var sprout = sprouts[sproutId], sprout.state == .active {
+        sprout.state = .uprooted
+        sprout.uprootedAt = parseTimestamp(event.clientTimestamp)
+        sprouts[sproutId] = sprout
+    }
 }
 
 private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sunEntries: inout [DerivedSunEntry]) {

@@ -76,10 +76,6 @@ extension Color {
         light: Color(red: 0.420, green: 0.267, blue: 0.137).opacity(0.15),
         dark: Color(red: 0.671, green: 0.498, blue: 0.337).opacity(0.20)
     )
-    static let borderStrong = Color(
-        light: Color(red: 0.420, green: 0.267, blue: 0.137).opacity(0.25),
-        dark: Color(red: 0.671, green: 0.498, blue: 0.337).opacity(0.30)
-    )
 }
 
 // MARK: - Adaptive Color Helper
@@ -130,13 +126,6 @@ enum TrunkFontWeight {
 
 // MARK: - View Modifiers
 
-struct ParchmentBackground: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .background(Color.parchment)
-    }
-}
-
 struct PaperCard: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -145,27 +134,6 @@ struct PaperCard: ViewModifier {
                 Rectangle()
                     .stroke(Color.border, lineWidth: 1)
             )
-    }
-}
-
-struct InkText: ViewModifier {
-    var style: InkStyle = .primary
-
-    enum InkStyle {
-        case primary, light, faint
-    }
-
-    func body(content: Content) -> some View {
-        content
-            .foregroundStyle(color)
-    }
-
-    private var color: Color {
-        switch style {
-        case .primary: return .ink
-        case .light: return .inkLight
-        case .faint: return .inkFaint
-        }
     }
 }
 
@@ -185,16 +153,8 @@ struct MonoLabel: ViewModifier {
 // MARK: - Extensions
 
 extension View {
-    func parchmentBackground() -> some View {
-        modifier(ParchmentBackground())
-    }
-
     func paperCard() -> some View {
         modifier(PaperCard())
-    }
-
-    func inkText(_ style: InkText.InkStyle = .primary) -> some View {
-        modifier(InkText(style: style))
     }
 
     func monoLabel(size: CGFloat = TrunkTheme.textSm, uppercase: Bool = true) -> some View {
@@ -217,7 +177,7 @@ struct TrunkButtonStyle: ButtonStyle {
     var variant: Variant = .primary
 
     enum Variant {
-        case primary, secondary, water, sun, destructive
+        case primary, water, sun, destructive
     }
 
     func makeBody(configuration: Configuration) -> some View {
@@ -239,7 +199,6 @@ struct TrunkButtonStyle: ButtonStyle {
     private var foregroundColor: Color {
         switch variant {
         case .primary: return .wood
-        case .secondary: return .ink
         case .water: return .trunkWater
         case .sun: return .trunkSun
         case .destructive: return .trunkDestructive
@@ -249,7 +208,6 @@ struct TrunkButtonStyle: ButtonStyle {
     private var backgroundColor: Color {
         switch variant {
         case .primary: return .clear
-        case .secondary: return .clear
         case .water: return .clear
         case .sun: return .clear
         case .destructive: return .clear
@@ -259,7 +217,6 @@ struct TrunkButtonStyle: ButtonStyle {
     private var pressedBackgroundColor: Color {
         switch variant {
         case .primary: return .wood.opacity(0.08)
-        case .secondary: return .ink.opacity(0.03)
         case .water: return .trunkWater.opacity(0.08)
         case .sun: return .trunkSun.opacity(0.08)
         case .destructive: return .trunkDestructive.opacity(0.08)
@@ -269,7 +226,6 @@ struct TrunkButtonStyle: ButtonStyle {
     private var borderColor: Color {
         switch variant {
         case .primary: return .wood
-        case .secondary: return .border
         case .water: return .trunkWater
         case .sun: return .trunkSun
         case .destructive: return .trunkDestructive
@@ -279,7 +235,6 @@ struct TrunkButtonStyle: ButtonStyle {
 
 extension ButtonStyle where Self == TrunkButtonStyle {
     static var trunk: TrunkButtonStyle { TrunkButtonStyle() }
-    static var trunkSecondary: TrunkButtonStyle { TrunkButtonStyle(variant: .secondary) }
     static var trunkWater: TrunkButtonStyle { TrunkButtonStyle(variant: .water) }
     static var trunkSun: TrunkButtonStyle { TrunkButtonStyle(variant: .sun) }
     static var trunkDestructive: TrunkButtonStyle { TrunkButtonStyle(variant: .destructive) }

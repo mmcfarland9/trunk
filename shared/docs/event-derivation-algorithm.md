@@ -44,11 +44,12 @@ DerivedSprout {
   bloomWither:    String?        // 1/5 outcome description
   bloomBudding:   String?        // 3/5 outcome description
   bloomFlourish:  String?        // 5/5 outcome description
-  state:          Enum("active", "completed")   // No "draft" or "failed"
+  state:          Enum("active", "completed", "uprooted")   // No "draft" or "failed"
   plantedAt:      Timestamp
   harvestedAt:    Timestamp?
   result:         Integer?       // 1-5 when harvested
   reflection:     String?
+  uprootedAt:     Timestamp?
   waterEntries:   List<WaterEntry>
 }
 ```
@@ -182,8 +183,11 @@ FOR event IN sortedEvents:
             // Return partial soil (amount specified in event)
             soilAvailable = MIN(soilAvailable + event.soilReturned, soilCapacity)
 
-            // Remove sprout entirely from state
-            DELETE sprouts[event.sproutId]
+            // Transition sprout to uprooted state (preserve all data)
+            sprout = sprouts[event.sproutId]
+            IF sprout EXISTS AND sprout.state == "active":
+                sprout.state = "uprooted"
+                sprout.uprootedAt = event.timestamp
 
         CASE "sun_shone":
             APPEND SunEntry {

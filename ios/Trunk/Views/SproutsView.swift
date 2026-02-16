@@ -13,6 +13,7 @@ enum SproutFilter: String, CaseIterable {
     case all = "All"
     case active = "Active"
     case completed = "Completed"
+    case uprooted = "Uprooted"
 }
 
 enum SproutSort: String, CaseIterable {
@@ -45,6 +46,8 @@ struct SproutsView: View {
             sprouts = sprouts.filter { $0.state == .active }
         case .completed:
             sprouts = sprouts.filter { $0.state == .completed }
+        case .uprooted:
+            sprouts = sprouts.filter { $0.state == .uprooted }
         }
 
         // Apply search (case-insensitive against sprout title and leaf name)
@@ -374,7 +377,7 @@ struct SproutListRow: View {
         HStack(spacing: TrunkTheme.space3) {
             // Left border indicator
             Rectangle()
-                .fill(sprout.state == .active ? Color.twig : Color.border)
+                .fill(sprout.state == .active ? Color.twig : sprout.state == .uprooted ? Color.trunkDestructive : Color.border)
                 .frame(width: 2)
 
             VStack(alignment: .leading, spacing: TrunkTheme.space1) {
@@ -414,9 +417,9 @@ struct SproutListRow: View {
                 // Detail row
                 HStack(spacing: TrunkTheme.space2) {
                     // Status
-                    Text(sprout.state == .active ? "active" : "completed")
+                    Text(sprout.state == .active ? "active" : sprout.state == .uprooted ? "uprooted" : "completed")
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .foregroundStyle(sprout.state == .active ? Color.twig : Color.inkFaint)
+                        .foregroundStyle(sprout.state == .active ? Color.twig : sprout.state == .uprooted ? Color.trunkDestructive : Color.inkFaint)
 
                     Text("·")
                         .foregroundStyle(Color.inkFaint)
@@ -562,8 +565,8 @@ struct SproutDetailView: View {
                 .monoLabel(size: TrunkTheme.textXs)
 
             VStack(spacing: 0) {
-                detailRow(label: "Status", value: sprout.state == .active ? "Active" : "Completed",
-                         valueColor: sprout.state == .active ? Color.twig : Color.inkFaint)
+                detailRow(label: "Status", value: sprout.state == .active ? "Active" : sprout.state == .uprooted ? "Uprooted" : "Completed",
+                         valueColor: sprout.state == .active ? Color.twig : sprout.state == .uprooted ? Color.trunkDestructive : Color.inkFaint)
 
                 Divider().overlay(Color.borderSubtle)
 

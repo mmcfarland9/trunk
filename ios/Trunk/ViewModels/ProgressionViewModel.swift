@@ -84,10 +84,4 @@ final class ProgressionViewModel {
         hasLoaded = true
     }
 
-    // MARK: - Debug
-
-    func resetToDefaults() {
-        EventStore.shared.clearEvents()
-        recompute()
-    }
 }

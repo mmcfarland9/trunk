@@ -24,7 +24,8 @@
     "recoveryRates": {
       "waterUse": 0.05,
       "sunUse": 0.35
-    }
+    },
+    "uprootRefundRate": 0.25
   },
   "water": {
     "dailyCapacity": 3,

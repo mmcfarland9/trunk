@@ -173,14 +173,14 @@
           "type": "sprout_uprooted",
           "timestamp": "2026-01-05T10:00:00Z",
           "sproutId": "sprout-1",
-          "soilReturned": 5
+          "soilReturned": 2.5
         }
       ],
       "expected": {
         "soilCapacity": 10,
-        "soilAvailable": 5,
-        "sproutCount": 0,
-        "_note": "avail: min(0 + 5, 10) = 5. Sprout removed from map."
+        "soilAvailable": 2.5,
+        "sproutCount": 1,
+        "_note": "avail: min(0 + 2.5, 10) = 2.5. Sprout preserved with state='uprooted'."
       }
     },
     {
@@ -294,7 +294,7 @@
       "expected": {
         "soilCapacity": 10.851,
         "soilAvailable": 5.5,
-        "sproutCount": 2,
+        "sproutCount": 3,
         "activeSproutCount": 0,
         "completedSproutCount": 2,
         "leafCount": 1,
@@ -306,6 +306,10 @@
             "waterEntryCount": 1,
             "reflection": "Achieved my goal"
           },
+          "sprout-b": {
+            "state": "uprooted",
+            "waterEntryCount": 0
+          },
           "sprout-c": {
             "state": "completed",
             "result": 3,
@@ -314,7 +318,7 @@
             "leafId": "leaf-1"
           }
         },
-        "_note": "sprout-b was uprooted and removed from map"
+        "_note": "sprout-b was uprooted but preserved in map with state='uprooted'"
       },
       "soilCalculation": {
         "_note": "Step-by-step soil derivation",

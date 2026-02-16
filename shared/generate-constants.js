@@ -111,6 +111,7 @@ ${resultMultipliersEntries}
 
 export const SOIL_WATER_RECOVERY = ${constants.soil.recoveryRates.waterUse}
 export const SOIL_SUN_RECOVERY = ${constants.soil.recoveryRates.sunUse}
+export const SOIL_UPROOT_REFUND_RATE = ${constants.soil.uprootRefundRate}
 
 // =============================================================================
 // Water Constants
@@ -299,6 +300,7 @@ ${Object.entries(constants.soil.resultMultipliers)
         /// Recovery rates
         static let waterRecovery: Double = ${constants.soil.recoveryRates.waterUse}
         static let sunRecovery: Double = ${constants.soil.recoveryRates.sunUse}
+        static let uprootRefundRate: Double = ${constants.soil.uprootRefundRate}
     }
 
     // MARK: - Water

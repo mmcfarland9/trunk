@@ -17,6 +17,7 @@ struct SproutActionsView: View {
     @State private var showingHarvestSheet = false
     @State private var isUprooting = false
     @State private var errorMessage: String?
+    @State private var showUprootConfirmation = false
 
     private var hasBloomDescriptions: Bool {
         sprout.bloomWither?.isEmpty == false ||
@@ -52,6 +53,8 @@ struct SproutActionsView: View {
                         activeSection
                     case .completed:
                         completedSection
+                    case .uprooted:
+                        uprootedSection
                     }
 
                     // Bloom descriptions
@@ -250,7 +253,7 @@ struct SproutActionsView: View {
                 }
 
                 Button {
-                    uprootSprout()
+                    showUprootConfirmation = true
                 } label: {
                     HStack(spacing: TrunkTheme.space1) {
                         Text("✕")
@@ -259,6 +262,12 @@ struct SproutActionsView: View {
                 }
                 .buttonStyle(.trunkDestructive)
                 .disabled(isUprooting)
+                .confirmationDialog("Are you sure you want to uproot this sprout?", isPresented: $showUprootConfirmation, titleVisibility: .visible) {
+                    Button("Uproot", role: .destructive) {
+                        uprootSprout()
+                    }
+                    Button("Cancel", role: .cancel) { }
+                }
             }
         }
     }
@@ -302,13 +311,39 @@ struct SproutActionsView: View {
         }
     }
 
+    // MARK: - Uprooted State
+
+    @ViewBuilder
+    private var uprootedSection: some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("STATUS")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(spacing: 1) {
+                HStack {
+                    Text("Uprooted")
+                        .trunkFont(size: TrunkTheme.textBase)
+                        .foregroundStyle(Color.trunkDestructive)
+                    Spacer()
+                    if let uprootedAt = sprout.uprootedAt {
+                        Text(uprootedAt, style: .date)
+                            .trunkFont(size: TrunkTheme.textSm)
+                            .foregroundStyle(Color.inkFaint)
+                    }
+                }
+                .padding(TrunkTheme.space3)
+            }
+            .paperCard()
+        }
+    }
+
     // MARK: - Uproot
 
     private func uprootSprout() {
         isUprooting = true
         errorMessage = nil
 
-        let soilReturned = Double(sprout.soilCost) * 0.25
+        let soilReturned = Double(sprout.soilCost) * SharedConstants.Soil.uprootRefundRate
 
         Task {
             do {
@@ -317,7 +352,7 @@ struct SproutActionsView: View {
                     "soilReturned": soilReturned
                 ])
             } catch {
-                print("Uproot push failed (rolled back): \(error)")
+                print("Uproot push failed (queued for retry): \(error)")
             }
         }
 

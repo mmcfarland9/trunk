@@ -119,6 +119,32 @@ See `docs/progression-system.md` for detailed projection tables.
 
 ---
 
+## Uproot Refund Calculation
+
+When a sprout is uprooted (abandoned), partial soil is returned to available soil.
+
+**Formula:**
+```
+soilReturned = soilCost × uprootRefundRate
+```
+
+**Where:**
+- `soilCost` = original soil spent to plant the sprout (from `sprout_planted` event)
+- `uprootRefundRate` = `constants.soil.uprootRefundRate` (0.25 = 25% refund)
+
+**Clamping:**
+```
+soilAvailable = min(soilAvailable + soilReturned, soilCapacity)
+```
+
+**No capacity change** — uprooting does not affect `soilCapacity` (unlike harvesting).
+
+**Example:**
+- 3-month barren sprout (cost: 10 soil) → refund: 10 × 0.25 = 2.5 soil returned
+- 2-week fertile sprout (cost: 2 soil) → refund: 2 × 0.25 = 0.5 soil returned
+
+---
+
 ## Implementation Checklist
 
 For each platform, verify:
@@ -129,6 +155,8 @@ For each platform, verify:
 - [ ] Water/sun reset at 6:00 AM local time
 - [ ] Week calculation uses ISO weeks (Monday start)
 - [ ] All numeric constants imported from `constants.json`
+- [ ] Uproot refund rate matches constants (0.25)
+- [ ] Uprooted sprouts preserved in derived state with state="uprooted"
 
 ---
 

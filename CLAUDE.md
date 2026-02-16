@@ -248,22 +248,33 @@ src/
 ├── main.ts              # Entry point, wires everything together
 ├── types.ts             # All TypeScript type definitions
 ├── constants.ts         # BRANCH_COUNT, TWIG_COUNT, STORAGE_KEY, etc.
-├── state.ts             # Legacy state: nodeState, migrations, persistence
+│
+├── state/               # State management
+│   ├── index.ts         # Re-exports, legacy nodeState, migrations, persistence
+│   └── view-state.ts    # In-memory view/navigation state (mode, focus, hover)
 │
 ├── events/              # Event-sourced state (new architecture)
 │   ├── index.ts         # Public API exports
 │   ├── types.ts         # Event type definitions
 │   ├── store.ts         # Event persistence (localStorage)
-│   ├── derive.ts        # State derivation from events
-│   ├── migrate.ts       # Migration from legacy state to events
-│   └── rebuild.ts       # Rebuild state from event log
+│   └── derive.ts        # State derivation from events
+│
+├── generated/           # Auto-generated code (do not edit)
+│   └── constants.ts     # Generated from shared/constants.json
+│
+├── lib/                 # Third-party client setup
+│   └── supabase.ts      # Supabase client initialization
+│
+├── services/            # Cloud services
+│   ├── auth-service.ts  # Authentication (Supabase auth, OTP)
+│   ├── sync-service.ts  # Event sync with Supabase
+│   └── sync-types.ts    # Sync event type definitions
 │
 ├── features/            # Feature modules (business logic)
 │   ├── navigation.ts    # View switching, zoom transitions
 │   ├── progress.ts      # Stats calculation, sidebar sprout lists
-│   ├── status.ts        # Status bar messages
 │   ├── hover-branch.ts  # Branch/twig hover detection
-│   ├── import-export.ts # JSON backup/restore
+│   ├── account-dialog.ts # Account settings modal
 │   ├── water-dialog.ts  # Water journaling modal
 │   ├── harvest-dialog.ts # Harvest sprout modal
 │   ├── shine-dialog.ts  # Sun reflection modal
@@ -272,14 +283,16 @@ src/
 ├── ui/                  # UI construction and rendering
 │   ├── dom-builder.ts   # Builds entire DOM tree, exports elements
 │   ├── node-ui.ts       # Node rendering, focus updates
-│   ├── editor.ts        # Inline label/note editor modal
 │   ├── layout.ts        # Positioning, SVG guides, wind animation
 │   ├── twig-view.ts     # Twig detail panel (sprout management)
-│   └── leaf-view.ts     # Leaf saga panel
+│   ├── leaf-view.ts     # Leaf saga panel
+│   └── login-view.ts    # Login/authentication UI
 │
 ├── utils/               # Utility functions
+│   ├── calculations.ts  # Pure soil/water/sun math functions
 │   ├── debounce.ts      # Debounce helper
 │   ├── escape-html.ts   # XSS prevention
+│   ├── presets.ts       # Default tree labels from shared constants
 │   ├── safe-storage.ts  # localStorage wrapper with error handling
 │   ├── sprout-labels.ts # Season/environment label helpers
 │   └── validate-import.ts # Import validation
@@ -295,7 +308,7 @@ src/
     ├── buttons.css      # Button component styles
     ├── cards.css        # Card component styles
     ├── nodes.css        # Trunk/branch/twig node styles
-    ├── editor.css       # Editor modal
+    ├── login.css        # Login/authentication styles
     ├── sidebar.css      # Side panel styles
     ├── dialogs.css      # All dialog modals
     └── twig-view.css    # Twig detail panel styles
@@ -306,7 +319,7 @@ src/
 | File | Purpose |
 |------|---------|
 | `main.ts` | Initializes app, wires up all event listeners, coordinates features |
-| `state.ts` | Legacy state management: nodeState, migrations, persistence |
+| `state/index.ts` | Legacy state management: nodeState, migrations, persistence |
 | `events/store.ts` | Event log: append, get, export events |
 | `events/derive.ts` | Derives current state by replaying events |
 | `dom-builder.ts` | Constructs entire DOM, returns `elements` object and `branchGroups` |
@@ -321,7 +334,7 @@ src/
 
 Trunk uses a **dual state system** during transition to event sourcing:
 
-### Legacy State (`state.ts`)
+### Legacy State (`state/index.ts`)
 
 The `nodeState` object holds node data (labels, notes), keyed by node ID:
 

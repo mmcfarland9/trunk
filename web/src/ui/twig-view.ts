@@ -13,6 +13,7 @@ import {
   MAX_TITLE_LENGTH,
   MAX_LEAF_NAME_LENGTH,
   MAX_BLOOM_LENGTH,
+  SOIL_UPROOT_REFUND_RATE,
 } from '../generated/constants'
 import {
   calculateSoilCost,
@@ -306,7 +307,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       <div class="sprout-card sprout-history-card is-completed ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''}>
         <div class="sprout-card-header">
           <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
-          <button type="button" class="sprout-delete-btn" data-action="delete" aria-label="Uproot">x</button>
         </div>
         <p class="sprout-card-title">${escapeHtml(s.title)}</p>
         ${bloomHtml}
@@ -476,37 +476,27 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
     const sprouts = getSprouts()
     const sprout = sprouts.find(s => s.id === id)
-    if (!sprout) return
+    if (!sprout || sprout.state !== 'active') return
 
-    let confirmMsg: string
-    if (sprout.state === 'active') {
-      const hasLeafHistory = sprout.leafId && sprouts.some(
-        s => s.id !== sprout.id && s.leafId === sprout.leafId
-      )
-      const soilReturn = sprout.soilCost * 0.25
-      const soilMsg = soilReturn > 0 ? ` (+${soilReturn} soil returned)` : ''
-      confirmMsg = hasLeafHistory
-        ? `Are you sure you want to uproot this sprout? This will only affect the most recent part of this leaf's history.${soilMsg}`
-        : `Are you sure you want to uproot this sprout?${soilMsg}`
-    } else {
-      confirmMsg = 'Are you sure you want to prune this leaf? This will remove the entire history of this leaf.'
-    }
+    const hasLeafHistory = sprout.leafId && sprouts.some(
+      s => s.id !== sprout.id && s.leafId === sprout.leafId
+    )
+    const soilReturn = sprout.soilCost * SOIL_UPROOT_REFUND_RATE
+    const soilMsg = soilReturn > 0 ? ` (+${soilReturn} soil returned)` : ''
+    const confirmMsg = hasLeafHistory
+      ? `Are you sure you want to uproot this sprout? This will only affect the most recent part of this leaf's history.${soilMsg}`
+      : `Are you sure you want to uproot this sprout?${soilMsg}`
 
-    const confirmLabel = sprout.state === 'active' ? 'Uproot' : 'Prune'
-    const confirmed = await showConfirm(confirmMsg, confirmLabel)
+    const confirmed = await showConfirm(confirmMsg, 'Uproot')
     if (!confirmed) return
 
-    if (sprout.state === 'active') {
-      const soilReturn = sprout.soilCost * 0.25
-      appendEvent({
-        type: 'sprout_uprooted',
-        timestamp: new Date().toISOString(),
-        sproutId: sprout.id,
-        soilReturned: soilReturn,
-      })
-      callbacks.onSoilChange?.()
-    }
-
+    appendEvent({
+      type: 'sprout_uprooted',
+      timestamp: new Date().toISOString(),
+      sproutId: sprout.id,
+      soilReturned: soilReturn,
+    })
+    callbacks.onSoilChange?.()
     renderSprouts()
   }
 

@@ -188,7 +188,7 @@ describe('State Derivation from Events', () => {
       expect(state.soilAvailable).toBeCloseTo(10, 2)
     })
 
-    it('should remove sprout on sprout_uprooted event', () => {
+    it('should preserve sprout as uprooted on sprout_uprooted event', () => {
       const events: TrunkEvent[] = [
         {
           type: 'sprout_planted',
@@ -209,7 +209,10 @@ describe('State Derivation from Events', () => {
       ]
 
       const state = deriveState(events)
-      expect(state.sprouts.has('sprout-1')).toBe(false)
+      expect(state.sprouts.has('sprout-1')).toBe(true)
+      const sprout = state.sprouts.get('sprout-1')!
+      expect(sprout.state).toBe('uprooted')
+      expect(sprout.uprootedAt).toBe('2026-01-20T10:00:00Z')
       // 10 - 2 (plant) + 0.5 (return) = 8.5
       expect(state.soilAvailable).toBeCloseTo(8.5, 2)
     })

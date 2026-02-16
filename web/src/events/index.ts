@@ -53,12 +53,8 @@ export {
   getState,
   getWaterAvailable,
   getSunAvailable,
-  checkSproutWateredThisWeek,
   checkSproutWateredToday,
-  clearEvents,
   replaceEvents,
-  getEventCount,
-  exportEvents,
   // Resource getters (derived from events)
   getSoilAvailable,
   getSoilCapacity,
@@ -66,6 +62,5 @@ export {
   canAffordWater,
   canAffordSun,
   getWaterCapacity,
-  getSunCapacity,
 } from './store'
 

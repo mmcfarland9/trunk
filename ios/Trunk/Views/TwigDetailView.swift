@@ -211,6 +211,7 @@ struct SproutRow: View {
         switch sprout.state {
         case .active: return Color.twig
         case .completed: return Color.trunkSuccess
+        case .uprooted: return Color.trunkDestructive
         }
     }
 
@@ -234,6 +235,10 @@ struct SproutRow: View {
                     .font(.system(size: TrunkTheme.textXs))
                     .foregroundStyle(Color.trunkSun)
             }
+        case .uprooted:
+            Text("UPROOTED")
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.trunkDestructive)
         }
     }
 }

@@ -39,30 +39,3 @@ enum ISO8601 {
     }
 }
 
-// MARK: - Log View Formatting
-
-enum LogFormatting {
-    private static let dateGroupFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d, yyyy"
-        return f
-    }()
-
-    static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
-    /// Group header for log entries: "Today", "Yesterday", or "Jan 5, 2025"
-    static func dateGroupKey(_ date: Date) -> String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return "Today"
-        } else if calendar.isDateInYesterday(date) {
-            return "Yesterday"
-        } else {
-            return dateGroupFormatter.string(from: date)
-        }
-    }
-}

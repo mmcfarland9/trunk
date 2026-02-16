@@ -39,9 +39,4 @@ enum HapticManager {
         selectionGenerator.selectionChanged()
     }
 
-    /// Error notification for failed actions
-    static func error() {
-        notificationGenerator.prepare()
-        notificationGenerator.notificationOccurred(.error)
-    }
 }

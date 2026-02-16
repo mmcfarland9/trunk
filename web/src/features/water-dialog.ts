@@ -77,8 +77,10 @@ export function initWaterDialog(
     sections.forEach(section => {
       if (section.classList.contains('is-watered')) return
       const pourBtn = section.querySelector<HTMLButtonElement>('.water-dialog-pour')
+      const textarea = section.querySelector<HTMLTextAreaElement>('textarea')
       if (pourBtn) {
-        pourBtn.disabled = remaining <= 0
+        const hasContent = textarea ? textarea.value.trim().length > 0 : false
+        pourBtn.disabled = remaining <= 0 || !hasContent
       }
     })
   }

@@ -171,10 +171,16 @@ struct SproutStateEnumTests {
         #expect(SproutState.completed.rawValue == "completed")
     }
 
+    @Test("Uprooted raw value is 'uprooted'")
+    func rawValue_uprooted() {
+        #expect(SproutState.uprooted.rawValue == "uprooted")
+    }
+
     @Test("State initializes from raw value")
     func initFromRawValue() {
         #expect(SproutState(rawValue: "active") == .active)
         #expect(SproutState(rawValue: "completed") == .completed)
+        #expect(SproutState(rawValue: "uprooted") == .uprooted)
         #expect(SproutState(rawValue: "invalid") == nil)
     }
 }

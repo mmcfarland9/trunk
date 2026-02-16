@@ -32,11 +32,12 @@ export interface DerivedSprout {
   bloomBudding?: string
   bloomFlourish?: string
   // Derived state
-  state: 'active' | 'completed' // No draft, no failed
+  state: 'active' | 'completed' | 'uprooted'
   plantedAt: string
   harvestedAt?: string
   result?: number
   reflection?: string
+  uprootedAt?: string
   waterEntries: WaterEntry[]
 }
 
@@ -141,8 +142,12 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
       case 'sprout_uprooted': {
         // Return partial soil
         soilAvailable = Math.min(soilAvailable + event.soilReturned, soilCapacity)
-        // Remove sprout from active tracking
-        sprouts.delete(event.sproutId)
+        // Transition sprout to uprooted state (preserve all data)
+        const sprout = sprouts.get(event.sproutId)
+        if (sprout && sprout.state === 'active') {
+          sprout.state = 'uprooted'
+          sprout.uprootedAt = event.timestamp
+        }
         break
       }
 
@@ -296,6 +301,7 @@ export function toSprout(derived: DerivedSprout): Sprout {
     reflection: derived.reflection,
     completedAt: derived.harvestedAt,
     harvestedAt: derived.harvestedAt,
+    uprootedAt: derived.uprootedAt,
     bloomWither: derived.bloomWither,
     bloomBudding: derived.bloomBudding,
     bloomFlourish: derived.bloomFlourish,
