@@ -115,8 +115,6 @@ Maximum capacity: 120
 
 **Time to max capacity:** ~20 years of consistent effort (by design).
 
-See `docs/progression-system.md` for detailed projection tables.
-
 ---
 
 ## Uproot Refund Calculation

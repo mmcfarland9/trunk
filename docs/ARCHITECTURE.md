@@ -99,13 +99,19 @@ bootstrap/ (app initialization - split from main.ts)
          │       ├── derive.ts ──► Computes current state
          │       └── soil-charting.ts ──► Capacity tracking
          │
-         ├── services/sync/ ──► Cloud sync (split from sync-service.ts)
-         │   ├── index.ts ──► Public API
-         │   ├── operations.ts ──► Push/pull logic
-         │   ├── cache.ts ──► Local cache management
-         │   ├── pending-uploads.ts ──► Retry queue
-         │   ├── realtime.ts ──► Supabase subscriptions
-         │   └── status.ts ──► Sync status tracking
+         ├── services/ ──► Cloud services (auth, sync)
+         │   ├── auth-service.ts ──► Authentication logic
+         │   ├── sync-types.ts ──► Sync event data models
+         │   └── sync/ ──► Cloud sync (split from sync-service.ts)
+         │       ├── index.ts ──► Public API
+         │       ├── operations.ts ──► Push/pull logic
+         │       ├── cache.ts ──► Local cache management
+         │       ├── pending-uploads.ts ──► Retry queue
+         │       ├── realtime.ts ──► Supabase subscriptions
+         │       └── status.ts ──► Sync status tracking
+         │
+         ├── lib/
+         │   └── supabase.ts ──► Supabase client configuration
          │
          ├── features/
          │   ├── navigation.ts ──► View transitions
@@ -120,6 +126,7 @@ bootstrap/ (app initialization - split from main.ts)
          └── ui/
              ├── layout.ts ──► Node positioning, SVG guides
              ├── node-ui.ts ──► Node state sync
+             ├── progress-panel.ts ──► Sidebar sprout cards & grouping
              ├── twig-view/ ──► Sprout CRUD panel (split from twig-view.ts)
              │   ├── index.ts ──► Main orchestration
              │   ├── sprout-cards.ts ──► Card rendering
@@ -334,7 +341,7 @@ Trunk uses event sourcing with cloud backup. All user actions are immediately re
 
 2. **Optimistic updates**: UI reflects changes before server confirmation. Failed pushes are queued for retry instead of being rolled back.
 
-3. **Idempotent pushes**: Each event has a unique `client_id` (content-based hash). Duplicate pushes are safely ignored via database constraint.
+3. **Idempotent pushes**: Each event has a unique `client_id` (UUID-based). Duplicate pushes are safely ignored via database constraint.
 
 4. **Incremental pulls**: Only fetch events since `last_sync` timestamp. Full pulls only when cache is invalidated.
 

@@ -203,6 +203,9 @@ interface AppContext {
   // Sub-APIs
   twigView?: TwigViewApi
   leafView?: LeafViewApi
+
+  // Auth
+  getUserDisplayName?: () => string
 }
 ```
 
@@ -355,8 +358,9 @@ Handles JSON export/import of the full event log, mirroring web's export functio
 
 ```swift
 class DataExportService {
-  static func exportData(events: [SyncEvent], state: DerivedState) -> Data?
-  static func importData(from data: Data) -> [SyncEvent]?
+  static func generateExport(events: [SyncEvent]) -> ExportPayload
+  static func exportToJSON(_ payload: ExportPayload) throws -> Data
+  static func parseImport(_ data: Data) throws -> ExportPayload
 }
 ```
 
@@ -368,9 +372,9 @@ Computes soil capacity history for charting. iOS counterpart of web's `events/so
 
 ```swift
 struct SoilHistoryService {
-  static func computeSoilHistory(from events: [SyncEvent]) -> [SoilHistoryPoint]
-  static func bucketSoilData(
-    points: [SoilHistoryPoint],
+  static func computeSoilHistory() -> [RawSoilSnapshot]  // Uses EventStore.shared.events
+  static func bucketSoilHistory(
+    _ rawHistory: [RawSoilSnapshot],
     range: SoilChartRange,
     now: Date
   ) -> [SoilChartPoint]

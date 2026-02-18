@@ -177,20 +177,21 @@ The iOS counterpart of web's `TrunkEvent`. Defines the event structure used for 
 
 ```swift
 struct SyncEvent: Codable, Identifiable {
-  let id: Int?                         // Server-assigned ID
-  let userId: String
+  let id: UUID                         // Server-assigned ID
+  let userId: UUID
   let type: String                     // Event type (e.g. "sprout_planted")
   let payload: [String: AnyCodable]    // Event-specific data
-  let clientTimestamp: String           // ISO8601 creation time
   let clientId: String                 // Unique client-generated ID
-  let serverTimestamp: String?         // Set by Supabase on insert
+  let clientTimestamp: String           // ISO8601 creation time
+  let createdAt: String                // Set by Supabase on insert
 }
 
 struct SyncEventInsert: Codable {
+  let userId: String                   // Required for RLS
   let type: String
   let payload: [String: AnyCodable]
-  let clientTimestamp: String
   let clientId: String
+  let clientTimestamp: String
 }
 ```
 

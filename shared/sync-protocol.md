@@ -93,41 +93,23 @@ struct SyncEvent {
 
 Each event must have a unique `client_id` for deduplication.
 
-**Algorithm** (must be identical across platforms):
-1. Concatenate: `timestamp | type | sproutId | twigId | leafId | content_snippet`
-2. Hash the concatenated string (32-bit integer hash)
-3. Format: `{timestamp}-{hash_base36}`
+**Algorithm**: Both platforms use UUID-based generation. Client IDs are non-deterministic — each call produces a new unique ID. The ID is stored on the event at creation time and reused for retry matching.
+
+**Format**: `{ISO8601-timestamp}-{uuid-prefix}`
 
 **Web Implementation**:
 ```typescript
-function generateClientId(event: TrunkEvent): string {
-  const parts = [event.timestamp, event.type]
-  if ('sproutId' in event) parts.push(event.sproutId)
-  if ('twigId' in event) parts.push(event.twigId)
-  if ('leafId' in event && event.leafId) parts.push(event.leafId)
-  if ('content' in event) parts.push(event.content.slice(0, 50))
-
-  const str = parts.join('|')
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  return `${event.timestamp}-${Math.abs(hash).toString(36)}`
+function generateClientId(): string {
+  return `${new Date().toISOString()}-${crypto.randomUUID().slice(0, 8)}`
 }
 ```
 
 **iOS Implementation**:
 ```swift
-func generateClientId() -> String {
-  let timestamp = ISO8601DateFormatter().string(from: Date())
-  let randomSuffix = randomString(length: 6)
-  return "\(timestamp)-\(randomSuffix)"
-}
+let clientId = "\(ISO8601DateFormatter().string(from: Date()))-\(UUID().uuidString.prefix(8).lowercased())"
 ```
 
-**Important**: iOS currently uses a random suffix instead of content hash. This is acceptable as long as events are never re-generated from the same source data. For full idempotence, iOS should adopt the web's content-based hashing.
+**Important**: Client IDs are assigned once at event creation and persisted with the event. Retry logic matches pending uploads by stored `client_id`, not by regenerating it.
 
 ---
 
@@ -224,7 +206,7 @@ async function pullEvents(): Promise<{ pulled: number; error: string | null }> {
 **When**: User performs an action (plant sprout, water, harvest, shine, etc.)
 
 **Algorithm**:
-1. Generate `clientId` from event content
+1. Read `clientId` from event (assigned at creation via `generateClientId()`)
 2. Add `clientId` to `pendingUploadIds` set (mark as pending)
 3. Persist `pendingUploadIds` to storage
 4. Insert to Supabase `events` table
@@ -234,7 +216,7 @@ async function pullEvents(): Promise<{ pulled: number; error: string | null }> {
 **Web Implementation**:
 ```typescript
 async function pushEvent(event: TrunkEvent): Promise<{ error: string | null }> {
-  const clientId = generateClientId(event)
+  const clientId = event.client_id
   pendingUploadIds.add(clientId)
   savePendingIds()
 
@@ -273,7 +255,7 @@ async function pushEvent(event: TrunkEvent): Promise<{ error: string | null }> {
 **Algorithm**:
 1. Iterate through `pendingUploadIds` set
 2. For each `clientId`:
-   - Find matching local event (where `generateClientId(event) === clientId`)
+   - Find matching local event (where `event.client_id === clientId`)
    - If not found: remove stale `clientId` from pending set
    - If found: re-push to Supabase
    - If success or 23505: remove from pending set
@@ -286,7 +268,7 @@ async function pushEvent(event: TrunkEvent): Promise<{ error: string | null }> {
 async function retryPendingUploads(): Promise<number> {
   let pushed = 0
   for (const clientId of [...pendingUploadIds]) {
-    const event = events.find(e => generateClientId(e) === clientId)
+    const event = events.find(e => e.client_id === clientId)
     if (!event) {
       pendingUploadIds.delete(clientId)
       continue
@@ -548,7 +530,7 @@ if (!error || error.code === '23505') {
 **Code**:
 ```typescript
 for (const clientId of [...pendingUploadIds]) {
-  const event = events.find(e => generateClientId(e) === clientId)
+  const event = events.find(e => e.client_id === clientId)
   if (!event) {
     pendingUploadIds.delete(clientId)  // Stale - remove
     continue
@@ -634,16 +616,13 @@ Both web and iOS MUST implement:
 - [x] Realtime subscription with deduplication
 - [x] Visibility sync (re-sync when app becomes active)
 - [x] Error recovery (cached fallback)
-- [x] Client ID generation (content-based hash)
-- [x] Deduplication by `client_timestamp`
+- [x] Client ID generation (UUID-based)
+- [x] Deduplication by `client_id` and `client_timestamp`
 - [x] Sync status metadata (for UI badges)
 
 **Differences**:
-- **Client ID generation**: Web uses content hash, iOS uses random suffix (acceptable but non-ideal)
 - **Storage**: Web uses localStorage, iOS uses UserDefaults + JSON file
 - **Disk persistence**: iOS debounces writes, web writes immediately to localStorage
-
-**Recommendation**: Align iOS client ID generation with web's content-based hashing for full idempotence.
 
 ---
 
