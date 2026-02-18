@@ -47,7 +47,9 @@ describe('Regression Tests', () => {
       expect(sprout.endDate).toBeDefined()
       expect(new Date(sprout.endDate!).getTime()).not.toBeNaN()
       // Should be 2 weeks after plant date, normalized to 9am local timezone
-      const expectedEnd = new Date(new Date('2026-01-15T10:00:00Z').getTime() + 14 * 24 * 60 * 60 * 1000)
+      const expectedEnd = new Date(
+        new Date('2026-01-15T10:00:00Z').getTime() + 14 * 24 * 60 * 60 * 1000,
+      )
       expectedEnd.setHours(9, 0, 0, 0)
       expect(new Date(sprout.endDate!).getTime()).toBe(expectedEnd.getTime())
     })
