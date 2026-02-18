@@ -10,13 +10,13 @@ describe('Timestamp validation', () => {
   })
 
   it('should match all valid timestamps from fixture', () => {
-    fixture.validTimestamps.forEach(timestamp => {
+    fixture.validTimestamps.forEach((timestamp) => {
       expect(timestamp).toMatch(TIMESTAMP_PATTERN)
     })
   })
 
   it('should reject all invalid timestamps from fixture', () => {
-    fixture.invalidTimestamps.forEach(timestamp => {
+    fixture.invalidTimestamps.forEach((timestamp) => {
       expect(timestamp).not.toMatch(TIMESTAMP_PATTERN)
     })
   })

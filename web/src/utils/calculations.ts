@@ -28,14 +28,15 @@ export function calculateCapacityReward(
   season: SproutSeason,
   environment: SproutEnvironment,
   result: number,
-  currentCapacity: number
+  currentCapacity: number,
 ): number {
   const base = SEASONS[season].baseReward
   const envMult = ENVIRONMENT_MULTIPLIERS[environment]
-  const resultMult = RESULT_MULTIPLIERS[String(result) as keyof typeof RESULT_MULTIPLIERS] ?? RESULT_MULTIPLIERS['3']
+  const resultMult =
+    RESULT_MULTIPLIERS[String(result) as keyof typeof RESULT_MULTIPLIERS] ?? RESULT_MULTIPLIERS['3']
 
   // Diminishing returns (exponent 1.5) - growth slows as you approach max
-  const diminishingFactor = Math.max(0, (1 - (currentCapacity / MAX_SOIL_CAPACITY)) ** 1.5)
+  const diminishingFactor = Math.max(0, (1 - currentCapacity / MAX_SOIL_CAPACITY) ** 1.5)
 
   return base * envMult * resultMult * diminishingFactor
 }
@@ -112,4 +113,3 @@ export function formatResetTime(date: Date): string {
 
   return `Resets ${day} ${month}/${dayNum} at ${hours}:${minutes} ${ampm}`
 }
-

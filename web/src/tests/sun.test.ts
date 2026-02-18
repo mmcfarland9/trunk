@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import {
-  getWeekResetTime,
-  getNextSunReset,
-  getSunCapacity,
-  formatResetTime,
-} from '../state'
+import { getWeekResetTime, getNextSunReset, getSunCapacity, formatResetTime } from '../state'
 
 describe('Sun Reset Time', () => {
   beforeEach(() => {

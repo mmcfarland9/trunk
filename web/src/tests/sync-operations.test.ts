@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { TrunkEvent, SproutPlantedEvent, } from '../events/types'
+import type { TrunkEvent, SproutPlantedEvent } from '../events/types'
 
 // Mock all dependencies before imports
 vi.mock('../lib/supabase', () => ({
@@ -194,7 +194,7 @@ describe('sync operations', () => {
 
     it('handles duplicate event (23505 error) gracefully', async () => {
       const insertMock = vi.fn(() =>
-        Promise.resolve({ error: { code: '23505', message: 'duplicate key' } })
+        Promise.resolve({ error: { code: '23505', message: 'duplicate key' } }),
       )
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
@@ -217,7 +217,7 @@ describe('sync operations', () => {
 
     it('leaves event in pending on non-duplicate error', async () => {
       const insertMock = vi.fn(() =>
-        Promise.resolve({ error: { code: '42501', message: 'permission denied' } })
+        Promise.resolve({ error: { code: '42501', message: 'permission denied' } }),
       )
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
@@ -311,9 +311,7 @@ describe('sync operations', () => {
     })
 
     it('returns error on supabase delete failure', async () => {
-      const eqMock = vi.fn(() =>
-        Promise.resolve({ error: { message: 'delete failed' } })
-      )
+      const eqMock = vi.fn(() => Promise.resolve({ error: { message: 'delete failed' } }))
       const deleteMock = vi.fn(() => ({ eq: eqMock }))
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
@@ -448,7 +446,7 @@ describe('sync operations', () => {
       localStorage.setItem('trunk-last-sync', '2026-02-14T00:00:00Z')
 
       const gtMock = vi.fn(() =>
-        Promise.resolve({ data: null, error: { message: 'query failed' } })
+        Promise.resolve({ data: null, error: { message: 'query failed' } }),
       )
       const orderMock = vi.fn(() => ({ gt: gtMock }))
 
@@ -524,7 +522,7 @@ describe('sync operations', () => {
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
           order: vi.fn(() =>
-            Promise.resolve({ data: null, error: { message: 'connection error' } })
+            Promise.resolve({ data: null, error: { message: 'connection error' } }),
           ),
         })),
       }))
@@ -674,10 +672,7 @@ describe('sync operations', () => {
       const { startVisibilitySync } = await import('../services/sync/operations')
       startVisibilitySync()
 
-      expect(addEventListenerSpy).toHaveBeenCalledWith(
-        'visibilitychange',
-        expect.any(Function)
-      )
+      expect(addEventListenerSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
 
       addEventListenerSpy.mockRestore()
     })

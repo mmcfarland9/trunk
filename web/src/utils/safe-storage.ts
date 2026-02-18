@@ -22,4 +22,3 @@ export function safeSetItem(key: string, value: string): StorageResult {
     return { success: false, isQuotaError: false }
   }
 }
-

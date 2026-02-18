@@ -3,10 +3,7 @@ import { BRANCH_COUNT, TWIG_COUNT } from '../../constants'
 import { syncNode } from '../node-ui'
 import trunkLogo from '../../../assets/tree_icon_transp.png'
 
-type NodeClickHandler = (
-  element: HTMLButtonElement,
-  nodeId: string
-) => void
+type NodeClickHandler = (element: HTMLButtonElement, nodeId: string) => void
 
 export type TreeNodesElements = {
   mapPanel: HTMLElement
@@ -22,7 +19,7 @@ function initializeNode(
   element: HTMLButtonElement,
   placeholder: string,
   nodeLookup: Map<string, HTMLButtonElement>,
-  onNodeClick: NodeClickHandler
+  onNodeClick: NodeClickHandler,
 ): void {
   const nodeId = element.dataset.nodeId
   if (nodeId) {

@@ -35,11 +35,21 @@ export function getCurrentNodeId(state: FormState): string | null {
 export function getEndDate(season: SproutSeason, startDate: Date = new Date()): Date {
   const end = new Date(startDate)
   switch (season) {
-    case '2w': end.setDate(end.getDate() + 14); break
-    case '1m': end.setMonth(end.getMonth() + 1); break
-    case '3m': end.setMonth(end.getMonth() + 3); break
-    case '6m': end.setMonth(end.getMonth() + 6); break
-    case '1y': end.setFullYear(end.getFullYear() + 1); break
+    case '2w':
+      end.setDate(end.getDate() + 14)
+      break
+    case '1m':
+      end.setMonth(end.getMonth() + 1)
+      break
+    case '3m':
+      end.setMonth(end.getMonth() + 3)
+      break
+    case '6m':
+      end.setMonth(end.getMonth() + 6)
+      break
+    case '1y':
+      end.setFullYear(end.getFullYear() + 1)
+      break
   }
   // Set to 9am CST (UTC-6 = 15:00 UTC)
   end.setUTCHours(15, 0, 0, 0)

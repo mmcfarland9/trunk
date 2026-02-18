@@ -11,25 +11,32 @@ describe('App Smoke Tests', () => {
 
   beforeAll(() => {
     // Create a minimal DOM environment
-    dom = new JSDOM(`
+    dom = new JSDOM(
+      `
       <!DOCTYPE html>
       <html>
         <head><title>Trunk</title></head>
         <body><div id="app"></div></body>
       </html>
-    `, {
-      url: 'http://localhost:3000',
-      pretendToBeVisual: true,
-    })
+    `,
+      {
+        url: 'http://localhost:3000',
+        pretendToBeVisual: true,
+      },
+    )
 
     // Mock localStorage
     const storage: Record<string, string> = {}
     Object.defineProperty(dom.window, 'localStorage', {
       value: {
         getItem: (key: string) => storage[key] || null,
-        setItem: (key: string, value: string) => { storage[key] = value },
-        removeItem: (key: string) => { delete storage[key] },
-        clear: () => Object.keys(storage).forEach(k => delete storage[k]),
+        setItem: (key: string, value: string) => {
+          storage[key] = value
+        },
+        removeItem: (key: string) => {
+          delete storage[key]
+        },
+        clear: () => Object.keys(storage).forEach((k) => delete storage[k]),
       },
     })
   })

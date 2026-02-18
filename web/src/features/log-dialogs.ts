@@ -36,17 +36,18 @@ function populateSunLog(elements: SunLogElements): void {
 
   if (isEmpty) return
 
-  elements.sunLogDialogEntries.innerHTML = entries.map(entry => {
-    const branchLabel = getBranchLabelFromTwigId(entry.context.twigId)
-    const context = branchLabel
-      ? `${escapeHtml(branchLabel)} : ${escapeHtml(entry.context.twigLabel)}`
-      : escapeHtml(entry.context.twigLabel)
-    const timestamp = formatDateShort(entry.timestamp)
-    const promptHtml = entry.prompt
-      ? `<p class="sun-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
-      : ''
+  elements.sunLogDialogEntries.innerHTML = entries
+    .map((entry) => {
+      const branchLabel = getBranchLabelFromTwigId(entry.context.twigId)
+      const context = branchLabel
+        ? `${escapeHtml(branchLabel)} : ${escapeHtml(entry.context.twigLabel)}`
+        : escapeHtml(entry.context.twigLabel)
+      const timestamp = formatDateShort(entry.timestamp)
+      const promptHtml = entry.prompt
+        ? `<p class="sun-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
+        : ''
 
-    return `
+      return `
       <div class="sun-log-entry">
         <div class="sun-log-entry-header">
           <span class="sun-log-entry-context">${context}</span>
@@ -56,12 +57,13 @@ function populateSunLog(elements: SunLogElements): void {
         <p class="sun-log-entry-content">${escapeHtml(entry.content)}</p>
       </div>
     `
-  }).join('')
+    })
+    .join('')
 }
 
 export function initSunLogDialog(
   elements: SunLogElements & Pick<AppElements, 'sunMeter'>,
-  callbacks: { onPopulateSunLogShine: () => void }
+  callbacks: { onPopulateSunLogShine: () => void },
 ): { populate: () => void; isOpen: () => boolean; close: () => void } {
   const openDialog = () => {
     callbacks.onPopulateSunLogShine()
@@ -102,15 +104,16 @@ function populateSoilBag(elements: SoilBagElements): void {
 
   if (isEmpty) return
 
-  elements.soilBagDialogEntries.innerHTML = entries.map(entry => {
-    const amountClass = entry.amount > 0 ? 'is-gain' : 'is-loss'
-    const amountText = entry.amount > 0 ? `+${entry.amount.toFixed(2)}` : entry.amount.toFixed(2)
-    const contextHtml = entry.context
-      ? `<span class="soil-bag-entry-context">${escapeHtml(entry.context)}</span>`
-      : ''
-    const timestamp = formatDateShort(entry.timestamp)
+  elements.soilBagDialogEntries.innerHTML = entries
+    .map((entry) => {
+      const amountClass = entry.amount > 0 ? 'is-gain' : 'is-loss'
+      const amountText = entry.amount > 0 ? `+${entry.amount.toFixed(2)}` : entry.amount.toFixed(2)
+      const contextHtml = entry.context
+        ? `<span class="soil-bag-entry-context">${escapeHtml(entry.context)}</span>`
+        : ''
+      const timestamp = formatDateShort(entry.timestamp)
 
-    return `
+      return `
       <div class="soil-bag-entry">
         <div class="soil-bag-entry-info">
           <span class="soil-bag-entry-reason">${escapeHtml(entry.reason)}</span>
@@ -122,12 +125,14 @@ function populateSoilBag(elements: SoilBagElements): void {
         </div>
       </div>
     `
-  }).join('')
+    })
+    .join('')
 }
 
-export function initSoilBagDialog(
-  elements: SoilBagElements & Pick<AppElements, 'soilMeter'>
-): { isOpen: () => boolean; close: () => void } {
+export function initSoilBagDialog(elements: SoilBagElements & Pick<AppElements, 'soilMeter'>): {
+  isOpen: () => boolean
+  close: () => void
+} {
   const openDialog = () => {
     populateSoilBag(elements)
     elements.soilBagDialog.classList.remove('hidden')
@@ -181,13 +186,14 @@ function populateWaterCan(elements: WaterCanElements): void {
   elements.waterCanLogEntries.style.display = hasLog ? 'flex' : 'none'
 
   if (hasLog) {
-    elements.waterCanLogEntries.innerHTML = logEntries.map(entry => {
-      const timestamp = formatDateWithYear(entry.timestamp)
-      const promptHtml = entry.prompt
-        ? `<p class="water-can-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
-        : ''
+    elements.waterCanLogEntries.innerHTML = logEntries
+      .map((entry) => {
+        const timestamp = formatDateWithYear(entry.timestamp)
+        const promptHtml = entry.prompt
+          ? `<p class="water-can-log-entry-prompt">"${escapeHtml(entry.prompt)}"</p>`
+          : ''
 
-      return `
+        return `
         <div class="water-can-log-entry">
           <div class="water-can-log-entry-header">
             <span class="water-can-log-entry-context">${escapeHtml(entry.sproutTitle)} · ${escapeHtml(entry.twigLabel)}</span>
@@ -197,13 +203,15 @@ function populateWaterCan(elements: WaterCanElements): void {
           <p class="water-can-log-entry-content">${escapeHtml(entry.content)}</p>
         </div>
       `
-    }).join('')
+      })
+      .join('')
   }
 }
 
-export function initWaterCanDialog(
-  elements: WaterCanElements & Pick<AppElements, 'waterMeter'>
-): { isOpen: () => boolean; close: () => void } {
+export function initWaterCanDialog(elements: WaterCanElements & Pick<AppElements, 'waterMeter'>): {
+  isOpen: () => boolean
+  close: () => void
+} {
   const openDialog = () => {
     populateWaterCan(elements)
     elements.waterCanDialog.classList.remove('hidden')

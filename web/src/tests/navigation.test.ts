@@ -115,7 +115,9 @@ describe('Navigation State', () => {
     })
 
     it('clears on view mode change', async () => {
-      const { getHoveredBranchIndex, setHoveredBranchIndex, setViewModeState } = await import('../state')
+      const { getHoveredBranchIndex, setHoveredBranchIndex, setViewModeState } = await import(
+        '../state'
+      )
 
       setHoveredBranchIndex(2)
       setViewModeState('branch', 2)

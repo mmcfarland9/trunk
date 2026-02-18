@@ -1,5 +1,11 @@
 import type { AppContext } from '../types'
-import { getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
+import {
+  getFocusedNode,
+  setFocusedNodeState,
+  getViewMode,
+  getPresetLabel,
+  getPresetNote,
+} from '../state'
 import { getState } from '../events'
 
 function setNodeLabel(element: HTMLButtonElement, label: string): void {
@@ -74,7 +80,10 @@ function formatBoxLabel(label: string): BoxFormat {
 
   // Target wider 16:9-ish boxes - allow 2 lines max for most text
   const totalChars = words.reduce((sum, w) => sum + w.length, 0) + words.length - 1
-  const targetWidth = Math.max(Math.max(...words.map(w => w.length), 1), Math.ceil(totalChars / 2))
+  const targetWidth = Math.max(
+    Math.max(...words.map((w) => w.length), 1),
+    Math.ceil(totalChars / 2),
+  )
 
   // Wrap text to target width
   const lines: string[] = []
@@ -91,8 +100,8 @@ function formatBoxLabel(label: string): BoxFormat {
   }
   if (currentLine) lines.push(currentLine)
 
-  const maxLineLength = Math.max(...lines.map(l => l.length), 1)
-  const paddedLines = lines.map(line => {
+  const maxLineLength = Math.max(...lines.map((l) => l.length), 1)
+  const paddedLines = lines.map((line) => {
     const padding = maxLineLength - line.length
     const leftPad = Math.floor(padding / 2)
     const rightPad = padding - leftPad
@@ -133,7 +142,6 @@ function formatTwigBoxLabel(label: string, element: HTMLButtonElement): BoxForma
   }
 }
 
-
 export function getNodePlaceholder(element: HTMLButtonElement): string {
   return element.dataset.placeholder || element.dataset.defaultLabel || 'Node'
 }
@@ -170,13 +178,13 @@ export function syncNode(element: HTMLButtonElement): void {
   const state = getState()
   const hasSprouts = (state.sproutsByTwig.get(nodeId)?.length ?? 0) > 0
   const hasLeaves = (state.leavesByTwig.get(nodeId)?.length ?? 0) > 0
-  element.dataset.filled = (hasPresetContent || hasSprouts || hasLeaves) ? 'true' : 'false'
+  element.dataset.filled = hasPresetContent || hasSprouts || hasLeaves ? 'true' : 'false'
 }
 
 export function setFocusedNode(
   target: HTMLButtonElement | null,
   _ctx: AppContext,
-  updateFocusCallback: (target: HTMLButtonElement | null) => void
+  updateFocusCallback: (target: HTMLButtonElement | null) => void,
 ): void {
   const currentFocused = getFocusedNode()
   if (currentFocused && currentFocused !== target) {
@@ -293,7 +301,11 @@ function generateTwigLineCandidates(words: string[]): string[][] {
   if (words.length < 3) return candidates
   for (let i = 1; i < words.length - 1; i++) {
     for (let j = i + 1; j < words.length; j++) {
-      candidates.push([words.slice(0, i).join(' '), words.slice(i, j).join(' '), words.slice(j).join(' ')])
+      candidates.push([
+        words.slice(0, i).join(' '),
+        words.slice(i, j).join(' '),
+        words.slice(j).join(' '),
+      ])
     }
   }
   return candidates
@@ -321,7 +333,6 @@ function formatTwigLabel(label: string, element: HTMLButtonElement): string {
 
   return best.join('\n')
 }
-
 
 function scoreTwigLines(lines: string[], metrics: TwigMetrics): number {
   const lineWidths = lines.map((line) => measureLineWidth(line, metrics))

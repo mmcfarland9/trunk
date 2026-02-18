@@ -23,7 +23,7 @@ export function generateClientId(): string {
 
 export function localToSyncPayload(
   event: TrunkEvent,
-  userId: string
+  userId: string,
 ): Omit<SyncEvent, 'id' | 'created_at'> {
   return {
     user_id: userId,

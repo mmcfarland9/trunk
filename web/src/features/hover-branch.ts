@@ -1,10 +1,23 @@
 import type { AppContext } from '../types'
-import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex } from '../state'
+import {
+  getViewMode,
+  getHoveredBranchIndex,
+  setHoveredBranchIndex,
+  getHoveredTwigId,
+  setHoveredTwigId,
+  getFocusedNode,
+  getActiveBranchIndex,
+} from '../state'
 import type { NavigationCallbacks } from './navigation'
 
 export type HoverBranchCallbacks = {
   enterBranchView: (index: number, ctx: AppContext, callbacks: NavigationCallbacks) => void
-  enterTwigView: (twig: HTMLButtonElement, branchIndex: number, ctx: AppContext, callbacks: NavigationCallbacks) => void
+  enterTwigView: (
+    twig: HTMLButtonElement,
+    branchIndex: number,
+    ctx: AppContext,
+    callbacks: NavigationCallbacks,
+  ) => void
   returnToOverview: (ctx: AppContext, callbacks: NavigationCallbacks) => void
   returnToBranchView: (ctx: AppContext, callbacks: NavigationCallbacks) => void
   updateVisibility: (ctx: AppContext) => void
@@ -22,7 +35,11 @@ const HOVER_MIN_RADIUS_RATIO = 0.55
 const HOVER_MAX_RADIUS_RATIO = 1.35
 const SCROLL_THRESHOLD = 150 // pixels of scroll delta needed to trigger zoom
 
-export function setupHoverBranch(ctx: AppContext, navCallbacks: NavigationCallbacks, cb: HoverBranchCallbacks): void {
+export function setupHoverBranch(
+  ctx: AppContext,
+  navCallbacks: NavigationCallbacks,
+  cb: HoverBranchCallbacks,
+): void {
   const { canvas } = ctx.elements
   let scrollAccumulator = 0
 
@@ -174,7 +191,7 @@ function getEllipseRadii(
   ctx: AppContext,
   canvasRect: DOMRect,
   centerX: number,
-  centerY: number
+  centerY: number,
 ): { x: number; y: number } | null {
   const branchTop = ctx.branchGroups[0]
   const branchRight = ctx.branchGroups[2]
@@ -197,7 +214,7 @@ function getBranchIndexFromPosition(
   ctx: AppContext,
   canvasRect: DOMRect,
   dx: number,
-  dy: number
+  dy: number,
 ): number {
   const { branchGroups } = ctx
   const mouseAngle = Math.atan2(dy, dx)
@@ -228,8 +245,8 @@ function getBranchIndexFromPosition(
 
 export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
   // Add hover listeners to all twigs for branch view sidebar preview
-  ctx.branchGroups.forEach(group => {
-    group.twigs.forEach(twig => {
+  ctx.branchGroups.forEach((group) => {
+    group.twigs.forEach((twig) => {
       twig.addEventListener('mouseenter', () => {
         if (getViewMode() !== 'branch') return
         const twigId = twig.dataset.nodeId

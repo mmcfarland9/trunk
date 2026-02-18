@@ -18,11 +18,7 @@ import {
   wasShoneThisWeek,
   getAllWaterEntries,
 } from '../events/derive'
-import {
-  deriveSoilLog,
-  computeRawSoilHistory,
-  bucketSoilData,
-} from '../events/soil-charting'
+import { deriveSoilLog, computeRawSoilHistory, bucketSoilData } from '../events/soil-charting'
 import type { TrunkEvent } from '../events/types'
 
 describe('Derive State - Soil Capacity', () => {
@@ -113,7 +109,7 @@ describe('Derive Water Available', () => {
     vi.useRealTimers()
   })
 
-  it('returns 3 - today\'s waters', () => {
+  it("returns 3 - today's waters", () => {
     // Set time to 2pm on Jan 30
     const now = new Date(2026, 0, 30, 14, 0, 0)
     vi.setSystemTime(now)
@@ -165,7 +161,7 @@ describe('Derive Water Available', () => {
 })
 
 describe('Derive Sun Available', () => {
-  it('returns 1 - this week\'s suns', () => {
+  it("returns 1 - this week's suns", () => {
     // Wednesday Jan 29, 2026 at 2pm
     const now = new Date('2026-01-29T14:00:00')
 
@@ -242,8 +238,8 @@ describe('getSproutsForTwig', () => {
     const twig0Sprouts = getSproutsForTwig(state, 'branch-0-twig-0')
 
     expect(twig0Sprouts).toHaveLength(2)
-    expect(twig0Sprouts.map(s => s.id)).toContain('sprout-1')
-    expect(twig0Sprouts.map(s => s.id)).toContain('sprout-3')
+    expect(twig0Sprouts.map((s) => s.id)).toContain('sprout-1')
+    expect(twig0Sprouts.map((s) => s.id)).toContain('sprout-3')
   })
 })
 
@@ -277,8 +273,8 @@ describe('getLeavesForTwig', () => {
     const twig0Leaves = getLeavesForTwig(state, 'branch-0-twig-0')
 
     expect(twig0Leaves).toHaveLength(2)
-    expect(twig0Leaves.map(l => l.name)).toContain('Saga 1')
-    expect(twig0Leaves.map(l => l.name)).toContain('Saga 3')
+    expect(twig0Leaves.map((l) => l.name)).toContain('Saga 1')
+    expect(twig0Leaves.map((l) => l.name)).toContain('Saga 3')
   })
 })
 
@@ -503,8 +499,8 @@ describe('getSproutsByLeaf', () => {
     const leafSprouts = getSproutsByLeaf(state, 'leaf-1')
 
     expect(leafSprouts).toHaveLength(2)
-    expect(leafSprouts.map(s => s.title)).toContain('In Saga')
-    expect(leafSprouts.map(s => s.title)).toContain('Also In Saga')
+    expect(leafSprouts.map((s) => s.title)).toContain('In Saga')
+    expect(leafSprouts.map((s) => s.title)).toContain('Also In Saga')
   })
 
   it('returns empty array when no sprouts belong to leaf', () => {
@@ -975,7 +971,7 @@ describe('bucketSoilData', () => {
     // The event is within the 1d window, so after it all points should show
     // capacity=10, available=8
     const pointsAfterEvent = points.filter(
-      (p) => p.timestamp.getTime() >= new Date('2026-01-14T09:00:00Z').getTime()
+      (p) => p.timestamp.getTime() >= new Date('2026-01-14T09:00:00Z').getTime(),
     )
     for (const p of pointsAfterEvent) {
       expect(p.capacity).toBe(10)

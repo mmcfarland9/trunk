@@ -47,7 +47,7 @@ export function subscribeToAuth(listener: AuthListener): () => void {
 }
 
 function notifyListeners() {
-  listeners.forEach(l => l(authState))
+  listeners.forEach((l) => l(authState))
 }
 
 export async function initAuth(): Promise<void> {
@@ -58,7 +58,9 @@ export async function initAuth(): Promise<void> {
   }
 
   // Get initial session
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
   authState = {
     user: session?.user ?? null,
     session,
@@ -88,10 +90,7 @@ export async function requestCode(email: string): Promise<{ error: string | null
   return { error: error?.message ?? null }
 }
 
-export async function verifyCode(
-  email: string,
-  code: string
-): Promise<{ error: string | null }> {
+export async function verifyCode(email: string, code: string): Promise<{ error: string | null }> {
   if (!supabase) return { error: 'Supabase not configured' }
 
   const { error } = await supabase.auth.verifyOtp({

@@ -1,7 +1,4 @@
-import {
-  requestCode,
-  verifyCode,
-} from '../services/auth-service'
+import { requestCode, verifyCode } from '../services/auth-service'
 
 type LoginViewElements = {
   container: HTMLElement

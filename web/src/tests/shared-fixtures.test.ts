@@ -81,7 +81,13 @@ describe('Shared Fixtures: Event Derivation', () => {
       if ('sproutDetails' in scenario.expected && scenario.expected.sproutDetails) {
         const details = scenario.expected.sproutDetails as Record<
           string,
-          { state: string; result?: number; waterEntryCount: number; reflection?: string; leafId?: string }
+          {
+            state: string
+            result?: number
+            waterEntryCount: number
+            reflection?: string
+            leafId?: string
+          }
         >
         for (const [sproutId, expectedSprout] of Object.entries(details)) {
           it(`derives correct state for ${sproutId}`, () => {

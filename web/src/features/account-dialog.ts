@@ -54,7 +54,7 @@ function formatTimezone(tz: string): string {
       timeZoneName: 'short',
     })
     const parts = formatter.formatToParts(now)
-    const tzAbbr = parts.find(p => p.type === 'timeZoneName')?.value || ''
+    const tzAbbr = parts.find((p) => p.type === 'timeZoneName')?.value || ''
     const city = tz.split('/').pop()?.replace(/_/g, ' ') || tz
     return `${city} (${tzAbbr})`
   } catch {
@@ -65,8 +65,8 @@ function formatTimezone(tz: string): string {
 function updateNotifyOptionsVisibility(elements: AccountElements, channel: string): void {
   const notifyOptions = elements.accountDialog.querySelectorAll('.account-notify-options')
   const isOff = channel === 'none'
-  notifyOptions.forEach(el => {
-    (el as HTMLElement).style.opacity = isOff ? '0.4' : '1'
+  notifyOptions.forEach((el) => {
+    ;(el as HTMLElement).style.opacity = isOff ? '0.4' : '1'
     ;(el as HTMLElement).style.pointerEvents = isOff ? 'none' : 'auto'
   })
 }
@@ -95,17 +95,20 @@ function populateAccountDialog(elements: AccountElements): void {
   elements.accountDialogEmail.textContent = user?.email || ''
   elements.accountDialogNameInput.value = profile.full_name || ''
   elements.accountDialogPhoneInput.value = profile.phone || ''
-  populateTimezoneSelect(elements.accountDialogTimezoneSelect, profile.timezone || 'America/New_York')
+  populateTimezoneSelect(
+    elements.accountDialogTimezoneSelect,
+    profile.timezone || 'America/New_York',
+  )
 
   // Notification preferences
   const notif = profile.notifications!
-  elements.accountDialogChannelInputs.forEach(input => {
+  elements.accountDialogChannelInputs.forEach((input) => {
     input.checked = input.value === notif.channel
   })
-  elements.accountDialogFrequencyInputs.forEach(input => {
+  elements.accountDialogFrequencyInputs.forEach((input) => {
     input.checked = input.value === notif.check_in_frequency
   })
-  elements.accountDialogTimeInputs.forEach(input => {
+  elements.accountDialogTimeInputs.forEach((input) => {
     input.checked = input.value === notif.preferred_time
   })
   elements.accountDialogHarvestCheckbox.checked = notif.notify_harvest_ready
@@ -115,17 +118,18 @@ function populateAccountDialog(elements: AccountElements): void {
   updateNotifyOptionsVisibility(elements, notif.channel)
 }
 
-export function initAccountDialog(
-  elements: AccountElements
-): { isOpen: () => boolean; close: () => void } {
+export function initAccountDialog(elements: AccountElements): {
+  isOpen: () => boolean
+  close: () => void
+} {
   const tabs = elements.accountDialog.querySelectorAll<HTMLButtonElement>('.account-tab')
   const panels = elements.accountDialog.querySelectorAll<HTMLDivElement>('.account-tab-panel')
 
   const switchTab = (tabName: string) => {
-    tabs.forEach(tab => {
+    tabs.forEach((tab) => {
       tab.classList.toggle('is-active', tab.dataset.tab === tabName)
     })
-    panels.forEach(panel => {
+    panels.forEach((panel) => {
       panel.classList.toggle('hidden', panel.dataset.tab !== tabName)
     })
   }
@@ -141,7 +145,7 @@ export function initAccountDialog(
   }
 
   // Tab switching
-  tabs.forEach(tab => {
+  tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const tabName = tab.dataset.tab
       if (tabName) switchTab(tabName)
@@ -155,7 +159,7 @@ export function initAccountDialog(
   })
 
   // Update notify options visibility when channel changes
-  elements.accountDialogChannelInputs.forEach(input => {
+  elements.accountDialogChannelInputs.forEach((input) => {
     input.addEventListener('change', () => {
       updateNotifyOptionsVisibility(elements, input.value)
     })
@@ -170,8 +174,8 @@ export function initAccountDialog(
   elements.accountDialogResetData.addEventListener('click', async () => {
     const confirmed = window.confirm(
       'Are you sure you want to delete ALL your data?\n\n' +
-      'This will permanently remove all your sprouts, leaves, journal entries, and activity history.\n\n' +
-      'This action cannot be undone.'
+        'This will permanently remove all your sprouts, leaves, journal entries, and activity history.\n\n' +
+        'This action cannot be undone.',
     )
 
     if (!confirmed) return
@@ -207,8 +211,15 @@ export function initAccountDialog(
       timezone: elements.accountDialogTimezoneSelect.value,
       notifications: {
         channel: getSelectedRadio(elements.accountDialogChannelInputs) as 'email' | 'sms' | 'none',
-        check_in_frequency: getSelectedRadio(elements.accountDialogFrequencyInputs) as 'daily' | 'every3days' | 'weekly' | 'off',
-        preferred_time: getSelectedRadio(elements.accountDialogTimeInputs) as 'morning' | 'afternoon' | 'evening',
+        check_in_frequency: getSelectedRadio(elements.accountDialogFrequencyInputs) as
+          | 'daily'
+          | 'every3days'
+          | 'weekly'
+          | 'off',
+        preferred_time: getSelectedRadio(elements.accountDialogTimeInputs) as
+          | 'morning'
+          | 'afternoon'
+          | 'evening',
         notify_harvest_ready: elements.accountDialogHarvestCheckbox.checked,
         notify_shine_available: elements.accountDialogShineCheckbox.checked,
       },

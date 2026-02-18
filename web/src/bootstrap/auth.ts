@@ -1,7 +1,13 @@
 import { initAuth, subscribeToAuth, getUserProfile } from '../services/auth-service'
 import { createLoginView, destroyLoginView } from '../ui/login-view'
 import { isSupabaseConfigured } from '../lib/supabase'
-import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, startVisibilitySync } from '../services/sync'
+import {
+  pushEvent,
+  subscribeToRealtime,
+  unsubscribeFromRealtime,
+  smartSync,
+  startVisibilitySync,
+} from '../services/sync'
 import { setEventSyncCallback } from '../events/store'
 import { syncNode } from '../ui/node-ui'
 import type { AppContext } from '../types'
@@ -17,7 +23,7 @@ let hasSynced = false
 export async function initializeAuth(
   appElement: HTMLElement,
   ctx: AppContext,
-  callbacks: AuthCallbacks
+  callbacks: AuthCallbacks,
 ): Promise<void> {
   await initAuth()
 

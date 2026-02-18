@@ -53,4 +53,3 @@ export function getPresetNote(nodeId: string): string {
 
   return ''
 }
-

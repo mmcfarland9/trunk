@@ -13,11 +13,7 @@ describe('requireElement', () => {
     button.className = 'test-button'
     container.append(button)
 
-    const result = requireElement<HTMLButtonElement>(
-      container,
-      '.test-button',
-      'test button'
-    )
+    const result = requireElement<HTMLButtonElement>(container, '.test-button', 'test button')
 
     expect(result).toBe(button)
     expect(result.tagName).toBe('BUTTON')
@@ -29,11 +25,7 @@ describe('requireElement', () => {
     input.className = 'test-input'
     container.append(input)
 
-    const result = requireElement<HTMLInputElement>(
-      container,
-      '.test-input',
-      'test input'
-    )
+    const result = requireElement<HTMLInputElement>(container, '.test-input', 'test input')
 
     expect(result).toBe(input)
     expect(result.type).toBe('text')
@@ -44,11 +36,7 @@ describe('requireElement', () => {
     div.id = 'unique-test-id'
     document.body.append(div)
 
-    const result = requireElement<HTMLDivElement>(
-      document,
-      '#unique-test-id',
-      'unique test div'
-    )
+    const result = requireElement<HTMLDivElement>(document, '#unique-test-id', 'unique test div')
 
     expect(result).toBe(div)
     div.remove()
@@ -56,21 +44,13 @@ describe('requireElement', () => {
 
   it('throws descriptive error when element not found', () => {
     expect(() => {
-      requireElement<HTMLButtonElement>(
-        container,
-        '.missing-button',
-        'missing button'
-      )
+      requireElement<HTMLButtonElement>(container, '.missing-button', 'missing button')
     }).toThrow('Required element not found: missing button (selector: ".missing-button")')
   })
 
   it('throws error with correct selector in message', () => {
     expect(() => {
-      requireElement<HTMLInputElement>(
-        container,
-        'input[type="checkbox"]',
-        'checkbox input'
-      )
+      requireElement<HTMLInputElement>(container, 'input[type="checkbox"]', 'checkbox input')
     }).toThrow('Required element not found: checkbox input (selector: "input[type="checkbox"]")')
   })
 
@@ -85,7 +65,7 @@ describe('requireElement', () => {
     const result = requireElement<HTMLButtonElement>(
       container,
       'section button.action-btn[data-action="submit"]',
-      'submit action button'
+      'submit action button',
     )
 
     expect(result).toBe(button)
@@ -97,11 +77,7 @@ describe('requireElement', () => {
     button.className = 'submit-btn'
     container.append(button)
 
-    const result = requireElement<HTMLButtonElement>(
-      container,
-      '.submit-btn',
-      'submit button'
-    )
+    const result = requireElement<HTMLButtonElement>(container, '.submit-btn', 'submit button')
 
     expect(result.type).toBe('submit')
     expect(result.click).toBeDefined()
@@ -116,7 +92,7 @@ describe('requireElement', () => {
     const result = requireElement<HTMLTextAreaElement>(
       container,
       '.comment-box',
-      'comment textarea'
+      'comment textarea',
     )
 
     expect(result.placeholder).toBe('Enter comment')
@@ -134,7 +110,7 @@ describe('requireElement', () => {
     const result = requireElement<HTMLSelectElement>(
       container,
       '.timezone-select',
-      'timezone select'
+      'timezone select',
     )
 
     expect(result.options.length).toBe(1)
@@ -150,11 +126,7 @@ describe('requireElement', () => {
     button2.textContent = 'Second'
     container.append(button1, button2)
 
-    const result = requireElement<HTMLButtonElement>(
-      container,
-      '.btn',
-      'button'
-    )
+    const result = requireElement<HTMLButtonElement>(container, '.btn', 'button')
 
     expect(result).toBe(button1)
     expect(result.textContent).toBe('First')

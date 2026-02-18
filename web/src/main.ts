@@ -5,7 +5,12 @@ import { getViewMode } from './state'
 import { buildApp } from './ui/dom-builder'
 import { positionNodes } from './ui/layout'
 import { updateStats } from './features/progress'
-import { setViewMode, returnToOverview, enterBranchView, enterTwigView } from './features/navigation'
+import {
+  setViewMode,
+  returnToOverview,
+  enterBranchView,
+  enterTwigView,
+} from './features/navigation'
 import { initializeAuth } from './bootstrap/auth'
 import { initializeSync } from './bootstrap/sync'
 import { initializeUI, updateSoilMeter, updateWaterMeter } from './bootstrap/ui'
@@ -59,7 +64,7 @@ initializeSync(domResult.elements)
 const dialogAPIs = initializeUI(ctx, navCallbacks)
 
 function refreshUI(): void {
-  domResult.allNodes.forEach(node => syncNode(node))
+  domResult.allNodes.forEach((node) => syncNode(node))
   updateStats(ctx)
   positionNodes(ctx)
   updateFocus(null, ctx)
@@ -71,7 +76,9 @@ function refreshUI(): void {
 
 initializeAuth(app, ctx, {
   onSyncComplete: refreshUI,
-  onAuthStateChange: (hasUser) => { if (hasUser) updateFocus(null, ctx) },
+  onAuthStateChange: (hasUser) => {
+    if (hasUser) updateFocus(null, ctx)
+  },
 })
 
 initializeEvents(ctx, navCallbacks, dialogAPIs)

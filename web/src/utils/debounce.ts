@@ -3,7 +3,7 @@
  */
 export function debounce<T extends (...args: unknown[]) => void>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: number | null = null
   return (...args: Parameters<T>) => {
@@ -23,7 +23,7 @@ export function debounce<T extends (...args: unknown[]) => void>(
  */
 export function preventDoubleClick(
   handler: (e: MouseEvent) => void,
-  lockDuration: number = 500
+  lockDuration: number = 500,
 ): (e: MouseEvent) => void {
   let locked = false
   return (e: MouseEvent) => {

@@ -28,7 +28,7 @@ type HarvestDialogApi = {
 
 export function initHarvestDialog(
   ctx: AppContext,
-  callbacks: HarvestDialogCallbacks
+  callbacks: HarvestDialogCallbacks,
 ): HarvestDialogApi {
   // Harvest dialog state
   let currentHarvestSprout: {
@@ -47,7 +47,12 @@ export function initHarvestDialog(
     // All harvests return full soil + some capacity (no "failed" state)
     if (currentHarvestSprout) {
       const currentCapacity = getSoilCapacity()
-      const capGain = calculateCapacityReward(currentHarvestSprout.season, currentHarvestSprout.environment, result, currentCapacity)
+      const capGain = calculateCapacityReward(
+        currentHarvestSprout.season,
+        currentHarvestSprout.environment,
+        result,
+        currentCapacity,
+      )
       harvestDialogSave.innerHTML = `Harvest <span class="btn-soil-gain">(+${currentHarvestSprout.soilCost.toFixed(1)}, +${capGain.toFixed(2)} cap)</span>`
     }
   }
@@ -70,7 +75,7 @@ export function initHarvestDialog(
       harvestDialogMeta,
       harvestDialogSlider,
       harvestDialogBloomHints,
-      harvestDialogReflection
+      harvestDialogReflection,
     } = ctx.elements
 
     currentHarvestSprout = {
@@ -78,7 +83,7 @@ export function initHarvestDialog(
       twigId: sprout.twigId,
       soilCost: sprout.soilCost,
       environment: sprout.environment,
-      season: sprout.season
+      season: sprout.season,
     }
 
     harvestDialogTitle.textContent = sprout.title || 'Untitled Sprout'
@@ -87,7 +92,7 @@ export function initHarvestDialog(
     harvestDialogReflection.value = ''
 
     // Set bloom hints
-    harvestDialogBloomHints.forEach(hint => {
+    harvestDialogBloomHints.forEach((hint) => {
       const level = hint.dataset.level
       if (level === '1') {
         hint.textContent = sprout.bloomWither ? `withered: ${sprout.bloomWither}` : ''

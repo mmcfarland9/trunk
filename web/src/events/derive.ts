@@ -106,12 +106,12 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
 
   // Sort events by timestamp to ensure correct ordering
   const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   )
 
   // C13: Deduplicate events before replay to prevent double-counting
   const seenKeys = new Set<string>()
-  const dedupedEvents = sortedEvents.filter(event => {
+  const dedupedEvents = sortedEvents.filter((event) => {
     const key = getEventDedupeKey(event)
     if (seenKeys.has(key)) return false
     seenKeys.add(key)
@@ -276,11 +276,14 @@ export { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
  * Derive water available from events.
  * Water = capacity - waters since 6am today
  */
-export function deriveWaterAvailable(events: readonly TrunkEvent[], now: Date = new Date()): number {
+export function deriveWaterAvailable(
+  events: readonly TrunkEvent[],
+  now: Date = new Date(),
+): number {
   const resetTime = getTodayResetTime(now)
 
   const waterCount = events.filter(
-    (e) => e.type === 'sprout_watered' && new Date(e.timestamp) >= resetTime
+    (e) => e.type === 'sprout_watered' && new Date(e.timestamp) >= resetTime,
   ).length
 
   return Math.max(0, WATER_DAILY_CAPACITY - waterCount)
@@ -294,7 +297,7 @@ export function deriveSunAvailable(events: readonly TrunkEvent[], now: Date = ne
   const resetTime = getWeekResetTime(now)
 
   const sunCount = events.filter(
-    (e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime
+    (e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime,
   ).length
 
   return Math.max(0, SUN_WEEKLY_CAPACITY - sunCount)
@@ -306,15 +309,13 @@ export function deriveSunAvailable(events: readonly TrunkEvent[], now: Date = ne
 export function wasSproutWateredThisWeek(
   events: readonly TrunkEvent[],
   sproutId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): boolean {
   const resetTime = getWeekResetTime(now)
 
   return events.some(
     (e) =>
-      e.type === 'sprout_watered' &&
-      e.sproutId === sproutId &&
-      new Date(e.timestamp) >= resetTime
+      e.type === 'sprout_watered' && e.sproutId === sproutId && new Date(e.timestamp) >= resetTime,
   )
 }
 
@@ -324,15 +325,13 @@ export function wasSproutWateredThisWeek(
 export function wasSproutWateredToday(
   events: readonly TrunkEvent[],
   sproutId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): boolean {
   const resetTime = getTodayResetTime(now)
 
   return events.some(
     (e) =>
-      e.type === 'sprout_watered' &&
-      e.sproutId === sproutId &&
-      new Date(e.timestamp) >= resetTime
+      e.type === 'sprout_watered' && e.sproutId === sproutId && new Date(e.timestamp) >= resetTime,
   )
 }
 
@@ -423,9 +422,7 @@ export function getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSp
  */
 export function wasShoneThisWeek(events: readonly TrunkEvent[], now: Date = new Date()): boolean {
   const resetTime = getWeekResetTime(now)
-  return events.some(
-    (e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime
-  )
+  return events.some((e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime)
 }
 
 /**
@@ -445,8 +442,16 @@ export function generateLeafId(): string {
 /**
  * Get all water entries across all sprouts
  */
-export function getAllWaterEntries(state: DerivedState, getTwigLabel?: (twigId: string) => string): (WaterEntry & { sproutId: string, sproutTitle: string, twigId: string, twigLabel: string })[] {
-  const entries: (WaterEntry & { sproutId: string, sproutTitle: string, twigId: string, twigLabel: string })[] = []
+export function getAllWaterEntries(
+  state: DerivedState,
+  getTwigLabel?: (twigId: string) => string,
+): (WaterEntry & { sproutId: string; sproutTitle: string; twigId: string; twigLabel: string })[] {
+  const entries: (WaterEntry & {
+    sproutId: string
+    sproutTitle: string
+    twigId: string
+    twigLabel: string
+  })[] = []
   for (const sprout of state.sprouts.values()) {
     for (const entry of sprout.waterEntries) {
       entries.push({

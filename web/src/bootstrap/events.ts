@@ -3,14 +3,20 @@ import type { NavCallbacks, DialogAPIs } from './ui'
 import { positionNodes, startWind } from '../ui/layout'
 import { setupHoverBranch, setupHoverTwig } from '../features/hover-branch'
 import { getViewMode, getActiveBranchIndex } from '../state'
-import { returnToOverview, enterBranchView, enterTwigView, returnToBranchView, updateVisibility } from '../features/navigation'
+import {
+  returnToOverview,
+  enterBranchView,
+  enterTwigView,
+  returnToBranchView,
+  updateVisibility,
+} from '../features/navigation'
 import { updateScopedProgress, updateSidebarSprouts } from '../features/progress'
 import { updateFocus } from '../ui/node-ui'
 
 export function initializeEvents(
   ctx: AppContext,
   navCallbacks: NavCallbacks,
-  dialogAPIs: DialogAPIs
+  dialogAPIs: DialogAPIs,
 ): void {
   // Resize handling
   let resizeId = 0
@@ -44,9 +50,10 @@ export function initializeEvents(
   // Global keyboard navigation
   document.addEventListener('keydown', (e) => {
     // Skip if user is typing in an input field (except for Escape)
-    const isTyping = e.target instanceof HTMLInputElement ||
-                     e.target instanceof HTMLTextAreaElement ||
-                     e.target instanceof HTMLSelectElement
+    const isTyping =
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLSelectElement
 
     // Handle Escape: close dialogs first, then zoom back
     if (e.key === 'Escape') {
@@ -102,14 +109,19 @@ export function initializeEvents(
     if (ctx.twigView?.isOpen()) return
 
     // Arrow keys cycle through branches in branch view
-    if (getViewMode() === 'branch' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.metaKey) {
+    if (
+      getViewMode() === 'branch' &&
+      (e.key === 'ArrowLeft' || e.key === 'ArrowRight') &&
+      e.metaKey
+    ) {
       const currentIndex = getActiveBranchIndex()
       if (currentIndex === null) return
 
       const branchCount = ctx.branchGroups.length
-      const newIndex = e.key === 'ArrowRight'
-        ? (currentIndex + 1) % branchCount
-        : (currentIndex - 1 + branchCount) % branchCount
+      const newIndex =
+        e.key === 'ArrowRight'
+          ? (currentIndex + 1) % branchCount
+          : (currentIndex - 1 + branchCount) % branchCount
 
       enterBranchView(newIndex, ctx, navCallbacks)
       return
@@ -122,7 +134,7 @@ export function initializeEvents(
       // Check if hovering a branch - if so, go to twig in that branch
       const hoveredGroup = ctx.elements.canvas.querySelector('.branch-group:hover')
       if (hoveredGroup) {
-        const branchIndex = ctx.branchGroups.findIndex(g => g.group === hoveredGroup)
+        const branchIndex = ctx.branchGroups.findIndex((g) => g.group === hoveredGroup)
         if (branchIndex !== -1) {
           const twig = ctx.branchGroups[branchIndex]?.twigs[num - 1]
           if (twig) {

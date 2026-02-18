@@ -4,7 +4,13 @@
 
 import { describe, it, expect } from 'vitest'
 import { calculateSoilCost } from '../state'
-import { generateSproutId, generateLeafId, getActiveSprouts, getCompletedSprouts, deriveState } from '../events'
+import {
+  generateSproutId,
+  generateLeafId,
+  getActiveSprouts,
+  getCompletedSprouts,
+  deriveState,
+} from '../events'
 import type { TrunkEvent } from '../events'
 
 describe('Soil Cost Calculation', () => {
@@ -65,7 +71,7 @@ describe('Sprout State Filtering (Events-based)', () => {
     const active = getActiveSprouts(state)
 
     expect(active.length).toBe(2)
-    expect(active.every(s => s.state === 'active')).toBe(true)
+    expect(active.every((s) => s.state === 'active')).toBe(true)
   })
 
   it('should return only completed sprouts from derived state', () => {
@@ -81,7 +87,7 @@ describe('Sprout State Filtering (Events-based)', () => {
     const completed = getCompletedSprouts(state)
 
     expect(completed.length).toBe(2)
-    expect(completed.every(s => s.state === 'completed')).toBe(true)
+    expect(completed.every((s) => s.state === 'completed')).toBe(true)
   })
 
   it('should correctly partition active and completed sprouts', () => {

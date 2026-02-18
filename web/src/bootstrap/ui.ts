@@ -1,6 +1,13 @@
 import type { AppContext, AppElements } from '../types'
 import { setEventStoreErrorCallbacks, getState } from '../events/store'
-import { getSoilAvailable, getSoilCapacity, getWaterAvailable, setViewModeState, getActiveBranchIndex, getActiveTwigId } from '../state'
+import {
+  getSoilAvailable,
+  getSoilCapacity,
+  getWaterAvailable,
+  setViewModeState,
+  getActiveBranchIndex,
+  getActiveTwigId,
+} from '../state'
 import { updateFocus, setFocusedNode } from '../ui/node-ui'
 import { buildTwigView } from '../ui/twig-view'
 import { buildLeafView } from '../ui/leaf-view'
@@ -10,7 +17,12 @@ import { initHarvestDialog } from '../features/harvest-dialog'
 import { initShine } from '../features/shine-dialog'
 import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from '../features/log-dialogs'
 import { initAccountDialog } from '../features/account-dialog'
-import { returnToBranchView, enterBranchView, returnToOverview, enterTwigView } from '../features/navigation'
+import {
+  returnToBranchView,
+  enterBranchView,
+  returnToOverview,
+  enterTwigView,
+} from '../features/navigation'
 
 export type NavCallbacks = {
   onPositionNodes: () => void
@@ -64,16 +76,11 @@ function updateWaterMeter(elements: AppElements): void {
   })
 }
 
-export function initializeUI(
-  ctx: AppContext,
-  navCallbacks: NavCallbacks
-): DialogAPIs {
+export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): DialogAPIs {
   // Set up storage error callbacks
   setEventStoreErrorCallbacks(
-    () => {
-    },
-    () => {
-    }
+    () => {},
+    () => {},
   )
 
   // Initialize dialogs
@@ -87,8 +94,8 @@ export function initializeUI(
     getActiveSprouts: () => {
       const state = getState()
       return [...state.sprouts.values()]
-        .filter(s => s.state === 'active')
-        .map(s => ({ id: s.id, title: s.title, waterEntries: s.waterEntries }))
+        .filter((s) => s.state === 'active')
+        .map((s) => ({ id: s.id, title: s.title, waterEntries: s.waterEntries }))
     },
   })
 
@@ -134,12 +141,13 @@ export function initializeUI(
       const branchGroup = ctx.branchGroups[activeBranchIndex]
       if (!branchGroup) return null
 
-      const currentIndex = branchGroup.twigs.findIndex(t => t.dataset.nodeId === activeTwigId)
+      const currentIndex = branchGroup.twigs.findIndex((t) => t.dataset.nodeId === activeTwigId)
       if (currentIndex === -1) return null
 
-      const newIndex = direction === 'prev'
-        ? (currentIndex - 1 + branchGroup.twigs.length) % branchGroup.twigs.length
-        : (currentIndex + 1) % branchGroup.twigs.length
+      const newIndex =
+        direction === 'prev'
+          ? (currentIndex - 1 + branchGroup.twigs.length) % branchGroup.twigs.length
+          : (currentIndex + 1) % branchGroup.twigs.length
 
       const newTwig = branchGroup.twigs[newIndex]
       if (newTwig) {
@@ -192,7 +200,7 @@ export function initializeUI(
     ctx,
     (sprout) => waterDialogApi.openWaterDialog(sprout),
     {
-      onClick: (index) => enterBranchView(index, ctx, navCallbacks)
+      onClick: (index) => enterBranchView(index, ctx, navCallbacks),
     },
     (twigId, branchIndex) => {
       // Navigate to twig view
@@ -225,7 +233,7 @@ export function initializeUI(
         bloomBudding: sprout.bloomBudding,
         bloomFlourish: sprout.bloomFlourish,
       })
-    }
+    },
   )
 
   // Initial view setup

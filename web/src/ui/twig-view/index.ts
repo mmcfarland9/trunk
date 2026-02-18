@@ -28,7 +28,7 @@ type TwigViewCallbacks = {
   onSoilChange?: () => void
   onNavigate?: (direction: 'prev' | 'next') => HTMLButtonElement | null
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
-  onWaterClick?: (sprout: { id: string, title: string }) => void
+  onWaterClick?: (sprout: { id: string; title: string }) => void
   onHarvestClick?: (sprout: {
     id: string
     title: string
@@ -80,11 +80,11 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   }
 
   function getActiveSprouts(sprouts: Sprout[]): Sprout[] {
-    return sprouts.filter(s => s.state === 'active')
+    return sprouts.filter((s) => s.state === 'active')
   }
 
   function getHistorySprouts(sprouts: Sprout[]): Sprout[] {
-    return sprouts.filter(s => s.state === 'completed')
+    return sprouts.filter((s) => s.state === 'completed')
   }
 
   function getLeaves(): DerivedLeaf[] {
@@ -95,7 +95,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   }
 
   function filterSproutsByLeaf(sprouts: Sprout[], leafId: string): Sprout[] {
-    return sprouts.filter(s => s.leafId === leafId)
+    return sprouts.filter((s) => s.leafId === leafId)
   }
 
   function updateForm(): void {
@@ -119,15 +119,15 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     const leaves = getLeaves()
     const leafIdSet = new Set(leaves.map((l: DerivedLeaf) => l.id))
 
-    const activeLeafIds = new Set(active.filter(s => s.leafId).map(s => s.leafId!))
+    const activeLeafIds = new Set(active.filter((s) => s.leafId).map((s) => s.leafId!))
 
-    const standaloneActive = active.filter(s => !s.leafId || !leafIdSet.has(s.leafId))
+    const standaloneActive = active.filter((s) => !s.leafId || !leafIdSet.has(s.leafId))
 
-    const cultivatedLeaves = leaves.filter(l => !activeLeafIds.has(l.id))
-    const cultivatedLeavesWithHistory = cultivatedLeaves.filter((leaf: DerivedLeaf) =>
-      filterSproutsByLeaf(history, leaf.id).length > 0
+    const cultivatedLeaves = leaves.filter((l) => !activeLeafIds.has(l.id))
+    const cultivatedLeavesWithHistory = cultivatedLeaves.filter(
+      (leaf: DerivedLeaf) => filterSproutsByLeaf(history, leaf.id).length > 0,
     )
-    const unassignedHistory = history.filter(s => !s.leafId || !leafIdSet.has(s.leafId))
+    const unassignedHistory = history.filter((s) => !s.leafId || !leafIdSet.has(s.leafId))
 
     const growingCount = standaloneActive.length + activeLeafIds.size
     const cultivatedCountVal = cultivatedLeavesWithHistory.length + unassignedHistory.length
@@ -141,7 +141,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       if (leafSprouts.length === 0) return
       activeHtml += renderLeafCard(leaf.id, leafSprouts, true)
     })
-    activeHtml += standaloneActive.map(s => renderActiveCard(s)).join('')
+    activeHtml += standaloneActive.map((s) => renderActiveCard(s)).join('')
     elements.activeList.innerHTML = activeHtml || '<p class="empty-message">No growing sprouts</p>'
 
     let historyHtml = ''
@@ -151,7 +151,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       historyHtml += renderLeafCard(leaf.id, leafSprouts, false)
     })
     if (unassignedHistory.length > 0) {
-      historyHtml += unassignedHistory.map(s => renderHistoryCard(s)).join('')
+      historyHtml += unassignedHistory.map((s) => renderHistoryCard(s)).join('')
     }
     elements.historyList.innerHTML = historyHtml || '<p class="empty-message">No history</p>'
   }
@@ -199,20 +199,22 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.leafSelect.value = ''
     elements.newLeafNameInput.value = ''
     elements.newLeafNameInput.classList.add('hidden')
-    elements.seasonBtns.forEach(btn => btn.classList.remove('is-active'))
-    elements.envBtns.forEach(btn => btn.classList.remove('is-active'))
-    elements.envHints.forEach(h => h.classList.remove('is-visible'))
+    elements.seasonBtns.forEach((btn) => btn.classList.remove('is-active'))
+    elements.envBtns.forEach((btn) => btn.classList.remove('is-active'))
+    elements.envHints.forEach((h) => h.classList.remove('is-visible'))
     elements.endDateDisplay.textContent = ''
     elements.soilCostDisplay.textContent = ''
     updateForm()
   }
 
   // Season selector
-  elements.seasonBtns.forEach(btn => {
+  elements.seasonBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const season = btn.dataset.season as SproutSeason
       state.selectedSeason = state.selectedSeason === season ? null : season
-      elements.seasonBtns.forEach(b => b.classList.toggle('is-active', b.dataset.season === state.selectedSeason))
+      elements.seasonBtns.forEach((b) =>
+        b.classList.toggle('is-active', b.dataset.season === state.selectedSeason),
+      )
       if (state.selectedSeason) {
         const endDate = getEndDate(state.selectedSeason)
         elements.endDateDisplay.textContent = `Ends on ${formatDate(endDate)}`
@@ -224,12 +226,16 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   })
 
   // Environment selector
-  elements.envBtns.forEach(btn => {
+  elements.envBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const env = btn.dataset.env as SproutEnvironment
       state.selectedEnvironment = state.selectedEnvironment === env ? null : env
-      elements.envBtns.forEach(b => b.classList.toggle('is-active', b.dataset.env === state.selectedEnvironment))
-      elements.envHints.forEach(h => h.classList.toggle('is-visible', h.dataset.for === state.selectedEnvironment))
+      elements.envBtns.forEach((b) =>
+        b.classList.toggle('is-active', b.dataset.env === state.selectedEnvironment),
+      )
+      elements.envHints.forEach((h) =>
+        h.classList.toggle('is-visible', h.dataset.for === state.selectedEnvironment),
+      )
       updateForm()
     })
   })
@@ -252,59 +258,62 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   elements.flourishInput.addEventListener('input', updateForm)
 
   // Set button - create sprout
-  elements.setBtn.addEventListener('click', preventDoubleClick(() => {
-    if (!state.selectedSeason || !state.selectedEnvironment) return
-    const title = elements.sproutTitleInput.value.trim()
-    if (!title) return
+  elements.setBtn.addEventListener(
+    'click',
+    preventDoubleClick(() => {
+      if (!state.selectedSeason || !state.selectedEnvironment) return
+      const title = elements.sproutTitleInput.value.trim()
+      if (!title) return
 
-    const cost = calculateSoilCost(state.selectedSeason, state.selectedEnvironment)
-    if (!canAffordSoil(cost)) return
+      const cost = calculateSoilCost(state.selectedSeason, state.selectedEnvironment)
+      if (!canAffordSoil(cost)) return
 
-    const nodeId = getCurrentNodeId(state)
-    if (!nodeId) return
+      const nodeId = getCurrentNodeId(state)
+      if (!nodeId) return
 
-    let leafId: string | undefined
-    const leafChoice = elements.leafSelect.value
-    if (leafChoice === '__new__') {
-      const leafName = elements.newLeafNameInput.value.trim() || title
-      leafId = generateLeafId()
+      let leafId: string | undefined
+      const leafChoice = elements.leafSelect.value
+      if (leafChoice === '__new__') {
+        const leafName = elements.newLeafNameInput.value.trim() || title
+        leafId = generateLeafId()
+        appendEvent({
+          type: 'leaf_created',
+          timestamp: new Date().toISOString(),
+          leafId,
+          twigId: nodeId,
+          name: leafName,
+        })
+      } else if (leafChoice) {
+        leafId = leafChoice
+      }
+
+      const now = new Date()
+      const bloomWither = elements.witherInput.value.trim() || undefined
+      const bloomBudding = elements.buddingInput.value.trim() || undefined
+      const bloomFlourish = elements.flourishInput.value.trim() || undefined
+      const sproutId = generateSproutId()
+      const timestamp = now.toISOString()
+
       appendEvent({
-        type: 'leaf_created',
-        timestamp: new Date().toISOString(),
-        leafId,
+        type: 'sprout_planted',
+        timestamp,
+        sproutId,
         twigId: nodeId,
-        name: leafName,
+        title,
+        season: state.selectedSeason,
+        environment: state.selectedEnvironment,
+        soilCost: cost,
+        leafId,
+        bloomWither,
+        bloomBudding,
+        bloomFlourish,
       })
-    } else if (leafChoice) {
-      leafId = leafChoice
-    }
 
-    const now = new Date()
-    const bloomWither = elements.witherInput.value.trim() || undefined
-    const bloomBudding = elements.buddingInput.value.trim() || undefined
-    const bloomFlourish = elements.flourishInput.value.trim() || undefined
-    const sproutId = generateSproutId()
-    const timestamp = now.toISOString()
-
-    appendEvent({
-      type: 'sprout_planted',
-      timestamp,
-      sproutId,
-      twigId: nodeId,
-      title,
-      season: state.selectedSeason,
-      environment: state.selectedEnvironment,
-      soilCost: cost,
-      leafId,
-      bloomWither,
-      bloomBudding,
-      bloomFlourish,
-    })
-
-    resetForm()
-    renderSprouts()
-    callbacks.onSoilChange?.()
-  }))
+      resetForm()
+      renderSprouts()
+      callbacks.onSoilChange?.()
+    }),
+  )
 
   // Keyboard handler
   function handleKeydown(e: KeyboardEvent): void {

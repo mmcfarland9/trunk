@@ -43,9 +43,10 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
 
         // C9: Dedup by client_id (primary) and timestamp (fallback)
         const existingEvents = getEvents()
-        const alreadyExists = existingEvents.some(e =>
-          (syncEvent.client_id && e.client_id === syncEvent.client_id) ||
-          e.timestamp === localEvent.timestamp
+        const alreadyExists = existingEvents.some(
+          (e) =>
+            (syncEvent.client_id && e.client_id === syncEvent.client_id) ||
+            e.timestamp === localEvent.timestamp,
         )
 
         if (!alreadyExists) {
@@ -53,7 +54,7 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
           appendEvents([localEvent])
           onRealtimeEvent?.(localEvent)
         }
-      }
+      },
     )
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') {

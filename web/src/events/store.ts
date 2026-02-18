@@ -78,8 +78,7 @@ function loadEvents(): TrunkEvent[] {
         return valid
       }
     }
-  } catch (_error) {
-  }
+  } catch (_error) {}
   return []
 }
 
@@ -110,7 +109,7 @@ export function initEventStore(): void {
  */
 export function setEventStoreErrorCallbacks(
   quotaCallback: () => void,
-  errorCallback?: (error: unknown) => void
+  errorCallback?: (error: unknown) => void,
 ): void {
   onQuotaError = quotaCallback
   onSaveError = errorCallback ?? null
@@ -155,7 +154,7 @@ export function appendEvents(newEvents: TrunkEvent[]): void {
   saveEvents()
   // Sync each to cloud if callback is set
   if (onEventAppended) {
-    newEvents.forEach(e => onEventAppended?.(e))
+    newEvents.forEach((e) => onEventAppended?.(e))
   }
 }
 
@@ -326,4 +325,3 @@ export function startVisibilityCacheInvalidation(): void {
     }
   })
 }
-

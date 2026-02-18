@@ -46,10 +46,13 @@ export function getBranchLabel(branchNode: HTMLButtonElement, index: number): st
   return presetLabel || `Branch ${index + 1}`
 }
 
-function groupByLeaf(sprouts: SproutWithLocation[]): { standalone: SproutWithLocation[]; byLeaf: Map<string, SproutWithLocation[]> } {
+function groupByLeaf(sprouts: SproutWithLocation[]): {
+  standalone: SproutWithLocation[]
+  byLeaf: Map<string, SproutWithLocation[]>
+} {
   const standalone: SproutWithLocation[] = []
   const byLeaf = new Map<string, SproutWithLocation[]>()
-  sprouts.forEach(sprout => {
+  sprouts.forEach((sprout) => {
     if (!sprout.leafId) {
       standalone.push(sprout)
     } else {
@@ -67,7 +70,7 @@ export function createBranchFolder(
   branchIndex: number,
   branchLabel: string,
   count: number,
-  callbacks?: SidebarBranchCallbacks
+  callbacks?: SidebarBranchCallbacks,
 ): HTMLDivElement {
   const folder = document.createElement('div')
   folder.className = 'branch-folder'
@@ -100,7 +103,7 @@ export function createTwigFolder(
   twigLabel: string,
   count: number,
   onTwigClick?: SidebarTwigCallback,
-  branchIndex?: number
+  branchIndex?: number,
 ): HTMLDivElement {
   const folder = document.createElement('div')
   folder.className = 'twig-folder'
@@ -134,7 +137,7 @@ export function createStackedLeafCard(
   sprouts: SproutWithLocation[],
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onLeafClick?: SidebarLeafCallback,
-  onHarvestClick?: SidebarHarvestCallback
+  onHarvestClick?: SidebarHarvestCallback,
 ): HTMLDivElement {
   const card = document.createElement('div')
   card.className = 'sidebar-stacked-card'
@@ -153,7 +156,7 @@ export function createStackedLeafCard(
   const rows = document.createElement('div')
   rows.className = 'sidebar-stacked-rows'
 
-  sprouts.forEach(sprout => {
+  sprouts.forEach((sprout) => {
     const row = document.createElement('div')
     row.className = 'sidebar-stacked-row'
 
@@ -169,7 +172,8 @@ export function createStackedLeafCard(
     if (isReady && onHarvestClick) {
       const harvestBtn = document.createElement('button')
       harvestBtn.type = 'button'
-      harvestBtn.className = 'action-btn action-btn-progress action-btn-harvest sidebar-stacked-action'
+      harvestBtn.className =
+        'action-btn action-btn-progress action-btn-harvest sidebar-stacked-action'
       harvestBtn.textContent = 'harvest'
       harvestBtn.addEventListener('click', (e) => {
         e.stopPropagation()
@@ -186,7 +190,8 @@ export function createStackedLeafCard(
       } else {
         const waterBtn = document.createElement('button')
         waterBtn.type = 'button'
-        waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
+        waterBtn.className =
+          'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
         waterBtn.textContent = 'water'
         waterBtn.addEventListener('click', (e) => {
           e.stopPropagation()
@@ -217,7 +222,7 @@ export function renderLeafGroupedSprouts(
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onLeafClick?: SidebarLeafCallback,
-  onHarvestClick?: SidebarHarvestCallback
+  onHarvestClick?: SidebarHarvestCallback,
 ): void {
   const { standalone, byLeaf } = groupByLeaf(sprouts)
 
@@ -226,12 +231,26 @@ export function renderLeafGroupedSprouts(
     if (!twigId) return
     const leaf = getLeafById(state, leafId)
     const leafName = leaf?.name || 'Unnamed Leaf'
-    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick, isActive ? onHarvestClick : undefined)
+    const card = createStackedLeafCard(
+      leafName,
+      leafId,
+      leafSprouts,
+      isActive ? onWaterClick : undefined,
+      onLeafClick,
+      isActive ? onHarvestClick : undefined,
+    )
     container.append(card)
   })
 
-  standalone.forEach(sprout => {
-    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick, isActive ? onHarvestClick : undefined)
+  standalone.forEach((sprout) => {
+    const card = createStackedLeafCard(
+      'No Leaf',
+      '',
+      [sprout],
+      isActive ? onWaterClick : undefined,
+      onLeafClick,
+      isActive ? onHarvestClick : undefined,
+    )
     container.append(card)
   })
 }

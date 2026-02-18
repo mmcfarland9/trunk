@@ -17,7 +17,7 @@ let getLastConfirmedTimestamp: () => string | null = () => null
 
 export function setStatusDependencies(
   getSyncStatus: () => string,
-  getTimestamp: () => string | null
+  getTimestamp: () => string | null,
 ): void {
   getCurrentSyncStatus = getSyncStatus
   getLastConfirmedTimestamp = getTimestamp
@@ -52,5 +52,5 @@ export function notifyMetadataListeners(): void {
     lastConfirmedTimestamp: getLastConfirmedTimestamp(),
     pendingCount: getPendingCount(),
   }
-  metadataListeners.forEach(l => l(meta))
+  metadataListeners.forEach((l) => l(meta))
 }

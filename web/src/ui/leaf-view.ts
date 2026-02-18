@@ -1,15 +1,7 @@
 import type { LeafViewApi, Sprout, SproutSeason, SproutEnvironment } from '../types'
 import { escapeHtml } from '../utils/escape-html'
-import {
-  getSeasonLabel,
-  getEnvironmentLabel,
-  getResultEmoji,
-} from '../utils/sprout-labels'
-import {
-  getState,
-  getSproutsByLeaf,
-  toSprout,
-} from '../events'
+import { getSeasonLabel, getEnvironmentLabel, getResultEmoji } from '../utils/sprout-labels'
+import { getState, getSproutsByLeaf, toSprout } from '../events'
 import { formatDateWithYear } from '../utils/date-formatting'
 
 type LeafViewCallbacks = {
@@ -88,7 +80,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
           bloomWither: sprout.bloomWither,
           bloomBudding: sprout.bloomBudding,
           bloomFlourish: sprout.bloomFlourish,
-        }
+        },
       })
 
       // Watering entries
@@ -101,7 +93,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
           data: {
             content: water.content,
             prompt: water.prompt,
-          }
+          },
         })
       }
 
@@ -116,7 +108,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
             result: sprout.result,
             reflection: sprout.reflection,
             isSuccess: sprout.state === 'completed',
-          }
+          },
         })
       }
 
@@ -127,15 +119,13 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
           timestamp: sprout.uprootedAt,
           sproutId: sprout.id,
           sproutTitle: sprout.title,
-          data: {}
+          data: {},
         })
       }
     }
 
     // Sort by timestamp descending (most recent first)
-    return entries.sort((a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    )
+    return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   }
 
   function renderLogEntry(entry: LogEntry): string {
@@ -143,14 +133,17 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
     switch (entry.type) {
       case 'sprout-start': {
-        const hasBloom = entry.data.bloomWither || entry.data.bloomBudding || entry.data.bloomFlourish
-        const bloomHtml = hasBloom ? `
+        const hasBloom =
+          entry.data.bloomWither || entry.data.bloomBudding || entry.data.bloomFlourish
+        const bloomHtml = hasBloom
+          ? `
           <p class="log-entry-bloom">
             ${entry.data.bloomWither ? `<span class="bloom-item">🥀 <em>${escapeHtml(entry.data.bloomWither)}</em></span>` : ''}
             ${entry.data.bloomBudding ? `<span class="bloom-item">🌱 <em>${escapeHtml(entry.data.bloomBudding)}</em></span>` : ''}
             ${entry.data.bloomFlourish ? `<span class="bloom-item">🌲 <em>${escapeHtml(entry.data.bloomFlourish)}</em></span>` : ''}
           </p>
-        ` : ''
+        `
+          : ''
         return `
           <div class="log-entry log-entry-start" data-sprout-id="${escapeHtml(entry.sproutId)}">
             <div class="log-entry-header">
@@ -226,7 +219,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
     }
 
     // Render all log entries
-    logEl.innerHTML = logEntries.map(e => renderLogEntry(e)).join('')
+    logEl.innerHTML = logEntries.map((e) => renderLogEntry(e)).join('')
   }
 
   // Event handlers

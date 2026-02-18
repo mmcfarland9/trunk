@@ -1,11 +1,14 @@
 import type { AppContext, ViewMode } from '../types'
 import { ZOOM_TRANSITION_DURATION } from '../constants'
-import { getViewMode, setViewModeState, getActiveBranchIndex, getHoveredBranchIndex, isBranchView, isTwigView } from '../state'
 import {
-  setNodeVisibility,
-  setFocusedNode,
-  updateFocus,
-} from '../ui/node-ui'
+  getViewMode,
+  setViewModeState,
+  getActiveBranchIndex,
+  getHoveredBranchIndex,
+  isBranchView,
+  isTwigView,
+} from '../state'
+import { setNodeVisibility, setFocusedNode, updateFocus } from '../ui/node-ui'
 import { animateGuideLines } from '../ui/layout'
 
 let zoomTimeoutId = 0
@@ -119,14 +122,13 @@ export function updateVisibility(ctx: AppContext): void {
       })
     }
   })
-
 }
 
 export function setViewMode(
   mode: ViewMode,
   ctx: AppContext,
   callbacks: NavigationCallbacks,
-  branchIndex?: number
+  branchIndex?: number,
 ): void {
   const previousMode = getViewMode()
   const previousBranch = getActiveBranchIndex()
@@ -161,10 +163,7 @@ export function setViewMode(
   }
 }
 
-export function returnToOverview(
-  ctx: AppContext,
-  callbacks: NavigationCallbacks
-): void {
+export function returnToOverview(ctx: AppContext, callbacks: NavigationCallbacks): void {
   setViewMode('overview', ctx, callbacks)
   callbacks.onUpdateStats() // Update sidebar to show branches
 
@@ -191,7 +190,7 @@ export function enterTwigView(
   twigNode: HTMLButtonElement,
   branchIndex: number,
   ctx: AppContext,
-  callbacks: NavigationCallbacks
+  callbacks: NavigationCallbacks,
 ): void {
   const twigId = twigNode.dataset.nodeId
   if (!twigId) return
@@ -227,10 +226,7 @@ export function enterTwigView(
   setFocusedNode(twigNode, ctx, (t) => updateFocus(t, ctx))
 }
 
-export function returnToBranchView(
-  ctx: AppContext,
-  callbacks: NavigationCallbacks
-): void {
+export function returnToBranchView(ctx: AppContext, callbacks: NavigationCallbacks): void {
   const branchIndex = getActiveBranchIndex()
   if (branchIndex === null) {
     returnToOverview(ctx, callbacks)

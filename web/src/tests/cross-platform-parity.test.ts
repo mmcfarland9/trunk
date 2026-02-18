@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { calculateSoilCost, calculateCapacityReward, } from '../utils/calculations'
+import { calculateSoilCost, calculateCapacityReward } from '../utils/calculations'
 import { deriveState, deriveWaterAvailable, deriveSunAvailable } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 import fixture from '../../../shared/test-fixtures/cross-platform-validation.json'
@@ -31,7 +31,7 @@ describe('Cross-platform parity: capacity rewards', () => {
         testCase.season,
         testCase.environment,
         testCase.result,
-        testCase.currentCapacity
+        testCase.currentCapacity,
       )
       // Use toBeCloseTo for floating point comparisons (2 decimal places)
       expect(actual).toBeCloseTo(testCase.expected, 2)
@@ -85,14 +85,18 @@ describe('Cross-platform parity: event derivation', () => {
         const state = deriveState(events)
         expect(state.sprouts.size).toBe(expected.sproutCount)
 
-        const activeSprouts = Array.from(state.sprouts.values()).filter(s => s.state === 'active')
+        const activeSprouts = Array.from(state.sprouts.values()).filter((s) => s.state === 'active')
         expect(activeSprouts.length).toBe(expected.activeSproutCount)
 
-        const completedSprouts = Array.from(state.sprouts.values()).filter(s => s.state === 'completed')
+        const completedSprouts = Array.from(state.sprouts.values()).filter(
+          (s) => s.state === 'completed',
+        )
         expect(completedSprouts.length).toBe(expected.completedSproutCount)
 
         if (expected.uprootedSproutCount !== undefined) {
-          const uprootedSprouts = Array.from(state.sprouts.values()).filter(s => s.state === 'uprooted')
+          const uprootedSprouts = Array.from(state.sprouts.values()).filter(
+            (s) => s.state === 'uprooted',
+          )
           expect(uprootedSprouts.length).toBe(expected.uprootedSproutCount)
         }
       })
@@ -147,7 +151,9 @@ describe('Cross-platform parity: event derivation', () => {
           const state = deriveState(events)
 
           Object.entries(expected.sproutsForTwig).forEach(([twigId, expectedCount]) => {
-            const sproutsInTwig = Array.from(state.sprouts.values()).filter(s => s.twigId === twigId)
+            const sproutsInTwig = Array.from(state.sprouts.values()).filter(
+              (s) => s.twigId === twigId,
+            )
             expect(sproutsInTwig.length).toBe(expectedCount)
           })
         })
@@ -158,7 +164,9 @@ describe('Cross-platform parity: event derivation', () => {
           const state = deriveState(events)
 
           Object.entries(expected.leavesForTwig).forEach(([twigId, expectedCount]) => {
-            const leavesInTwig = Array.from(state.leaves.values()).filter(l => l.twigId === twigId)
+            const leavesInTwig = Array.from(state.leaves.values()).filter(
+              (l) => l.twigId === twigId,
+            )
             expect(leavesInTwig.length).toBe(expectedCount)
           })
         })

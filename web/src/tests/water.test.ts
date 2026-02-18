@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import {
-  getTodayResetTime,
-  getNextWaterReset,
-  getWaterCapacity,
-  getWeekResetTime,
-} from '../state'
+import { getTodayResetTime, getNextWaterReset, getWaterCapacity, getWeekResetTime } from '../state'
 import { wasSproutWateredThisWeek } from '../events'
 import type { TrunkEvent } from '../events'
 

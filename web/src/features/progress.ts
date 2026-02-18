@@ -6,9 +6,21 @@
 
 import type { AppContext } from '../types'
 import { TWIG_COUNT } from '../constants'
-import { getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getPresetLabel } from '../state'
+import {
+  getHoveredBranchIndex,
+  getHoveredTwigId,
+  getActiveBranchIndex,
+  getActiveTwigId,
+  getViewMode,
+  getPresetLabel,
+} from '../state'
 import type { DerivedState } from '../events'
-import { getState, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts } from '../events'
+import {
+  getState,
+  toSprout,
+  getActiveSprouts as getActiveDerivedSprouts,
+  getCompletedSprouts,
+} from '../events'
 import {
   createBranchFolder,
   createTwigFolder,
@@ -44,9 +56,7 @@ export function updateScopedProgress(ctx: AppContext): void {
   const hoveredIndex = getHoveredBranchIndex()
 
   // In branch view OR when hovering a branch, show scoped progress for that branch
-  const activeBranchIndex = viewMode === 'branch'
-    ? getActiveBranchIndex()
-    : hoveredIndex
+  const activeBranchIndex = viewMode === 'branch' ? getActiveBranchIndex() : hoveredIndex
 
   // Show "Back to trunk" only in actual branch view (not when hovering or in twig view)
   backToTrunkButton.style.display = viewMode === 'branch' ? '' : 'none'
@@ -71,11 +81,11 @@ export function updateScopedProgress(ctx: AppContext): void {
   const totalTwigs = branchGroups.reduce((sum, bg) => sum + bg.twigs.length, 0)
   const filledTwigs = branchGroups.reduce(
     (sum, bg) => sum + bg.twigs.filter((twig) => twig.dataset.filled === 'true').length,
-    0
+    0,
   )
   const activeSprouts = branchGroups.reduce(
     (sum, bg) => sum + countActiveSproutsForTwigs(bg.twigs),
-    0
+    0,
   )
 
   progressCount.innerHTML = `${filledBranches} of ${branchGroups.length} branches filled<br>${filledTwigs} of ${totalTwigs} twigs filled<br>${activeSprouts} growing sprouts`
@@ -98,19 +108,22 @@ function parseBranchIndex(twigId: string): number {
   return match ? parseInt(match[1], 10) : -1
 }
 
-function getAllSproutsFromState(state: DerivedState): { active: SproutWithLocation[], cultivated: SproutWithLocation[] } {
+function getAllSproutsFromState(state: DerivedState): {
+  active: SproutWithLocation[]
+  cultivated: SproutWithLocation[]
+} {
   const active: SproutWithLocation[] = []
   const cultivated: SproutWithLocation[] = []
 
   // Get all sprouts from derived state
-  getActiveDerivedSprouts(state).forEach(derived => {
+  getActiveDerivedSprouts(state).forEach((derived) => {
     const sprout = toSprout(derived)
     const twigLabel = getPresetLabel(derived.twigId) || derived.twigId
     const branchIndex = parseBranchIndex(derived.twigId)
     active.push({ ...sprout, twigId: derived.twigId, twigLabel, branchIndex })
   })
 
-  getCompletedSprouts(state).forEach(derived => {
+  getCompletedSprouts(state).forEach((derived) => {
     const sprout = toSprout(derived)
     const twigLabel = getPresetLabel(derived.twigId) || derived.twigId
     const branchIndex = parseBranchIndex(derived.twigId)
@@ -122,7 +135,7 @@ function getAllSproutsFromState(state: DerivedState): { active: SproutWithLocati
 
 function groupByBranch(sprouts: SproutWithLocation[]): Map<number, SproutWithLocation[]> {
   const grouped = new Map<number, SproutWithLocation[]>()
-  sprouts.forEach(sprout => {
+  sprouts.forEach((sprout) => {
     if (sprout.branchIndex < 0) return // Skip invalid
     const list = grouped.get(sprout.branchIndex) || []
     list.push(sprout)
@@ -133,7 +146,7 @@ function groupByBranch(sprouts: SproutWithLocation[]): Map<number, SproutWithLoc
 
 function groupByTwig(sprouts: SproutWithLocation[]): Map<string, SproutWithLocation[]> {
   const grouped = new Map<string, SproutWithLocation[]>()
-  sprouts.forEach(sprout => {
+  sprouts.forEach((sprout) => {
     const list = grouped.get(sprout.twigId) || []
     list.push(sprout)
     grouped.set(sprout.twigId, list)
@@ -147,9 +160,10 @@ export function initSidebarSprouts(
   branchCallbacks?: SidebarBranchCallbacks,
   onTwigClick?: SidebarTwigCallback,
   onLeafClick?: SidebarLeafCallback,
-  onHarvestClick?: SidebarHarvestCallback
+  onHarvestClick?: SidebarHarvestCallback,
 ): void {
-  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
+  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } =
+    ctx.elements
 
   // Store callbacks for future updates
   storedWaterClick = onWaterClick
@@ -180,7 +194,8 @@ export function initSidebarSprouts(
 }
 
 export function updateSidebarSprouts(ctx: AppContext): void {
-  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } = ctx.elements
+  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } =
+    ctx.elements
   const { branchGroups } = ctx
   const state = getState()
   const { active, cultivated } = getAllSproutsFromState(state)
@@ -204,17 +219,21 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   // Effective branch index: hovered (in overview) or active (in branch view)
   const effectiveBranchIndex = viewMode === 'overview' ? hoveredBranchIndex : activeBranchIndex
   // Effective twig: active (in twig view) or hovered (in branch view)
-  const effectiveTwigId = viewMode === 'twig' ? activeTwigId : (viewMode === 'branch' ? hoveredTwigId : null)
+  const effectiveTwigId =
+    viewMode === 'twig' ? activeTwigId : viewMode === 'branch' ? hoveredTwigId : null
 
   if (effectiveTwigId) {
     // Twig view OR hovering twig in branch view: only show sprouts from this twig
-    filteredActive = active.filter(s => s.twigId === effectiveTwigId)
-    filteredCultivated = cultivated.filter(s => s.twigId === effectiveTwigId)
-  } else if ((viewMode === 'branch' && activeBranchIndex !== null) || (viewMode === 'overview' && hoveredBranchIndex !== null)) {
+    filteredActive = active.filter((s) => s.twigId === effectiveTwigId)
+    filteredCultivated = cultivated.filter((s) => s.twigId === effectiveTwigId)
+  } else if (
+    (viewMode === 'branch' && activeBranchIndex !== null) ||
+    (viewMode === 'overview' && hoveredBranchIndex !== null)
+  ) {
     // Branch view OR hovering a branch: only show sprouts from this branch
     const branchIdx = effectiveBranchIndex!
-    filteredActive = active.filter(s => s.branchIndex === branchIdx)
-    filteredCultivated = cultivated.filter(s => s.branchIndex === branchIdx)
+    filteredActive = active.filter((s) => s.branchIndex === branchIdx)
+    filteredCultivated = cultivated.filter((s) => s.branchIndex === branchIdx)
   }
 
   // Update counts
@@ -235,8 +254,24 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
   if (showFlatList) {
     // Twig view OR hovering twig: group by leaf
-    renderLeafGroupedSprouts(state, filteredActive, activeSproutsList, true, onWaterClick, onLeafClick, onHarvestClick)
-    renderLeafGroupedSprouts(state, filteredCultivated, cultivatedSproutsList, false, undefined, onLeafClick, undefined)
+    renderLeafGroupedSprouts(
+      state,
+      filteredActive,
+      activeSproutsList,
+      true,
+      onWaterClick,
+      onLeafClick,
+      onHarvestClick,
+    )
+    renderLeafGroupedSprouts(
+      state,
+      filteredCultivated,
+      cultivatedSproutsList,
+      false,
+      undefined,
+      onLeafClick,
+      undefined,
+    )
   } else if (showTwigGrouping && branchIdxForTwigFolders !== null) {
     // Branch view OR hovering branch: group by twig, then by leaf within each twig
     const activeByTwig = groupByTwig(filteredActive)
@@ -244,14 +279,34 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
     activeByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
-      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
-      renderLeafGroupedSprouts(state, sprouts, folder, true, onWaterClick, onLeafClick, onHarvestClick)
+      const folder = createTwigFolder(
+        twigId,
+        twigLabel,
+        sprouts.length,
+        onTwigClick,
+        branchIdxForTwigFolders,
+      )
+      renderLeafGroupedSprouts(
+        state,
+        sprouts,
+        folder,
+        true,
+        onWaterClick,
+        onLeafClick,
+        onHarvestClick,
+      )
       activeSproutsList.append(folder)
     })
 
     cultivatedByTwig.forEach((sprouts, twigId) => {
       const twigLabel = getTwigLabel(twigId)
-      const folder = createTwigFolder(twigId, twigLabel, sprouts.length, onTwigClick, branchIdxForTwigFolders)
+      const folder = createTwigFolder(
+        twigId,
+        twigLabel,
+        sprouts.length,
+        onTwigClick,
+        branchIdxForTwigFolders,
+      )
       renderLeafGroupedSprouts(state, sprouts, folder, false, undefined, onLeafClick, undefined)
       cultivatedSproutsList.append(folder)
     })
@@ -262,14 +317,33 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
     activeByBranch.forEach((branchSprouts, branchIndex) => {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
-      const branchFolder = createBranchFolder(branchIndex, branchLabel, branchSprouts.length, branchCallbacks)
+      const branchFolder = createBranchFolder(
+        branchIndex,
+        branchLabel,
+        branchSprouts.length,
+        branchCallbacks,
+      )
 
       // Group by twig within this branch
       const byTwig = groupByTwig(branchSprouts)
       byTwig.forEach((twigSprouts, twigId) => {
         const twigLabel = getTwigLabel(twigId)
-        const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
-        renderLeafGroupedSprouts(state, twigSprouts, twigFolder, true, onWaterClick, onLeafClick, onHarvestClick)
+        const twigFolder = createTwigFolder(
+          twigId,
+          twigLabel,
+          twigSprouts.length,
+          onTwigClick,
+          branchIndex,
+        )
+        renderLeafGroupedSprouts(
+          state,
+          twigSprouts,
+          twigFolder,
+          true,
+          onWaterClick,
+          onLeafClick,
+          onHarvestClick,
+        )
         branchFolder.append(twigFolder)
       })
 
@@ -278,14 +352,33 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
     cultivatedByBranch.forEach((branchSprouts, branchIndex) => {
       const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
-      const branchFolder = createBranchFolder(branchIndex, branchLabel, branchSprouts.length, branchCallbacks)
+      const branchFolder = createBranchFolder(
+        branchIndex,
+        branchLabel,
+        branchSprouts.length,
+        branchCallbacks,
+      )
 
       // Group by twig within this branch
       const byTwig = groupByTwig(branchSprouts)
       byTwig.forEach((twigSprouts, twigId) => {
         const twigLabel = getTwigLabel(twigId)
-        const twigFolder = createTwigFolder(twigId, twigLabel, twigSprouts.length, onTwigClick, branchIndex)
-        renderLeafGroupedSprouts(state, twigSprouts, twigFolder, false, undefined, onLeafClick, undefined)
+        const twigFolder = createTwigFolder(
+          twigId,
+          twigLabel,
+          twigSprouts.length,
+          onTwigClick,
+          branchIndex,
+        )
+        renderLeafGroupedSprouts(
+          state,
+          twigSprouts,
+          twigFolder,
+          false,
+          undefined,
+          onLeafClick,
+          undefined,
+        )
         branchFolder.append(twigFolder)
       })
 

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { DerivedState, DerivedSprout, } from '../events/derive'
+import type { DerivedState, DerivedSprout } from '../events/derive'
 import type { AppContext, BranchGroup } from '../types'
 
 // Mock events module
@@ -47,8 +47,21 @@ import {
   updateSidebarSprouts,
 } from '../features/progress'
 
-import { getState, toSprout, getActiveSprouts, getCompletedSprouts, getLeafById, checkSproutWateredToday } from '../events'
-import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex, getHoveredTwigId, getActiveTwigId } from '../state'
+import {
+  getState,
+  toSprout,
+  getActiveSprouts,
+  getCompletedSprouts,
+  getLeafById,
+  checkSproutWateredToday,
+} from '../events'
+import {
+  getViewMode,
+  getActiveBranchIndex,
+  getHoveredBranchIndex,
+  getHoveredTwigId,
+  getActiveTwigId,
+} from '../state'
 
 // Helper to create a DerivedSprout
 function makeDerivedSprout(overrides?: Partial<DerivedSprout>): DerivedSprout {
@@ -320,11 +333,13 @@ describe('updateSidebarSprouts', () => {
     vi.mocked(getCompletedSprouts).mockReturnValue([])
     vi.mocked(getState).mockReturnValue(makeDerivedState())
 
-    vi.mocked(toSprout).mockImplementation((derived) => makeSprout(derived.twigId, {
-      id: derived.id,
-      title: derived.title,
-      leafId: derived.leafId,
-    }))
+    vi.mocked(toSprout).mockImplementation((derived) =>
+      makeSprout(derived.twigId, {
+        id: derived.id,
+        title: derived.title,
+        leafId: derived.leafId,
+      }),
+    )
   })
 
   it('shows empty sidebar when no sprouts exist', () => {
@@ -388,7 +403,12 @@ describe('updateSidebarSprouts', () => {
     const sprout2 = makeDerivedSprout({ id: 's2', twigId: 'branch-0-twig-0', leafId: 'leaf-1' })
 
     vi.mocked(getActiveSprouts).mockReturnValue([sprout1, sprout2])
-    vi.mocked(getLeafById).mockReturnValue({ id: 'leaf-1', twigId: 'branch-0-twig-0', name: 'Piano Journey', createdAt: '2026-01-01T00:00:00Z' })
+    vi.mocked(getLeafById).mockReturnValue({
+      id: 'leaf-1',
+      twigId: 'branch-0-twig-0',
+      name: 'Piano Journey',
+      createdAt: '2026-01-01T00:00:00Z',
+    })
 
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
@@ -456,17 +476,20 @@ describe('updateSidebarSprouts', () => {
     })
 
     vi.mocked(getCompletedSprouts).mockReturnValue([completedSprout])
-    vi.mocked(toSprout).mockImplementation((derived) => makeSprout(derived.twigId, {
-      id: derived.id,
-      title: derived.title,
-      state: 'completed',
-      result: 4,
-    }))
+    vi.mocked(toSprout).mockImplementation((derived) =>
+      makeSprout(derived.twigId, {
+        id: derived.id,
+        title: derived.title,
+        state: 'completed',
+        result: 4,
+      }),
+    )
 
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
 
-    const cultivatedCount = ctx.elements.cultivatedSproutsToggle.querySelector('.sprouts-toggle-count')
+    const cultivatedCount =
+      ctx.elements.cultivatedSproutsToggle.querySelector('.sprouts-toggle-count')
     expect(cultivatedCount?.textContent).toBe('(1)')
   })
 
@@ -509,10 +532,12 @@ describe('updateSidebarSprouts', () => {
 
     const sprout = makeDerivedSprout({ id: 's1', twigId: 'branch-0-twig-0' })
     vi.mocked(getActiveSprouts).mockReturnValue([sprout])
-    vi.mocked(toSprout).mockReturnValue(makeSprout('branch-0-twig-0', {
-      id: 's1',
-      endDate: '2020-01-01T00:00:00Z', // Past date
-    }) as any)
+    vi.mocked(toSprout).mockReturnValue(
+      makeSprout('branch-0-twig-0', {
+        id: 's1',
+        endDate: '2020-01-01T00:00:00Z', // Past date
+      }) as any,
+    )
 
     const onWaterClick = vi.fn()
     const onHarvestClick = vi.fn()
@@ -530,10 +555,12 @@ describe('updateSidebarSprouts', () => {
 
     const sprout = makeDerivedSprout({ id: 's1', twigId: 'branch-0-twig-0' })
     vi.mocked(getActiveSprouts).mockReturnValue([sprout])
-    vi.mocked(toSprout).mockReturnValue(makeSprout('branch-0-twig-0', {
-      id: 's1',
-      endDate: '2020-01-01T00:00:00Z',
-    }) as any)
+    vi.mocked(toSprout).mockReturnValue(
+      makeSprout('branch-0-twig-0', {
+        id: 's1',
+        endDate: '2020-01-01T00:00:00Z',
+      }) as any,
+    )
 
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
@@ -548,10 +575,12 @@ describe('updateSidebarSprouts', () => {
 
     const sprout = makeDerivedSprout({ id: 's1', twigId: 'branch-0-twig-0' })
     vi.mocked(getActiveSprouts).mockReturnValue([sprout])
-    vi.mocked(toSprout).mockReturnValue(makeSprout('branch-0-twig-0', {
-      id: 's1',
-      endDate: '2030-06-15T15:00:00Z',
-    }) as any)
+    vi.mocked(toSprout).mockReturnValue(
+      makeSprout('branch-0-twig-0', {
+        id: 's1',
+        endDate: '2030-06-15T15:00:00Z',
+      }) as any,
+    )
 
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
@@ -566,10 +595,12 @@ describe('updateSidebarSprouts', () => {
 
     const sprout = makeDerivedSprout({ id: 's1', twigId: 'branch-0-twig-0' })
     vi.mocked(getActiveSprouts).mockReturnValue([sprout])
-    vi.mocked(toSprout).mockReturnValue(makeSprout('branch-0-twig-0', {
-      id: 's1',
-      endDate: undefined,
-    }) as any)
+    vi.mocked(toSprout).mockReturnValue(
+      makeSprout('branch-0-twig-0', {
+        id: 's1',
+        endDate: undefined,
+      }) as any,
+    )
 
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)

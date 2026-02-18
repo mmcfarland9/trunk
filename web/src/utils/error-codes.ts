@@ -20,10 +20,7 @@ export type ErrorInfo = {
  * @param errorKey - The specific error key (e.g., 'NOT_CONFIGURED')
  * @returns The error info object with code, defaultMessage, and userMessage
  */
-export function getErrorInfo(
-  category: ErrorCategory,
-  errorKey: string
-): ErrorInfo {
+export function getErrorInfo(category: ErrorCategory, errorKey: string): ErrorInfo {
   const categoryErrors = errorCodesJson[category]
   const errorInfo = categoryErrors[errorKey as keyof typeof categoryErrors]
 
@@ -45,10 +42,7 @@ export function getErrorInfo(
  * @param errorKey - The specific error key (e.g., 'NOT_CONFIGURED')
  * @returns The user-friendly error message
  */
-export function getUserMessage(
-  category: ErrorCategory,
-  errorKey: string
-): string {
+export function getUserMessage(category: ErrorCategory, errorKey: string): string {
   return getErrorInfo(category, errorKey).userMessage
 }
 
@@ -59,9 +53,6 @@ export function getUserMessage(
  * @param errorKey - The specific error key (e.g., 'NOT_CONFIGURED')
  * @returns The error code (e.g., 'AUTH_001')
  */
-export function getErrorCode(
-  category: ErrorCategory,
-  errorKey: string
-): string {
+export function getErrorCode(category: ErrorCategory, errorKey: string): string {
   return getErrorInfo(category, errorKey).code
 }

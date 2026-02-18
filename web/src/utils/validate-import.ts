@@ -164,12 +164,13 @@ export function sanitizeSprout(raw: unknown): Sprout | null {
 
   // Water entries
   if (Array.isArray(s.waterEntries)) {
-    sprout.waterEntries = s.waterEntries
-      .filter((e): e is { timestamp: string; content: string; prompt?: string } =>
-        e && typeof e === 'object' &&
+    sprout.waterEntries = s.waterEntries.filter(
+      (e): e is { timestamp: string; content: string; prompt?: string } =>
+        e &&
+        typeof e === 'object' &&
         typeof (e as Record<string, unknown>).timestamp === 'string' &&
-        typeof (e as Record<string, unknown>).content === 'string'
-      )
+        typeof (e as Record<string, unknown>).content === 'string',
+    )
   }
 
   return sprout

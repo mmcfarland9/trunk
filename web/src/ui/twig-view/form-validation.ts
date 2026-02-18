@@ -51,7 +51,8 @@ export function updateFormState(state: FormState, elements: FormElements): void 
 
   // Check if form is ready and affordable (leaf is now required)
   const isFormComplete = hasTitle && hasSeason && hasEnv && hasLeaf && bloomsValid
-  const cost = hasSeason && hasEnv ? calculateSoilCost(state.selectedSeason!, state.selectedEnvironment!) : 0
+  const cost =
+    hasSeason && hasEnv ? calculateSoilCost(state.selectedSeason!, state.selectedEnvironment!) : 0
   const isAffordable = canAffordSoil(cost)
   elements.setBtn.disabled = !isFormComplete || !isAffordable
 

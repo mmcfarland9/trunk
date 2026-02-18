@@ -8,7 +8,7 @@ import { escapeHtml } from '../utils/escape-html'
 describe('escapeHtml', () => {
   it('should escape HTML special characters', () => {
     expect(escapeHtml('<script>alert("xss")</script>')).toBe(
-      '&lt;script&gt;alert("xss")&lt;/script&gt;'
+      '&lt;script&gt;alert("xss")&lt;/script&gt;',
     )
   })
 
@@ -36,8 +36,6 @@ describe('escapeHtml', () => {
 
   it('should handle multiple special characters', () => {
     // Quotes preserved, tags and ampersands escaped
-    expect(escapeHtml('<a href="test" & more>')).toBe(
-      '&lt;a href="test" &amp; more&gt;'
-    )
+    expect(escapeHtml('<a href="test" & more>')).toBe('&lt;a href="test" &amp; more&gt;')
   })
 })

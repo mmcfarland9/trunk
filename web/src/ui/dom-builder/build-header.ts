@@ -33,7 +33,8 @@ export function buildHeader(): HeaderElements {
 
   const profileIcon = document.createElement('span')
   profileIcon.className = 'profile-icon'
-  profileIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5z"/></svg>'
+  profileIcon.innerHTML =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5z"/></svg>'
 
   const profileEmail = document.createElement('span')
   profileEmail.className = 'profile-email'
@@ -46,7 +47,8 @@ export function buildHeader(): HeaderElements {
   syncButton.type = 'button'
   syncButton.className = 'sync-button hidden'
   syncButton.setAttribute('aria-label', 'Sync data')
-  syncButton.innerHTML = '<svg class="sync-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>'
+  syncButton.innerHTML =
+    '<svg class="sync-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>'
 
   // Wrap badge + sync in a stretch group so sync button matches badge height
   const profileGroup = document.createElement('div')

@@ -1,7 +1,13 @@
 import type { AppContext, SunEntry } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
 import { SUN_PROMPTS, RECENT_SHINE_LIMIT, GENERIC_WEIGHT } from '../generated/constants'
-import { canAffordSun, getSunAvailable, getPresetLabel, getNextSunReset, formatResetTime } from '../state'
+import {
+  canAffordSun,
+  getSunAvailable,
+  getPresetLabel,
+  getNextSunReset,
+  formatResetTime,
+} from '../state'
 import { appendEvent, getEvents, wasShoneThisWeek as wasShoneThisWeekFromEvents } from '../events'
 
 type ShineCallbacks = {
@@ -25,8 +31,8 @@ function getRandomPrompt(twigId: string, twigLabel: string): string {
   }
 
   // Filter out recently shown prompts from each pool
-  const availableGeneric = genericPrompts.filter(p => !recentPrompts.includes(p))
-  const availableSpecific = specificPrompts.filter(p => !recentPrompts.includes(p))
+  const availableGeneric = genericPrompts.filter((p) => !recentPrompts.includes(p))
+  const availableSpecific = specificPrompts.filter((p) => !recentPrompts.includes(p))
 
   // Determine which pool to select from
   let selectedPrompt: string
@@ -93,7 +99,7 @@ function selectRandomTwig(): SunEntry['context'] | null {
   const twig = twigs[Math.floor(Math.random() * twigs.length)]
   return {
     twigId: twig.twigId,
-    twigLabel: twig.twigLabel
+    twigLabel: twig.twigLabel,
   }
 }
 
@@ -102,10 +108,7 @@ type ShineApi = {
   populateSunLogShine: () => void
 }
 
-export function initShine(
-  ctx: AppContext,
-  callbacks: ShineCallbacks
-): ShineApi {
+export function initShine(ctx: AppContext, callbacks: ShineCallbacks): ShineApi {
   // Current shine context (selected when dialog opens)
   let currentContext: SunEntry['context'] | null = null
 
@@ -129,7 +132,7 @@ export function initShine(
       sunLogShineJournal,
       sunLogShineBtn,
       sunLogShineShone,
-      sunLogShineShoneReset
+      sunLogShineShoneReset,
     } = ctx.elements
 
     // Check if already shone this week

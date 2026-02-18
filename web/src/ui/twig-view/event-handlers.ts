@@ -6,7 +6,7 @@ import { appendEvent, getState, getSproutsForTwig, toSprout } from '../../events
 type HandlerCallbacks = {
   onSoilChange?: () => void
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
-  onWaterClick?: (sprout: { id: string, title: string }) => void
+  onWaterClick?: (sprout: { id: string; title: string }) => void
   onHarvestClick?: (sprout: {
     id: string
     title: string
@@ -44,18 +44,17 @@ export async function handleDeleteAction(
   state: FormState,
   confirmDialog: ConfirmDialog,
   callbacks: HandlerCallbacks,
-  renderSprouts: () => void
+  renderSprouts: () => void,
 ): Promise<void> {
   const id = card.dataset.id
   if (!id) return
 
   const sprouts = getSprouts(state)
-  const sprout = sprouts.find(s => s.id === id)
+  const sprout = sprouts.find((s) => s.id === id)
   if (!sprout || sprout.state !== 'active') return
 
-  const hasLeafHistory = sprout.leafId && sprouts.some(
-    s => s.id !== sprout.id && s.leafId === sprout.leafId
-  )
+  const hasLeafHistory =
+    sprout.leafId && sprouts.some((s) => s.id !== sprout.id && s.leafId === sprout.leafId)
   const soilReturn = sprout.soilCost * SOIL_UPROOT_REFUND_RATE
   const soilMsg = soilReturn > 0 ? ` (+${soilReturn} soil returned)` : ''
   const confirmMsg = hasLeafHistory
@@ -83,7 +82,7 @@ export function handleOpenLeafAction(
   e: MouseEvent,
   state: FormState,
   callbacks: HandlerCallbacks,
-  close: () => void
+  close: () => void,
 ): void {
   const target = e.target as HTMLElement
   if (target.closest('button') || target.closest('input') || target.closest('textarea')) return
@@ -103,7 +102,7 @@ export function handleOpenLeafAction(
 export function handleWaterAction(
   actionEl: HTMLElement,
   state: FormState,
-  callbacks: HandlerCallbacks
+  callbacks: HandlerCallbacks,
 ): void {
   if (!callbacks.onWaterClick) return
   const card = actionEl.closest('.sprout-card') as HTMLElement
@@ -111,7 +110,7 @@ export function handleWaterAction(
   if (!id) return
 
   const sprouts = getSprouts(state)
-  const sprout = sprouts.find(s => s.id === id)
+  const sprout = sprouts.find((s) => s.id === id)
   if (!sprout) return
 
   callbacks.onWaterClick({ id: sprout.id, title: sprout.title })
@@ -123,14 +122,14 @@ export function handleWaterAction(
 export function handleHarvestAction(
   actionEl: HTMLElement,
   state: FormState,
-  callbacks: HandlerCallbacks
+  callbacks: HandlerCallbacks,
 ): void {
   const card = actionEl.closest('.sprout-card') as HTMLElement
   const id = card?.dataset.id
   if (!id) return
 
   const sprouts = getSprouts(state)
-  const sprout = sprouts.find(s => s.id === id)
+  const sprout = sprouts.find((s) => s.id === id)
   if (!sprout) return
 
   const nodeId = state.currentTwigNode?.dataset.nodeId

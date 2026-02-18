@@ -153,7 +153,7 @@ describe('DOM Builder Integration', () => {
 
     it('has water circles', () => {
       expect(result.elements.waterCircles).toHaveLength(3)
-      result.elements.waterCircles.forEach(circle => {
+      result.elements.waterCircles.forEach((circle) => {
         expect(circle).toBeInstanceOf(HTMLSpanElement)
       })
       expect(result.elements.waterMeter).toBeInstanceOf(HTMLDivElement)
@@ -231,7 +231,7 @@ describe('DOM Builder Integration', () => {
         expect(group.branch).toBeInstanceOf(HTMLButtonElement)
         expect(group.branch.dataset.nodeId).toBe(`branch-${i}`)
         expect(group.twigs).toHaveLength(TWIG_COUNT)
-        group.twigs.forEach(twig => {
+        group.twigs.forEach((twig) => {
           expect(twig).toBeInstanceOf(HTMLButtonElement)
         })
       })
@@ -246,7 +246,7 @@ describe('DOM Builder Integration', () => {
     })
 
     it('all nodes are buttons', () => {
-      result.allNodes.forEach(node => {
+      result.allNodes.forEach((node) => {
         expect(node).toBeInstanceOf(HTMLButtonElement)
       })
     })
@@ -286,10 +286,7 @@ describe('DOM Builder Integration', () => {
 
       freshResult.elements.trunk.click()
 
-      expect(mockClick).toHaveBeenCalledWith(
-        freshResult.elements.trunk,
-        'trunk'
-      )
+      expect(mockClick).toHaveBeenCalledWith(freshResult.elements.trunk, 'trunk')
     })
   })
 })

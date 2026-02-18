@@ -92,10 +92,12 @@ describe('sync-service array bounds safety', () => {
       // Mock query to return empty array
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({
-            data: [], // Empty array
-            error: null,
-          })),
+          order: vi.fn(() =>
+            Promise.resolve({
+              data: [], // Empty array
+              error: null,
+            }),
+          ),
         })),
       }))
 
@@ -135,10 +137,12 @@ describe('sync-service array bounds safety', () => {
 
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({
-            data: [singleEvent], // Single item
-            error: null,
-          })),
+          order: vi.fn(() =>
+            Promise.resolve({
+              data: [singleEvent], // Single item
+              error: null,
+            }),
+          ),
         })),
       }))
 
@@ -210,10 +214,12 @@ describe('sync-service array bounds safety', () => {
 
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({
-            data: events,
-            error: null,
-          })),
+          order: vi.fn(() =>
+            Promise.resolve({
+              data: events,
+              error: null,
+            }),
+          ),
         })),
       }))
 
@@ -237,10 +243,12 @@ describe('sync-service array bounds safety', () => {
 
       mockSupabase.from = vi.fn(() => ({
         select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({
-            data: [], // Empty array
-            error: null,
-          })),
+          order: vi.fn(() =>
+            Promise.resolve({
+              data: [], // Empty array
+              error: null,
+            }),
+          ),
         })),
       }))
 

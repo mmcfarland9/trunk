@@ -49,7 +49,7 @@ export function computeRawSoilHistory(events: readonly TrunkEvent[]): RawSoilSna
   const history: RawSoilSnapshot[] = []
 
   const sorted = [...events].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   )
 
   // Track planted sprouts for harvest reward calculation
@@ -142,7 +142,10 @@ function generateSemimonthlyBoundaries(rangeStart: Date, rangeEnd: Date): Date[]
   }
 
   // Always include rangeEnd as final boundary
-  if (boundaries.length === 0 || boundaries[boundaries.length - 1].getTime() !== rangeEnd.getTime()) {
+  if (
+    boundaries.length === 0 ||
+    boundaries[boundaries.length - 1].getTime() !== rangeEnd.getTime()
+  ) {
     boundaries.push(rangeEnd)
   }
 
@@ -152,7 +155,12 @@ function generateSemimonthlyBoundaries(rangeStart: Date, rangeEnd: Date): Date[]
 /**
  * Generate uniform bucket boundaries at a fixed interval from floored start to end.
  */
-function generateFixedBoundaries(rangeStart: Date, rangeEnd: Date, intervalSeconds: number, floorFn: (d: Date) => Date): Date[] {
+function generateFixedBoundaries(
+  rangeStart: Date,
+  rangeEnd: Date,
+  intervalSeconds: number,
+  floorFn: (d: Date) => Date,
+): Date[] {
   const boundaries: Date[] = []
   const intervalMs = intervalSeconds * 1000
   let current = floorFn(rangeStart)
@@ -163,7 +171,10 @@ function generateFixedBoundaries(rangeStart: Date, rangeEnd: Date, intervalSecon
   }
 
   // Always include rangeEnd as final boundary
-  if (boundaries.length === 0 || boundaries[boundaries.length - 1].getTime() !== rangeEnd.getTime()) {
+  if (
+    boundaries.length === 0 ||
+    boundaries[boundaries.length - 1].getTime() !== rangeEnd.getTime()
+  ) {
     boundaries.push(rangeEnd)
   }
 
@@ -175,8 +186,10 @@ function generateFixedBoundaries(rangeStart: Date, rangeEnd: Date, intervalSecon
  */
 function getRangeStart(range: SoilChartRange, now: Date): Date | null {
   switch (range) {
-    case '1d': return new Date(now.getTime() - 86400000)
-    case '1w': return new Date(now.getTime() - 7 * 86400000)
+    case '1d':
+      return new Date(now.getTime() - 86400000)
+    case '1w':
+      return new Date(now.getTime() - 7 * 86400000)
     case '1m': {
       const d = new Date(now)
       d.setMonth(d.getMonth() - 1)
@@ -210,7 +223,7 @@ const CHART_BUCKET_CONFIG = constants.chart.buckets
 export function bucketSoilData(
   rawHistory: readonly RawSoilSnapshot[],
   range: SoilChartRange,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): SoilChartPoint[] {
   if (rawHistory.length === 0) return []
 
@@ -254,7 +267,10 @@ export function bucketSoilData(
   let snapshotIdx = 0
   for (const boundary of boundaries) {
     // Advance through snapshots up to this boundary
-    while (snapshotIdx < rawHistory.length && rawHistory[snapshotIdx].date.getTime() <= boundary.getTime()) {
+    while (
+      snapshotIdx < rawHistory.length &&
+      rawHistory[snapshotIdx].date.getTime() <= boundary.getTime()
+    ) {
       lastCapacity = rawHistory[snapshotIdx].capacity
       lastAvailable = rawHistory[snapshotIdx].available
       snapshotIdx++

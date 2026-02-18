@@ -48,21 +48,15 @@ describe('getEnvironmentLabel', () => {
 
 describe('getEnvironmentFormHint', () => {
   it('returns comfort hint for fertile', () => {
-    expect(getEnvironmentFormHint('fertile')).toBe(
-      '[Comfortable terrain · no soil bonus]'
-    )
+    expect(getEnvironmentFormHint('fertile')).toBe('[Comfortable terrain · no soil bonus]')
   })
 
   it('returns obstacle hint for firm', () => {
-    expect(getEnvironmentFormHint('firm')).toBe(
-      '[New obstacles · +1 soil capacity]'
-    )
+    expect(getEnvironmentFormHint('firm')).toBe('[New obstacles · +1 soil capacity]')
   })
 
   it('returns hostile hint for barren', () => {
-    expect(getEnvironmentFormHint('barren')).toBe(
-      '[Hostile conditions · +2 soil capacity]'
-    )
+    expect(getEnvironmentFormHint('barren')).toBe('[Hostile conditions · +2 soil capacity]')
   })
 })
 

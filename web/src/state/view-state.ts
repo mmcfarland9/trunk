@@ -25,16 +25,16 @@ export function setViewModeState(mode: ViewMode, branchIndex?: number, twigId?: 
   viewMode = mode
   if (mode === 'leaf') {
     // Leaf view requires branch index, twig ID, and leaf ID
-    activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : activeBranchIndex ?? 0
+    activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : (activeBranchIndex ?? 0)
     activeTwigId = twigId ?? activeTwigId
     hoveredBranchIndex = null
   } else if (mode === 'twig') {
     // Twig view requires both branch index and twig ID
-    activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : activeBranchIndex ?? 0
+    activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : (activeBranchIndex ?? 0)
     activeTwigId = twigId ?? null
     hoveredBranchIndex = null
   } else if (mode === 'branch') {
-    activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : activeBranchIndex ?? 0
+    activeBranchIndex = typeof branchIndex === 'number' ? branchIndex : (activeBranchIndex ?? 0)
     activeTwigId = null
     hoveredBranchIndex = null
   } else {

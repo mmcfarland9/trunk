@@ -35,7 +35,7 @@ describe('Sprout Validation', () => {
     }
     const result = validateSprout(sprout, 0)
     expect(result.valid).toBe(false)
-    expect(result.errors.some(e => e.includes('id'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('id'))).toBe(true)
   })
 
   it('should reject invalid season', () => {
@@ -48,7 +48,7 @@ describe('Sprout Validation', () => {
     }
     const result = validateSprout(sprout, 0)
     expect(result.valid).toBe(false)
-    expect(result.errors.some(e => e.includes('season'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('season'))).toBe(true)
   })
 
   it('should reject invalid environment', () => {
@@ -61,7 +61,7 @@ describe('Sprout Validation', () => {
     }
     const result = validateSprout(sprout, 0)
     expect(result.valid).toBe(false)
-    expect(result.errors.some(e => e.includes('environment'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('environment'))).toBe(true)
   })
 
   it('should reject invalid state', () => {
@@ -74,7 +74,7 @@ describe('Sprout Validation', () => {
     }
     const result = validateSprout(sprout, 0)
     expect(result.valid).toBe(false)
-    expect(result.errors.some(e => e.includes('state'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('state'))).toBe(true)
   })
 
   it('should warn about invalid result range', () => {
@@ -88,7 +88,7 @@ describe('Sprout Validation', () => {
     }
     const result = validateSprout(sprout, 0)
     expect(result.valid).toBe(true) // Still valid, just warnings
-    expect(result.warnings.some(w => w.includes('result'))).toBe(true)
+    expect(result.warnings.some((w) => w.includes('result'))).toBe(true)
   })
 })
 
@@ -110,7 +110,7 @@ describe('Leaf Validation', () => {
     }
     const result = validateLeaf(leaf, 0)
     expect(result.valid).toBe(false)
-    expect(result.errors.some(e => e.includes('id'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('id'))).toBe(true)
   })
 
   it('should warn about missing name', () => {
@@ -119,7 +119,7 @@ describe('Leaf Validation', () => {
     }
     const result = validateLeaf(leaf, 0)
     expect(result.valid).toBe(true) // Still valid, just warning
-    expect(result.warnings.some(w => w.includes('name'))).toBe(true)
+    expect(result.warnings.some((w) => w.includes('name'))).toBe(true)
   })
 })
 

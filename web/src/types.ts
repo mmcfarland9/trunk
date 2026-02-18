@@ -57,9 +57,9 @@ export type Sprout = {
   harvestedAt?: string
   uprootedAt?: string
   // Bloom: describes what each outcome looks like (60 char max each)
-  bloomWither?: string    // 1/5 - failure
-  bloomBudding?: string   // 3/5 - moderate success
-  bloomFlourish?: string  // 5/5 - full success
+  bloomWither?: string // 1/5 - failure
+  bloomBudding?: string // 3/5 - moderate success
+  bloomFlourish?: string // 5/5 - full success
   // Leaf association
   leafId?: string
   waterEntries?: WaterEntry[]

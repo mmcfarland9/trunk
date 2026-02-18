@@ -1,4 +1,9 @@
-import { SEASONS, ENVIRONMENTS, getEnvironmentLabel, getEnvironmentFormHint } from '../../utils/sprout-labels'
+import {
+  SEASONS,
+  ENVIRONMENTS,
+  getEnvironmentLabel,
+  getEnvironmentFormHint,
+} from '../../utils/sprout-labels'
 
 /**
  * Builds the twig view panel DOM structure.
@@ -29,15 +34,15 @@ export function buildPanel(mapPanel: HTMLElement): HTMLDivElement {
           <input type="text" class="sprout-title-input" placeholder="Describe this sprout." maxlength="60" />
           <label class="sprout-field-label">Season <span class="field-hint">(period)</span></label>
           <div class="sprout-season-selector">
-            ${SEASONS.map(s => `<button type="button" class="sprout-season-btn" data-season="${s}">${s}</button>`).join('')}
+            ${SEASONS.map((s) => `<button type="button" class="sprout-season-btn" data-season="${s}">${s}</button>`).join('')}
           </div>
           <div class="sprout-end-date"></div>
           <label class="sprout-field-label">Environment <span class="field-hint">(difficulty)</span></label>
           <div class="sprout-environment-selector">
-            ${ENVIRONMENTS.map(e => `<button type="button" class="sprout-env-btn" data-env="${e}">${getEnvironmentLabel(e)}</button>`).join('')}
+            ${ENVIRONMENTS.map((e) => `<button type="button" class="sprout-env-btn" data-env="${e}">${getEnvironmentLabel(e)}</button>`).join('')}
           </div>
           <div class="env-hint-area">
-            ${ENVIRONMENTS.map(e => `<span class="env-hint" data-for="${e}">${getEnvironmentFormHint(e)}</span>`).join('')}
+            ${ENVIRONMENTS.map((e) => `<span class="env-hint" data-for="${e}">${getEnvironmentFormHint(e)}</span>`).join('')}
           </div>
           <label class="sprout-field-label">Bloom <span class="field-hint">(outcomes)</span></label>
           <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />

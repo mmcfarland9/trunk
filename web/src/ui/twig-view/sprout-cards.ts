@@ -31,13 +31,15 @@ export function renderHistoryCard(s: Sprout): string {
   const hasLeaf = !!s.leafId
 
   const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
-  const bloomHtml = hasBloom ? `
+  const bloomHtml = hasBloom
+    ? `
     <p class="sprout-card-bloom">
       ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${escapeHtml(s.bloomWither)}</em></span>` : ''}
       ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${escapeHtml(s.bloomBudding)}</em></span>` : ''}
       ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${escapeHtml(s.bloomFlourish)}</em></span>` : ''}
     </p>
-  ` : ''
+  `
+    : ''
 
   return `
     <div class="sprout-card sprout-history-card is-completed ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''}>
@@ -63,13 +65,15 @@ export function renderActiveCard(s: Sprout): string {
   const daysLeft = getDaysRemaining(s)
   const hasLeaf = !!s.leafId
   const hasBloom = s.bloomWither || s.bloomBudding || s.bloomFlourish
-  const bloomHtml = hasBloom ? `
+  const bloomHtml = hasBloom
+    ? `
     <p class="sprout-card-bloom">
       ${s.bloomWither ? `<span class="bloom-item">🥀 <em>${escapeHtml(s.bloomWither)}</em></span>` : ''}
       ${s.bloomBudding ? `<span class="bloom-item">🌱 <em>${escapeHtml(s.bloomBudding)}</em></span>` : ''}
       ${s.bloomFlourish ? `<span class="bloom-item">🌲 <em>${escapeHtml(s.bloomFlourish)}</em></span>` : ''}
     </p>
-  ` : ''
+  `
+    : ''
 
   return `
     <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''}>
@@ -80,20 +84,25 @@ export function renderActiveCard(s: Sprout): string {
       <p class="sprout-card-title">${escapeHtml(s.title)}</p>
       ${bloomHtml}
 
-      ${ready ? `
+      ${
+        ready
+          ? `
         <div class="sprout-ready-footer">
           <p class="sprout-card-status">Ready to harvest</p>
           <button type="button" class="action-btn action-btn-progress action-btn-harvest sprout-harvest-btn" data-action="harvest">Harvest</button>
         </div>
-      ` : `
+      `
+          : `
         <div class="sprout-growing-footer">
           <p class="sprout-days-remaining">${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</p>
-          ${checkSproutWateredToday(s.id)
-            ? `<span class="is-watered-badge">watered</span>`
-            : `<button type="button" class="action-btn action-btn-progress action-btn-water sprout-water-btn" data-action="water">Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span></button>`
+          ${
+            checkSproutWateredToday(s.id)
+              ? `<span class="is-watered-badge">watered</span>`
+              : `<button type="button" class="action-btn action-btn-progress action-btn-water sprout-water-btn" data-action="water">Water <span class="btn-soil-gain">(+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)})</span></button>`
           }
         </div>
-      `}
+      `
+      }
     </div>
   `
 }
@@ -108,7 +117,8 @@ export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boo
 
   if (isGrowing) {
     // Get all active sprouts for this leaf
-    const activeSprouts = sprouts.filter(s => s.state === 'active')
+    const activeSprouts = sprouts
+      .filter((s) => s.state === 'active')
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 
     if (activeSprouts.length === 0) return ''
@@ -127,21 +137,21 @@ export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boo
       <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}" data-action="open-leaf">
         <div class="leaf-card-group-header">${escapeHtml(leafName)}</div>
         <div class="leaf-card-group-sprouts">
-          ${activeSprouts.map(s => renderActiveCard(s)).join('')}
+          ${activeSprouts.map((s) => renderActiveCard(s)).join('')}
         </div>
       </div>
     `
   }
-    // Cultivated - show most recent completed sprout
-    const completedSprouts = sprouts.filter(s => s.state === 'completed')
-    const topSprout = completedSprouts.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )[0]
+  // Cultivated - show most recent completed sprout
+  const completedSprouts = sprouts.filter((s) => s.state === 'completed')
+  const topSprout = completedSprouts.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )[0]
 
-    if (!topSprout) return ''
+  if (!topSprout) return ''
 
-    const layerCount = Math.min(completedSprouts.length, 3)
-    return `
+  const layerCount = Math.min(completedSprouts.length, 3)
+  return `
       <div class="leaf-card" data-leaf-id="${escapeHtml(leafId)}" data-layers="${layerCount}" data-action="open-leaf">
         ${renderHistoryCard(topSprout)}
       </div>

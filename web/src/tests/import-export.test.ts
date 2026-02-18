@@ -23,7 +23,11 @@ describe('Import/Export Round-Trip', () => {
       bloomFlourish: 'Built a full project',
       waterEntries: [
         { timestamp: '2024-01-17T09:00:00Z', content: 'Read chapter 1' },
-        { timestamp: '2024-01-18T10:00:00Z', content: 'Practice exercises', prompt: 'What did you learn?' },
+        {
+          timestamp: '2024-01-18T10:00:00Z',
+          content: 'Practice exercises',
+          prompt: 'What did you learn?',
+        },
       ],
     }
 
@@ -127,10 +131,12 @@ describe('Import/Export Round-Trip', () => {
     }
 
     // Simulate import processing
-    const sanitizedSprouts = nodeData.sprouts?.map(sanitizeSprout)
+    const sanitizedSprouts = nodeData.sprouts
+      ?.map(sanitizeSprout)
       .filter((s): s is NonNullable<typeof s> => s !== null)
 
-    const sanitizedLeaves = nodeData.leaves?.map(sanitizeLeaf)
+    const sanitizedLeaves = nodeData.leaves
+      ?.map(sanitizeLeaf)
       .filter((l): l is NonNullable<typeof l> => l !== null)
 
     expect(sanitizedSprouts).toHaveLength(2)
@@ -148,7 +154,7 @@ describe('Import/Export Round-Trip', () => {
     ]
 
     const sanitized = mixedSprouts
-      .map(s => sanitizeSprout(s))
+      .map((s) => sanitizeSprout(s))
       .filter((s): s is NonNullable<typeof s> => s !== null)
 
     expect(sanitized).toHaveLength(2)
@@ -186,7 +192,7 @@ describe('Import/Export Round-Trip', () => {
 
   it('should preserve all valid season values', () => {
     const seasons = ['2w', '1m', '3m', '6m', '1y'] as const
-    seasons.forEach(season => {
+    seasons.forEach((season) => {
       const sprout = {
         id: `sprout-${season}`,
         title: 'Test',
@@ -201,7 +207,7 @@ describe('Import/Export Round-Trip', () => {
 
   it('should preserve all valid environment values', () => {
     const environments = ['fertile', 'firm', 'barren'] as const
-    environments.forEach(environment => {
+    environments.forEach((environment) => {
       const sprout = {
         id: `sprout-${environment}`,
         title: 'Test',

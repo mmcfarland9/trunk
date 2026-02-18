@@ -30,7 +30,7 @@ const recentPrompts: string[] = []
 const RECENT_PROMPT_LIMIT = Math.min(RECENT_WATER_LIMIT, Math.floor(WATERING_PROMPTS.length / 3))
 
 function getUniquePrompts(count: number): string[] {
-  const available = WATERING_PROMPTS.filter(p => !recentPrompts.includes(p))
+  const available = WATERING_PROMPTS.filter((p) => !recentPrompts.includes(p))
   const pool = available.length >= count ? available : [...WATERING_PROMPTS]
 
   // Shuffle and take the first `count`
@@ -54,27 +54,33 @@ function getUniquePrompts(count: number): string[] {
  */
 function selectDailySprouts(sprouts: ActiveSproutInfo[]): ActiveSproutInfo[] {
   return [...sprouts]
-    .filter(s => !checkSproutWateredToday(s.id))
+    .filter((s) => !checkSproutWateredToday(s.id))
     .sort((a, b) => {
-      const aLast = a.waterEntries?.map(e => e.timestamp).sort().pop() ?? ''
-      const bLast = b.waterEntries?.map(e => e.timestamp).sort().pop() ?? ''
+      const aLast =
+        a.waterEntries
+          ?.map((e) => e.timestamp)
+          .sort()
+          .pop() ?? ''
+      const bLast =
+        b.waterEntries
+          ?.map((e) => e.timestamp)
+          .sort()
+          .pop() ?? ''
       return aLast < bLast ? -1 : aLast > bLast ? 1 : 0
     })
     .slice(0, 3)
 }
 
-export function initWaterDialog(
-  ctx: AppContext,
-  callbacks: WaterDialogCallbacks
-): WaterDialogApi {
+export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks): WaterDialogApi {
   function closeWaterDialog(): void {
     ctx.elements.waterDialog.classList.add('hidden')
   }
 
   function updateAllPourButtons(): void {
     const remaining = getWaterAvailable()
-    const sections = ctx.elements.waterDialogBody.querySelectorAll<HTMLDivElement>('.water-dialog-section')
-    sections.forEach(section => {
+    const sections =
+      ctx.elements.waterDialogBody.querySelectorAll<HTMLDivElement>('.water-dialog-section')
+    sections.forEach((section) => {
       if (section.classList.contains('is-watered')) return
       const pourBtn = section.querySelector<HTMLButtonElement>('.water-dialog-pour')
       const textarea = section.querySelector<HTMLTextAreaElement>('textarea')
@@ -89,9 +95,7 @@ export function initWaterDialog(
     // If targeting a specific sprout that's already watered today, don't open
     if (targetSprout && checkSproutWateredToday(targetSprout.id)) return
 
-    const sprouts = targetSprout
-      ? [targetSprout]
-      : selectDailySprouts(callbacks.getActiveSprouts())
+    const sprouts = targetSprout ? [targetSprout] : selectDailySprouts(callbacks.getActiveSprouts())
     if (sprouts.length === 0) return
 
     const prompts = getUniquePrompts(sprouts.length)
@@ -127,30 +131,33 @@ export function initWaterDialog(
         pourBtn.disabled = !hasContent || !hasWater
       })
 
-      pourBtn.addEventListener('click', preventDoubleClick(() => {
-        const content = textarea.value.trim()
-        if (!content || !canAffordWater()) return
+      pourBtn.addEventListener(
+        'click',
+        preventDoubleClick(() => {
+          const content = textarea.value.trim()
+          if (!content || !canAffordWater()) return
 
-        appendEvent({
-          type: 'sprout_watered',
-          timestamp: new Date().toISOString(),
-          sproutId: sprout.id,
-          content,
-          prompt: prompts[i],
-        })
+          appendEvent({
+            type: 'sprout_watered',
+            timestamp: new Date().toISOString(),
+            sproutId: sprout.id,
+            content,
+            prompt: prompts[i],
+          })
 
-        section.classList.add('is-watered')
-        pourBtn.disabled = true
-        pourBtn.textContent = 'Watered'
-        textarea.disabled = true
+          section.classList.add('is-watered')
+          pourBtn.disabled = true
+          pourBtn.textContent = 'Watered'
+          textarea.disabled = true
 
-        callbacks.onWaterMeterChange()
-        callbacks.onSoilMeterChange()
-        callbacks.onWaterComplete()
+          callbacks.onWaterMeterChange()
+          callbacks.onSoilMeterChange()
+          callbacks.onWaterComplete()
 
-        // Disable remaining pour buttons if no water left
-        updateAllPourButtons()
-      }))
+          // Disable remaining pour buttons if no water left
+          updateAllPourButtons()
+        }),
+      )
 
       body.appendChild(section)
     })
