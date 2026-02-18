@@ -5,8 +5,7 @@ import trunkLogo from '../../../assets/tree_icon_transp.png'
 
 type NodeClickHandler = (
   element: HTMLButtonElement,
-  nodeId: string,
-  placeholder: string
+  nodeId: string
 ) => void
 
 export type TreeNodesElements = {
@@ -35,7 +34,7 @@ function initializeNode(
   element.addEventListener('click', (event) => {
     event.stopPropagation()
     if (nodeId) {
-      onNodeClick(element, nodeId, placeholder)
+      onNodeClick(element, nodeId)
     }
   })
 }

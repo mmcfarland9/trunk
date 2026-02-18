@@ -53,9 +53,11 @@ Pods/
 # Test artifacts
 web/test-results/
 web/coverage/
+.stryker-incremental.json
 
 # Generated reports
 web/.reports/
+web/reports/
 
 # MCP config (contains tokens)
 .mcp.json
@@ -63,5 +65,3 @@ web/.reports/
 # iOS Secrets (contains Supabase keys)
 ios/Trunk/Config/Secrets.swift
 
-# 
-.nvmrc

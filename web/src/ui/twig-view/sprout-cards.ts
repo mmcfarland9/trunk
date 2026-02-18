@@ -48,7 +48,7 @@ export function renderHistoryCard(s: Sprout): string {
       ${bloomHtml}
       <div class="sprout-result-section">
         <span class="sprout-result-display">${getResultEmoji(s.result || 1)} ${s.result || 1}/5</span>
-        <span class="sprout-card-date">${s.completedAt ? formatDate(new Date(s.completedAt)) : ''}</span>
+        <span class="sprout-card-date">${s.harvestedAt ? formatDate(new Date(s.harvestedAt)) : ''}</span>
       </div>
       ${s.reflection ? `<p class="sprout-card-reflection">${escapeHtml(s.reflection)}</p>` : ''}
     </div>

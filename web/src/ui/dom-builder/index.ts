@@ -14,8 +14,7 @@ type DomBuilderResult = {
 
 type NodeClickHandler = (
   element: HTMLButtonElement,
-  nodeId: string,
-  placeholder: string
+  nodeId: string
 ) => void
 
 function assembleElements(

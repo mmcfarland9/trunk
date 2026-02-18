@@ -54,6 +54,9 @@ struct AnyCodable: Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
+        // Decode order matters: String must come before Int/Double (to avoid
+        // numeric strings being decoded as numbers), and Int before Double
+        // (so whole numbers like 1 are Int, not Double 1.0).
         if let string = try? container.decode(String.self) {
             value = string
         } else if let int = try? container.decode(Int.self) {

@@ -15,6 +15,7 @@ export type {
   SunShoneEvent,
   LeafCreatedEvent,
 } from './types'
+export { EVENT_TYPES } from './types'
 
 // Derivation
 export type { DerivedState, DerivedSprout, DerivedLeaf } from './derive'
@@ -60,6 +61,7 @@ export {
   getSunAvailable,
   checkSproutWateredToday,
   replaceEvents,
+  startVisibilityCacheInvalidation,
   // Resource getters (derived from events)
   getSoilAvailable,
   getSoilCapacity,

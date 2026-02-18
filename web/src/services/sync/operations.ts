@@ -4,6 +4,9 @@ import { getEvents, appendEvents, replaceEvents } from '../../events/store'
 import type { TrunkEvent } from '../../events/types'
 import type { SyncEvent } from '../sync-types'
 import { localToSyncPayload, syncToLocalEvent, generateClientId } from '../sync-types'
+
+// C17: Guard against concurrent sync invocations
+let currentSyncPromise: Promise<SyncResult> | null = null
 import { isCacheValid, setCacheVersion, clearCacheVersion } from './cache'
 import { getPendingCount, getPendingIds, addPendingId, removePendingId, savePendingIds } from './pending-uploads'
 import { notifyMetadataListeners, setStatusDependencies } from './status'
@@ -73,10 +76,15 @@ async function pullEvents(): Promise<{ pulled: number; error: string | null }> {
         .map(syncToLocalEvent)
         .filter((e): e is TrunkEvent => e !== null)
 
-      // Merge with existing local events, avoiding duplicates by timestamp
+      // C8: Merge with existing local events, dedup by client_id (primary) and timestamp (fallback)
       const existingEvents = getEvents()
+      const existingClientIds = new Set(existingEvents.map(e => e.client_id).filter(Boolean))
       const existingTimestamps = new Set(existingEvents.map(e => e.timestamp))
-      const uniqueNewEvents = newLocalEvents.filter(e => !existingTimestamps.has(e.timestamp))
+      const uniqueNewEvents = newLocalEvents.filter(e => {
+        if (e.client_id && existingClientIds.has(e.client_id)) return false
+        if (existingTimestamps.has(e.timestamp)) return false
+        return true
+      })
 
       if (uniqueNewEvents.length > 0) {
         appendEvents(uniqueNewEvents)
@@ -107,7 +115,11 @@ export async function pushEvent(event: TrunkEvent): Promise<{ error: string | nu
   const { user } = getAuthState()
   if (!user) return { error: 'Not authenticated' }
 
-  const clientId = generateClientId(event)
+  // Assign client_id to event if not already set (for retry matching)
+  if (!event.client_id) {
+    event.client_id = generateClientId()
+  }
+  const clientId = event.client_id
 
   // Track as pending before attempting push
   addPendingId(clientId)
@@ -153,8 +165,8 @@ async function retryPendingUploads(): Promise<number> {
   let pushed = 0
 
   for (const clientId of getPendingIds()) {
-    // Find the local event whose generated clientId matches
-    const event = events.find(e => generateClientId(e) === clientId)
+    // Find the local event whose stored client_id matches
+    const event = events.find(e => e.client_id === clientId)
     if (!event) {
       // Event no longer in local store — remove stale pending ID
       removePendingId(clientId)
@@ -246,6 +258,12 @@ export async function smartSync(): Promise<SyncResult> {
     return { status: 'error', pulled: 0, error: 'Not authenticated', mode: 'full' }
   }
 
+  // C17: Guard against concurrent sync invocations
+  if (currentSyncPromise) {
+    return currentSyncPromise
+  }
+
+  const syncWork = async (): Promise<SyncResult> => {
   setSyncStatus('syncing')
 
   // Retry any previously failed pushes before pulling
@@ -261,9 +279,16 @@ export async function smartSync(): Promise<SyncResult> {
       // Incremental: pull only new events since last sync
       result = await pullEvents()
     } else {
+      // C4: Preserve local pending events before full sync replacement
+      const localEvents = getEvents()
+      const pendingClientIds = new Set(getPendingIds())
+      const pendingLocalEvents = localEvents.filter(e =>
+        e.client_id && pendingClientIds.has(e.client_id)
+      )
+
       // Full: clear and pull everything
       // But don't clear cache until we have new data (fallback protection)
-      const { data: syncEvents, error } = await supabase
+      const { data: syncEvents, error } = await supabase!
         .from('events')
         .select('*')
         .order('created_at', { ascending: true })
@@ -276,10 +301,16 @@ export async function smartSync(): Promise<SyncResult> {
       }
 
       // Success - now safe to replace cache
-      const allEvents = (syncEvents as SyncEvent[])
+      const serverEvents = (syncEvents as SyncEvent[])
         .map(syncToLocalEvent)
         .filter((e): e is TrunkEvent => e !== null)
-      replaceEvents(allEvents)
+
+      // C4: Merge local pending events that aren't on the server yet
+      const serverClientIds = new Set(serverEvents.map(e => e.client_id).filter(Boolean))
+      const uniquePending = pendingLocalEvents.filter(e => !serverClientIds.has(e.client_id!))
+      const mergedEvents = [...serverEvents, ...uniquePending]
+
+      replaceEvents(mergedEvents)
       setCacheVersion()
 
       if (syncEvents.length > 0) {
@@ -288,7 +319,7 @@ export async function smartSync(): Promise<SyncResult> {
         lastConfirmedTimestamp = latest
       }
 
-      result = { pulled: allEvents.length, error: null }
+      result = { pulled: mergedEvents.length, error: null }
     }
 
     if (result.error) {
@@ -312,6 +343,14 @@ export async function smartSync(): Promise<SyncResult> {
     console.warn('Sync exception, using cached data:', err)
     setSyncStatus('error')
     return { status: 'error', pulled: 0, error: String(err), mode }
+  }
+  } // end syncWork
+
+  currentSyncPromise = syncWork()
+  try {
+    return await currentSyncPromise
+  } finally {
+    currentSyncPromise = null
   }
 }
 

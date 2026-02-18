@@ -153,7 +153,8 @@ export function appendEvent(event: TrunkEvent): void {
  * Append multiple events at once
  */
 export function appendEvents(newEvents: TrunkEvent[]): void {
-  events.push(...newEvents)
+  // C16: Use loop instead of spread to avoid stack overflow on large arrays
+  for (const e of newEvents) events.push(e)
   invalidateCache()
   saveEvents()
   // Sync each to cloud if callback is set
@@ -287,10 +288,19 @@ export function clearEvents(): void {
 }
 
 /**
- * Replace all events (for import)
+ * Replace all events (for import or full sync).
+ * Validates events before storing; invalid events are filtered with a warning.
  */
 export function replaceEvents(newEvents: TrunkEvent[]): void {
-  events = newEvents
+  const valid: TrunkEvent[] = []
+  for (const event of newEvents) {
+    if (validateEvent(event)) {
+      valid.push(event)
+    } else {
+      console.warn('replaceEvents: skipping invalid event', event)
+    }
+  }
+  events = valid
   invalidateCache()
   saveEvents()
 }
@@ -307,5 +317,18 @@ export function getEventCount(): number {
  */
 export function exportEvents(): TrunkEvent[] {
   return [...events]
+}
+
+/**
+ * C26: Start a visibilitychange listener that invalidates cached water/sun
+ * availability when the page becomes visible. Ensures stale cache values
+ * (e.g., tab left open across a 6am boundary) are refreshed.
+ */
+export function startVisibilityCacheInvalidation(): void {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      invalidateCache()
+    }
+  })
 }
 

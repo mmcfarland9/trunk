@@ -25,7 +25,7 @@ const navCallbacks = {
   },
 }
 
-function handleNodeClick(element: HTMLButtonElement, nodeId: string, _placeholder: string): void {
+function handleNodeClick(element: HTMLButtonElement, nodeId: string): void {
   if (nodeId === 'trunk' && (getViewMode() === 'branch' || getViewMode() === 'twig')) {
     returnToOverview(ctx, navCallbacks)
     return

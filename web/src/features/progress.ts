@@ -1,8 +1,28 @@
-import type { AppContext, Sprout } from '../types'
+/**
+ * Progress orchestration.
+ * Manages sidebar sprout display and scoped progress bar.
+ * DOM construction delegated to ui/progress-panel.ts.
+ */
+
+import type { AppContext } from '../types'
 import { TWIG_COUNT } from '../constants'
 import { getHoveredBranchIndex, getHoveredTwigId, getActiveBranchIndex, getActiveTwigId, getViewMode, getPresetLabel } from '../state'
 import type { DerivedState } from '../events'
-import { getState, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts, getLeafById, checkSproutWateredToday } from '../events'
+import { getState, toSprout, getActiveSprouts as getActiveDerivedSprouts, getCompletedSprouts } from '../events'
+import {
+  createBranchFolder,
+  createTwigFolder,
+  renderLeafGroupedSprouts,
+  getTwigLabel,
+  getBranchLabel,
+} from '../ui/progress-panel'
+import type {
+  SproutWithLocation,
+  SidebarBranchCallbacks,
+  SidebarTwigCallback,
+  SidebarLeafCallback,
+  SidebarHarvestCallback,
+} from '../ui/progress-panel'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -65,16 +85,6 @@ export function updateScopedProgress(ctx: AppContext): void {
 
 // --- Sidebar Sprout Sections ---
 
-type SproutWithLocation = Sprout & { twigId: string, twigLabel: string, branchIndex: number }
-
-type SidebarBranchCallbacks = {
-  onClick: (index: number) => void
-}
-
-type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
-type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
-type SidebarHarvestCallback = (sprout: SproutWithLocation) => void
-
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedBranchCallbacks: SidebarBranchCallbacks | undefined
@@ -86,22 +96,6 @@ function parseBranchIndex(twigId: string): number {
   // Parse "branch-X-twig-Y" to get X
   const match = twigId.match(/^branch-(\d+)-twig-\d+$/)
   return match ? parseInt(match[1], 10) : -1
-}
-
-function formatEndDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-
-  // If on or past due date, show READY
-  if (date <= now) {
-    return 'READY'
-  }
-
-  // Format as MM/DD/YY
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = String(date.getFullYear()).slice(-2)
-  return `${month}/${day}/${year}`
 }
 
 function getAllSproutsFromState(state: DerivedState): { active: SproutWithLocation[], cultivated: SproutWithLocation[] } {
@@ -145,64 +139,6 @@ function groupByTwig(sprouts: SproutWithLocation[]): Map<string, SproutWithLocat
     grouped.set(sprout.twigId, list)
   })
   return grouped
-}
-
-function groupByLeaf(sprouts: SproutWithLocation[]): { standalone: SproutWithLocation[], byLeaf: Map<string, SproutWithLocation[]> } {
-  const standalone: SproutWithLocation[] = []
-  const byLeaf = new Map<string, SproutWithLocation[]>()
-
-  sprouts.forEach(sprout => {
-    if (!sprout.leafId) {
-      standalone.push(sprout)
-    } else {
-      const list = byLeaf.get(sprout.leafId) || []
-      list.push(sprout)
-      byLeaf.set(sprout.leafId, list)
-    }
-  })
-
-  return { standalone, byLeaf }
-}
-
-function getTwigLabel(twigId: string): string {
-  const presetLabel = getPresetLabel(twigId)
-  if (presetLabel) {
-    return presetLabel
-  }
-  // Fallback: parse twig number from ID like "branch-0-twig-3"
-  const match = twigId.match(/twig-(\d+)$/)
-  return match ? `Twig ${parseInt(match[1], 10) + 1}` : twigId
-}
-
-// Helper to render sprouts grouped by leaf into a container
-function renderLeafGroupedSprouts(
-  state: DerivedState,
-  sprouts: SproutWithLocation[],
-  container: HTMLElement,
-  isActive: boolean,
-  onWaterClick?: (sprout: SproutWithLocation) => void,
-  onLeafClick?: SidebarLeafCallback,
-  onHarvestClick?: SidebarHarvestCallback
-): void {
-  const { standalone, byLeaf } = groupByLeaf(sprouts)
-
-  // Render leaf groups - always use stacked card format for consistency
-  byLeaf.forEach((leafSprouts, leafId) => {
-    const twigId = leafSprouts[0]?.twigId
-    if (!twigId) return
-    const leaf = getLeafById(state, leafId)
-    const leafName = leaf?.name || 'Unnamed Leaf'
-
-    // Always render as stacked card, even for single sprouts
-    const card = createStackedLeafCard(leafName, leafId, leafSprouts, isActive ? onWaterClick : undefined, onLeafClick, isActive ? onHarvestClick : undefined)
-    container.append(card)
-  })
-
-  // Render standalone sprouts (no leaf) - these shouldn't exist but handle gracefully
-  standalone.forEach(sprout => {
-    const card = createStackedLeafCard('No Leaf', '', [sprout], isActive ? onWaterClick : undefined, onLeafClick, isActive ? onHarvestClick : undefined)
-    container.append(card)
-  })
 }
 
 export function initSidebarSprouts(
@@ -356,172 +292,4 @@ export function updateSidebarSprouts(ctx: AppContext): void {
       cultivatedSproutsList.append(branchFolder)
     })
   }
-}
-
-function createBranchFolder(
-  branchIndex: number,
-  branchLabel: string,
-  count: number,
-  callbacks?: SidebarBranchCallbacks
-): HTMLDivElement {
-  const folder = document.createElement('div')
-  folder.className = 'branch-folder'
-  folder.dataset.branchIndex = String(branchIndex)
-
-  const header = document.createElement('button')
-  header.type = 'button'
-  header.className = 'branch-folder-header'
-
-  const label = document.createElement('span')
-  label.className = 'branch-folder-label'
-  label.textContent = branchLabel
-
-  const countEl = document.createElement('span')
-  countEl.className = 'branch-folder-count'
-  countEl.textContent = `(${count})`
-
-  header.append(label, countEl)
-  folder.append(header)
-
-  // Click navigates to branch view
-  if (callbacks) {
-    header.addEventListener('click', () => callbacks.onClick(branchIndex))
-  }
-
-  return folder
-}
-
-function createTwigFolder(
-  twigId: string,
-  twigLabel: string,
-  count: number,
-  onTwigClick?: SidebarTwigCallback,
-  branchIndex?: number
-): HTMLDivElement {
-  const folder = document.createElement('div')
-  folder.className = 'twig-folder'
-  folder.dataset.twigId = twigId
-
-  const header = document.createElement('button')
-  header.type = 'button'
-  header.className = 'twig-folder-header'
-
-  const label = document.createElement('span')
-  label.className = 'twig-folder-label'
-  label.textContent = twigLabel
-
-  const countEl = document.createElement('span')
-  countEl.className = 'twig-folder-count'
-  countEl.textContent = `(${count})`
-
-  header.append(label, countEl)
-  folder.append(header)
-
-  // Click navigates to twig view
-  if (onTwigClick && branchIndex !== undefined) {
-    header.addEventListener('click', () => onTwigClick(twigId, branchIndex))
-  }
-
-  return folder
-}
-
-function createStackedLeafCard(
-  leafName: string,
-  leafId: string,
-  sprouts: SproutWithLocation[],
-  onWaterClick?: (sprout: SproutWithLocation) => void,
-  onLeafClick?: SidebarLeafCallback,
-  onHarvestClick?: SidebarHarvestCallback
-): HTMLDivElement {
-  const card = document.createElement('div')
-  card.className = 'sidebar-stacked-card'
-
-  // Leaf header (clickable to open leaf view)
-  const header = document.createElement('button')
-  header.type = 'button'
-  header.className = 'sidebar-stacked-header'
-  header.textContent = leafName
-  if (onLeafClick && sprouts[0]) {
-    header.addEventListener('click', () => {
-      onLeafClick(leafId, sprouts[0].twigId, sprouts[0].branchIndex)
-    })
-  }
-  card.append(header)
-
-  // Sprout rows
-  const rows = document.createElement('div')
-  rows.className = 'sidebar-stacked-rows'
-
-  sprouts.forEach(sprout => {
-    const row = document.createElement('div')
-    row.className = 'sidebar-stacked-row'
-
-    const title = document.createElement('span')
-    title.className = 'sidebar-stacked-title'
-    title.textContent = sprout.title || 'Untitled'
-
-    const isReady = sprout.endDate ? new Date(sprout.endDate) <= new Date() : false
-
-    // Highlight row in green when ready to harvest
-    if (isReady) {
-      row.classList.add('is-ready')
-    }
-
-    // Action button (left of date)
-    if (isReady && onHarvestClick) {
-      // Harvest button - opens harvest dialog
-      const harvestBtn = document.createElement('button')
-      harvestBtn.type = 'button'
-      harvestBtn.className = 'action-btn action-btn-progress action-btn-harvest sidebar-stacked-action'
-      harvestBtn.textContent = 'harvest'
-      harvestBtn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        onHarvestClick(sprout)
-      })
-      row.append(title, harvestBtn)
-    } else if (onWaterClick) {
-      const wateredToday = checkSproutWateredToday(sprout.id)
-      if (wateredToday) {
-        // Show "watered" badge instead of water button
-        const badge = document.createElement('span')
-        badge.className = 'action-btn action-btn-progress sidebar-stacked-action is-watered-badge'
-        badge.textContent = 'watered'
-        row.append(title, badge)
-      } else {
-        const waterBtn = document.createElement('button')
-        waterBtn.type = 'button'
-        waterBtn.className = 'action-btn action-btn-progress action-btn-water sidebar-stacked-action'
-        waterBtn.textContent = 'water'
-
-        waterBtn.addEventListener('click', (e) => {
-          e.stopPropagation()
-          onWaterClick(sprout)
-        })
-        row.append(title, waterBtn)
-      }
-    } else {
-      row.append(title)
-    }
-
-    // Date (always at right edge)
-    const meta = document.createElement('span')
-    meta.className = 'sidebar-stacked-meta'
-    meta.textContent = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
-    row.append(meta)
-
-    rows.append(row)
-  })
-
-  card.append(rows)
-  return card
-}
-
-function getBranchLabel(branchNode: HTMLButtonElement, index: number): string {
-  // Get label from preset or default
-  const nodeId = branchNode.dataset.nodeId || ''
-  const presetLabel = getPresetLabel(nodeId)
-  if (presetLabel) {
-    return presetLabel
-  }
-  return `Branch ${index + 1}`
 }

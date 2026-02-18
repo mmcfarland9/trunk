@@ -36,7 +36,7 @@ extension SyncService {
 
             // Dedup: skip if we already have this event (e.g. we pushed it ourselves)
             let isDuplicate = await MainActor.run {
-              EventStore.shared.events.contains { $0.clientTimestamp == event.clientTimestamp }
+              EventStore.shared.events.contains { $0.clientId == event.clientId }
             }
 
             if !isDuplicate {

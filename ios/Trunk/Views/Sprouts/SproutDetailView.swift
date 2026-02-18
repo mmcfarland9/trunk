@@ -21,16 +21,7 @@ struct SproutDetailView: View {
 
     private var locationLabel: String {
         guard let sprout else { return "" }
-        let parts = sprout.twigId.split(separator: "-")
-        guard parts.count >= 4,
-              let branchIndex = Int(parts[1]),
-              let twigIndex = Int(parts[3]) else {
-            return sprout.twigId
-        }
-
-        let branchName = SharedConstants.Tree.branchName(branchIndex)
-        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
-        return "\(branchName) / \(twigLabel.capitalized)"
+        return twigLocationLabel(for: sprout.twigId)
     }
 
     private var leafName: String? {
@@ -38,18 +29,20 @@ struct SproutDetailView: View {
         return state.leaves[leafId]?.name
     }
 
-    private var formattedPlantedDate: String {
-        guard let sprout else { return "" }
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: sprout.plantedAt)
+        return formatter
+    }()
+
+    private var formattedPlantedDate: String {
+        guard let sprout else { return "" }
+        return Self.dateFormatter.string(from: sprout.plantedAt)
     }
 
     private var formattedHarvestDate: String? {
         guard let harvestedAt = sprout?.harvestedAt else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: harvestedAt)
+        return Self.dateFormatter.string(from: harvestedAt)
     }
 
     var body: some View {
@@ -326,9 +319,13 @@ struct SproutDetailView: View {
         .padding(TrunkTheme.space3)
     }
 
-    private func formatWaterDate(_ date: Date) -> String {
+    private static let waterDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    private func formatWaterDate(_ date: Date) -> String {
+        Self.waterDateFormatter.string(from: date)
     }
 }

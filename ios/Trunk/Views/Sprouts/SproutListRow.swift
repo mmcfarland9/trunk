@@ -16,16 +16,7 @@ struct SproutListRow: View {
     }
 
     private var locationLabel: String {
-        let parts = sprout.twigId.split(separator: "-")
-        guard parts.count >= 4,
-              let branchIndex = Int(parts[1]),
-              let twigIndex = Int(parts[3]) else {
-            return sprout.twigId
-        }
-
-        let branchName = SharedConstants.Tree.branchName(branchIndex)
-        let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
-        return "\(branchName) / \(twigLabel.capitalized)"
+        twigLocationLabel(for: sprout.twigId)
     }
 
     private var leafName: String? {

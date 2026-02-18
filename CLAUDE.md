@@ -104,7 +104,7 @@ A **leaf** is a named trajectory of related sprouts—a continuing story. Each l
 
 | Resource | Represents | Capacity | Restores | Used For |
 |----------|------------|----------|----------|----------|
-| **Soil** | Focus/energy budget | Grows over lifetime (10→120) | Goal completion, journaling | Planting sprouts |
+| **Soil** | Focus/energy budget | Grows over lifetime (10→120) | Harvesting (soil cost returned + capacity gained), watering (+0.05/water), shining (+0.35/sun) | Planting sprouts |
 | **Water** | Daily attention | 3/day | 6:00 AM local | Watering active sprouts |
 | **Sun** | Weekly reflection | 1/week | 6:00 AM Monday | Shining on any twig |
 
@@ -141,7 +141,7 @@ OVERVIEW ──scroll/click──► BRANCH ──scroll/click──► TWIG ─
 | `1-8` | Overview (not hovering) | Jump to branch N |
 | `1-8` | Overview (hovering branch) | Jump to twig N in hovered branch |
 | `1-8` | Branch view | Jump to twig N in current branch |
-| `←` / `→` | Branch view | Cycle to previous/next branch |
+| `Cmd+←` / `Cmd+→` | Branch view | Cycle to previous/next branch |
 | `←` / `→` | Twig view | Navigate to previous/next twig |
 | `d` then `b` | Anywhere | Toggle debug panel (within 500ms) |
 

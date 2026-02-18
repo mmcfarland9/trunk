@@ -1,26 +1,39 @@
 import type { AppContext } from '../types'
 import { getViewMode, getHoveredBranchIndex, setHoveredBranchIndex, getHoveredTwigId, setHoveredTwigId, getFocusedNode, getActiveBranchIndex } from '../state'
-import { enterBranchView, enterTwigView, returnToOverview, returnToBranchView, updateVisibility } from './navigation'
-import { updateScopedProgress, updateSidebarSprouts } from './progress'
 import type { NavigationCallbacks } from './navigation'
-import { updateFocus } from '../ui/node-ui'
+
+export type HoverBranchCallbacks = {
+  enterBranchView: (index: number, ctx: AppContext, callbacks: NavigationCallbacks) => void
+  enterTwigView: (twig: HTMLButtonElement, branchIndex: number, ctx: AppContext, callbacks: NavigationCallbacks) => void
+  returnToOverview: (ctx: AppContext, callbacks: NavigationCallbacks) => void
+  returnToBranchView: (ctx: AppContext, callbacks: NavigationCallbacks) => void
+  updateVisibility: (ctx: AppContext) => void
+  updateScopedProgress: (ctx: AppContext) => void
+  updateSidebarSprouts: (ctx: AppContext) => void
+  updateFocus: (target: HTMLButtonElement | null, ctx: AppContext) => void
+}
+
+export type HoverTwigCallbacks = {
+  updateFocus: (target: HTMLButtonElement | null, ctx: AppContext) => void
+  updateSidebarSprouts: (ctx: AppContext) => void
+}
 
 const HOVER_MIN_RADIUS_RATIO = 0.55
 const HOVER_MAX_RADIUS_RATIO = 1.35
 const SCROLL_THRESHOLD = 150 // pixels of scroll delta needed to trigger zoom
 
-export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks): void {
+export function setupHoverBranch(ctx: AppContext, navCallbacks: NavigationCallbacks, cb: HoverBranchCallbacks): void {
   const { canvas } = ctx.elements
   let scrollAccumulator = 0
 
   function clearHover(): void {
     if (getHoveredBranchIndex() !== null) {
       setHoveredBranchIndex(null)
-      updateVisibility(ctx)
+      cb.updateVisibility(ctx)
       const focused = getFocusedNode()
-      updateFocus(focused, ctx)
-      updateScopedProgress(ctx)
-      updateSidebarSprouts(ctx)
+      cb.updateFocus(focused, ctx)
+      cb.updateScopedProgress(ctx)
+      cb.updateSidebarSprouts(ctx)
     }
     scrollAccumulator = 0
   }
@@ -58,12 +71,12 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
     if (hoveredIndex !== getHoveredBranchIndex()) {
       setHoveredBranchIndex(hoveredIndex)
       scrollAccumulator = 0 // reset scroll when changing branches
-      updateVisibility(ctx)
+      cb.updateVisibility(ctx)
       const branchGroup = ctx.branchGroups[hoveredIndex]
       if (branchGroup) {
-        updateFocus(branchGroup.branch, ctx)
-        updateScopedProgress(ctx)
-        updateSidebarSprouts(ctx)
+        cb.updateFocus(branchGroup.branch, ctx)
+        cb.updateScopedProgress(ctx)
+        cb.updateSidebarSprouts(ctx)
       }
     }
   }
@@ -76,7 +89,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
     const hoveredIndex = getHoveredBranchIndex()
     if (hoveredIndex === null) return
 
-    enterBranchView(hoveredIndex, ctx, callbacks)
+    cb.enterBranchView(hoveredIndex, ctx, navCallbacks)
   }
 
   function handleWheel(event: WheelEvent): void {
@@ -95,7 +108,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
         if (scrollAccumulator >= SCROLL_THRESHOLD) {
           event.preventDefault()
           scrollAccumulator = 0
-          enterBranchView(hoveredIndex, ctx, callbacks)
+          cb.enterBranchView(hoveredIndex, ctx, navCallbacks)
         }
       } else {
         scrollAccumulator = Math.max(0, scrollAccumulator - event.deltaY)
@@ -117,7 +130,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
         if (scrollAccumulator >= SCROLL_THRESHOLD) {
           event.preventDefault()
           scrollAccumulator = 0
-          enterTwigView(twigNode, activeBranchIndex, ctx, callbacks)
+          cb.enterTwigView(twigNode, activeBranchIndex, ctx, navCallbacks)
         }
         return
       }
@@ -128,7 +141,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
         if (scrollAccumulator >= SCROLL_THRESHOLD) {
           event.preventDefault()
           scrollAccumulator = 0
-          returnToOverview(ctx, callbacks)
+          cb.returnToOverview(ctx, navCallbacks)
         }
       } else {
         scrollAccumulator = Math.max(0, scrollAccumulator + event.deltaY)
@@ -143,7 +156,7 @@ export function setupHoverBranch(ctx: AppContext, callbacks: NavigationCallbacks
         if (scrollAccumulator >= SCROLL_THRESHOLD) {
           event.preventDefault()
           scrollAccumulator = 0
-          returnToBranchView(ctx, callbacks)
+          cb.returnToBranchView(ctx, navCallbacks)
         }
       } else {
         scrollAccumulator = Math.max(0, scrollAccumulator + event.deltaY)
@@ -213,7 +226,7 @@ function getBranchIndexFromPosition(
   return closestIndex
 }
 
-export function setupHoverTwig(ctx: AppContext): void {
+export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
   // Add hover listeners to all twigs for branch view sidebar preview
   ctx.branchGroups.forEach(group => {
     group.twigs.forEach(twig => {
@@ -223,8 +236,8 @@ export function setupHoverTwig(ctx: AppContext): void {
         if (!twigId || twigId === getHoveredTwigId()) return
 
         setHoveredTwigId(twigId)
-        updateFocus(twig, ctx)
-        updateSidebarSprouts(ctx)
+        cb.updateFocus(twig, ctx)
+        cb.updateSidebarSprouts(ctx)
       })
 
       twig.addEventListener('mouseleave', () => {
@@ -237,10 +250,10 @@ export function setupHoverTwig(ctx: AppContext): void {
         if (activeBranchIndex !== null) {
           const branchGroup = ctx.branchGroups[activeBranchIndex]
           if (branchGroup) {
-            updateFocus(branchGroup.branch, ctx)
+            cb.updateFocus(branchGroup.branch, ctx)
           }
         }
-        updateSidebarSprouts(ctx)
+        cb.updateSidebarSprouts(ctx)
       })
     })
   })

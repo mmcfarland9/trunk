@@ -288,8 +288,7 @@ describe('DOM Builder Integration', () => {
 
       expect(mockClick).toHaveBeenCalledWith(
         freshResult.elements.trunk,
-        'trunk',
-        'Trunk'
+        'trunk'
       )
     })
   })

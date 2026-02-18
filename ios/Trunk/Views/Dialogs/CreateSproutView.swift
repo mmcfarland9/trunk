@@ -318,17 +318,24 @@ struct CreateSproutView: View {
         let leafId = "leaf-\(UUID().uuidString.lowercased())"
         newLeafName = ""
 
-        // pushEvent is local-first — leaf lands in EventStore immediately
-        Task {
-            try? await SyncService.shared.pushEvent(type: "leaf_created", payload: [
-                "leafId": leafId,
-                "name": trimmedName,
-                "twigId": nodeId
-            ])
-        }
-
         // Select immediately — the optimistic event is already in EventStore
         selectedLeafId = leafId
+
+        // pushEvent is local-first — leaf lands in EventStore immediately
+        Task {
+            do {
+                try await SyncService.shared.pushEvent(type: "leaf_created", payload: [
+                    "leafId": leafId,
+                    "name": trimmedName,
+                    "twigId": nodeId
+                ])
+            } catch {
+                // Push failed — deselect leaf since it may not persist
+                selectedLeafId = nil
+                errorMessage = "Failed to create leaf: \(error.localizedDescription)"
+                print("Leaf creation push failed: \(error)")
+            }
+        }
     }
 
     private func plantSprout() {
@@ -353,7 +360,8 @@ struct CreateSproutView: View {
                     "bloomFlourish": bloomFlourish
                 ])
             } catch {
-                print("Plant push failed (rolled back): \(error)")
+                // Push failed — event stays in local store, queued for retry on next sync
+                print("Plant push failed, queued for retry: \(error)")
             }
         }
 

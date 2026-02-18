@@ -66,7 +66,7 @@ function createHarvestDialog(): HTMLDivElement {
             <p class="harvest-dialog-bloom-hint" data-level="5"></p>
           </div>
         </div>
-        <textarea class="harvest-dialog-reflection" placeholder="Reflect on what you learned..."></textarea>
+        <textarea class="harvest-dialog-reflection" placeholder="Reflect on what you learned..." maxlength="2000"></textarea>
         <div class="harvest-dialog-actions">
           <button type="button" class="action-btn action-btn-passive action-btn-neutral harvest-dialog-cancel">Cancel</button>
           <button type="button" class="action-btn action-btn-progress action-btn-twig harvest-dialog-save">Harvest</button>
@@ -117,7 +117,7 @@ function createSunLogDialog(): HTMLDivElement {
             <p class="sun-log-shine-title"></p>
             <p class="sun-log-shine-meta"></p>
           </div>
-          <textarea class="sun-log-shine-journal" placeholder="Reflect on this journey..."></textarea>
+          <textarea class="sun-log-shine-journal" placeholder="Reflect on this journey..." maxlength="2000"></textarea>
           <div class="sun-log-shine-actions">
             <button type="button" class="action-btn action-btn-progress action-btn-sun sun-log-shine-btn">Radiate</button>
           </div>

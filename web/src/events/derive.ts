@@ -6,16 +6,38 @@
  */
 
 import type { TrunkEvent } from './types'
+import { EVENT_TYPES } from './types'
 import type { SproutSeason, SproutEnvironment, Sprout, WaterEntry, SunEntry } from '../types'
 import constants from '../../../shared/constants.json'
 import { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity
+const MAX_SOIL_CAPACITY = constants.soil.maxCapacity
 const SOIL_RECOVERY_PER_WATER = constants.soil.recoveryRates.waterUse
 const SOIL_RECOVERY_PER_SUN = constants.soil.recoveryRates.sunUse
 const WATER_DAILY_CAPACITY = constants.water.dailyCapacity
 const SUN_WEEKLY_CAPACITY = constants.sun.weeklyCapacity
+
+/**
+ * Round soil values to 2 decimal places to prevent floating-point drift.
+ */
+function roundSoil(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+/**
+ * Generate a deduplication key for an event.
+ * Uses client_id if available, falls back to composite key.
+ */
+function getEventDedupeKey(event: TrunkEvent): string {
+  if (event.client_id) return event.client_id
+  let entityId = ''
+  if ('sproutId' in event) entityId = event.sproutId
+  else if ('leafId' in event) entityId = event.leafId
+  else if ('twigId' in event) entityId = event.twigId
+  return `${event.type}|${entityId}|${event.timestamp}`
+}
 
 /**
  * Derived sprout state (computed from events)
@@ -87,11 +109,20 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   )
 
-  for (const event of sortedEvents) {
+  // C13: Deduplicate events before replay to prevent double-counting
+  const seenKeys = new Set<string>()
+  const dedupedEvents = sortedEvents.filter(event => {
+    const key = getEventDedupeKey(event)
+    if (seenKeys.has(key)) return false
+    seenKeys.add(key)
+    return true
+  })
+
+  for (const event of dedupedEvents) {
     switch (event.type) {
-      case 'sprout_planted': {
+      case EVENT_TYPES.SPROUT_PLANTED: {
         // Spend soil (clamped to 0 minimum)
-        soilAvailable = Math.max(0, soilAvailable - event.soilCost)
+        soilAvailable = roundSoil(Math.max(0, soilAvailable - event.soilCost))
 
         // Create sprout
         sprouts.set(event.sproutId, {
@@ -112,7 +143,7 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
         break
       }
 
-      case 'sprout_watered': {
+      case EVENT_TYPES.SPROUT_WATERED: {
         const sprout = sprouts.get(event.sproutId)
         if (sprout) {
           // DerivedSprout objects are freshly created per deriveState() call,
@@ -123,30 +154,39 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
             prompt: event.prompt,
           })
         }
-        // Soil recovery from watering
-        soilAvailable = Math.min(soilAvailable + SOIL_RECOVERY_PER_WATER, soilCapacity)
+        // C2: Only recover soil if sprout exists and is active
+        if (sprout && sprout.state === 'active') {
+          soilAvailable = roundSoil(Math.min(soilAvailable + SOIL_RECOVERY_PER_WATER, soilCapacity))
+        } else if (!sprout) {
+          // Q8: Warn when event references missing sprout
+          console.warn(`Skipping soil recovery for sprout_watered: sprout ${event.sproutId} not found`)
+        }
         break
       }
 
-      case 'sprout_harvested': {
+      case EVENT_TYPES.SPROUT_HARVESTED: {
         const sprout = sprouts.get(event.sproutId)
         if (sprout) {
           sprout.state = 'completed'
           sprout.result = event.result
           sprout.reflection = event.reflection
           sprout.harvestedAt = event.timestamp
-        }
 
-        // Return soil cost + gain capacity
-        const returnedSoil = sprout?.soilCost ?? 0
-        soilCapacity += event.capacityGained
-        soilAvailable = Math.min(soilAvailable + returnedSoil, soilCapacity)
+          // C3: Only gain capacity and return soil if sprout exists
+          const returnedSoil = sprout.soilCost
+          // C14: Clamp capacity to MAX_SOIL_CAPACITY (no rounding — capacity retains full precision)
+          soilCapacity = Math.min(soilCapacity + event.capacityGained, MAX_SOIL_CAPACITY)
+          soilAvailable = roundSoil(Math.min(soilAvailable + returnedSoil, soilCapacity))
+        } else {
+          // Q8: Warn when harvesting a non-existent sprout
+          console.warn(`Skipping sprout_harvested: sprout ${event.sproutId} not found (timestamp: ${event.timestamp})`)
+        }
         break
       }
 
-      case 'sprout_uprooted': {
+      case EVENT_TYPES.SPROUT_UPROOTED: {
         // Return partial soil
-        soilAvailable = Math.min(soilAvailable + event.soilReturned, soilCapacity)
+        soilAvailable = roundSoil(Math.min(soilAvailable + event.soilReturned, soilCapacity))
         // Transition sprout to uprooted state (preserve all data)
         const sprout = sprouts.get(event.sproutId)
         if (sprout && sprout.state === 'active') {
@@ -156,7 +196,7 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
         break
       }
 
-      case 'sun_shone': {
+      case EVENT_TYPES.SUN_SHONE: {
         sunEntries.push({
           timestamp: event.timestamp,
           content: event.content,
@@ -167,17 +207,23 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
           },
         })
         // Soil recovery from sun
-        soilAvailable = Math.min(soilAvailable + SOIL_RECOVERY_PER_SUN, soilCapacity)
+        soilAvailable = roundSoil(Math.min(soilAvailable + SOIL_RECOVERY_PER_SUN, soilCapacity))
         break
       }
 
-      case 'leaf_created': {
+      case EVENT_TYPES.LEAF_CREATED: {
         leaves.set(event.leafId, {
           id: event.leafId,
           twigId: event.twigId,
           name: event.name,
           createdAt: event.timestamp,
         })
+        break
+      }
+
+      default: {
+        // Q8: Warn about unrecognized event types
+        console.warn(`Skipping unknown event type: ${(event as TrunkEvent).type} (timestamp: ${(event as TrunkEvent).timestamp})`)
         break
       }
     }
@@ -248,7 +294,7 @@ export function deriveWaterAvailable(events: readonly TrunkEvent[], now: Date = 
 
 /**
  * Derive sun available from events.
- * Sun = capacity - shines since Sunday 6am
+ * Sun = capacity - shines since Monday 6am
  */
 export function deriveSunAvailable(events: readonly TrunkEvent[], now: Date = new Date()): number {
   const resetTime = getWeekResetTime(now)
@@ -359,8 +405,8 @@ function calculateEndDate(plantedAt: string, season: SproutSeason): string {
   const start = new Date(plantedAt)
   const durationMs = constants.seasons[season].durationMs
   const end = new Date(start.getTime() + durationMs)
-  // Set to 9am CST (UTC-6 = 15:00 UTC)
-  end.setUTCHours(15, 0, 0, 0)
+  // Set to 9am in user's local timezone (not hardcoded to any specific timezone)
+  end.setHours(9, 0, 0, 0)
   return end.toISOString()
 }
 

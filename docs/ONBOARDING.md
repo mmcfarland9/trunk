@@ -109,7 +109,7 @@ Additional configuration lives in:
 
 1. **Business logic** → `web/src/features/new-feature.ts`
 2. **UI components** → `web/src/ui/` (if needed)
-3. **Wire it up** → `web/src/main.ts` (call setup function)
+3. **Wire it up** → `web/src/bootstrap/ui.ts` (call setup function)
 4. **Add tests** → `web/src/tests/new-feature.test.ts`
 
 ### Adding a New Event Type
@@ -131,8 +131,8 @@ Additional configuration lives in:
 
 1. Create `web/src/features/new-dialog.ts`
 2. Add styles to `web/src/styles/dialogs.css`
-3. Add DOM structure in `web/src/ui/dom-builder.ts`
-4. Wire callbacks in `web/src/main.ts`
+3. Add DOM structure in `web/src/ui/dom-builder/build-dialogs.ts`
+4. Wire callbacks in `web/src/bootstrap/ui.ts`
 
 ### Running Tests
 
@@ -152,11 +152,40 @@ npm run test:e2e            # Run all E2E tests
 npm run test:e2e -- --ui    # Interactive mode
 ```
 
+**E2E test details:**
+
+E2E tests live in `web/e2e/` and cover critical user flows:
+- Navigation between views (overview → branch → twig)
+- Sprout lifecycle (plant, water, harvest, uproot)
+- Resource management (soil spending, water/sun usage)
+- Import/export functionality
+- Authentication flows
+
+To write a new E2E test:
+1. Add a spec file in `web/e2e/` (e.g., `my-feature.spec.ts`)
+2. Use Playwright's `test` and `expect` from `@playwright/test`
+3. Tests run against `http://localhost:5173` — start dev server first with `npm run dev`
+4. Run with `npm run test:e2e -- --ui` for interactive debugging
+
 **Mutation tests:**
 ```bash
 cd web
 npm run test:mutation       # Verify test quality
 ```
+
+### Generated Constants Pipeline
+
+Shared constants are defined in `shared/constants.json` and transformed into platform-specific code:
+
+```bash
+npm run generate    # from web/ directory
+```
+
+This runs `shared/generate-constants.js`, which outputs:
+- `web/src/generated/constants.ts` — TypeScript constants, validation sets, and prompt arrays
+- `ios/Trunk/Generated/SharedConstants.swift` — Swift constants mirroring web values
+
+Always run `npm run generate` after modifying `shared/constants.json`.
 
 ### Debugging State Issues
 
@@ -171,11 +200,11 @@ npm run test:mutation       # Verify test quality
 |----------------|----------|
 | Magic numbers | `shared/constants.json` |
 | Type definitions | `web/src/types.ts` |
-| DOM element refs | `web/src/ui/dom-builder.ts` |
+| DOM element refs | `web/src/ui/dom-builder/index.ts` |
 | CSS variables | `web/src/styles/base.css` (`:root` block) |
 | State getters | `web/src/events/index.ts` |
 | Node positioning | `web/src/ui/layout.ts` |
-| Keyboard shortcuts | `web/src/main.ts` (search "keydown") |
+| Keyboard shortcuts | `web/src/bootstrap/events.ts` (search "keydown") |
 
 ---
 
@@ -208,7 +237,7 @@ function doSomething(ctx: AppContext) {
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| State not persisting | Forgot `saveState()` | Always call after mutations |
+| State not persisting | Event not appended | Use `appendEvent()` — state persists automatically |
 | Resources seem wrong | Derived from logs | Check event log, not counters |
 | CSS not applying | Wrong specificity | Check view mode class context |
 | Node not found | Wrong ID format | Use `branch-{b}-twig-{t}` |

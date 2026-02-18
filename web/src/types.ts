@@ -46,13 +46,15 @@ export type Sprout = {
   state: SproutState
   soilCost: number
   createdAt: string
+  /** @deprecated Use plantedAt instead */
   activatedAt?: string
-  plantedAt?: string      // Alias for activatedAt (gardening metaphor)
+  plantedAt?: string
   endDate?: string
   result?: number // 1-5 scale
   reflection?: string
+  /** @deprecated Use harvestedAt instead */
   completedAt?: string
-  harvestedAt?: string    // Alias for completedAt (gardening metaphor)
+  harvestedAt?: string
   uprootedAt?: string
   // Bloom: describes what each outcome looks like (60 char max each)
   bloomWither?: string    // 1/5 - failure
@@ -69,9 +71,6 @@ export type NodeData = {
   // Sprout and leaf data
   sprouts?: Sprout[]
   leaves?: Leaf[]
-  // Legacy fields (for migration, will be converted to sprouts)
-  goalValue?: number
-  goalTitle?: string
 }
 
 export type TwigViewApi = {
@@ -182,4 +181,5 @@ export type AppContext = {
   nodeLookup: Map<string, HTMLButtonElement>
   twigView?: TwigViewApi
   leafView?: LeafViewApi
+  getUserDisplayName?: () => string
 }

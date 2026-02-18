@@ -8,27 +8,7 @@ import {
   getPresetLabel,
 } from '../state'
 import { getState, getAllWaterEntries, getEvents, deriveSoilLog } from '../events'
-
-// --- Timestamp Formatters ---
-
-/** Format as "MM/DD h:mm AM/PM" (used by sun log and soil bag) */
-function formatDateShort(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day} ${time}`
-}
-
-/** Format as "MM/DD/YYYY h:mm AM/PM" (used by water log for full history) */
-function formatDateWithYear(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = date.getFullYear()
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day}/${year} ${time}`
-}
+import { formatDateShort, formatDateWithYear } from '../utils/date-formatting'
 
 // --- Helper Functions ---
 

@@ -188,7 +188,7 @@ struct TrunkButtonStyle: ButtonStyle {
             .padding(.horizontal, TrunkTheme.space4)
             .padding(.vertical, TrunkTheme.space2)
             .foregroundStyle(foregroundColor)
-            .background(configuration.isPressed ? pressedBackgroundColor : backgroundColor)
+            .background(configuration.isPressed ? pressedBackgroundColor : Color.clear)
             .overlay(
                 Rectangle()
                     .stroke(borderColor, lineWidth: 1)
@@ -202,15 +202,6 @@ struct TrunkButtonStyle: ButtonStyle {
         case .water: return .trunkWater
         case .sun: return .trunkSun
         case .destructive: return .trunkDestructive
-        }
-    }
-
-    private var backgroundColor: Color {
-        switch variant {
-        case .primary: return .clear
-        case .water: return .clear
-        case .sun: return .clear
-        case .destructive: return .clear
         }
     }
 

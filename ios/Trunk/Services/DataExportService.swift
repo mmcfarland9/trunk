@@ -191,30 +191,5 @@ struct DataExportService {
         isoFormatter.string(from: date)
     }
 
-    private static func getString(_ payload: [String: AnyCodable], _ key: String) -> String? {
-        guard let codable = payload[key] else { return nil }
-        return codable.value as? String
-    }
-
-    private static func getInt(_ payload: [String: AnyCodable], _ key: String) -> Int? {
-        guard let codable = payload[key] else { return nil }
-        if let intValue = codable.value as? Int {
-            return intValue
-        }
-        if let doubleValue = codable.value as? Double {
-            return Int(doubleValue)
-        }
-        return nil
-    }
-
-    private static func getDouble(_ payload: [String: AnyCodable], _ key: String) -> Double? {
-        guard let codable = payload[key] else { return nil }
-        if let doubleValue = codable.value as? Double {
-            return doubleValue
-        }
-        if let intValue = codable.value as? Int {
-            return Double(intValue)
-        }
-        return nil
-    }
+    // Payload parsing helpers (getString, getInt, getDouble) are in Utils/PayloadHelpers.swift
 }

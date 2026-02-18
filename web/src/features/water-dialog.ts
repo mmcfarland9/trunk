@@ -110,7 +110,7 @@ export function initWaterDialog(
           <p class="water-dialog-sprout-name">${escapeHtml(sprout.title)}</p>
         </div>
         <p class="water-dialog-prompt">${escapeHtml(prompts[i])}</p>
-        <textarea class="water-dialog-journal" placeholder="Write something..."></textarea>
+        <textarea class="water-dialog-journal" placeholder="Write something..." maxlength="2000"></textarea>
         <div class="water-dialog-section-footer">
           <span class="water-dialog-soil-gain">${escapeHtml(soilGainText)}</span>
           <button type="button" class="action-btn action-btn-progress action-btn-water water-dialog-pour" disabled>Pour</button>

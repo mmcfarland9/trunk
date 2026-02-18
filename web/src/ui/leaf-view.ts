@@ -10,6 +10,7 @@ import {
   getSproutsByLeaf,
   toSprout,
 } from '../events'
+import { formatDateWithYear } from '../utils/date-formatting'
 
 type LeafViewCallbacks = {
   onClose: () => void
@@ -40,15 +41,6 @@ type LogEntry = {
 }
 
 // Labels and emojis imported from ../utils/sprout-labels
-
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = date.getFullYear()
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${month}/${day}/${year} ${time}`
-}
 
 export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallbacks): LeafViewApi {
   const container = document.createElement('div')
@@ -87,7 +79,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
       // Sprout start event
       entries.push({
         type: 'sprout-start',
-        timestamp: sprout.activatedAt || sprout.createdAt,
+        timestamp: sprout.plantedAt || sprout.createdAt,
         sproutId: sprout.id,
         sproutTitle: sprout.title,
         data: {
@@ -114,10 +106,10 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
       }
 
       // Completion event
-      if (sprout.completedAt) {
+      if (sprout.harvestedAt) {
         entries.push({
           type: 'completion',
-          timestamp: sprout.completedAt,
+          timestamp: sprout.harvestedAt,
           sproutId: sprout.id,
           sproutTitle: sprout.title,
           data: {
@@ -147,7 +139,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
   }
 
   function renderLogEntry(entry: LogEntry): string {
-    const timeStr = formatDateTime(entry.timestamp)
+    const timeStr = formatDateWithYear(entry.timestamp)
 
     switch (entry.type) {
       case 'sprout-start': {

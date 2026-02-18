@@ -40,8 +40,14 @@ extension SyncService {
         EventStore.shared.markConfirmed(clientId: event.clientId)
         pushed += 1
       } catch {
-        // Leave as pending — will retry next cycle
-        print("Sync: Failed to retry pending event \(event.clientId) — \(error.localizedDescription)")
+        // Handle duplicate key (23505) as success — event was already on server
+        if error.localizedDescription.contains("23505") || error.localizedDescription.contains("duplicate key") {
+          EventStore.shared.markConfirmed(clientId: event.clientId)
+          pushed += 1
+        } else {
+          // Leave as pending — will retry next cycle
+          print("Sync: Failed to retry pending event \(event.clientId) — \(error.localizedDescription)")
+        }
       }
     }
 

@@ -12,7 +12,10 @@ const BRANCH_ANGLE_STEP = (2 * Math.PI) / BRANCH_COUNT
 const TWIG_LINE_SPACING = 8, BRANCH_LINE_SPACING = 12
 const PREVIEW_FADE = 500, PREVIEW_OPACITY_MAX = 0.4
 
-// Wind animation constants
+// Wind animation: simulates organic sway using sine-based oscillation.
+// Each branch/twig gets a deterministic random speed and phase (via seeded()),
+// creating varied but repeatable motion. Y-axis is damped for realism.
+// PULSE adds subtle scale breathing; FLUTTER adds high-freq secondary sway.
 const WIND_BRANCH_AMP = 6, WIND_TWIG_AMP = 10, WIND_PULSE = 0.04, WIND_MIN = 0.35, WIND_MAX = 0.7
 const WIND_FOCUS_BRANCH_SCALE = 0.7, WIND_FOCUS_TWIG_SCALE = 0.85
 const WIND_Y_DAMPING = 0.6, WIND_FLUTTER_SCALE = 0.18

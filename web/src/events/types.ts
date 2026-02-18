@@ -10,7 +10,21 @@ import type { SproutSeason, SproutEnvironment } from '../types'
 // Base event structure
 interface BaseEvent {
   timestamp: string // ISO 8601
+  client_id?: string // Unique client-generated ID for dedup (set during sync push)
 }
+
+/**
+ * Type-safe event type constants.
+ * Use these instead of raw strings for event type references.
+ */
+export const EVENT_TYPES = {
+  SPROUT_PLANTED: 'sprout_planted',
+  SPROUT_WATERED: 'sprout_watered',
+  SPROUT_HARVESTED: 'sprout_harvested',
+  SPROUT_UPROOTED: 'sprout_uprooted',
+  SUN_SHONE: 'sun_shone',
+  LEAF_CREATED: 'leaf_created',
+} as const
 
 /**
  * Sprout planted - soil spent, sprout becomes active

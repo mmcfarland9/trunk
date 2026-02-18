@@ -195,7 +195,8 @@ struct ShineView: View {
                     "timestamp": timestamp
                 ])
             } catch {
-                print("Shine push failed (rolled back): \(error)")
+                // Push failed — event stays in local store, queued for retry on next sync
+                print("Shine push failed, queued for retry: \(error)")
             }
         }
 

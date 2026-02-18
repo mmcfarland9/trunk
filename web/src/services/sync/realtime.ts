@@ -41,9 +41,12 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
         const localEvent = syncToLocalEvent(syncEvent)
         if (!localEvent) return
 
-        // Check if we already have this event (we pushed it ourselves)
+        // C9: Dedup by client_id (primary) and timestamp (fallback)
         const existingEvents = getEvents()
-        const alreadyExists = existingEvents.some(e => e.timestamp === localEvent.timestamp)
+        const alreadyExists = existingEvents.some(e =>
+          (syncEvent.client_id && e.client_id === syncEvent.client_id) ||
+          e.timestamp === localEvent.timestamp
+        )
 
         if (!alreadyExists) {
           // New event from another device - apply it

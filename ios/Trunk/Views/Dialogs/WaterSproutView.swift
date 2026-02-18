@@ -172,9 +172,8 @@ struct WaterSproutView: View {
                     "timestamp": timestamp
                 ])
             } catch {
-                // Optimistic event was rolled back — but we already dismissed.
-                // The view-level refresh (via progression.version) will correct the UI.
-                print("Water push failed (rolled back): \(error)")
+                // Push failed — event stays in local store, queued for retry on next sync
+                print("Water push failed, queued for retry: \(error)")
             }
         }
 

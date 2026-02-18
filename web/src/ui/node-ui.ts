@@ -1,6 +1,5 @@
 import type { AppContext } from '../types'
 import { getFocusedNode, setFocusedNodeState, getViewMode, getPresetLabel, getPresetNote } from '../state'
-import { getUserProfile } from '../services/auth-service'
 import { getState } from '../events'
 
 function setNodeLabel(element: HTMLButtonElement, label: string): void {
@@ -56,6 +55,8 @@ type BorderStyle = {
   vertical: string
 }
 
+// Currently only style '0' is defined; additional border styles can be added
+// per twigStyle dataset attribute (e.g. '1', '2') to vary twig box appearance.
 const TWIG_BORDER_STYLES: Record<string, BorderStyle> = {
   '0': {
     topLeft: '┌',
@@ -222,8 +223,7 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   let hasLabel: boolean
 
   if (isTrunk) {
-    const profile = getUserProfile()
-    label = profile.full_name || ''
+    label = ctx.getUserDisplayName?.() || ''
     note = 'a unified framework\nfor mind, body & spirit'
     hasLabel = Boolean(label)
   } else {
@@ -275,7 +275,13 @@ const DEFAULT_TWIG_METRICS = {
   paddingY: 32,
   font: '500 9.6px sans-serif',
 }
-const twigMeasureContext = document.createElement('canvas').getContext('2d')
+let twigMeasureContext: CanvasRenderingContext2D | null = null
+function getTwigMeasureContext(): CanvasRenderingContext2D | null {
+  if (!twigMeasureContext) {
+    twigMeasureContext = document.createElement('canvas').getContext('2d')
+  }
+  return twigMeasureContext
+}
 
 function generateTwigLineCandidates(words: string[]): string[][] {
   const joined = words.join(' ')
@@ -370,13 +376,14 @@ function getTwigMetrics(element: HTMLButtonElement): TwigMetrics {
 }
 
 function measureLineWidth(line: string, metrics: TwigMetrics): number {
-  if (!twigMeasureContext) {
+  const ctx = getTwigMeasureContext()
+  if (!ctx) {
     return line.length * metrics.fontSize * 0.55
   }
 
-  if (twigMeasureContext.font !== metrics.font) {
-    twigMeasureContext.font = metrics.font
+  if (ctx.font !== metrics.font) {
+    ctx.font = metrics.font
   }
 
-  return twigMeasureContext.measureText(line).width
+  return ctx.measureText(line).width
 }

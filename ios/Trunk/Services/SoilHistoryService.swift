@@ -80,10 +80,10 @@ struct SoilHistoryService {
 
             switch event.type {
             case "sprout_planted":
-                if let sproutId = event.payload["sproutId"]?.value as? String,
-                   let season = event.payload["season"]?.value as? String,
-                   let environment = event.payload["environment"]?.value as? String,
-                   let soilCost = event.payload["soilCost"]?.value as? Int {
+                if let sproutId = getString(event.payload, "sproutId"),
+                   let season = getString(event.payload, "season"),
+                   let environment = getString(event.payload, "environment"),
+                   let soilCost = getInt(event.payload, "soilCost") {
                     sproutInfo[sproutId] = (season: season, environment: environment, soilCost: soilCost)
                     available = max(0, available - Double(soilCost))
                     changed = true
@@ -94,25 +94,17 @@ struct SoilHistoryService {
                 changed = true
 
             case "sprout_harvested":
-                if let sproutId = event.payload["sproutId"]?.value as? String,
-                   let result = event.payload["result"]?.value as? Int,
-                   let info = sproutInfo[sproutId],
-                   let season = Season(rawValue: info.season),
-                   let environment = SproutEnvironment(rawValue: info.environment) {
-                    let reward = ProgressionService.capacityReward(
-                        season: season,
-                        environment: environment,
-                        result: result,
-                        currentCapacity: capacity
-                    )
-                    capacity += reward
+                if let sproutId = getString(event.payload, "sproutId"),
+                   let capacityGained = getDouble(event.payload, "capacityGained"),
+                   let info = sproutInfo[sproutId] {
+                    capacity += capacityGained
                     let returnedSoil = Double(info.soilCost)
                     available = min(available + returnedSoil, capacity)
                     changed = true
                 }
 
             case "sprout_uprooted":
-                if let soilReturned = event.payload["soilReturned"]?.value as? Double {
+                if let soilReturned = getDouble(event.payload, "soilReturned") {
                     available = min(available + soilReturned, capacity)
                     changed = true
                 }
@@ -170,6 +162,10 @@ struct SoilHistoryService {
                 dates.append(cursor)
                 cursor = cursor.addingTimeInterval(interval)
             }
+            // Always include rangeEnd as final boundary (matches web behavior)
+            if dates.last != rangeEnd {
+                dates.append(rangeEnd)
+            }
             boundaries = dates
 
         } else if SharedConstants.Chart.semimonthlyRanges.contains(bucketKey) {
@@ -208,6 +204,10 @@ struct SoilHistoryService {
                     break
                 }
             }
+            // Always include rangeEnd as final boundary (matches web behavior)
+            if dates.last != rangeEnd {
+                dates.append(rangeEnd)
+            }
             boundaries = dates
 
         } else {
@@ -226,6 +226,10 @@ struct SoilHistoryService {
             while cursor <= rangeEnd {
                 dates.append(cursor)
                 cursor = cursor.addingTimeInterval(intervalSeconds)
+            }
+            // Always include rangeEnd as final boundary (matches web behavior)
+            if dates.last != rangeEnd {
+                dates.append(rangeEnd)
             }
             boundaries = dates
         }

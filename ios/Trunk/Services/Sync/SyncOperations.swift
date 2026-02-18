@@ -43,9 +43,9 @@ extension SyncService {
     }
 
     if !syncEvents.isEmpty {
-      // Merge with existing events, avoiding duplicates by client_timestamp
-      let existingTimestamps = Set(EventStore.shared.events.map { $0.clientTimestamp })
-      let uniqueNewEvents = syncEvents.filter { !existingTimestamps.contains($0.clientTimestamp) }
+      // Merge with existing events, avoiding duplicates by client_id
+      let existingClientIds = Set(EventStore.shared.events.map { $0.clientId })
+      let uniqueNewEvents = syncEvents.filter { !existingClientIds.contains($0.clientId) }
 
       if !uniqueNewEvents.isEmpty {
         EventStore.shared.appendEvents(uniqueNewEvents)
@@ -76,6 +76,11 @@ extension SyncService {
 
     guard AuthService.shared.isAuthenticated else {
       return SyncResult(status: .error, pulled: 0, pushed: 0, error: "Not authenticated", mode: .full)
+    }
+
+    // Guard against concurrent sync — if already syncing, return early
+    guard syncStatus != .syncing else {
+      return SyncResult(status: .syncing, pulled: 0, pushed: 0, error: nil, mode: .incremental)
     }
 
     syncStatus = .syncing
@@ -227,6 +232,15 @@ extension SyncService {
       refreshLastConfirmedTimestamp()
       updateDetailedStatus()
     } catch {
+      // Handle Supabase duplicate key error (23505) as success — the event
+      // was already inserted (e.g. response was lost on a previous attempt)
+      if error.localizedDescription.contains("23505") || error.localizedDescription.contains("duplicate key") {
+        EventStore.shared.markConfirmed(clientId: clientId)
+        syncStatus = .success
+        refreshLastConfirmedTimestamp()
+        updateDetailedStatus()
+        return
+      }
       // Keep the event in the store — it will be retried on next sync cycle
       print("Sync: Push failed for event \(clientId), queued for retry — \(error.localizedDescription)")
       syncStatus = .error

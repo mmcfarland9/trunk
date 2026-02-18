@@ -9,13 +9,13 @@
 │   web/      │   ios/      │         shared/             │
 │  (Vite+TS)  │ (SwiftUI)   │  (constants, schemas)       │
 ├─────────────┴─────────────┴─────────────────────────────┤
-│              localStorage / SwiftData                    │
-│                  (no backend)                           │
+│     localStorage (web) / JSON file cache (iOS)           │
+│           ↕ Supabase (optional cloud sync)               │
 └─────────────────────────────────────────────────────────┘
 ```
 
 Both platforms implement the same progression system using shared specifications.
-No server—all data stays on-device.
+Local-first architecture with optional Supabase cloud sync for multi-device access. App works fully offline.
 
 ## Core Abstraction: The Tree
 
@@ -172,12 +172,9 @@ Each top-level directory in `web/src/` has a specific responsibility:
 ```
 TrunkApp.swift (entry)
     │
-    ├── Models/
-    │   ├── Sprout.swift, Leaf.swift, NodeData.swift
-    │   └── ResourceState.swift, WaterEntry.swift, SunEntry.swift
-    │
     ├── ViewModels/
-    │   └── ProgressionViewModel.swift ──► All state computation
+    │   ├── ProgressionViewModel.swift ──► Soil/resource state for views
+    │   └── SproutsViewModel.swift ──► Sprout list state for views
     │
     ├── Views/
     │   ├── MainTabView.swift ──► Tab navigation
@@ -186,9 +183,14 @@ TrunkApp.swift (entry)
     │   └── Dialogs/ ──► Create, Water, Harvest, Shine
     │
     └── Services/
+        ├── EventDerivation.swift ──► Derived types + state derivation
+        ├── EventStore.swift ──► Event persistence & cache
         ├── ProgressionService.swift ──► Formulas from shared/
+        ├── SoilHistoryService.swift ──► Soil charting
+        ├── SyncEvent.swift ──► Sync event data model
         ├── DataExportService.swift ──► JSON export/import
         ├── AuthService.swift ──► Authentication
+        ├── SupabaseClient.swift ──► Supabase configuration
         └── SyncService.swift (thin facade)
             └── Sync/ ──► Sync implementation (mirrors web's services/sync/)
                 ├── SyncCache.swift ──► Local cache management
@@ -198,7 +200,7 @@ TrunkApp.swift (entry)
                 └── SyncStatus.swift ──► Sync status tracking
 ```
 
-Storage: SwiftData (on-device, mirrors web's event model)
+Storage: JSON file cache (ApplicationSupport/Trunk/events-cache.json) + UserDefaults (mirrors web's event model)
 
 ---
 
@@ -448,9 +450,9 @@ print(info.defaultMessage)  // Technical message
 3. **Codes are unique** — Each code maps to exactly one error condition
 4. **Categories are domain-aligned** — Matches service boundaries (auth, sync, validation)
 
-### Future Work
+### Current Status
 
-Error code utilities are infrastructure-only. Existing error handling call sites (auth-service, sync-service) will be migrated incrementally to use the shared registry.
+> **Note:** Error code utilities exist on both platforms but are not yet used at call sites. The examples above show intended usage. Existing error handling in auth-service and sync-service will be migrated incrementally to use the shared registry.
 
 ---
 

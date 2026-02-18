@@ -63,38 +63,11 @@ struct SproutActionsView: View {
                             Text("BLOOM DESCRIPTIONS")
                                 .monoLabel(size: TrunkTheme.textXs)
 
-                            VStack(alignment: .leading, spacing: TrunkTheme.space3) {
-                                if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
-                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                                        Text("1/5 Withering")
-                                            .trunkFont(size: TrunkTheme.textXs, weight: .medium)
-                                            .foregroundStyle(Color.inkFaint)
-                                        Text(bloomWither)
-                                            .trunkFont(size: TrunkTheme.textSm)
-                                            .foregroundStyle(Color.inkLight)
-                                    }
-                                }
-                                if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
-                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                                        Text("3/5 Budding")
-                                            .trunkFont(size: TrunkTheme.textXs, weight: .medium)
-                                            .foregroundStyle(Color.inkFaint)
-                                        Text(bloomBudding)
-                                            .trunkFont(size: TrunkTheme.textSm)
-                                            .foregroundStyle(Color.inkLight)
-                                    }
-                                }
-                                if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
-                                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                                        Text("5/5 Flourishing")
-                                            .trunkFont(size: TrunkTheme.textXs, weight: .medium)
-                                            .foregroundStyle(Color.inkFaint)
-                                        Text(bloomFlourish)
-                                            .trunkFont(size: TrunkTheme.textSm)
-                                            .foregroundStyle(Color.inkLight)
-                                    }
-                                }
-                            }
+                            BloomDescriptionsView(
+                                bloomWither: sprout.bloomWither,
+                                bloomBudding: sprout.bloomBudding,
+                                bloomFlourish: sprout.bloomFlourish
+                            )
                             .padding(TrunkTheme.space3)
                             .paperCard()
                         }

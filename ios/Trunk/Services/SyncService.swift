@@ -63,9 +63,11 @@ final class SyncService: ObservableObject {
 
   // MARK: - Published Properties
 
-  @Published private(set) var syncStatus: SyncStatus = .syncing
-  @Published private(set) var detailedSyncStatus: DetailedSyncStatus = .loading
-  @Published private(set) var lastConfirmedTimestamp: String? = nil
+  // Note: setters are internal (not private) because SyncOperations.swift
+  // and SyncStatus.swift — extensions in separate files — need write access.
+  @Published var syncStatus: SyncStatus = .syncing
+  @Published var detailedSyncStatus: DetailedSyncStatus = .loading
+  @Published var lastConfirmedTimestamp: String? = nil
 
   // MARK: - Internal Properties (accessed by extensions)
 

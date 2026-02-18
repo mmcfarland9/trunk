@@ -79,38 +79,11 @@ struct HarvestSproutView: View {
                             Text("YOUR BLOOM DESCRIPTIONS")
                                 .monoLabel(size: TrunkTheme.textXs)
 
-                            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-                                if let bloomWither = sprout.bloomWither, !bloomWither.isEmpty {
-                                    HStack(alignment: .top, spacing: TrunkTheme.space2) {
-                                        Text("1/5")
-                                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
-                                            .frame(width: 30)
-                                        Text(bloomWither)
-                                            .trunkFont(size: TrunkTheme.textSm)
-                                            .foregroundStyle(Color.inkLight)
-                                    }
-                                }
-                                if let bloomBudding = sprout.bloomBudding, !bloomBudding.isEmpty {
-                                    HStack(alignment: .top, spacing: TrunkTheme.space2) {
-                                        Text("3/5")
-                                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
-                                            .frame(width: 30)
-                                        Text(bloomBudding)
-                                            .trunkFont(size: TrunkTheme.textSm)
-                                            .foregroundStyle(Color.inkLight)
-                                    }
-                                }
-                                if let bloomFlourish = sprout.bloomFlourish, !bloomFlourish.isEmpty {
-                                    HStack(alignment: .top, spacing: TrunkTheme.space2) {
-                                        Text("5/5")
-                                            .trunkFont(size: TrunkTheme.textXs, weight: .semibold)
-                                            .frame(width: 30)
-                                        Text(bloomFlourish)
-                                            .trunkFont(size: TrunkTheme.textSm)
-                                            .foregroundStyle(Color.inkLight)
-                                    }
-                                }
-                            }
+                            BloomDescriptionsView(
+                                bloomWither: sprout.bloomWither,
+                                bloomBudding: sprout.bloomBudding,
+                                bloomFlourish: sprout.bloomFlourish
+                            )
                             .padding(TrunkTheme.space3)
                             .background(Color.paper)
                             .overlay(
@@ -292,7 +265,8 @@ struct HarvestSproutView: View {
                     "timestamp": timestamp
                 ])
             } catch {
-                print("Harvest push failed (rolled back): \(error)")
+                // Push failed — event stays in local store, queued for retry on next sync
+                print("Harvest push failed, queued for retry: \(error)")
             }
         }
 

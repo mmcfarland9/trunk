@@ -58,10 +58,17 @@ enum SproutState: String, Codable {
 
 /// A water entry derived from events
 struct DerivedWaterEntry: Identifiable {
-    var id: Date { timestamp }
+    let id: UUID
     let timestamp: Date
     let content: String
     let prompt: String?
+
+    init(timestamp: Date, content: String, prompt: String?) {
+        self.id = UUID()
+        self.timestamp = timestamp
+        self.content = content
+        self.prompt = prompt
+    }
 }
 
 /// A sprout derived from events
@@ -95,12 +102,21 @@ struct DerivedLeaf: Identifiable {
 
 /// A sun entry derived from events
 struct DerivedSunEntry: Identifiable {
-    var id: Date { timestamp }
+    let id: UUID
     let timestamp: Date
     let content: String
     let prompt: String?
     let twigId: String
     let twigLabel: String
+
+    init(timestamp: Date, content: String, prompt: String?, twigId: String, twigLabel: String) {
+        self.id = UUID()
+        self.timestamp = timestamp
+        self.content = content
+        self.prompt = prompt
+        self.twigId = twigId
+        self.twigLabel = twigLabel
+    }
 }
 
 /// Complete derived state from the event log
@@ -124,8 +140,9 @@ func deriveState(from events: [SyncEvent]) -> DerivedState {
     var leaves: [String: DerivedLeaf] = [:]
     var sunEntries: [DerivedSunEntry] = []
 
-    // Events are appended chronologically — no sort needed
-    for event in events {
+    // Sort events by timestamp to ensure correct ordering (matches web derive.ts)
+    let sorted = events.sorted { ($0.clientTimestamp) < ($1.clientTimestamp) }
+    for event in sorted {
         switch event.type {
         case "sprout_planted":
             processSproutPlanted(event: event, soilAvailable: &soilAvailable, sprouts: &sprouts)
@@ -446,16 +463,7 @@ func resultToEmoji(_ result: Int) -> String {
 
 /// Get a human-readable context label for a leaf (e.g., "CORE / Movement")
 func contextLabel(for leaf: DerivedLeaf) -> String {
-    let parts = leaf.twigId.split(separator: "-")
-    guard parts.count >= 4,
-          let branchIndex = Int(parts[1]),
-          let twigIndex = Int(parts[3]) else {
-        return leaf.twigId
-    }
-
-    let branchName = SharedConstants.Tree.branchName(branchIndex)
-    let twigLabel = SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
-    return "\(branchName) / \(twigLabel.capitalized)"
+    twigLocationLabel(for: leaf.twigId)
 }
 
 // MARK: - Payload Parsing Helpers
@@ -464,32 +472,4 @@ private func parseTimestamp(_ timestamp: String) -> Date {
     ISO8601.parse(timestamp)
 }
 
-/// Safely get a string value from payload
-private func getString(_ payload: [String: AnyCodable], _ key: String) -> String? {
-    guard let codable = payload[key] else { return nil }
-    return codable.value as? String
-}
-
-/// Safely get an int value from payload (handles both Int and Double)
-private func getInt(_ payload: [String: AnyCodable], _ key: String) -> Int? {
-    guard let codable = payload[key] else { return nil }
-    if let intValue = codable.value as? Int {
-        return intValue
-    }
-    if let doubleValue = codable.value as? Double {
-        return Int(doubleValue)
-    }
-    return nil
-}
-
-/// Safely get a double value from payload (handles both Int and Double)
-private func getDouble(_ payload: [String: AnyCodable], _ key: String) -> Double? {
-    guard let codable = payload[key] else { return nil }
-    if let doubleValue = codable.value as? Double {
-        return doubleValue
-    }
-    if let intValue = codable.value as? Int {
-        return Double(intValue)
-    }
-    return nil
-}
+// Payload parsing helpers (getString, getInt, getDouble) are in Utils/PayloadHelpers.swift

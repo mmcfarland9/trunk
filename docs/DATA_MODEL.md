@@ -171,6 +171,33 @@ active ──► completed
 
 ---
 
+## iOS SyncEvent Model (ios/Trunk/Services/SyncEvent.swift)
+
+The iOS counterpart of web's `TrunkEvent`. Defines the event structure used for Supabase sync:
+
+```swift
+struct SyncEvent: Codable, Identifiable {
+  let id: Int?                         // Server-assigned ID
+  let userId: String
+  let type: String                     // Event type (e.g. "sprout_planted")
+  let payload: [String: AnyCodable]    // Event-specific data
+  let clientTimestamp: String           // ISO8601 creation time
+  let clientId: String                 // Unique client-generated ID
+  let serverTimestamp: String?         // Set by Supabase on insert
+}
+
+struct SyncEventInsert: Codable {
+  let type: String
+  let payload: [String: AnyCodable]
+  let clientTimestamp: String
+  let clientId: String
+}
+```
+
+`AnyCodable` is a hand-rolled type-erased wrapper for JSON payload values, supporting `String`, `Int`, `Double`, and `Bool` types. Decode order matters (String → Int → Double → Bool) to preserve type fidelity.
+
+---
+
 ## Enums
 
 ### Season

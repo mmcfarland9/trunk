@@ -1,4 +1,4 @@
-import { initAuth, subscribeToAuth } from '../services/auth-service'
+import { initAuth, subscribeToAuth, getUserProfile } from '../services/auth-service'
 import { createLoginView, destroyLoginView } from '../ui/login-view'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { pushEvent, subscribeToRealtime, unsubscribeFromRealtime, smartSync, startVisibilitySync } from '../services/sync'
@@ -20,6 +20,9 @@ export async function initializeAuth(
   callbacks: AuthCallbacks
 ): Promise<void> {
   await initAuth()
+
+  // Provide display name callback so UI modules don't import auth-service directly
+  ctx.getUserDisplayName = () => getUserProfile().full_name || ''
 
   subscribeToAuth(async (state) => {
     if (state.loading) return

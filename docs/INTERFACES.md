@@ -186,7 +186,7 @@ interface SyncMetadata {
 
 ```typescript
 interface AppContext {
-  // DOM references (from dom-builder.ts)
+  // DOM references (from dom-builder/index.ts)
   elements: AppElements
 
   // Branch/twig hierarchy
@@ -208,23 +208,14 @@ interface AppContext {
 
 ---
 
-## Legacy State API (web/src/state/index.ts)
+## State Module (web/src/state/index.ts)
 
-**Note:** Most of these are deprecated in favor of event-sourced APIs above.
+Convenience re-exports from other modules:
 
-```typescript
-// Node data (labels, notes)
-getNodeData(nodeId: string): NodeData
-updateNodeData(nodeId: string, updates: Partial<NodeData>): void
-saveState(): void
-
-// Preset labels
-getPresetLabel(nodeId: string): string
-
-// Utility
-canAffordSoil(cost: number): boolean
-calculateSoilCost(season: SproutSeason, environment: SproutEnvironment): number
-```
+- **View state** (from `state/view-state.ts`): `getViewMode`, `setViewModeState`, `getActiveTwigId`, `getActiveBranchIndex`, etc.
+- **Resource getters** (from `events/store.ts`): `getSoilAvailable`, `getSoilCapacity`, `canAffordSoil`, `getWaterAvailable`, etc.
+- **Calculations** (from `utils/calculations.ts`): `calculateSoilCost`, `calculateCapacityReward`, `getTodayResetTime`, etc.
+- **Presets** (from `utils/presets.ts`): `getPresetLabel`, `getPresetNote`
 
 ---
 
@@ -272,7 +263,7 @@ export function setupMyDialog(
 }
 ```
 
-2. **Add DOM elements** in `web/src/ui/dom-builder.ts`.
+2. **Add DOM elements** in `web/src/ui/dom-builder/build-dialogs.ts`.
 
 3. **Wire in `web/src/bootstrap/ui.ts`**:
 ```typescript
@@ -286,40 +277,55 @@ setupMyDialog(ctx, {
 ## iOS ProgressionService (ios/Trunk/Services/ProgressionService.swift)
 
 ```swift
-class ProgressionService {
+struct ProgressionService {
   // Soil costs
-  static func plantingCost(season: Season, environment: Environment) -> Int
+  static func soilCost(season: Season, environment: SproutEnvironment) -> Int
 
   // Capacity rewards
-  static func harvestReward(
+  static func capacityReward(
     season: Season,
-    environment: Environment,
+    environment: SproutEnvironment,
     result: Int,
     currentCapacity: Double
   ) -> Double
 
   // Diminishing returns curve
-  static func diminishingReturns(capacity: Double) -> Double
+  static func diminishingReturns(currentCapacity: Double) -> Double
+
+  // Resource recovery rates
+  static var waterRecovery: Double
+  static var sunRecovery: Double
+
+  // Sprout timeline
+  static func harvestDate(plantedAt: Date, season: Season) -> Date
+  static func progress(plantedAt: Date, season: Season) -> Double
 }
 ```
 
 ---
 
-## iOS EventDerivation (ios/Trunk/Services/EventDerivation.swift)
+## iOS Event Derivation (ios/Trunk/Services/EventDerivation.swift)
+
+Free functions (not struct methods):
 
 ```swift
-struct EventDerivation {
-  // Core derivation
-  static func deriveState(from events: [TrunkEvent]) -> DerivedState
+// Core derivation
+func deriveState(from events: [SyncEvent]) -> DerivedState
 
-  // Resource availability
-  static func deriveWaterAvailable(from events: [TrunkEvent], now: Date) -> Int
-  static func deriveSunAvailable(from events: [TrunkEvent], now: Date) -> Int
+// Resource availability
+func deriveWaterAvailable(from events: [SyncEvent], now: Date) -> Int
+func deriveSunAvailable(from events: [SyncEvent], now: Date) -> Int
 
-  // Time resets
-  static func getTodayResetTime(now: Date) -> Date
-  static func getWeekResetTime(now: Date) -> Date
-}
+// Time resets
+func getTodayResetTime(now: Date) -> Date
+func getWeekResetTime(now: Date) -> Date
+
+// Helper queries
+func getActiveSprouts(from state: DerivedState) -> [DerivedSprout]
+func getCompletedSprouts(from state: DerivedState) -> [DerivedSprout]
+func getSproutsForTwig(from state: DerivedState, twigId: String) -> [DerivedSprout]
+func getLeavesForTwig(from state: DerivedState, twigId: String) -> [DerivedLeaf]
+func isSproutReady(_ sprout: DerivedSprout) -> Bool
 ```
 
 ---
@@ -327,14 +333,47 @@ struct EventDerivation {
 ## iOS SyncService (ios/Trunk/Services/SyncService.swift)
 
 ```swift
-class SyncService: ObservableObject {
-  @Published var metadata: SyncMetadata
+@MainActor
+final class SyncService: ObservableObject {
+  @Published private(set) var syncStatus: SyncStatus
+  @Published private(set) var detailedSyncStatus: DetailedSyncStatus
+  @Published private(set) var lastConfirmedTimestamp: String?
 
-  func pushEvent(_ event: TrunkEvent) async -> SyncError?
+  func pushEvent(type: String, payload: [String: Any]) async throws
   func smartSync() async -> SyncResult
   func forceFullSync() async -> SyncResult
   func subscribeToRealtime()
   func unsubscribeFromRealtime()
+}
+```
+
+---
+
+## iOS DataExportService (ios/Trunk/Services/DataExportService.swift)
+
+Handles JSON export/import of the full event log, mirroring web's export functionality.
+
+```swift
+class DataExportService {
+  static func exportData(events: [SyncEvent], state: DerivedState) -> Data?
+  static func importData(from data: Data) -> [SyncEvent]?
+}
+```
+
+---
+
+## iOS SoilHistoryService (ios/Trunk/Services/SoilHistoryService.swift)
+
+Computes soil capacity history for charting. iOS counterpart of web's `events/soil-charting.ts`.
+
+```swift
+struct SoilHistoryService {
+  static func computeSoilHistory(from events: [SyncEvent]) -> [SoilHistoryPoint]
+  static func bucketSoilData(
+    points: [SoilHistoryPoint],
+    range: SoilChartRange,
+    now: Date
+  ) -> [SoilChartPoint]
 }
 ```
 

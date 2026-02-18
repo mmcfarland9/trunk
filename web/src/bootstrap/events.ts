@@ -3,7 +3,9 @@ import type { NavCallbacks, DialogAPIs } from './ui'
 import { positionNodes, startWind } from '../ui/layout'
 import { setupHoverBranch, setupHoverTwig } from '../features/hover-branch'
 import { getViewMode, getActiveBranchIndex } from '../state'
-import { returnToOverview, enterBranchView, enterTwigView } from '../features/navigation'
+import { returnToOverview, enterBranchView, enterTwigView, returnToBranchView, updateVisibility } from '../features/navigation'
+import { updateScopedProgress, updateSidebarSprouts } from '../features/progress'
+import { updateFocus } from '../ui/node-ui'
 
 export function initializeEvents(
   ctx: AppContext,
@@ -24,8 +26,20 @@ export function initializeEvents(
 
   // Start animations and hover
   startWind(ctx)
-  setupHoverBranch(ctx, navCallbacks)
-  setupHoverTwig(ctx)
+  setupHoverBranch(ctx, navCallbacks, {
+    enterBranchView,
+    enterTwigView,
+    returnToOverview,
+    returnToBranchView,
+    updateVisibility,
+    updateScopedProgress,
+    updateSidebarSprouts,
+    updateFocus,
+  })
+  setupHoverTwig(ctx, {
+    updateFocus,
+    updateSidebarSprouts,
+  })
 
   // Global keyboard navigation
   document.addEventListener('keydown', (e) => {
