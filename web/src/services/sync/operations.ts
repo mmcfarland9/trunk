@@ -267,7 +267,7 @@ export async function smartSync(): Promise<SyncResult> {
   setSyncStatus('syncing')
 
   // Retry any previously failed pushes before pulling
-  const retried = await retryPendingUploads()
+  await retryPendingUploads()
 
   const cacheValid = isCacheValid()
   const mode = cacheValid ? 'incremental' : 'full'
@@ -288,14 +288,15 @@ export async function smartSync(): Promise<SyncResult> {
 
       // Full: clear and pull everything
       // But don't clear cache until we have new data (fallback protection)
-      const { data: syncEvents, error } = await supabase!
-        .from('events')
+      if (!supabase) {
+        setSyncStatus('error')
+        return { status: 'error', pulled: 0, error: 'Supabase not configured', mode }
+      }
+      const { data: syncEvents, error } = await supabase.from('events')
         .select('*')
         .order('created_at', { ascending: true })
 
       if (error) {
-        // Network failed - use existing cache as fallback
-        console.warn('Sync failed, using cached data:', error.message)
         setSyncStatus('error')
         return { status: 'error', pulled: 0, error: error.message, mode }
       }
@@ -332,15 +333,9 @@ export async function smartSync(): Promise<SyncResult> {
       setCacheVersion()
     }
 
-    console.info(
-      `Sync: Fetched ${result.pulled} remote changes, pushed ${retried} local changes, ${getPendingCount()} pending uploads remaining.`
-    )
-
     setSyncStatus('success')
     return { status: 'success', pulled: result.pulled, error: null, mode }
   } catch (err) {
-    // Network error - use cached data as fallback
-    console.warn('Sync exception, using cached data:', err)
     setSyncStatus('error')
     return { status: 'error', pulled: 0, error: String(err), mode }
   }

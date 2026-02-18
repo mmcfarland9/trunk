@@ -131,7 +131,7 @@ export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boo
         </div>
       </div>
     `
-  } else {
+  }
     // Cultivated - show most recent completed sprout
     const completedSprouts = sprouts.filter(s => s.state === 'completed')
     const topSprout = completedSprouts.sort((a, b) =>
@@ -146,5 +146,4 @@ export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boo
         ${renderHistoryCard(topSprout)}
       </div>
     `
-  }
 }

@@ -242,7 +242,7 @@ function getBase(el: HTMLElement, axis: 'x'|'y'): number | null {
   const v = el.dataset[axis === 'x' ? 'baseX' : 'baseY']
   if (!v) return null
   const p = parseFloat(v)
-  return isNaN(p) ? null : p
+  return Number.isNaN(p) ? null : p
 }
 
 function getTwigCollisionDiameter(el: HTMLElement): number {
@@ -255,7 +255,7 @@ function getTwigRadius(el: HTMLElement): number {
   const cached = twigRadiusCache.get(el)
   if (cached !== undefined) return cached
   const r = el.dataset.twigRadius
-  if (r) { const p = parseFloat(r); if (!isNaN(p)) return p }
+  if (r) { const p = parseFloat(r); if (!Number.isNaN(p)) return p }
   return Math.hypot(el.offsetWidth || TWIG_BASE_SIZE, el.offsetHeight || TWIG_BASE_SIZE) / 2
 }
 

@@ -82,7 +82,7 @@ describe('Regression Tests', () => {
       expect(activeSprouts.length).toBe(0)
       // But should still exist in sprouts map
       expect(state.sprouts.get('sprout-1')).toBeDefined()
-      expect(state.sprouts.get('sprout-1')!.state).toBe('completed')
+      expect(state.sprouts.get('sprout-1')?.state).toBe('completed')
     })
 
     it('BUG-003: multiple water entries should all be preserved', () => {

@@ -87,16 +87,16 @@ describe('Shared Fixtures: Event Derivation', () => {
           it(`derives correct state for ${sproutId}`, () => {
             const sprout = state.sprouts.get(sproutId)
             expect(sprout, `${sproutId} should exist`).toBeDefined()
-            expect(sprout!.state).toBe(expectedSprout.state)
-            expect(sprout!.waterEntries.length).toBe(expectedSprout.waterEntryCount)
+            expect(sprout?.state).toBe(expectedSprout.state)
+            expect(sprout?.waterEntries.length).toBe(expectedSprout.waterEntryCount)
             if (expectedSprout.result !== undefined) {
-              expect(sprout!.result).toBe(expectedSprout.result)
+              expect(sprout?.result).toBe(expectedSprout.result)
             }
             if (expectedSprout.reflection !== undefined) {
-              expect(sprout!.reflection).toBe(expectedSprout.reflection)
+              expect(sprout?.reflection).toBe(expectedSprout.reflection)
             }
             if (expectedSprout.leafId !== undefined) {
-              expect(sprout!.leafId).toBe(expectedSprout.leafId)
+              expect(sprout?.leafId).toBe(expectedSprout.leafId)
             }
           })
         }

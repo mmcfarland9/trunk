@@ -23,7 +23,6 @@ import {
   computeRawSoilHistory,
   bucketSoilData,
 } from '../events/soil-charting'
-import type { SoilChartRange } from '../events/soil-charting'
 import type { TrunkEvent } from '../events/types'
 
 describe('Derive State - Soil Capacity', () => {

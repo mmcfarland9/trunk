@@ -41,7 +41,7 @@ export function initializeSync(elements: AppElements): void {
     btn.classList.remove('is-syncing')
 
     if (result.error) {
-      alert('Sync failed: ' + result.error)
+      alert(`Sync failed: ${result.error}`)
     } else {
       window.location.reload()
     }

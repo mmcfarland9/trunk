@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { calculateSoilCost, calculateCapacityReward, getTodayResetTime, getWeekResetTime } from '../utils/calculations'
+import { calculateSoilCost, calculateCapacityReward, } from '../utils/calculations'
 import { deriveState, deriveWaterAvailable, deriveSunAvailable } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 import fixture from '../../../shared/test-fixtures/cross-platform-validation.json'

@@ -83,7 +83,7 @@ function formatBoxLabel(label: string): BoxFormat {
     if (!currentLine) {
       currentLine = word
     } else if (currentLine.length + 1 + word.length <= targetWidth) {
-      currentLine += ' ' + word
+      currentLine += ` ${word}`
     } else {
       lines.push(currentLine)
       currentLine = word

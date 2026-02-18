@@ -55,7 +55,6 @@ export function syncToLocalEvent(sync: SyncEvent): TrunkEvent | null {
   }
 
   if (!validateSyncPayload(merged)) {
-    console.warn('Sync: rejected invalid event payload', merged)
     return null
   }
   return merged as unknown as TrunkEvent

@@ -52,13 +52,11 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
           // New event from another device - apply it
           appendEvents([localEvent])
           onRealtimeEvent?.(localEvent)
-          console.info('Realtime: received event from another device', localEvent.type)
         }
       }
     )
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        console.info('Realtime: connected')
       }
     })
 }
@@ -70,7 +68,6 @@ export function unsubscribeFromRealtime(): void {
   if (realtimeChannel) {
     supabase?.removeChannel(realtimeChannel)
     realtimeChannel = null
-    console.info('Realtime: disconnected')
   }
   onRealtimeEvent = null
 }

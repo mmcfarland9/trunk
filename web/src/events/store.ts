@@ -73,14 +73,12 @@ function loadEvents(): TrunkEvent[] {
           if (validateEvent(item)) {
             valid.push(item)
           } else {
-            console.warn('Skipping invalid event during load:', item)
           }
         }
         return valid
       }
     }
-  } catch (error) {
-    console.warn('Could not load events from storage', error)
+  } catch (_error) {
   }
   return []
 }
@@ -92,10 +90,8 @@ function saveEvents(): void {
   const result = safeSetItem(STORAGE_KEY, JSON.stringify(events))
   if (!result.success) {
     if (result.isQuotaError) {
-      console.warn('localStorage quota exceeded while saving events')
       onQuotaError?.()
     } else {
-      console.warn('Could not save events')
       onSaveError?.(new Error('Storage unavailable'))
     }
   }
@@ -297,7 +293,6 @@ export function replaceEvents(newEvents: TrunkEvent[]): void {
     if (validateEvent(event)) {
       valid.push(event)
     } else {
-      console.warn('replaceEvents: skipping invalid event', event)
     }
   }
   events = valid

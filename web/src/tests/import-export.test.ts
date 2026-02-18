@@ -31,29 +31,29 @@ describe('Import/Export Round-Trip', () => {
     expect(sanitized).not.toBeNull()
 
     // Core fields
-    expect(sanitized!.id).toBe(original.id)
-    expect(sanitized!.title).toBe(original.title)
-    expect(sanitized!.season).toBe(original.season)
-    expect(sanitized!.environment).toBe(original.environment)
-    expect(sanitized!.state).toBe(original.state)
-    expect(sanitized!.soilCost).toBe(original.soilCost)
+    expect(sanitized?.id).toBe(original.id)
+    expect(sanitized?.title).toBe(original.title)
+    expect(sanitized?.season).toBe(original.season)
+    expect(sanitized?.environment).toBe(original.environment)
+    expect(sanitized?.state).toBe(original.state)
+    expect(sanitized?.soilCost).toBe(original.soilCost)
 
     // Dates
-    expect(sanitized!.createdAt).toBe(original.createdAt)
-    expect(sanitized!.plantedAt).toBe(original.plantedAt)
+    expect(sanitized?.createdAt).toBe(original.createdAt)
+    expect(sanitized?.plantedAt).toBe(original.plantedAt)
 
     // Leaf association
-    expect(sanitized!.leafId).toBe(original.leafId)
+    expect(sanitized?.leafId).toBe(original.leafId)
 
     // Bloom descriptions
-    expect(sanitized!.bloomWither).toBe(original.bloomWither)
-    expect(sanitized!.bloomBudding).toBe(original.bloomBudding)
-    expect(sanitized!.bloomFlourish).toBe(original.bloomFlourish)
+    expect(sanitized?.bloomWither).toBe(original.bloomWither)
+    expect(sanitized?.bloomBudding).toBe(original.bloomBudding)
+    expect(sanitized?.bloomFlourish).toBe(original.bloomFlourish)
 
     // Water entries
-    expect(sanitized!.waterEntries).toHaveLength(2)
-    expect(sanitized!.waterEntries![0].content).toBe('Read chapter 1')
-    expect(sanitized!.waterEntries![1].prompt).toBe('What did you learn?')
+    expect(sanitized?.waterEntries).toHaveLength(2)
+    expect(sanitized?.waterEntries?.[0].content).toBe('Read chapter 1')
+    expect(sanitized?.waterEntries?.[1].prompt).toBe('What did you learn?')
   })
 
   it('should preserve completed sprout with result', () => {
@@ -72,9 +72,9 @@ describe('Import/Export Round-Trip', () => {
 
     const sanitized = sanitizeSprout(original)
     expect(sanitized).not.toBeNull()
-    expect(sanitized!.state).toBe('completed')
-    expect(sanitized!.result).toBe(4)
-    expect(sanitized!.harvestedAt).toBe(original.harvestedAt)
+    expect(sanitized?.state).toBe('completed')
+    expect(sanitized?.result).toBe(4)
+    expect(sanitized?.harvestedAt).toBe(original.harvestedAt)
   })
 
   it('should preserve complete leaf data through sanitization', () => {
@@ -86,9 +86,9 @@ describe('Import/Export Round-Trip', () => {
 
     const sanitized = sanitizeLeaf(original)
     expect(sanitized).not.toBeNull()
-    expect(sanitized!.id).toBe(original.id)
-    expect(sanitized!.name).toBe(original.name)
-    expect(sanitized!.createdAt).toBe(original.createdAt)
+    expect(sanitized?.id).toBe(original.id)
+    expect(sanitized?.name).toBe(original.name)
+    expect(sanitized?.createdAt).toBe(original.createdAt)
   })
 
   it('should handle full node data structure', () => {
@@ -127,12 +127,10 @@ describe('Import/Export Round-Trip', () => {
     }
 
     // Simulate import processing
-    const sanitizedSprouts = nodeData.sprouts!
-      .map(sanitizeSprout)
+    const sanitizedSprouts = nodeData.sprouts?.map(sanitizeSprout)
       .filter((s): s is NonNullable<typeof s> => s !== null)
 
-    const sanitizedLeaves = nodeData.leaves!
-      .map(sanitizeLeaf)
+    const sanitizedLeaves = nodeData.leaves?.map(sanitizeLeaf)
       .filter((l): l is NonNullable<typeof l> => l !== null)
 
     expect(sanitizedSprouts).toHaveLength(2)
@@ -182,8 +180,8 @@ describe('Import/Export Round-Trip', () => {
     const sanitized = sanitizeSprout(parsed)
 
     expect(sanitized).not.toBeNull()
-    expect(sanitized!.id).toBe(original.id)
-    expect(sanitized!.waterEntries![0].content).toBe('Entry with "quotes" and <brackets>')
+    expect(sanitized?.id).toBe(original.id)
+    expect(sanitized?.waterEntries?.[0].content).toBe('Entry with "quotes" and <brackets>')
   })
 
   it('should preserve all valid season values', () => {
@@ -197,7 +195,7 @@ describe('Import/Export Round-Trip', () => {
         state: 'active' as const,
       }
       const sanitized = sanitizeSprout(sprout)
-      expect(sanitized!.season).toBe(season)
+      expect(sanitized?.season).toBe(season)
     })
   })
 
@@ -212,7 +210,7 @@ describe('Import/Export Round-Trip', () => {
         state: 'active' as const,
       }
       const sanitized = sanitizeSprout(sprout)
-      expect(sanitized!.environment).toBe(environment)
+      expect(sanitized?.environment).toBe(environment)
     })
   })
 
@@ -225,7 +223,7 @@ describe('Import/Export Round-Trip', () => {
       environment: 'fertile',
       state: 'draft',
     })
-    expect(draftSprout!.state).toBe('active')
+    expect(draftSprout?.state).toBe('active')
 
     // Legacy 'failed' should become 'completed' (showing up counts!)
     const failedSprout = sanitizeSprout({
@@ -236,8 +234,8 @@ describe('Import/Export Round-Trip', () => {
       state: 'failed',
       result: 2,
     })
-    expect(failedSprout!.state).toBe('completed')
-    expect(failedSprout!.result).toBe(2) // Result preserved
+    expect(failedSprout?.state).toBe('completed')
+    expect(failedSprout?.result).toBe(2) // Result preserved
 
     // Current states should pass through unchanged
     const activeSprout = sanitizeSprout({
@@ -247,7 +245,7 @@ describe('Import/Export Round-Trip', () => {
       environment: 'fertile',
       state: 'active',
     })
-    expect(activeSprout!.state).toBe('active')
+    expect(activeSprout?.state).toBe('active')
 
     const completedSprout = sanitizeSprout({
       id: 'sprout-completed',
@@ -257,6 +255,6 @@ describe('Import/Export Round-Trip', () => {
       state: 'completed',
       result: 5,
     })
-    expect(completedSprout!.state).toBe('completed')
+    expect(completedSprout?.state).toBe('completed')
   })
 })

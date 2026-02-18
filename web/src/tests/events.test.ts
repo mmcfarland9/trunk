@@ -393,7 +393,7 @@ describe('State Derivation from Events', () => {
 
       // Verify leaves
       expect(state.leaves.size).toBe(1)
-      expect(state.leaves.get('leaf-fitness')!.name).toBe('Fitness Journey')
+      expect(state.leaves.get('leaf-fitness')?.name).toBe('Fitness Journey')
 
       // Verify sprouts
       expect(state.sprouts.size).toBe(2)

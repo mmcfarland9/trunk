@@ -185,8 +185,7 @@ export function initAccountDialog(
     elements.accountDialogResetData.textContent = 'Reset All Data'
 
     if (error) {
-      console.error('Failed to delete data:', error)
-      alert('Failed to delete data: ' + error)
+      alert(`Failed to delete data: ${error}`)
     } else {
       closeDialog()
       window.location.reload()
@@ -224,7 +223,6 @@ export function initAccountDialog(
     elements.accountDialogSave.textContent = 'Save'
 
     if (error) {
-      console.error('Failed to save profile:', error)
     } else {
       closeDialog()
     }

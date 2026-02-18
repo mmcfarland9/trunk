@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { TrunkEvent, SproutPlantedEvent, SproutWateredEvent } from '../events/types'
+import type { TrunkEvent, SproutPlantedEvent, } from '../events/types'
 
 // Mock all dependencies before imports
 vi.mock('../lib/supabase', () => ({
@@ -86,8 +86,8 @@ describe('sync operations', () => {
   let setCacheVersionMock: any
   let clearCacheVersionMock: any
   let replaceEventsMock: any
-  let appendEventsMock: any
-  let notifyMetadataListenersMock: any
+  let _appendEventsMock: any
+  let _notifyMetadataListenersMock: any
 
   beforeEach(async () => {
     vi.resetModules()
@@ -101,7 +101,7 @@ describe('sync operations', () => {
     getAuthStateMock = vi.mocked(authService.getAuthState)
     getEventsMock = vi.mocked(eventStore.getEvents)
     replaceEventsMock = vi.mocked(eventStore.replaceEvents)
-    appendEventsMock = vi.mocked(eventStore.appendEvents)
+    _appendEventsMock = vi.mocked(eventStore.appendEvents)
     isCacheValidMock = vi.mocked(cache.isCacheValid)
     setCacheVersionMock = vi.mocked(cache.setCacheVersion)
     clearCacheVersionMock = vi.mocked(cache.clearCacheVersion)
@@ -110,7 +110,7 @@ describe('sync operations', () => {
     addPendingIdMock = vi.mocked(pending.addPendingId)
     removePendingIdMock = vi.mocked(pending.removePendingId)
     savePendingIdsMock = vi.mocked(pending.savePendingIds)
-    notifyMetadataListenersMock = vi.mocked(status.notifyMetadataListeners)
+    _notifyMetadataListenersMock = vi.mocked(status.notifyMetadataListeners)
 
     // Default: authenticated user
     getAuthStateMock.mockReturnValue({

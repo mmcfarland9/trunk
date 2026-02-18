@@ -135,8 +135,8 @@ describe('Sprout Sanitization', () => {
     }
     const result = sanitizeSprout(raw)
     expect(result).not.toBeNull()
-    expect(result!.id).toBe('sprout-123')
-    expect(result!.title).toBe('Test Sprout')
+    expect(result?.id).toBe('sprout-123')
+    expect(result?.title).toBe('Test Sprout')
   })
 
   it('should return null for invalid sprout', () => {
@@ -153,7 +153,7 @@ describe('Sprout Sanitization', () => {
       state: 'active',
     }
     const result = sanitizeSprout(raw)
-    expect(result!.season).toBe('2w')
+    expect(result?.season).toBe('2w')
   })
 
   it('should fix invalid environment to fertile', () => {
@@ -165,7 +165,7 @@ describe('Sprout Sanitization', () => {
       state: 'active',
     }
     const result = sanitizeSprout(raw)
-    expect(result!.environment).toBe('fertile')
+    expect(result?.environment).toBe('fertile')
   })
 
   it('should preserve optional bloom fields', () => {
@@ -180,9 +180,9 @@ describe('Sprout Sanitization', () => {
       bloomFlourish: 'Great outcome',
     }
     const result = sanitizeSprout(raw)
-    expect(result!.bloomWither).toBe('Failed outcome')
-    expect(result!.bloomBudding).toBe('Medium outcome')
-    expect(result!.bloomFlourish).toBe('Great outcome')
+    expect(result?.bloomWither).toBe('Failed outcome')
+    expect(result?.bloomBudding).toBe('Medium outcome')
+    expect(result?.bloomFlourish).toBe('Great outcome')
   })
 
   it('should sanitize water entries', () => {
@@ -199,9 +199,9 @@ describe('Sprout Sanitization', () => {
       ],
     }
     const result = sanitizeSprout(raw)
-    expect(result!.waterEntries).toHaveLength(2)
-    expect(result!.waterEntries![0].content).toBe('Entry 1')
-    expect(result!.waterEntries![1].prompt).toBe('Question?')
+    expect(result?.waterEntries).toHaveLength(2)
+    expect(result?.waterEntries?.[0].content).toBe('Entry 1')
+    expect(result?.waterEntries?.[1].prompt).toBe('Question?')
   })
 })
 
@@ -214,8 +214,8 @@ describe('Leaf Sanitization', () => {
     }
     const result = sanitizeLeaf(raw)
     expect(result).not.toBeNull()
-    expect(result!.id).toBe('leaf-123')
-    expect(result!.name).toBe('Test Leaf')
+    expect(result?.id).toBe('leaf-123')
+    expect(result?.name).toBe('Test Leaf')
   })
 
   it('should return null for leaf without id', () => {
@@ -226,6 +226,6 @@ describe('Leaf Sanitization', () => {
   it('should provide default name if missing', () => {
     const raw = { id: 'leaf-123' }
     const result = sanitizeLeaf(raw)
-    expect(result!.name).toBe('Unnamed Saga')
+    expect(result?.name).toBe('Unnamed Saga')
   })
 })

@@ -83,10 +83,10 @@ describe('Cross-Platform Parity Tests', () => {
       for (const [id, expectedSprout] of Object.entries(expected.sproutDetails)) {
         const sprout = state.sprouts.get(id)
         expect(sprout, `sprout ${id} should exist`).toBeDefined()
-        expect(sprout!.state).toBe(expectedSprout.state)
-        expect(sprout!.waterEntries.length).toBe(expectedSprout.waterEntryCount)
+        expect(sprout?.state).toBe(expectedSprout.state)
+        expect(sprout?.waterEntries.length).toBe(expectedSprout.waterEntryCount)
         if ('result' in expectedSprout && expectedSprout.result !== undefined) {
-          expect(sprout!.result).toBe(expectedSprout.result)
+          expect(sprout?.result).toBe(expectedSprout.result)
         }
       }
     })

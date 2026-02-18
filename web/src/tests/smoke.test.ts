@@ -53,8 +53,8 @@ describe('App Smoke Tests', () => {
       ]
 
       for (const file of cssFiles) {
-        const fs = await import('fs')
-        const path = await import('path')
+        const fs = await import('node:fs')
+        const path = await import('node:path')
         const filePath = path.join(process.cwd(), 'src/styles', file)
         expect(fs.existsSync(filePath), `${file} should exist`).toBe(true)
       }
@@ -72,8 +72,8 @@ describe('App Smoke Tests', () => {
       ]
 
       for (const file of modules) {
-        const fs = await import('fs')
-        const path = await import('path')
+        const fs = await import('node:fs')
+        const path = await import('node:path')
         const filePath = path.join(process.cwd(), 'src/features', file)
         expect(fs.existsSync(filePath), `${file} should exist`).toBe(true)
       }

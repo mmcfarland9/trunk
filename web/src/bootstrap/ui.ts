@@ -71,12 +71,8 @@ export function initializeUI(
   // Set up storage error callbacks
   setEventStoreErrorCallbacks(
     () => {
-      // Quota error - prompt user to export data
-      console.error('Storage full! Please export your data to prevent data loss.')
     },
     () => {
-      // General storage error
-      console.warn('Unable to save. Export your data as backup.')
     }
   )
 

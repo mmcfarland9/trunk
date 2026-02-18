@@ -158,8 +158,6 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
         if (sprout && sprout.state === 'active') {
           soilAvailable = roundSoil(Math.min(soilAvailable + SOIL_RECOVERY_PER_WATER, soilCapacity))
         } else if (!sprout) {
-          // Q8: Warn when event references missing sprout
-          console.warn(`Skipping soil recovery for sprout_watered: sprout ${event.sproutId} not found`)
         }
         break
       }
@@ -178,8 +176,6 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
           soilCapacity = Math.min(soilCapacity + event.capacityGained, MAX_SOIL_CAPACITY)
           soilAvailable = roundSoil(Math.min(soilAvailable + returnedSoil, soilCapacity))
         } else {
-          // Q8: Warn when harvesting a non-existent sprout
-          console.warn(`Skipping sprout_harvested: sprout ${event.sproutId} not found (timestamp: ${event.timestamp})`)
         }
         break
       }
@@ -222,8 +218,6 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
       }
 
       default: {
-        // Q8: Warn about unrecognized event types
-        console.warn(`Skipping unknown event type: ${(event as TrunkEvent).type} (timestamp: ${(event as TrunkEvent).timestamp})`)
         break
       }
     }

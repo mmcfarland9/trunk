@@ -4,7 +4,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { TrunkEvent } from '../events/types'
 
 // Mock dependencies before importing sync-service
 vi.mock('../lib/supabase', () => ({
@@ -308,9 +307,9 @@ describe('sync-service array bounds safety', () => {
       const calls2: any[] = []
       const calls3: any[] = []
 
-      const unsub1 = subscribeSyncMetadata((meta) => calls1.push(meta))
+      const _unsub1 = subscribeSyncMetadata((meta) => calls1.push(meta))
       const unsub2 = subscribeSyncMetadata((meta) => calls2.push(meta))
-      const unsub3 = subscribeSyncMetadata((meta) => calls3.push(meta))
+      const _unsub3 = subscribeSyncMetadata((meta) => calls3.push(meta))
 
       expect(calls1.length).toBe(1)
       expect(calls2.length).toBe(1)

@@ -112,7 +112,7 @@ describe('Capacity Reward Calculation', () => {
     it('returns ~35% reward at capacity 50 (factor ≈ 0.354)', () => {
       // (1 - 50/120)^1.5 = (0.583)^1.5 ≈ 0.445
       const reward = calculateCapacityReward(season, env, 5, 50)
-      const diminishingFactor = Math.pow(1 - 50 / MAX_CAPACITY, 1.5)
+      const diminishingFactor = (1 - 50 / MAX_CAPACITY) ** 1.5
       expect(reward).toBeCloseTo(fullReward * diminishingFactor, 2)
     })
 
@@ -144,7 +144,7 @@ describe('Capacity Reward Calculation', () => {
 
     it('calculates 2w/fertile/result1/cap50 correctly', () => {
       // 0.26 base * 1.1 env * 0.4 result * diminishing(50)
-      const diminishing = Math.pow(1 - 50 / MAX_CAPACITY, 1.5)
+      const diminishing = (1 - 50 / MAX_CAPACITY) ** 1.5
       const expected = 0.26 * 1.1 * 0.4 * diminishing
       const reward = calculateCapacityReward('2w', 'fertile', 1, 50)
       expect(reward).toBeCloseTo(expected, 3)
@@ -152,7 +152,7 @@ describe('Capacity Reward Calculation', () => {
 
     it('calculates complex scenario: 6m/firm/result3/cap75', () => {
       // 4.16 base * 1.75 env * 0.7 result * diminishing(75)
-      const diminishing = Math.pow(1 - 75 / MAX_CAPACITY, 1.5)
+      const diminishing = (1 - 75 / MAX_CAPACITY) ** 1.5
       const expected = 4.16 * 1.75 * 0.7 * diminishing
       const reward = calculateCapacityReward('6m', 'firm', 3, 75)
       expect(reward).toBeCloseTo(expected, 3)

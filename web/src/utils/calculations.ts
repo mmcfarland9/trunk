@@ -35,7 +35,7 @@ export function calculateCapacityReward(
   const resultMult = RESULT_MULTIPLIERS[String(result) as keyof typeof RESULT_MULTIPLIERS] ?? RESULT_MULTIPLIERS['3']
 
   // Diminishing returns (exponent 1.5) - growth slows as you approach max
-  const diminishingFactor = Math.max(0, Math.pow(1 - (currentCapacity / MAX_SOIL_CAPACITY), 1.5))
+  const diminishingFactor = Math.max(0, (1 - (currentCapacity / MAX_SOIL_CAPACITY)) ** 1.5)
 
   return base * envMult * resultMult * diminishingFactor
 }

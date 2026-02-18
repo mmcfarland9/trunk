@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { DerivedState, DerivedSprout, DerivedLeaf } from '../events/derive'
+import type { DerivedState, DerivedSprout, } from '../events/derive'
 import type { AppContext, BranchGroup } from '../types'
 
 // Mock events module
@@ -67,7 +67,7 @@ function makeDerivedSprout(overrides?: Partial<DerivedSprout>): DerivedSprout {
 }
 
 // Helper to create a mock Sprout (output of toSprout)
-function makeSprout(twigId: string, overrides?: Record<string, unknown>) {
+function makeSprout(_twigId: string, overrides?: Record<string, unknown>) {
   return {
     id: overrides?.id ?? 'sprout-1',
     title: overrides?.title ?? 'Test Sprout',

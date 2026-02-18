@@ -20,13 +20,17 @@
       },
       "suspicious": {
         "noExplicitAny": "warn",
-        "noConsole": "warn"
+        "noConsole": "warn",
+        "useIterableCallbackReturn": "warn"
       },
       "style": {
         "useConst": "error",
         "useTemplate": "warn",
         "noUselessElse": "warn",
-        "useDefaultParameterLast": "warn"
+        "useDefaultParameterLast": "warn",
+        "noNonNullAssertion": "warn",
+        "useNodejsImportProtocol": "warn",
+        "useExponentiationOperator": "warn"
       },
       "complexity": {
         "noForEach": "off"

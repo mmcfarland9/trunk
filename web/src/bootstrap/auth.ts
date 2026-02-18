@@ -52,20 +52,16 @@ export async function initializeAuth(
         // Smart sync: incremental if cache valid, full if not
         const result = await smartSync()
         if (result.error) {
-          console.warn(`Sync failed (${result.mode}):`, result.error)
           // Don't reload - use cached data as fallback
         } else if (result.pulled > 0) {
-          console.info(`Synced ${result.pulled} events (${result.mode})`)
           callbacks.onSyncComplete()
         } else {
-          console.info(`Sync complete, no new events (${result.mode})`)
         }
 
         // Enable real-time sync: push events as they're created
         setEventSyncCallback((event) => {
           pushEvent(event).then(({ error: pushError }) => {
             if (pushError) {
-              console.warn('Failed to sync event:', pushError)
             }
           })
         })
