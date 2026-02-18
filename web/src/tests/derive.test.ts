@@ -180,14 +180,14 @@ describe('Derive Sun Available', () => {
   })
 
   it('resets on Monday 6am', () => {
-    // Wednesday Jan 29, 2026 at 2pm
+    // Wednesday Jan 29, 2026 at 2pm local
     const now = new Date('2026-01-29T14:00:00')
 
     const events: TrunkEvent[] = [
-      // Last Sunday (before this week's Monday reset)
+      // Saturday (clearly previous week in any timezone)
       {
         type: 'sun_shone',
-        timestamp: '2026-01-26T10:00:00Z',
+        timestamp: '2026-01-24T10:00:00Z',
         twigId: 'branch-0-twig-0',
         twigLabel: 'Test',
         content: 'Last week',
@@ -383,10 +383,10 @@ describe('End Date Calculation (via toSprout)', () => {
     // Convert to legacy Sprout to get endDate
     const sprout = toSprout(derivedSprouts[0])
 
-    // 2w = 14 days, with end time set to 9am CST (15:00 UTC)
+    // 2w = 14 days, with end time set to 9am local timezone
     const startDate = new Date(plantedAt)
     const expectedEnd = new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000)
-    expectedEnd.setUTCHours(15, 0, 0, 0)
+    expectedEnd.setHours(9, 0, 0, 0)
 
     expect(sprout.endDate).toBe(expectedEnd.toISOString())
   })
@@ -414,10 +414,10 @@ describe('End Date Calculation (via toSprout)', () => {
     // Convert to legacy Sprout to get endDate
     const sprout = toSprout(derivedSprouts[0])
 
-    // 1m = 30 days, with end time set to 9am CST (15:00 UTC)
+    // 1m = 30 days, with end time set to 9am local timezone
     const startDate = new Date(plantedAt)
     const expectedEnd = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000)
-    expectedEnd.setUTCHours(15, 0, 0, 0)
+    expectedEnd.setHours(9, 0, 0, 0)
 
     expect(sprout.endDate).toBe(expectedEnd.toISOString())
   })
