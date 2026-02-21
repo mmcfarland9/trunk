@@ -188,11 +188,11 @@ struct ShineView: View {
         Task {
             do {
                 try await SyncService.shared.pushEvent(type: "sun_shone", payload: [
-                    "twigId": twig.nodeId,
-                    "twigLabel": twig.label,
-                    "content": content,
-                    "prompt": selectedPrompt,
-                    "timestamp": timestamp
+                    "twigId": .string(twig.nodeId),
+                    "twigLabel": .string(twig.label),
+                    "content": .string(content),
+                    "prompt": .string(selectedPrompt),
+                    "timestamp": .string(timestamp)
                 ])
             } catch {
                 // Push failed — event stays in local store, queued for retry on next sync

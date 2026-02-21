@@ -327,8 +327,8 @@ struct SproutActionsView: View {
         Task {
             do {
                 try await SyncService.shared.pushEvent(type: "sprout_uprooted", payload: [
-                    "sproutId": sprout.id,
-                    "soilReturned": soilReturned
+                    "sproutId": .string(sprout.id),
+                    "soilReturned": .double(soilReturned)
                 ])
             } catch {
                 print("Uproot push failed (queued for retry): \(error)")

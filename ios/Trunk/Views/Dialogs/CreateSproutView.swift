@@ -325,9 +325,9 @@ struct CreateSproutView: View {
         Task {
             do {
                 try await SyncService.shared.pushEvent(type: "leaf_created", payload: [
-                    "leafId": leafId,
-                    "name": trimmedName,
-                    "twigId": nodeId
+                    "leafId": .string(leafId),
+                    "name": .string(trimmedName),
+                    "twigId": .string(nodeId)
                 ])
             } catch {
                 // Push failed — deselect leaf since it may not persist
@@ -347,18 +347,21 @@ struct CreateSproutView: View {
 
         Task {
             do {
-                try await SyncService.shared.pushEvent(type: "sprout_planted", payload: [
-                    "sproutId": sproutId,
-                    "title": trimmedTitle,
-                    "twigId": nodeId,
-                    "season": season.rawValue,
-                    "environment": environment.rawValue,
-                    "soilCost": soilCost,
-                    "leafId": selectedLeafId as Any,
-                    "bloomWither": bloomWither,
-                    "bloomBudding": bloomBudding,
-                    "bloomFlourish": bloomFlourish
-                ])
+                var plantPayload: [String: JSONValue] = [
+                    "sproutId": .string(sproutId),
+                    "title": .string(trimmedTitle),
+                    "twigId": .string(nodeId),
+                    "season": .string(season.rawValue),
+                    "environment": .string(environment.rawValue),
+                    "soilCost": .int(soilCost),
+                    "bloomWither": .string(bloomWither),
+                    "bloomBudding": .string(bloomBudding),
+                    "bloomFlourish": .string(bloomFlourish)
+                ]
+                if let leafId = selectedLeafId {
+                    plantPayload["leafId"] = .string(leafId)
+                }
+                try await SyncService.shared.pushEvent(type: "sprout_planted", payload: plantPayload)
             } catch {
                 // Push failed — event stays in local store, queued for retry on next sync
                 print("Plant push failed, queued for retry: \(error)")

@@ -259,10 +259,10 @@ struct HarvestSproutView: View {
         Task {
             do {
                 try await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
-                    "sproutId": sprout.id,
-                    "result": selectedResult,
-                    "capacityGained": capacityGained,
-                    "timestamp": timestamp
+                    "sproutId": .string(sprout.id),
+                    "result": .int(selectedResult),
+                    "capacityGained": .double(capacityGained),
+                    "timestamp": .string(timestamp)
                 ])
             } catch {
                 // Push failed — event stays in local store, queued for retry on next sync

@@ -166,10 +166,10 @@ struct WaterSproutView: View {
                 // pushEvent is local-first: EventStore updates immediately,
                 // UI reflects the change before the network call completes.
                 try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
-                    "sproutId": sprout.id,
-                    "content": content,
-                    "prompt": prompt,
-                    "timestamp": timestamp
+                    "sproutId": .string(sprout.id),
+                    "content": .string(content),
+                    "prompt": .string(prompt),
+                    "timestamp": .string(timestamp)
                 ])
             } catch {
                 // Push failed — event stays in local store, queued for retry on next sync

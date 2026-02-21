@@ -16,19 +16,14 @@ import Foundation
 func makeEvent(
     type: String,
     timestamp: String,
-    payload: [String: Any]
+    payload: [String: JSONValue]
 ) -> SyncEvent {
-    var payloadDict: [String: AnyCodable] = [:]
-    for (key, value) in payload {
-        payloadDict[key] = AnyCodable(value)
-    }
-
-    return SyncEvent(
+    SyncEvent(
         id: UUID(),
         userId: UUID(),
         type: type,
-        payload: payloadDict,
-        clientId: "test",
+        payload: payload,
+        clientId: UUID().uuidString,
         clientTimestamp: timestamp,
         createdAt: timestamp
     )

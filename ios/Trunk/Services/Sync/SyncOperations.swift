@@ -205,7 +205,7 @@ extension SyncService {
   /// The local EventStore is updated immediately so the UI reflects the
   /// action without waiting for a network round-trip. On failure the event
   /// is queued for retry instead of being rolled back.
-  func pushEvent(type: String, payload: [String: Any]) async throws {
+  func pushEvent(type: String, payload: [String: JSONValue]) async throws {
     guard let client = SupabaseClientProvider.shared else {
       throw SyncError.notConfigured
     }
@@ -225,7 +225,7 @@ extension SyncService {
       id: UUID(),
       userId: userId,
       type: type,
-      payload: payload.mapValues { AnyCodable($0) },
+      payload: payload,
       clientId: clientId,
       clientTimestamp: clientTimestamp,
       createdAt: clientTimestamp // placeholder until server confirms
@@ -237,7 +237,7 @@ extension SyncService {
     let eventInsert = SyncEventInsert(
       userId: userId.uuidString,
       type: type,
-      payload: payload.mapValues { AnyCodable($0) },
+      payload: payload,
       clientId: clientId,
       clientTimestamp: clientTimestamp
     )

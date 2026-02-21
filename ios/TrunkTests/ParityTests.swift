@@ -130,32 +130,32 @@ func loadWeekBoundaryFixture() -> WeekBoundaryFixture? {
 
 func convertToSyncEvents(_ events: [ParityEvent]) -> [SyncEvent] {
     events.map { event in
-        var payload: [String: AnyCodable] = [:]
+        var payload: [String: JSONValue] = [:]
 
-        if let v = event.sproutId { payload["sproutId"] = AnyCodable(v) }
-        if let v = event.twigId { payload["twigId"] = AnyCodable(v) }
-        if let v = event.leafId { payload["leafId"] = AnyCodable(v) }
-        if let v = event.title { payload["title"] = AnyCodable(v) }
-        if let v = event.season { payload["season"] = AnyCodable(v) }
-        if let v = event.environment { payload["environment"] = AnyCodable(v) }
-        if let v = event.soilCost { payload["soilCost"] = AnyCodable(v) }
-        if let v = event.content { payload["content"] = AnyCodable(v) }
-        if let v = event.prompt { payload["prompt"] = AnyCodable(v) }
-        if let v = event.result { payload["result"] = AnyCodable(v) }
-        if let v = event.capacityGained { payload["capacityGained"] = AnyCodable(v) }
-        if let v = event.reflection { payload["reflection"] = AnyCodable(v) }
-        if let v = event.name { payload["name"] = AnyCodable(v) }
-        if let v = event.twigLabel { payload["twigLabel"] = AnyCodable(v) }
-        if let v = event.bloomWither { payload["bloomWither"] = AnyCodable(v) }
-        if let v = event.bloomBudding { payload["bloomBudding"] = AnyCodable(v) }
-        if let v = event.bloomFlourish { payload["bloomFlourish"] = AnyCodable(v) }
+        if let v = event.sproutId { payload["sproutId"] = .string(v) }
+        if let v = event.twigId { payload["twigId"] = .string(v) }
+        if let v = event.leafId { payload["leafId"] = .string(v) }
+        if let v = event.title { payload["title"] = .string(v) }
+        if let v = event.season { payload["season"] = .string(v) }
+        if let v = event.environment { payload["environment"] = .string(v) }
+        if let v = event.soilCost { payload["soilCost"] = .int(v) }
+        if let v = event.content { payload["content"] = .string(v) }
+        if let v = event.prompt { payload["prompt"] = .string(v) }
+        if let v = event.result { payload["result"] = .int(v) }
+        if let v = event.capacityGained { payload["capacityGained"] = .double(v) }
+        if let v = event.reflection { payload["reflection"] = .string(v) }
+        if let v = event.name { payload["name"] = .string(v) }
+        if let v = event.twigLabel { payload["twigLabel"] = .string(v) }
+        if let v = event.bloomWither { payload["bloomWither"] = .string(v) }
+        if let v = event.bloomBudding { payload["bloomBudding"] = .string(v) }
+        if let v = event.bloomFlourish { payload["bloomFlourish"] = .string(v) }
 
         return SyncEvent(
             id: UUID(),
             userId: UUID(),
             type: event.type,
             payload: payload,
-            clientId: "test",
+            clientId: UUID().uuidString,
             clientTimestamp: event.timestamp,
             createdAt: event.timestamp
         )

@@ -153,10 +153,10 @@ struct WaterDailySproutsView: View {
         Task {
             do {
                 try await SyncService.shared.pushEvent(type: "sprout_watered", payload: [
-                    "sproutId": sprout.id,
-                    "content": content,
-                    "prompt": prompts[sprout.id] ?? "",
-                    "timestamp": timestamp
+                    "sproutId": .string(sprout.id),
+                    "content": .string(content),
+                    "prompt": .string(prompts[sprout.id] ?? ""),
+                    "timestamp": .string(timestamp)
                 ])
             } catch {
                 print("Water push failed (rolled back): \(error)")

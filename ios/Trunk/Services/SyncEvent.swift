@@ -9,7 +9,7 @@ import Foundation
 
 // REVIEW: Added event type validation via enum. Alternative: validate against known string set
 // without enum. Enum provides compile-time safety.
-enum TrunkEventType: String, Codable {
+enum TrunkEventType: String, Codable, Sendable {
     case sproutPlanted = "sprout_planted"
     case sproutWatered = "sprout_watered"
     case sproutHarvested = "sprout_harvested"
@@ -23,11 +23,11 @@ enum TrunkEventType: String, Codable {
     }
 }
 
-struct SyncEvent: Codable, Identifiable {
+struct SyncEvent: Codable, Sendable, Identifiable {
     let id: UUID
     let userId: UUID
     let type: String
-    let payload: [String: AnyCodable]
+    let payload: [String: JSONValue]
     let clientId: String
     let clientTimestamp: String
     let createdAt: String
@@ -44,10 +44,10 @@ struct SyncEvent: Codable, Identifiable {
 }
 
 /// Payload for inserting a new event (without server-generated fields)
-struct SyncEventInsert: Codable {
+struct SyncEventInsert: Codable, Sendable {
     let userId: String
     let type: String
-    let payload: [String: AnyCodable]
+    let payload: [String: JSONValue]
     let clientId: String
     let clientTimestamp: String
 
@@ -60,13 +60,49 @@ struct SyncEventInsert: Codable {
     }
 }
 
-/// For encoding/decoding arbitrary JSON
-struct AnyCodable: Codable {
-    let value: Any
+/// Type-safe JSON value enum — replaces AnyCodable for Sendable conformance
+enum JSONValue: Codable, Sendable, Equatable {
+    case string(String)
+    case int(Int)
+    case double(Double)
+    case bool(Bool)
+    case object([String: JSONValue])
+    case array([JSONValue])
+    case null
 
-    init(_ value: Any) {
-        self.value = value
+    // MARK: - Convenience Initializers
+
+    init(_ value: String) { self = .string(value) }
+    init(_ value: Int) { self = .int(value) }
+    init(_ value: Double) { self = .double(value) }
+    init(_ value: Bool) { self = .bool(value) }
+
+    // MARK: - Computed Properties
+
+    var stringValue: String? {
+        if case .string(let v) = self { return v }
+        return nil
     }
+
+    var intValue: Int? {
+        if case .int(let v) = self { return v }
+        return nil
+    }
+
+    var doubleValue: Double? {
+        switch self {
+        case .double(let v): return v
+        case .int(let v): return Double(v)
+        default: return nil
+        }
+    }
+
+    var boolValue: Bool? {
+        if case .bool(let v) = self { return v }
+        return nil
+    }
+
+    // MARK: - Codable
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -74,43 +110,56 @@ struct AnyCodable: Codable {
         // numeric strings being decoded as numbers), and Int before Double
         // (so whole numbers like 1 are Int, not Double 1.0).
         if let string = try? container.decode(String.self) {
-            value = string
+            self = .string(string)
         } else if let int = try? container.decode(Int.self) {
-            value = int
+            self = .int(int)
         } else if let double = try? container.decode(Double.self) {
-            value = double
+            self = .double(double)
         } else if let bool = try? container.decode(Bool.self) {
-            value = bool
-        } else if let dict = try? container.decode([String: AnyCodable].self) {
-            value = dict.mapValues { $0.value }
-        } else if let array = try? container.decode([AnyCodable].self) {
-            value = array.map { $0.value }
+            self = .bool(bool)
+        } else if let dict = try? container.decode([String: JSONValue].self) {
+            self = .object(dict)
+        } else if let array = try? container.decode([JSONValue].self) {
+            self = .array(array)
         } else if container.decodeNil() {
-            value = NSNull()
+            self = .null
         } else {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode value")
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode JSON value")
         }
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        switch value {
-        case let string as String:
-            try container.encode(string)
-        case let int as Int:
-            try container.encode(int)
-        case let double as Double:
-            try container.encode(double)
-        case let bool as Bool:
-            try container.encode(bool)
-        case let dict as [String: Any]:
-            try container.encode(dict.mapValues { AnyCodable($0) })
-        case let array as [Any]:
-            try container.encode(array.map { AnyCodable($0) })
-        case is NSNull:
-            try container.encodeNil()
-        default:
-            throw EncodingError.invalidValue(value, .init(codingPath: [], debugDescription: "Cannot encode value"))
+        switch self {
+        case .string(let v): try container.encode(v)
+        case .int(let v): try container.encode(v)
+        case .double(let v): try container.encode(v)
+        case .bool(let v): try container.encode(v)
+        case .object(let v): try container.encode(v)
+        case .array(let v): try container.encode(v)
+        case .null: try container.encodeNil()
         }
     }
+}
+
+// MARK: - Literal Conformances
+
+extension JSONValue: ExpressibleByStringLiteral {
+    init(stringLiteral value: String) { self = .string(value) }
+}
+
+extension JSONValue: ExpressibleByIntegerLiteral {
+    init(integerLiteral value: Int) { self = .int(value) }
+}
+
+extension JSONValue: ExpressibleByFloatLiteral {
+    init(floatLiteral value: Double) { self = .double(value) }
+}
+
+extension JSONValue: ExpressibleByBooleanLiteral {
+    init(booleanLiteral value: Bool) { self = .bool(value) }
+}
+
+extension JSONValue: ExpressibleByNilLiteral {
+    init(nilLiteral: ()) { self = .null }
 }

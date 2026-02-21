@@ -12,7 +12,7 @@ import Combine
 
 // MARK: - Cache Model
 
-struct CachedEventStore: Codable {
+struct CachedEventStore: Codable, Sendable {
   let events: [SyncEvent]
   let pendingUploadClientIds: [String]
   let lastSyncTimestamp: String?
@@ -39,15 +39,24 @@ final class EventStore: ObservableObject {
   private var writeTask: Task<Void, Never>?
   private static let writeDebounceInterval: TimeInterval = 0.5
 
-  // File path for JSON cache
-  private static var cacheFileURL: URL {
-    let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-    let trunkDir = appSupport.appendingPathComponent("Trunk", isDirectory: true)
-    return trunkDir.appendingPathComponent("events-cache.json")
-  }
-
   private init() {
-    loadFromDisk()
+    // Read raw bytes off main thread, decode on main thread
+    Task { [weak self] in
+      let data = await EventCacheIO.shared.readData()
+      guard let self else { return }
+      guard let data else {
+        print("EventStore: No cache found, starting fresh")
+        return
+      }
+      do {
+        let cached = try JSONDecoder().decode(CachedEventStore.self, from: data)
+        self.events = cached.events
+        self.pendingUploadClientIds = Set(cached.pendingUploadClientIds)
+        print("EventStore: Loaded \(cached.events.count) events from cache (\(cached.pendingUploadClientIds.count) pending)")
+      } catch {
+        print("EventStore: Failed to decode cache, starting fresh — \(error.localizedDescription)")
+      }
+    }
   }
 
   // MARK: - Event Management
@@ -180,40 +189,8 @@ final class EventStore: ObservableObject {
 
   // MARK: - Disk Persistence
 
-  /// Load events from JSON cache file on disk
-  private func loadFromDisk() {
-    let fileURL = Self.cacheFileURL
-    guard FileManager.default.fileExists(atPath: fileURL.path) else {
-      print("EventStore: No cache file found, starting fresh")
-      return
-    }
-
-    do {
-      let data = try Data(contentsOf: fileURL)
-      let cached = try JSONDecoder().decode(CachedEventStore.self, from: data)
-      events = cached.events
-      pendingUploadClientIds = Set(cached.pendingUploadClientIds)
-      print("EventStore: Loaded \(cached.events.count) events from cache (\(cached.pendingUploadClientIds.count) pending)")
-    } catch {
-      print("EventStore: Failed to load cache, starting fresh — \(error.localizedDescription)")
-      // Corrupt cache — start with empty state
-      events = []
-      pendingUploadClientIds = []
-    }
-  }
-
-  /// Schedule a debounced write to disk
-  private func scheduleDiskWrite() {
-    writeTask?.cancel()
-    writeTask = Task { [weak self] in
-      try? await Task.sleep(nanoseconds: UInt64(Self.writeDebounceInterval * 1_000_000_000))
-      guard !Task.isCancelled else { return }
-      self?.writeToDisk()
-    }
-  }
-
-  /// Write current state to JSON cache file
-  private func writeToDisk() {
+  /// Encode current state to Data (runs on @MainActor where events are accessible)
+  private func encodeCache() -> Data? {
     let cached = CachedEventStore(
       events: events,
       pendingUploadClientIds: Array(pendingUploadClientIds),
@@ -225,21 +202,31 @@ final class EventStore: ObservableObject {
     do {
       let encoder = JSONEncoder()
       encoder.outputFormatting = .prettyPrinted
-      let data = try encoder.encode(cached)
-
-      // Ensure directory exists
-      let dirURL = Self.cacheFileURL.deletingLastPathComponent()
-      try FileManager.default.createDirectory(at: dirURL, withIntermediateDirectories: true)
-
-      try data.write(to: Self.cacheFileURL, options: .atomic)
+      return try encoder.encode(cached)
     } catch {
-      print("EventStore: Failed to write cache — \(error.localizedDescription)")
+      print("EventStore: Failed to encode cache — \(error.localizedDescription)")
+      return nil
     }
   }
 
-  /// Force an immediate write (e.g., before app goes to background)
+  /// Schedule a debounced write to disk via EventCacheIO (off main thread)
+  private func scheduleDiskWrite() {
+    writeTask?.cancel()
+    writeTask = Task { [weak self] in
+      try? await Task.sleep(nanoseconds: UInt64(Self.writeDebounceInterval * 1_000_000_000))
+      guard !Task.isCancelled else { return }
+      guard let data = self?.encodeCache() else { return }
+      await EventCacheIO.shared.writeData(data)
+    }
+  }
+
+  /// Force an immediate write (e.g., before app goes to background).
+  /// Encodes synchronously on @MainActor, then dispatches I/O to EventCacheIO.
   func flushToDisk() {
     writeTask?.cancel()
-    writeToDisk()
+    guard let data = encodeCache() else { return }
+    Task.detached {
+      await EventCacheIO.shared.writeData(data)
+    }
   }
 }
