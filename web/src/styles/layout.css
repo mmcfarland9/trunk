@@ -191,7 +191,7 @@
 .map-panel { display: flex; flex-direction: column; gap: 1rem; align-items: center; margin-top: 3rem; position: relative; flex: 1; min-height: 0; }
 
 /* === Canvas === */
-.canvas { position: relative; --canvas-max-height: max(320px, calc(100vh - 210px)); --base-scale: 1.375; --camera-x: -4%; --camera-y: -3%; width: min(100%, 1100px, calc(var(--canvas-max-height) * 14 / 9)); aspect-ratio: 14 / 9; overflow: visible; transform: translate3d(var(--camera-x, 0px), var(--camera-y, 0px), 0) scale(calc(var(--base-scale) * var(--camera-scale, 1))); transform-origin: var(--zoom-origin-x, 50%) var(--zoom-origin-y, 50%); transition: transform 480ms ease-in-out; will-change: transform; }
+.canvas { position: relative; --canvas-max-height: max(320px, calc(100vh - 210px)); --base-scale: 1.375; --camera-x: 0; --camera-y: 0; width: min(100%, 1100px, calc(var(--canvas-max-height) * 14 / 9)); aspect-ratio: 14 / 9; overflow: visible; transform: translate3d(var(--camera-x, 0px), var(--camera-y, 0px), 0) scale(calc(var(--base-scale) * var(--camera-scale, 1))); transform-origin: var(--zoom-origin-x, 50%) var(--zoom-origin-y, 50%); transition: transform 480ms ease-in-out; will-change: transform; }
 .canvas.is-zoomed { --camera-scale: 1.02; }
 .canvas.is-twig-zoomed { --camera-scale: 1.12; overflow: hidden; }
 .canvas.is-twig-zoomed .branch-group,
