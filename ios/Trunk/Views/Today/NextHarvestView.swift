@@ -9,6 +9,7 @@ import SwiftUI
 
 struct NextHarvestView: View {
     let sprout: DerivedSprout
+    let onTap: () -> Void
 
     private var harvestDate: Date {
         ProgressionService.harvestDate(plantedAt: sprout.plantedAt, season: sprout.season)
@@ -19,57 +20,64 @@ struct NextHarvestView: View {
     }
 
     private var progress: Double {
-        ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)
+        min(1, max(0, ProgressionService.progress(plantedAt: sprout.plantedAt, season: sprout.season)))
     }
 
     private var percentage: Int {
         Int((progress * 100).rounded())
     }
 
-    private var progressBar: String {
-        let barTotal = 10
-        let filled = Int(progress * Double(barTotal))
-        let clampedFilled = min(barTotal, max(0, filled))
-        let barFilled = String(repeating: "\u{2501}", count: clampedFilled)
-        let barEmpty = String(repeating: "\u{2500}", count: barTotal - clampedFilled)
-        return "[\(barFilled)\(barEmpty)]"
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
-            Text("NEXT HARVEST")
-                .monoLabel(size: TrunkTheme.textXs)
+        Button {
+            HapticManager.tap()
+            onTap()
+        } label: {
+            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                Text("NEXT HARVEST")
+                    .monoLabel(size: TrunkTheme.textXs)
 
-            HStack {
-                VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                    Text(sprout.title)
-                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-                        .lineLimit(1)
+                HStack {
+                    VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                        Text(sprout.title)
+                            .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                            .foregroundStyle(Color.ink)
+                            .lineLimit(1)
 
-                    Text("\(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
-                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
-                }
+                        Text("\(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
+                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
 
-                Spacer()
+                    Spacer()
 
-                VStack(alignment: .trailing, spacing: TrunkTheme.space1) {
-                    Text(progressBar)
-                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .foregroundStyle(Color.twig)
+                    VStack(alignment: .trailing, spacing: TrunkTheme.space1) {
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 1.5)
+                                    .fill(Color.borderSubtle)
+                                    .frame(height: 3)
+                                RoundedRectangle(cornerRadius: 1.5)
+                                    .fill(Color.twig)
+                                    .frame(width: geo.size.width * progress, height: 3)
+                            }
+                        }
+                        .frame(width: 80, height: 3)
 
-                    Text("\(percentage)%")
-                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .foregroundStyle(Color.inkFaint)
+                        Text("\(percentage)%")
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                    }
                 }
             }
+            .padding(TrunkTheme.space3)
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
         }
-        .padding(TrunkTheme.space3)
-        .background(Color.paper)
-        .overlay(
-            Rectangle()
-                .stroke(Color.border, lineWidth: 1)
-        )
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(sprout.title), \(percentage)% complete, \(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
+        .accessibilityHint("Opens sprout details")
     }
 }

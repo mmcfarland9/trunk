@@ -16,6 +16,7 @@ struct TodayView: View {
     @State private var showShineSheet = false
     @State private var showDataInfo = false
     @State private var showWaterSheet = false
+    @State private var showSproutActions = false
 
     // MARK: - Cached State (updated in .task / .onAppear)
 
@@ -60,7 +61,7 @@ struct TodayView: View {
 
                         // Next harvest countdown
                         if let nextSprout = cachedNextHarvestSprout {
-                            NextHarvestView(sprout: nextSprout)
+                            NextHarvestView(sprout: nextSprout, onTap: { showSproutActions = true })
                                 .animatedCard(index: 3)
                         }
 
@@ -106,6 +107,13 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showDataInfo) {
             DataInfoSheet(progression: progression)
+        }
+        .sheet(isPresented: $showSproutActions) {
+            if let sprout = cachedNextHarvestSprout {
+                NavigationStack {
+                    SproutActionsView(sprout: sprout, progression: progression)
+                }
+            }
         }
         .onAppear {
             progression.refresh()
