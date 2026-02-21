@@ -141,6 +141,10 @@ extension SyncService {
 
         if let latest = syncEvents.last?.createdAt {
           setLastSync(latest)
+        } else {
+          // Server returned no events — clear stale timestamp so future
+          // incremental syncs don't silently skip a full refresh.
+          clearLastSync()
         }
 
         result = (syncEvents.count, nil)
@@ -195,7 +199,12 @@ extension SyncService {
 
   /// Force a full sync by invalidating cache and re-pulling everything.
   /// Use for pull-to-refresh to pick up server-side changes (e.g. deleted rows).
+  ///
+  /// Resets `syncStatus` so this always runs even if a background sync is
+  /// in progress — pull-to-refresh is an explicit user action that should
+  /// supersede any concurrent incremental sync.
   func forceFullSync() async -> SyncResult {
+    syncStatus = .idle
     clearLastSync()
     clearCacheVersion()
     return await smartSync()
