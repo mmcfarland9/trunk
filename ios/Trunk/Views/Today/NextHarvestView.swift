@@ -78,6 +78,6 @@ struct NextHarvestView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(sprout.title), \(percentage)% complete, \(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
-        .accessibilityHint("Opens sprout details")
+        .accessibilityHint("Shows all upcoming harvests")
     }
 }

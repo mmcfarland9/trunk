@@ -16,12 +16,13 @@ struct TodayView: View {
     @State private var showShineSheet = false
     @State private var showDataInfo = false
     @State private var showWaterSheet = false
-    @State private var showSproutActions = false
+    @State private var showUpcomingHarvests = false
 
     // MARK: - Cached State (updated in .task / .onAppear)
 
     @State private var activeSprouts: [DerivedSprout] = []
     @State private var cachedLeafNames: [String: String] = [:]
+    @State private var cachedUpcomingSprouts: [DerivedSprout] = []
     @State private var cachedNextHarvestSprout: DerivedSprout? = nil
     @State private var cachedRawSoilHistory: [RawSoilSnapshot] = []
     @State private var selectedSoilRange: SoilChartRange = .inception
@@ -61,7 +62,7 @@ struct TodayView: View {
 
                         // Next harvest countdown
                         if let nextSprout = cachedNextHarvestSprout {
-                            NextHarvestView(sprout: nextSprout, onTap: { showSproutActions = true })
+                            NextHarvestView(sprout: nextSprout, onTap: { showUpcomingHarvests = true })
                                 .animatedCard(index: 3)
                         }
 
@@ -108,11 +109,9 @@ struct TodayView: View {
         .sheet(isPresented: $showDataInfo) {
             DataInfoSheet(progression: progression)
         }
-        .sheet(isPresented: $showSproutActions) {
-            if let sprout = cachedNextHarvestSprout {
-                NavigationStack {
-                    SproutActionsView(sprout: sprout, progression: progression)
-                }
+        .sheet(isPresented: $showUpcomingHarvests) {
+            NavigationStack {
+                UpcomingHarvestsView(sprouts: cachedUpcomingSprouts)
             }
         }
         .onAppear {
@@ -136,15 +135,15 @@ struct TodayView: View {
             map[pair.key] = pair.value.name
         }
 
-        // Next harvest sprout
-        cachedNextHarvestSprout = active
+        // Upcoming harvests (sorted soonest first)
+        cachedUpcomingSprouts = active
             .filter { !isSproutReady($0) }
             .sorted { sprout1, sprout2 in
                 let date1 = ProgressionService.harvestDate(plantedAt: sprout1.plantedAt, season: sprout1.season)
                 let date2 = ProgressionService.harvestDate(plantedAt: sprout2.plantedAt, season: sprout2.season)
                 return date1 < date2
             }
-            .first
+        cachedNextHarvestSprout = cachedUpcomingSprouts.first
 
         // Soil capacity history (raw snapshots before bucketing)
         cachedRawSoilHistory = SoilHistoryService.computeSoilHistory()

@@ -8,12 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Tapping the Next Harvest panel on the Today view opens the sprout detail sheet
-- VoiceOver accessibility labels and hints on the Next Harvest panel
+- Upcoming Harvests sheet: tapping the Next Harvest panel shows all active sprouts sorted by harvest date
+- VoiceOver accessibility labels and hints on the Next Harvest panel and harvest list rows
 
 ### Changed
 - Replaced ASCII text progress bar in Next Harvest panel with a native SwiftUI rounded bar
 - Improved dark mode track visibility using the borderSubtle semantic color token
+- Next Harvest tap now opens a glanceable overview of all upcoming harvests instead of a single sprout detail
 
 ## [0.1.0] - 2026-01-29
 
