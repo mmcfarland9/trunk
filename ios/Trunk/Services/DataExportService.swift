@@ -8,16 +8,7 @@
 
 import Foundation
 
-// MARK: - Event Types (match web src/events/types.ts)
-
-enum TrunkEventType: String, Codable {
-    case sproutPlanted = "sprout_planted"
-    case sproutWatered = "sprout_watered"
-    case sproutHarvested = "sprout_harvested"
-    case sproutUprooted = "sprout_uprooted"
-    case sunShone = "sun_shone"
-    case leafCreated = "leaf_created"
-}
+// TrunkEventType is defined in SyncEvent.swift
 
 struct TrunkEvent: Codable {
     let type: TrunkEventType
