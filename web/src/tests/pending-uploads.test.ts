@@ -17,9 +17,7 @@ describe('pending-uploads', () => {
 
   describe('addPendingId / getPendingCount', () => {
     it('starts at 0 and increases count when IDs are added', async () => {
-      const { getPendingCount, addPendingId } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { getPendingCount, addPendingId } = await import('../services/sync/pending-uploads')
 
       expect(getPendingCount()).toBe(0)
 
@@ -36,9 +34,7 @@ describe('pending-uploads', () => {
 
   describe('hasPendingId', () => {
     it('returns false for absent ID and true for present ID', async () => {
-      const { hasPendingId, addPendingId } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { hasPendingId, addPendingId } = await import('../services/sync/pending-uploads')
 
       expect(hasPendingId('id-1')).toBe(false)
 
@@ -65,9 +61,7 @@ describe('pending-uploads', () => {
     })
 
     it('does nothing when removing an ID that does not exist', async () => {
-      const { getPendingCount, removePendingId } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { getPendingCount, removePendingId } = await import('../services/sync/pending-uploads')
 
       expect(getPendingCount()).toBe(0)
       removePendingId('nonexistent')
@@ -77,9 +71,7 @@ describe('pending-uploads', () => {
 
   describe('getPendingIds', () => {
     it('returns array of all current IDs', async () => {
-      const { getPendingIds, addPendingId } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { getPendingIds, addPendingId } = await import('../services/sync/pending-uploads')
 
       expect(getPendingIds()).toEqual([])
 
@@ -110,9 +102,7 @@ describe('pending-uploads', () => {
 
   describe('savePendingIds', () => {
     it('writes to localStorage as JSON array', async () => {
-      const { addPendingId, savePendingIds } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { addPendingId, savePendingIds } = await import('../services/sync/pending-uploads')
 
       addPendingId('id-x')
       addPendingId('id-y')
@@ -130,9 +120,7 @@ describe('pending-uploads', () => {
     })
 
     it('handles localStorage errors gracefully', async () => {
-      const { addPendingId, savePendingIds } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { addPendingId, savePendingIds } = await import('../services/sync/pending-uploads')
 
       addPendingId('id-1')
 
@@ -152,7 +140,10 @@ describe('pending-uploads', () => {
   describe('loadPendingIds on module init', () => {
     it('loads existing IDs from localStorage', async () => {
       // Pre-populate localStorage before module loads
-      localStorage.setItem('trunk-pending-uploads', JSON.stringify(['saved-1', 'saved-2', 'saved-3']))
+      localStorage.setItem(
+        'trunk-pending-uploads',
+        JSON.stringify(['saved-1', 'saved-2', 'saved-3']),
+      )
 
       const { getPendingCount, hasPendingId, getPendingIds } = await import(
         '../services/sync/pending-uploads'
@@ -210,9 +201,7 @@ describe('pending-uploads', () => {
     })
 
     it('adding multiple unique IDs then duplicates keeps correct count', async () => {
-      const { getPendingCount, addPendingId } = await import(
-        '../services/sync/pending-uploads'
-      )
+      const { getPendingCount, addPendingId } = await import('../services/sync/pending-uploads')
 
       addPendingId('a')
       addPendingId('b')

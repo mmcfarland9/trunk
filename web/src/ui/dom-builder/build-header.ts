@@ -83,7 +83,10 @@ export function buildHeader(): HeaderElements {
   soilMeter.setAttribute('aria-valuenow', String(initialAvailable))
   soilMeter.setAttribute('aria-valuemin', '0')
   soilMeter.setAttribute('aria-valuemax', String(initialCapacity))
-  soilMeter.setAttribute('aria-label', `Soil: ${initialAvailable.toFixed(2)} of ${initialCapacity.toFixed(2)}`)
+  soilMeter.setAttribute(
+    'aria-label',
+    `Soil: ${initialAvailable.toFixed(2)} of ${initialCapacity.toFixed(2)}`,
+  )
   soilMeter.append(soilLabel, soilTrack, soilValue)
 
   // Global Water meter - 3 circles

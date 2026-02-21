@@ -57,9 +57,7 @@ describe('buildDialogs', () => {
 
   describe('harvest dialog specifics', () => {
     it('has a slider with min=1 and max=5', () => {
-      const slider = dialogs.harvestDialog.querySelector(
-        'input[type="range"]',
-      ) as HTMLInputElement
+      const slider = dialogs.harvestDialog.querySelector('input[type="range"]') as HTMLInputElement
       expect(slider).not.toBeNull()
       expect(slider.min).toBe('1')
       expect(slider.max).toBe('5')
@@ -123,7 +121,9 @@ describe('buildDialogs', () => {
     })
 
     it('has name and phone inputs', () => {
-      const nameInput = dialogs.accountDialog.querySelector('.account-name-input') as HTMLInputElement
+      const nameInput = dialogs.accountDialog.querySelector(
+        '.account-name-input',
+      ) as HTMLInputElement
       const phoneInput = dialogs.accountDialog.querySelector(
         '.account-phone-input',
       ) as HTMLInputElement
@@ -134,7 +134,9 @@ describe('buildDialogs', () => {
     })
 
     it('has timezone select', () => {
-      const tz = dialogs.accountDialog.querySelector('.account-timezone-select') as HTMLSelectElement
+      const tz = dialogs.accountDialog.querySelector(
+        '.account-timezone-select',
+      ) as HTMLSelectElement
       expect(tz).not.toBeNull()
       expect(tz.tagName).toBe('SELECT')
     })

@@ -118,9 +118,7 @@ function createMockCtx() {
   } as unknown as Parameters<typeof initWaterDialog>[0]
 }
 
-function createMockCallbacks(
-  sprouts: ActiveSproutInfo[] = [],
-): WaterDialogCallbacks {
+function createMockCallbacks(sprouts: ActiveSproutInfo[] = []): WaterDialogCallbacks {
   return {
     onWaterMeterChange: vi.fn(),
     onSoilMeterChange: vi.fn(),
@@ -180,10 +178,7 @@ describe('water-dialog', () => {
     it('does nothing when all sprouts are already watered today', () => {
       vi.mocked(checkSproutWateredToday).mockReturnValue(true)
 
-      const sprouts = [
-        makeSprout('s1', 'Run daily'),
-        makeSprout('s2', 'Read a book'),
-      ]
+      const sprouts = [makeSprout('s1', 'Run daily'), makeSprout('s2', 'Read a book')]
       callbacks = createMockCallbacks(sprouts)
       const api = initWaterDialog(ctx, callbacks)
 
@@ -199,10 +194,7 @@ describe('water-dialog', () => {
     it('targets specific sprout when passed as argument', () => {
       const target = makeSprout('s-target', 'Specific Goal')
       // Provide extra sprouts via getActiveSprouts to prove they are ignored
-      callbacks = createMockCallbacks([
-        makeSprout('s1', 'Other1'),
-        makeSprout('s2', 'Other2'),
-      ])
+      callbacks = createMockCallbacks([makeSprout('s1', 'Other1'), makeSprout('s2', 'Other2')])
       const api = initWaterDialog(ctx, callbacks)
 
       api.openWaterDialog(target)
@@ -215,9 +207,7 @@ describe('water-dialog', () => {
     })
 
     it('does not open if target sprout is already watered today', () => {
-      vi.mocked(checkSproutWateredToday).mockImplementation(
-        (id: string) => id === 's-watered',
-      )
+      vi.mocked(checkSproutWateredToday).mockImplementation((id: string) => id === 's-watered')
 
       const target = makeSprout('s-watered', 'Already Done')
       callbacks = createMockCallbacks([])
@@ -310,9 +300,8 @@ describe('water-dialog', () => {
 
       api.openWaterDialog()
 
-      const pourBtn = ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>(
-        '.water-dialog-pour',
-      )
+      const pourBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')
       expect(pourBtn?.disabled).toBe(true)
     })
 
@@ -323,9 +312,8 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn = ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>(
-        '.water-dialog-pour',
-      )!
+      const pourBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
 
       // Type something into the textarea
       textarea.value = 'Made progress today'
@@ -341,9 +329,8 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn = ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>(
-        '.water-dialog-pour',
-      )!
+      const pourBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
 
       // Enable button
       textarea.value = 'Journaling about progress'
@@ -390,9 +377,8 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn = ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>(
-        '.water-dialog-pour',
-      )!
+      const pourBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
 
       // Even with content, button should be disabled when no water
       textarea.value = 'Some text'
@@ -412,9 +398,8 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn = ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>(
-        '.water-dialog-pour',
-      )!
+      const pourBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
 
       // Enable button first
       textarea.value = 'Text'
@@ -432,10 +417,7 @@ describe('water-dialog', () => {
       // Start with 1 water remaining
       vi.mocked(getWaterAvailable).mockReturnValue(1)
 
-      const sprouts = [
-        makeSprout('s1', 'Goal 1'),
-        makeSprout('s2', 'Goal 2'),
-      ]
+      const sprouts = [makeSprout('s1', 'Goal 1'), makeSprout('s2', 'Goal 2')]
       callbacks = createMockCallbacks(sprouts)
       const api = initWaterDialog(ctx, callbacks)
 
@@ -504,9 +486,7 @@ describe('water-dialog', () => {
     })
 
     it('excludes sprouts already watered today', () => {
-      vi.mocked(checkSproutWateredToday).mockImplementation(
-        (id: string) => id === 's-done',
-      )
+      vi.mocked(checkSproutWateredToday).mockImplementation((id: string) => id === 's-done')
 
       const sprouts = [
         makeSprout('s-done', 'Already Watered'),

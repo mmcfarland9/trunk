@@ -276,9 +276,7 @@ describe('shine-dialog', () => {
       // The placeholder should not contain the raw {twig} token
       expect(ctx.elements.sunLogShineJournal.placeholder).not.toContain('{twig}')
       // It should contain the actual twig label (since Math.random is 0, it picks first twig)
-      expect(ctx.elements.sunLogShineJournal.placeholder).toContain(
-        'Label for branch-0-twig-0',
-      )
+      expect(ctx.elements.sunLogShineJournal.placeholder).toContain('Label for branch-0-twig-0')
     })
 
     it('hides shine section when no twigs have labels', async () => {
@@ -550,10 +548,7 @@ describe('shine-dialog', () => {
     })
 
     it('wires up input listener on journal textarea', async () => {
-      const addEventListenerSpy = vi.spyOn(
-        ctx.elements.sunLogShineJournal,
-        'addEventListener',
-      )
+      const addEventListenerSpy = vi.spyOn(ctx.elements.sunLogShineJournal, 'addEventListener')
 
       const { initShine } = await import('../features/shine-dialog')
       initShine(ctx, callbacks)
@@ -562,10 +557,7 @@ describe('shine-dialog', () => {
     })
 
     it('wires up click listener on radiate button', async () => {
-      const addEventListenerSpy = vi.spyOn(
-        ctx.elements.sunLogShineBtn,
-        'addEventListener',
-      )
+      const addEventListenerSpy = vi.spyOn(ctx.elements.sunLogShineBtn, 'addEventListener')
 
       const { initShine } = await import('../features/shine-dialog')
       initShine(ctx, callbacks)
@@ -598,9 +590,7 @@ describe('shine-dialog', () => {
 
       api.populateSunLogShine()
 
-      expect(ctx.elements.sunLogShineJournal.placeholder).toBe(
-        'What are you reflecting on today?',
-      )
+      expect(ctx.elements.sunLogShineJournal.placeholder).toBe('What are you reflecting on today?')
     })
 
     it('uses specific prompts when only specific prompts exist for the twig', async () => {
