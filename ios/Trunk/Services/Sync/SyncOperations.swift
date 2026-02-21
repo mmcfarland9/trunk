@@ -31,22 +31,26 @@ extension SyncService {
 
     let syncEvents: [SyncEvent]
     if let lastSync = lastSync {
-      syncEvents = try await client
-        .from("events")
-        .select()
-        .eq("user_id", value: userId.uuidString)
-        .gt("created_at", value: lastSync)
-        .order("created_at")
-        .execute()
-        .value
+      syncEvents = try await withTimeout(seconds: 15) { [client] in
+        try await client
+          .from("events")
+          .select()
+          .eq("user_id", value: userId.uuidString)
+          .gt("created_at", value: lastSync)
+          .order("created_at")
+          .execute()
+          .value
+      }
     } else {
-      syncEvents = try await client
-        .from("events")
-        .select()
-        .eq("user_id", value: userId.uuidString)
-        .order("created_at")
-        .execute()
-        .value
+      syncEvents = try await withTimeout(seconds: 15) { [client] in
+        try await client
+          .from("events")
+          .select()
+          .eq("user_id", value: userId.uuidString)
+          .order("created_at")
+          .execute()
+          .value
+      }
     }
 
     if !syncEvents.isEmpty {
@@ -121,13 +125,15 @@ extension SyncService {
           return SyncResult(status: .error, pulled: 0, pushed: pushed, error: "Not authenticated", mode: mode)
         }
 
-        let syncEvents: [SyncEvent] = try await client
-          .from("events")
-          .select()
-          .eq("user_id", value: userId.uuidString)
-          .order("created_at")
-          .execute()
-          .value
+        let syncEvents: [SyncEvent] = try await withTimeout(seconds: 15) { [client] in
+          try await client
+            .from("events")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .order("created_at")
+            .execute()
+            .value
+        }
 
         // Success - now safe to replace cache
         EventStore.shared.setEvents(syncEvents)

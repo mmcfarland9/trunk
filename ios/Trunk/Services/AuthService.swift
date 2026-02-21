@@ -54,7 +54,9 @@ final class AuthService {
         #endif
 
         do {
-            session = try await client.auth.session
+            session = try await withTimeout(seconds: 10) { [client] in
+                try await client.auth.session
+            }
             user = session?.user
             if user != nil {
                 await fetchProfile()
@@ -105,8 +107,10 @@ final class AuthService {
 
     func signOut() async throws {
         guard let client = SupabaseClientProvider.shared else { return }
-        // Unsubscribe from realtime before signing out
+        // Clean up sync state before signing out to prevent stale cache
+        // if a different user signs in next
         SyncService.shared.unsubscribeFromRealtime()
+        SyncService.shared.clearLocalCache()
         try await client.auth.signOut()
     }
 }
