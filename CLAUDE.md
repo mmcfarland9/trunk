@@ -151,7 +151,7 @@ Visual keyboard hints appear in the sidebar when shortcuts are available for the
 
 ## Progression System
 
-Soil capacity grows from 10 to ~100 over years of consistent goal completion. Planting costs and capacity rewards scale with season length and difficulty. See `shared/formulas.md` for complete formulas (both platforms must implement identically).
+Soil capacity grows from 10 to ~120 over years of consistent goal completion. Planting costs and capacity rewards scale with season length and difficulty. See `shared/formulas.md` for complete formulas (both platforms must implement identically).
 
 ---
 
@@ -167,14 +167,11 @@ Key directories (full architecture in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.m
 
 - `bootstrap/` — App initialization (auth, events, sync, ui)
 - `events/` — Event sourcing core (store, derive, soil-charting)
-- `services/sync/` — Cloud sync modules (operations, cache, pending-uploads, realtime, status)
+- `services/sync/` — Cloud sync modules (index, operations, cache, pending-uploads, realtime, status)
 - `features/` — Business logic (navigation, dialogs, progress)
 - `ui/` — DOM construction (dom-builder/, twig-view/, layout, node-ui)
-- `state/` — View state (in-memory navigation)
+- `state/` — View state and convenience re-exports (navigation, resource getters, calculations, presets)
 - `utils/` — Pure utilities
-
----
-
 
 ---
 
@@ -183,18 +180,6 @@ Key directories (full architecture in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.m
 **AppContext**: Central context object passed to most functions, contains all DOM element references, node lookup maps, and feature APIs (twigView, leafView, etc.).
 
 **Callback Objects**: Features receive callbacks to coordinate with other modules without direct imports. See [docs/INTERFACES.md](docs/INTERFACES.md) for module APIs.
-
----
-
-## Debug Tools
-
-**Access**: Press `d` then `b` within 500ms to toggle the debug panel.
-
-**Features**:
-- **Debug hover zones**: Visualize branch hover detection areas
-- **Advance clock**: Jump forward in time (for testing sprout timelines)
-- **Reset soil**: Reset resources to starting values
-- **Clear all sprouts**: Remove all sprouts from all twigs
 
 ---
 
@@ -216,6 +201,8 @@ Export reminder appears after 7 days without export.
 - **Indentation**: 2 spaces
 - **TypeScript**: Strict mode (`noUnusedLocals`, `noUnusedParameters`)
 - **Target**: ES2022 with ESNext modules
+- **Formatter/Linter**: Biome (`web/biome.json`) — handles both formatting and linting
+- **Pre-commit hooks**: Lefthook — runs Biome checks before commit
 - **Naming**:
   - Files: `kebab-case.ts`
   - Exports: `camelCase`

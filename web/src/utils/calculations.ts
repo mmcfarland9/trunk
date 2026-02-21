@@ -32,8 +32,10 @@ export function calculateCapacityReward(
 ): number {
   const base = SEASONS[season].baseReward
   const envMult = ENVIRONMENT_MULTIPLIERS[environment]
+  const clampedResult = Math.max(1, Math.min(5, result))
   const resultMult =
-    RESULT_MULTIPLIERS[String(result) as keyof typeof RESULT_MULTIPLIERS] ?? RESULT_MULTIPLIERS['3']
+    RESULT_MULTIPLIERS[String(clampedResult) as keyof typeof RESULT_MULTIPLIERS] ??
+    RESULT_MULTIPLIERS['3']
 
   // Diminishing returns (exponent 1.5) - growth slows as you approach max
   const diminishingFactor = Math.max(0, (1 - currentCapacity / MAX_SOIL_CAPACITY) ** 1.5)

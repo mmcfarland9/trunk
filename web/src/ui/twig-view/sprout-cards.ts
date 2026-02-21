@@ -42,7 +42,7 @@ export function renderHistoryCard(s: Sprout): string {
     : ''
 
   return `
-    <div class="sprout-card sprout-history-card is-completed ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''}>
+    <div class="sprout-card sprout-history-card is-completed ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''} role="listitem" aria-label="${escapeHtml(s.title)} - completed">
       <div class="sprout-card-header">
         <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
       </div>
@@ -76,7 +76,7 @@ export function renderActiveCard(s: Sprout): string {
     : ''
 
   return `
-    <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''}>
+    <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''} role="listitem" aria-label="${escapeHtml(s.title)} - ${ready ? 'ready to harvest' : 'growing'}">
       <div class="sprout-card-header">
         <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
         <button type="button" class="sprout-delete-btn" data-action="delete" aria-label="Uproot">x</button>

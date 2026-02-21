@@ -117,7 +117,7 @@ struct SproutDetailView: View {
 
                 Divider().overlay(Color.borderSubtle)
 
-                detailRow(label: "Soil Cost", value: "\(sprout.soilCost)")
+                detailRow(label: "Soil Cost", value: "\(Int(sprout.soilCost))")
 
                 Divider().overlay(Color.borderSubtle)
 

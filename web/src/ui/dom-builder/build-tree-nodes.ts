@@ -92,7 +92,7 @@ export function buildTreeNodes(onNodeClick: NodeClickHandler): TreeNodesElements
     branch.dataset.defaultLabel = String(i + 1)
     branch.dataset.placeholder = `Branch ${i + 1}`
     branch.dataset.branchIndex = String(i)
-    branch.setAttribute('aria-label', `Branch ${i + 1}`)
+    branch.setAttribute('aria-label', `Branch: ${i + 1}`)
 
     const branchLabel = document.createElement('span')
     branchLabel.className = 'node-label'

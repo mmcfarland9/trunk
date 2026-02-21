@@ -37,7 +37,7 @@ final class AuthService {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: "testAuth") {
             let email = defaults.string(forKey: "testEmail") ?? ""
-            let testPassword = "trunk-e2e-test-2026!"
+            let testPassword = ProcessInfo.processInfo.environment["TRUNK_TEST_PASSWORD"] ?? ""
             if !email.isEmpty {
                 do {
                     let authSession = try await client.auth.signIn(email: email, password: testPassword)

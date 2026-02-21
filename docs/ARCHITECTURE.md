@@ -113,6 +113,8 @@ bootstrap/ (app initialization - split from main.ts)
          ├── lib/
          │   └── supabase.ts ──► Supabase client configuration
          │
+         ├── constants.ts ──► UI constants + re-exports from generated
+         │
          ├── features/
          │   ├── navigation.ts ──► View transitions
          │   ├── progress.ts ──► Stats calculation
@@ -122,6 +124,19 @@ bootstrap/ (app initialization - split from main.ts)
          │   ├── log-dialogs.ts ──► History views
          │   ├── account-dialog.ts ──► Account settings
          │   └── hover-branch.ts ──► Branch hover detection
+         │
+         ├── utils/ ──► Pure utility functions (no dependencies)
+         │   ├── calculations.ts ──► Soil, water, sun math
+         │   ├── safe-storage.ts ──► localStorage wrapper
+         │   ├── debounce.ts ──► Debounce helper
+         │   ├── dom-helpers.ts ──► DOM utility functions
+         │   ├── date-formatting.ts ──► Date display formatting
+         │   ├── twig-id.ts ──► Twig ID parsing
+         │   ├── sprout-labels.ts ──► Sprout display labels
+         │   ├── validate-import.ts ──► Import data validation
+         │   ├── error-codes.ts ──► Shared error code registry
+         │   ├── escape-html.ts ──► HTML escaping (XSS prevention)
+         │   └── presets.ts ──► Preset label/note helpers
          │
          └── ui/
              ├── layout.ts ──► Node positioning, SVG guides
@@ -184,10 +199,53 @@ TrunkApp.swift (entry)
     │   └── SproutsViewModel.swift ──► Sprout list state for views
     │
     ├── Views/
+    │   ├── ContentView.swift ──► Root view
+    │   ├── LoginView.swift ──► Authentication UI
     │   ├── MainTabView.swift ──► Tab navigation
-    │   ├── OverviewView / BranchView / TwigDetailView
-    │   ├── TodayView ──► Daily focus (unique to iOS)
-    │   └── Dialogs/ ──► Create, Water, Harvest, Shine
+    │   ├── OverviewView.swift / BranchView.swift / TwigDetailView.swift
+    │   ├── TreeCanvasView.swift ──► Tree visualization
+    │   ├── SproutsView.swift ──► Sprout management
+    │   ├── TodayView.swift ──► Daily focus (unique to iOS)
+    │   ├── Today/ ──► Today sub-views
+    │   │   ├── WaterSectionView.swift
+    │   │   ├── ShineSectionView.swift
+    │   │   ├── NextHarvestView.swift
+    │   │   └── SoilChartView.swift
+    │   ├── Sprouts/ ──► Sprout sub-views
+    │   │   ├── SproutsListView.swift
+    │   │   ├── SproutListRow.swift
+    │   │   ├── SproutDetailView.swift
+    │   │   └── SproutFilterBar.swift
+    │   └── Dialogs/ ──► Modal dialogs
+    │       ├── CreateSproutView.swift
+    │       ├── WaterSproutView.swift
+    │       ├── WaterDailySproutsView.swift
+    │       ├── HarvestSproutView.swift
+    │       ├── ShineView.swift
+    │       └── SproutActionsView.swift
+    │
+    ├── Components/ ──► Reusable UI components
+    │   ├── GreetingHeader.swift
+    │   ├── SyncIndicatorView.swift
+    │   ├── DataInfoSheet.swift
+    │   ├── HapticManager.swift
+    │   └── BloomDescriptionsView.swift
+    │
+    ├── Extensions/ ──► Swift extensions
+    │   ├── View+SwipeBack.swift
+    │   ├── View+Animations.swift
+    │   └── DateFormatting.swift
+    │
+    ├── Utils/ ──► Utility types
+    │   ├── ErrorCodes.swift
+    │   ├── PayloadHelpers.swift
+    │   └── TwigIdParser.swift
+    │
+    ├── Config/
+    │   └── Secrets.swift ──► API keys (gitignored)
+    │
+    ├── Resources/
+    │   └── Theme.swift ──► Color/style constants
     │
     └── Services/
         ├── EventDerivation.swift ──► Derived types + state derivation
@@ -353,13 +411,16 @@ Trunk uses event sourcing with cloud backup. All user actions are immediately re
 
 8. **Visibility sync**: Re-sync when tab/app becomes visible to catch up on events from other devices.
 
+9. **Visibility cache invalidation**: Separate from sync's `startVisibilitySync()` — `startVisibilityCacheInvalidation()` (in `events/store.ts`) invalidates cached water/sun availability when the tab becomes visible, preventing stale resource counts after crossing a 6am reset boundary.
+
 ### Deduplication Strategy
 
 Events are deduplicated at multiple levels:
 
 - **Server**: Unique constraint on `client_id` prevents duplicate inserts (Postgres error 23505)
-- **Pull**: Filter out events whose `client_timestamp` already exists locally
-- **Realtime**: Check for existing `client_timestamp` before appending broadcast events
+- **Derivation**: `deriveState()` deduplicates using `client_id` if present, else a composite key of `type|entityId|timestamp`
+- **Pull**: Filter out events whose `client_id` already exists locally
+- **Realtime**: Check for existing `client_id` before appending broadcast events
 
 This ensures eventual consistency across devices without duplicate events.
 

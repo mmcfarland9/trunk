@@ -66,7 +66,7 @@ struct SoilHistoryService {
         var history: [RawSoilSnapshot] = []
 
         // Track planted sprouts for harvest/uproot reward calculation
-        var sproutInfo: [String: (season: String, environment: String, soilCost: Int)] = [:]
+        var sproutInfo: [String: (season: String, environment: String, soilCost: Double, isActive: Bool)] = [:]
 
         // Starting point from first event
         if let firstEvent = events.first {
@@ -83,29 +83,40 @@ struct SoilHistoryService {
                 if let sproutId = getString(event.payload, "sproutId"),
                    let season = getString(event.payload, "season"),
                    let environment = getString(event.payload, "environment"),
-                   let soilCost = getInt(event.payload, "soilCost") {
-                    sproutInfo[sproutId] = (season: season, environment: environment, soilCost: soilCost)
-                    available = max(0, available - Double(soilCost))
+                   let soilCost = getDouble(event.payload, "soilCost") {
+                    sproutInfo[sproutId] = (season: season, environment: environment, soilCost: soilCost, isActive: true)
+                    available = max(0, available - soilCost)
                     changed = true
                 }
 
             case "sprout_watered":
-                available = min(available + SharedConstants.Soil.waterRecovery, capacity)
-                changed = true
+                // C2: Only recover soil if sprout exists and is active (matches web derive.ts)
+                if let sproutId = getString(event.payload, "sproutId"),
+                   let info = sproutInfo[sproutId],
+                   info.isActive {
+                    available = min(available + SharedConstants.Soil.waterRecovery, capacity)
+                    changed = true
+                }
 
             case "sprout_harvested":
                 if let sproutId = getString(event.payload, "sproutId"),
                    let capacityGained = getDouble(event.payload, "capacityGained"),
                    let info = sproutInfo[sproutId] {
-                    capacity += capacityGained
-                    let returnedSoil = Double(info.soilCost)
+                    // C14: Clamp capacity to maxCapacity (matches web derive.ts)
+                    capacity = min(capacity + capacityGained, SharedConstants.Soil.maxCapacity)
+                    let returnedSoil = info.soilCost
                     available = min(available + returnedSoil, capacity)
+                    sproutInfo[sproutId] = (season: info.season, environment: info.environment, soilCost: info.soilCost, isActive: false)
                     changed = true
                 }
 
             case "sprout_uprooted":
-                if let soilReturned = getDouble(event.payload, "soilReturned") {
+                if let sproutId = getString(event.payload, "sproutId"),
+                   let soilReturned = getDouble(event.payload, "soilReturned") {
                     available = min(available + soilReturned, capacity)
+                    if let info = sproutInfo[sproutId] {
+                        sproutInfo[sproutId] = (season: info.season, environment: info.environment, soilCost: info.soilCost, isActive: false)
+                    }
                     changed = true
                 }
 

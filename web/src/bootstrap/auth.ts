@@ -18,20 +18,60 @@ export type AuthCallbacks = {
 }
 
 let loginView: HTMLElement | null = null
+let loadingView: HTMLElement | null = null
 let hasSynced = false
+
+function showLoadingState(appElement: HTMLElement): void {
+  if (loadingView) return
+  appElement.classList.add('hidden')
+  loadingView = document.createElement('div')
+  loadingView.className = 'auth-loading'
+  loadingView.textContent = 'Loading...'
+  document.body.prepend(loadingView)
+}
+
+function hideLoadingState(): void {
+  if (loadingView) {
+    loadingView.remove()
+    loadingView = null
+  }
+}
+
+function showAuthError(appElement: HTMLElement, message: string): void {
+  hideLoadingState()
+  appElement.classList.add('hidden')
+  const errorView = document.createElement('div')
+  errorView.className = 'auth-error'
+  errorView.textContent = message
+  document.body.prepend(errorView)
+}
 
 export async function initializeAuth(
   appElement: HTMLElement,
   ctx: AppContext,
   callbacks: AuthCallbacks,
 ): Promise<void> {
-  await initAuth()
+  showLoadingState(appElement)
+
+  try {
+    await initAuth()
+  } catch (err) {
+    showAuthError(appElement, 'Unable to connect. Please refresh to try again.')
+    return
+  }
+
+  hideLoadingState()
 
   // Provide display name callback so UI modules don't import auth-service directly
   ctx.getUserDisplayName = () => getUserProfile().full_name || ''
 
   subscribeToAuth(async (state) => {
-    if (state.loading) return
+    if (state.loading) {
+      showLoadingState(appElement)
+      return
+    }
+
+    hideLoadingState()
 
     if (isSupabaseConfigured() && !state.user) {
       // Show login, hide app

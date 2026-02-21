@@ -1,5 +1,6 @@
 import type { TwigViewApi, Sprout, SproutSeason, SproutEnvironment } from '../../types'
 import { preventDoubleClick } from '../../utils/debounce'
+import { SEASONS, ENVIRONMENTS } from '../../utils/sprout-labels'
 import { calculateSoilCost, canAffordSoil, getPresetLabel } from '../../state'
 import {
   appendEvent,
@@ -199,8 +200,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.leafSelect.value = ''
     elements.newLeafNameInput.value = ''
     elements.newLeafNameInput.classList.add('hidden')
-    elements.seasonBtns.forEach((btn) => btn.classList.remove('is-active'))
-    elements.envBtns.forEach((btn) => btn.classList.remove('is-active'))
+    elements.seasonBtns.forEach((btn) => {
+      btn.classList.remove('is-active')
+      btn.setAttribute('aria-pressed', 'false')
+    })
+    elements.envBtns.forEach((btn) => {
+      btn.classList.remove('is-active')
+      btn.setAttribute('aria-pressed', 'false')
+    })
     elements.envHints.forEach((h) => h.classList.remove('is-visible'))
     elements.endDateDisplay.textContent = ''
     elements.soilCostDisplay.textContent = ''
@@ -211,10 +218,13 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   elements.seasonBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const season = btn.dataset.season as SproutSeason
+      if (!SEASONS.includes(season)) return
       state.selectedSeason = state.selectedSeason === season ? null : season
-      elements.seasonBtns.forEach((b) =>
-        b.classList.toggle('is-active', b.dataset.season === state.selectedSeason),
-      )
+      elements.seasonBtns.forEach((b) => {
+        const isActive = b.dataset.season === state.selectedSeason
+        b.classList.toggle('is-active', isActive)
+        b.setAttribute('aria-pressed', String(isActive))
+      })
       if (state.selectedSeason) {
         const endDate = getEndDate(state.selectedSeason)
         elements.endDateDisplay.textContent = `Ends on ${formatDate(endDate)}`
@@ -229,10 +239,13 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   elements.envBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const env = btn.dataset.env as SproutEnvironment
+      if (!ENVIRONMENTS.includes(env)) return
       state.selectedEnvironment = state.selectedEnvironment === env ? null : env
-      elements.envBtns.forEach((b) =>
-        b.classList.toggle('is-active', b.dataset.env === state.selectedEnvironment),
-      )
+      elements.envBtns.forEach((b) => {
+        const isActive = b.dataset.env === state.selectedEnvironment
+        b.classList.toggle('is-active', isActive)
+        b.setAttribute('aria-pressed', String(isActive))
+      })
       elements.envHints.forEach((h) =>
         h.classList.toggle('is-visible', h.dataset.for === state.selectedEnvironment),
       )

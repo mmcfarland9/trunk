@@ -1,7 +1,5 @@
 import type { Sprout, Leaf, SproutSeason, SproutEnvironment, SproutState } from '../types'
-
-const VALID_SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
-const VALID_ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']
+import { VALID_SEASONS, VALID_ENVIRONMENTS } from '../events/types'
 // Accept legacy states for backwards compatibility during import
 // (converted to active/completed during sanitization)
 const LEGACY_STATES = ['draft', 'active', 'completed', 'failed', 'uprooted']
@@ -32,6 +30,8 @@ export function validateSprout(sprout: unknown, index: number): ValidationResult
 
   if (typeof s.title !== 'string') {
     errors.push(`Sprout ${index}: missing title`)
+  } else if (s.title.length > 200) {
+    errors.push(`Sprout ${index}: title exceeds 200 characters`)
   }
 
   if (!VALID_SEASONS.includes(s.season as SproutSeason)) {

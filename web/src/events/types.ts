@@ -7,6 +7,12 @@
 
 import type { SproutSeason, SproutEnvironment } from '../types'
 
+/** Valid season values for runtime checks */
+export const VALID_SEASONS: readonly SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
+
+/** Valid environment values for runtime checks */
+export const VALID_ENVIRONMENTS: readonly SproutEnvironment[] = ['fertile', 'firm', 'barren']
+
 // Base event structure
 interface BaseEvent {
   timestamp: string // ISO 8601

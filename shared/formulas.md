@@ -12,19 +12,18 @@ See `constants.json` for all numeric constants referenced below.
 
 Determines how much soil capacity is required to plant a sprout.
 
-**Formula:**
+**Method:** Direct table lookup from `constants.soil.plantingCosts`:
+
 ```
-soilCost = baseCost × environmentMultiplier
+soilCost = constants.soil.plantingCosts[season][environment]
 ```
 
-**Where:**
-- `baseCost` = `constants.seasons[season].baseCost`
-- `environmentMultiplier` = `constants.environments[environment].costMultiplier`
+**Implementation:** `web/src/utils/calculations.ts` → `calculateSoilCost()` returns `PLANTING_COSTS[season][environment]`.
 
 **Example:**
-- 3-month sprout in firm environment: `5 × 1.5 = 7.5` → rounds to 8
+- 3-month sprout in firm environment: `PLANTING_COSTS['3m']['firm']` = 8
 
-**Implementation note:** Always round up (ceiling) the final result.
+See `shared/constants.json` → `soil.plantingCosts` for the complete cost table.
 
 ---
 
@@ -39,8 +38,8 @@ reward = baseReward × envMultiplier × resultMultiplier × diminishingFactor
 
 **Where:**
 - `baseReward` = `constants.seasons[season].baseReward`
-- `envMultiplier` = `constants.environments[environment].rewardMultiplier`
-- `resultMultiplier` = `constants.results[result].multiplier`
+- `envMultiplier` = `constants.soil.environmentMultipliers[environment]`
+- `resultMultiplier` = `constants.soil.resultMultipliers[result]`
 - `diminishingFactor` = `max(0, (1 - currentCapacity / maxCapacity)^1.5)`
 
 **Diminishing Returns:**

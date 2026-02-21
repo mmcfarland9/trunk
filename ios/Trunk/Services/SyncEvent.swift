@@ -7,6 +7,22 @@
 
 import Foundation
 
+// REVIEW: Added event type validation via enum. Alternative: validate against known string set
+// without enum. Enum provides compile-time safety.
+enum TrunkEventType: String, Codable {
+    case sproutPlanted = "sprout_planted"
+    case sproutWatered = "sprout_watered"
+    case sproutHarvested = "sprout_harvested"
+    case sproutUprooted = "sprout_uprooted"
+    case sunShone = "sun_shone"
+    case leafCreated = "leaf_created"
+
+    /// Validate that a string is a known event type
+    static func isValid(_ type: String) -> Bool {
+        Self(rawValue: type) != nil
+    }
+}
+
 struct SyncEvent: Codable, Identifiable {
     let id: UUID
     let userId: UUID

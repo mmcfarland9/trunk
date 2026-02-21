@@ -22,6 +22,11 @@ extension SyncService {
       return (0, "Not authenticated")
     }
 
+    // Defense-in-depth: filter by user_id even though RLS is enabled
+    guard let userId = AuthService.shared.user?.id else {
+      return (0, "Not authenticated")
+    }
+
     let lastSync = getLastSync()
 
     let syncEvents: [SyncEvent]
@@ -29,6 +34,7 @@ extension SyncService {
       syncEvents = try await client
         .from("events")
         .select()
+        .eq("user_id", value: userId.uuidString)
         .gt("created_at", value: lastSync)
         .order("created_at")
         .execute()
@@ -37,6 +43,7 @@ extension SyncService {
       syncEvents = try await client
         .from("events")
         .select()
+        .eq("user_id", value: userId.uuidString)
         .order("created_at")
         .execute()
         .value
@@ -107,9 +114,17 @@ extension SyncService {
           return SyncResult(status: .error, pulled: 0, pushed: pushed, error: "Supabase not configured", mode: mode)
         }
 
+        // Defense-in-depth: filter by user_id even though RLS is enabled
+        guard let userId = AuthService.shared.user?.id else {
+          syncStatus = .error
+          updateDetailedStatus()
+          return SyncResult(status: .error, pulled: 0, pushed: pushed, error: "Not authenticated", mode: mode)
+        }
+
         let syncEvents: [SyncEvent] = try await client
           .from("events")
           .select()
+          .eq("user_id", value: userId.uuidString)
           .order("created_at")
           .execute()
           .value
@@ -140,6 +155,7 @@ extension SyncService {
 
       syncStatus = .success
       hasCompletedInitialSync = true
+      restorePendingEvents()
       refreshLastConfirmedTimestamp()
       updateDetailedStatus()
 
@@ -162,6 +178,7 @@ extension SyncService {
   /// Clear local cache (events and sync timestamp)
   /// Used to ensure cloud is always source of truth
   func clearLocalCache() {
+    savePendingEventsForReauth()
     clearLastSync()
     clearCacheVersion()
     EventStore.shared.clearEvents()

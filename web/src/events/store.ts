@@ -8,6 +8,7 @@
  */
 
 import type { TrunkEvent } from './types'
+import { VALID_SEASONS, VALID_ENVIRONMENTS } from './types'
 import type { DerivedState } from './derive'
 import {
   deriveState,
@@ -28,6 +29,8 @@ const STORAGE_KEY = sharedConstants.storage.keys.events
 let events: TrunkEvent[] = []
 
 // Cached derived state (invalidated on event append)
+// REVIEW: Dirty flag approach — marks state stale on append, re-derives on next read.
+// Alternative: full incremental derivation (SKIP-level complexity).
 let cachedState: DerivedState | null = null
 
 // Cached water/sun availability (invalidated on relevant events or reset boundary)
@@ -45,18 +48,54 @@ let onEventAppended: ((event: TrunkEvent) => void) | null = null
 
 /**
  * Validate that a value has the required shape of a TrunkEvent.
- * Checks for required fields (type, timestamp) and known event type.
+ * Checks for required fields (type, timestamp), known event type,
+ * and per-event-type required fields.
  * Exported for use in sync validation (H3).
+ *
+ * // REVIEW: Strictness level — currently rejecting invalid events. Could warn+pass instead.
  */
 export function validateEvent(event: unknown): event is TrunkEvent {
   if (typeof event !== 'object' || event === null) return false
   const e = event as Record<string, unknown>
-  return (
-    typeof e.type === 'string' &&
-    VALID_EVENT_TYPES.has(e.type) &&
-    typeof e.timestamp === 'string' &&
-    e.timestamp.length > 0
-  )
+
+  // Common required fields
+  if (typeof e.type !== 'string' || !VALID_EVENT_TYPES.has(e.type)) return false
+  if (typeof e.timestamp !== 'string' || e.timestamp.length === 0) return false
+
+  // Per-event-type required field checks
+  switch (e.type) {
+    case 'sprout_planted':
+      return (
+        typeof e.sproutId === 'string' &&
+        typeof e.twigId === 'string' &&
+        typeof e.title === 'string' &&
+        typeof e.season === 'string' &&
+        (VALID_SEASONS as readonly string[]).includes(e.season) &&
+        typeof e.environment === 'string' &&
+        (VALID_ENVIRONMENTS as readonly string[]).includes(e.environment) &&
+        typeof e.soilCost === 'number' &&
+        e.soilCost >= 0
+      )
+    case 'sprout_watered':
+      return typeof e.sproutId === 'string'
+    case 'sprout_harvested':
+      return (
+        typeof e.sproutId === 'string' &&
+        typeof e.result === 'number' &&
+        e.result >= 1 &&
+        e.result <= 5 &&
+        typeof e.capacityGained === 'number' &&
+        e.capacityGained >= 0
+      )
+    case 'sprout_uprooted':
+      return typeof e.sproutId === 'string'
+    case 'sun_shone':
+      return typeof e.twigId === 'string'
+    case 'leaf_created':
+      return typeof e.leafId === 'string' && typeof e.name === 'string'
+    default:
+      return false
+  }
 }
 
 /**
@@ -159,10 +198,11 @@ export function appendEvents(newEvents: TrunkEvent[]): void {
 }
 
 /**
- * Get the full event log (read-only)
+ * Get the full event log (read-only).
+ * Returns a frozen copy to prevent external mutation of the internal array.
  */
 export function getEvents(): readonly TrunkEvent[] {
-  return events
+  return Object.freeze([...events])
 }
 
 /**

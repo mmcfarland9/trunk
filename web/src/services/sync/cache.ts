@@ -22,3 +22,11 @@ export function setCacheVersion(): void {
 export function clearCacheVersion(): void {
   localStorage.removeItem(CACHE_VERSION_KEY)
 }
+
+/**
+ * DO-12: Invalidate cache on sync failure so stale data isn't served.
+ * Clears the cache version, forcing a full sync on next attempt.
+ */
+export function invalidateOnSyncFailure(): void {
+  localStorage.removeItem(CACHE_VERSION_KEY)
+}

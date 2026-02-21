@@ -251,6 +251,64 @@ function createAccountDialog(): HTMLDivElement {
   return accountDialog
 }
 
+// REVIEW: Focus trap implemented with manual keydown listener. Alternative: rely solely on
+// aria-modal with modern browser support. Manual trap is more reliable cross-browser.
+/**
+ * Traps focus within a dialog element. Call when opening a dialog.
+ * Returns a cleanup function that removes the trap and restores focus
+ * to the previously focused element.
+ */
+export function trapFocus(dialogBox: HTMLElement): () => void {
+  // REVIEW: Focus restored to previously focused element on dialog close.
+  // Edge case: if original element was removed during dialog, falls back to document.body.
+  const previouslyFocused = document.activeElement as HTMLElement | null
+
+  function getFocusableElements(): HTMLElement[] {
+    return Array.from(
+      dialogBox.querySelectorAll<HTMLElement>(
+        'button:not([disabled]):not([tabindex="-1"]), [href], input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])',
+      ),
+    )
+  }
+
+  function handleKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Tab') return
+    const focusable = getFocusableElements()
+    if (focusable.length === 0) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+  }
+
+  dialogBox.addEventListener('keydown', handleKeydown)
+
+  const focusable = getFocusableElements()
+  if (focusable.length > 0) {
+    focusable[0].focus()
+  }
+
+  return () => {
+    dialogBox.removeEventListener('keydown', handleKeydown)
+    if (previouslyFocused && previouslyFocused.isConnected) {
+      previouslyFocused.focus()
+    } else {
+      document.body.focus()
+    }
+  }
+}
+
 export function buildDialogs(): DialogElements {
   return {
     sproutsDialog: createSproutsDialog(),

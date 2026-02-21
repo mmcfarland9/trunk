@@ -154,6 +154,36 @@ npm run build
 
 ---
 
+**Issue**: Sync stuck in "syncing" state
+
+**Solution**:
+1. Check browser console for network errors
+2. Look for Postgres error 23505 (duplicate `client_id`) — these are safe and expected
+3. Check `trunk-pending-uploads` in localStorage for stuck items
+4. Try clearing `trunk-cache-version` to force a full sync on next load
+5. Sign out and back in to refresh auth tokens
+
+---
+
+**Issue**: Duplicate events after sync
+
+**Solution**:
+1. Events are deduplicated at multiple levels (server, pull, realtime, derivation)
+2. If duplicates appear, force a full sync: clear `trunk-cache-version` from localStorage and reload
+3. The `deriveState()` function deduplicates using `client_id` or composite keys, so UI state should remain correct even if the local log has duplicates
+
+---
+
+**Issue**: Pending uploads not clearing
+
+**Solution**:
+1. Check `trunk-pending-uploads` in localStorage for the stuck `client_id` values
+2. Verify network connectivity and Supabase project status
+3. Pending uploads retry automatically on next `smartSync()` call
+4. If events are confirmed in the server `events` table, manually clear `trunk-pending-uploads`
+
+---
+
 ### Performance Issues
 
 **Issue**: App slow with many sprouts

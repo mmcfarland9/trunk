@@ -107,5 +107,7 @@ struct SproutListRow: View {
             Rectangle()
                 .stroke(Color.border, lineWidth: 1)
         )
+        .accessibilityLabel("Sprout: \(sprout.title), Status: \(sprout.state)")
+        .accessibilityHint("Double tap to view details")
     }
 }

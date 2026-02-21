@@ -78,7 +78,7 @@ struct DerivedSprout: Identifiable {
     let title: String
     let season: Season
     let environment: SproutEnvironment
-    let soilCost: Int
+    let soilCost: Double
     let leafId: String?
     let bloomWither: String?
     let bloomBudding: String?
@@ -128,6 +128,28 @@ struct DerivedState {
     var sunEntries: [DerivedSunEntry]
 }
 
+// MARK: - Soil Rounding
+
+/// Round soil values to 2 decimal places to prevent floating-point drift.
+/// Matches web's roundSoil: Math.round(value * 100) / 100
+func roundSoil(_ value: Double) -> Double {
+    (value * 100).rounded() / 100
+}
+
+// MARK: - Event Deduplication
+
+/// Generate a deduplication key for an event.
+/// Uses clientId if available, falls back to composite key.
+/// Matches web's getEventDedupeKey logic.
+private func getEventDedupeKey(_ event: SyncEvent) -> String {
+    if !event.clientId.isEmpty { return event.clientId }
+    let entityId = getString(event.payload, "sproutId")
+        ?? getString(event.payload, "leafId")
+        ?? getString(event.payload, "twigId")
+        ?? ""
+    return "\(event.type)|\(entityId)|\(event.clientTimestamp)"
+}
+
 // MARK: - State Derivation
 
 /// Derive complete state from event log.
@@ -142,7 +164,17 @@ func deriveState(from events: [SyncEvent]) -> DerivedState {
 
     // Sort events by timestamp to ensure correct ordering (matches web derive.ts)
     let sorted = events.sorted { ($0.clientTimestamp) < ($1.clientTimestamp) }
-    for event in sorted {
+
+    // Deduplicate events before replay to prevent double-counting (matches web C13)
+    var seenKeys = Set<String>()
+    let dedupedEvents = sorted.filter { event in
+        let key = getEventDedupeKey(event)
+        if seenKeys.contains(key) { return false }
+        seenKeys.insert(key)
+        return true
+    }
+
+    for event in dedupedEvents {
         switch event.type {
         case "sprout_planted":
             processSproutPlanted(event: event, soilAvailable: &soilAvailable, sprouts: &sprouts)
@@ -191,10 +223,10 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
         return
     }
 
-    let soilCost = getInt(payload, "soilCost") ?? 0
+    let soilCost = getDouble(payload, "soilCost") ?? 0
 
     // Spend soil (clamped to 0 minimum)
-    soilAvailable = max(0, soilAvailable - Double(soilCost))
+    soilAvailable = roundSoil(max(0, soilAvailable - soilCost))
 
     // Create sprout
     let sprout = DerivedSprout(
@@ -241,8 +273,10 @@ private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double,
         sprouts[sproutId] = sprout
     }
 
-    // Soil recovery from watering
-    soilAvailable = min(soilAvailable + SharedConstants.Soil.waterRecovery, soilCapacity)
+    // C2: Only recover soil if sprout exists and is active (matches web derive.ts)
+    if let sprout = sprouts[sproutId], sprout.state == .active {
+        soilAvailable = roundSoil(min(soilAvailable + SharedConstants.Soil.waterRecovery, soilCapacity))
+    }
 }
 
 private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
@@ -265,9 +299,10 @@ private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double
         sprout.harvestedAt = timestamp
 
         // Return soil cost + gain capacity
-        let returnedSoil = Double(sprout.soilCost)
-        soilCapacity += capacityGained
-        soilAvailable = min(soilAvailable + returnedSoil, soilCapacity)
+        // C14: Clamp capacity to maxCapacity (no rounding — capacity retains full precision)
+        let returnedSoil = sprout.soilCost
+        soilCapacity = min(soilCapacity + capacityGained, SharedConstants.Soil.maxCapacity)
+        soilAvailable = roundSoil(min(soilAvailable + returnedSoil, soilCapacity))
 
         sprouts[sproutId] = sprout
     }
@@ -283,7 +318,7 @@ private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double
     let soilReturned = getDouble(payload, "soilReturned") ?? 0
 
     // Return partial soil
-    soilAvailable = min(soilAvailable + soilReturned, soilCapacity)
+    soilAvailable = roundSoil(min(soilAvailable + soilReturned, soilCapacity))
 
     // Transition sprout to uprooted state (preserve all data)
     if var sprout = sprouts[sproutId], sprout.state == .active {
@@ -312,7 +347,7 @@ private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soil
     sunEntries.append(sunEntry)
 
     // Soil recovery from sun
-    soilAvailable = min(soilAvailable + SharedConstants.Soil.sunRecovery, soilCapacity)
+    soilAvailable = roundSoil(min(soilAvailable + SharedConstants.Soil.sunRecovery, soilCapacity))
 }
 
 private func processLeafCreated(event: SyncEvent, leaves: inout [String: DerivedLeaf]) {

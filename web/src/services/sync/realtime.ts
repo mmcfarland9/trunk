@@ -6,6 +6,18 @@ import type { SyncEvent } from '../sync-types'
 import { syncToLocalEvent } from '../sync-types'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
+// DO-14: Validate realtime payload shape before casting to SyncEvent
+function isValidSyncEventShape(data: unknown): data is SyncEvent {
+  if (typeof data !== 'object' || data === null) return false
+  const d = data as Record<string, unknown>
+  return (
+    typeof d.type === 'string' &&
+    typeof d.client_id === 'string' &&
+    typeof d.user_id === 'string' &&
+    typeof d.created_at === 'string'
+  )
+}
+
 // Track the current realtime subscription
 let realtimeChannel: RealtimeChannel | null = null
 let onRealtimeEvent: ((event: TrunkEvent) => void) | null = null
@@ -37,7 +49,9 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
         filter: `user_id=eq.${user.id}`,
       },
       (payload) => {
-        const syncEvent = payload.new as SyncEvent
+        // DO-14: Validate shape before casting
+        if (!isValidSyncEventShape(payload.new)) return
+        const syncEvent = payload.new
         const localEvent = syncToLocalEvent(syncEvent)
         if (!localEvent) return
 

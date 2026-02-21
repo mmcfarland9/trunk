@@ -79,6 +79,11 @@ export function buildHeader(): HeaderElements {
   soilValue.textContent = `${initialAvailable.toFixed(2)}/${initialCapacity.toFixed(2)}`
 
   soilTrack.append(soilFill)
+  soilMeter.setAttribute('role', 'meter')
+  soilMeter.setAttribute('aria-valuenow', String(initialAvailable))
+  soilMeter.setAttribute('aria-valuemin', '0')
+  soilMeter.setAttribute('aria-valuemax', String(initialCapacity))
+  soilMeter.setAttribute('aria-label', `Soil: ${initialAvailable.toFixed(2)} of ${initialCapacity.toFixed(2)}`)
   soilMeter.append(soilLabel, soilTrack, soilValue)
 
   // Global Water meter - 3 circles
@@ -104,6 +109,11 @@ export function buildHeader(): HeaderElements {
     waterTrack.append(circle)
   }
 
+  waterMeter.setAttribute('role', 'meter')
+  waterMeter.setAttribute('aria-valuenow', String(initialWaterAvailable))
+  waterMeter.setAttribute('aria-valuemin', '0')
+  waterMeter.setAttribute('aria-valuemax', '3')
+  waterMeter.setAttribute('aria-label', `Water: ${initialWaterAvailable} of 3`)
   waterMeter.append(waterLabel, waterTrack)
 
   // Global Sun meter - 1 circle
@@ -121,6 +131,11 @@ export function buildHeader(): HeaderElements {
   sunCircle.className = 'resource-circle sun-circle is-filled'
   sunTrack.append(sunCircle)
 
+  sunMeter.setAttribute('role', 'meter')
+  sunMeter.setAttribute('aria-valuenow', '1')
+  sunMeter.setAttribute('aria-valuemin', '0')
+  sunMeter.setAttribute('aria-valuemax', '1')
+  sunMeter.setAttribute('aria-label', 'Sun: 1 of 1')
   sunMeter.append(sunLabel, sunTrack)
 
   // Meter group for visual cohesion

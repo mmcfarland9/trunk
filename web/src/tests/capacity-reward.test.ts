@@ -160,16 +160,16 @@ describe('Capacity Reward Calculation', () => {
   })
 
   describe('Edge Cases', () => {
-    it('handles invalid result (defaults to 0.7)', () => {
+    it('handles result < 1 (clamped to 1)', () => {
       const reward = calculateCapacityReward('1m', 'fertile', 0, 0)
-      // Should default to result multiplier of 0.7
-      expect(reward).toBeCloseTo(0.56 * 1.1 * 0.7, 2)
+      // Result 0 clamped to 1, multiplier 0.4
+      expect(reward).toBeCloseTo(0.56 * 1.1 * 0.4, 2)
     })
 
-    it('handles result > 5 (treated as 5)', () => {
+    it('handles result > 5 (clamped to 5)', () => {
       const reward = calculateCapacityReward('1m', 'fertile', 10, 0)
-      // Should default to result multiplier of 0.7 (since 10 is not in map)
-      expect(reward).toBeCloseTo(0.56 * 1.1 * 0.7, 2)
+      // Result 10 clamped to 5, multiplier 1.0
+      expect(reward).toBeCloseTo(0.56 * 1.1 * 1.0, 2)
     })
   })
 })

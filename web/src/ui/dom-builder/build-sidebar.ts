@@ -31,9 +31,9 @@ export function buildSidebar(): HTMLElement {
       <div class="sprouts-list" data-section="cultivated"></div>
     </section>
     <section class="panel-section keyboard-hints">
-      <p class="keyboard-hint hint-escape" title="Press Escape to go back"><kbd>Esc</kbd> Back</p>
-      <p class="keyboard-hint hint-arrows" title="Cmd+Arrow to cycle"><kbd>⌘←</kbd><kbd>⌘→</kbd> Cycle</p>
-      <p class="keyboard-hint hint-numbers" title="Number keys to select"><kbd>1-8</kbd> Select</p>
+      <p class="keyboard-hint hint-escape" title="Press Escape to go back"><kbd>Esc</kbd> Back<span class="visually-hidden"> - Press Escape to go back</span></p>
+      <p class="keyboard-hint hint-arrows" title="Cmd+Arrow to cycle"><kbd>⌘←</kbd><kbd>⌘→</kbd> Cycle<span class="visually-hidden"> - Press Cmd+Arrow to cycle between branches</span></p>
+      <p class="keyboard-hint hint-numbers" title="Number keys to select"><kbd>1-8</kbd> Select<span class="visually-hidden"> - Press number keys 1 through 8 to select</span></p>
     </section>
   `
   return sidePanel

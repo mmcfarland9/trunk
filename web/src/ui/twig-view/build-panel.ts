@@ -34,12 +34,12 @@ export function buildPanel(mapPanel: HTMLElement): HTMLDivElement {
           <input type="text" class="sprout-title-input" placeholder="Describe this sprout." maxlength="60" />
           <label class="sprout-field-label">Season <span class="field-hint">(period)</span></label>
           <div class="sprout-season-selector">
-            ${SEASONS.map((s) => `<button type="button" class="sprout-season-btn" data-season="${s}">${s}</button>`).join('')}
+            ${SEASONS.map((s) => `<button type="button" class="sprout-season-btn" data-season="${s}" aria-pressed="false">${s}</button>`).join('')}
           </div>
           <div class="sprout-end-date"></div>
           <label class="sprout-field-label">Environment <span class="field-hint">(difficulty)</span></label>
           <div class="sprout-environment-selector">
-            ${ENVIRONMENTS.map((e) => `<button type="button" class="sprout-env-btn" data-env="${e}">${getEnvironmentLabel(e)}</button>`).join('')}
+            ${ENVIRONMENTS.map((e) => `<button type="button" class="sprout-env-btn" data-env="${e}" aria-pressed="false">${getEnvironmentLabel(e)}</button>`).join('')}
           </div>
           <div class="env-hint-area">
             ${ENVIRONMENTS.map((e) => `<span class="env-hint" data-for="${e}">${getEnvironmentFormHint(e)}</span>`).join('')}
@@ -48,7 +48,7 @@ export function buildPanel(mapPanel: HTMLElement): HTMLDivElement {
           <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
           <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
           <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
-          <div class="sprout-soil-cost"></div>
+          <div class="sprout-soil-cost" aria-live="polite"></div>
           <div class="action-btn-group action-btn-group-right">
             <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
           </div>

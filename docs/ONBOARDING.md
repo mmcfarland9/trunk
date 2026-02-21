@@ -39,6 +39,12 @@ All scripts run from `web/` directory:
 | **test:coverage** | `npm run test:coverage` | Run tests with coverage report |
 | **test:e2e** | `npm run test:e2e` | Run E2E tests (Playwright) |
 | **test:mutation** | `npm run test:mutation` | Run mutation tests (Stryker) |
+| **lint** | `npm run lint` | Run Biome linter on src/ |
+| **lint:fix** | `npm run lint:fix` | Auto-fix lint issues |
+| **format** | `npm run format` | Format code with Biome |
+| **format:check** | `npm run format:check` | Check formatting without writing |
+| **check** | `npm run check` | Run all Biome checks (lint + format) |
+| **check:fix** | `npm run check:fix` | Auto-fix all Biome issues |
 
 ---
 
@@ -116,8 +122,28 @@ Additional configuration lives in:
 
 1. Define type in `web/src/events/types.ts`
 2. Add handler in `web/src/events/derive.ts`
-3. Add schema in `shared/schemas/events.schema.json`
-4. Add test fixtures in `shared/test-fixtures/`
+3. Add to `shared/constants.json` → `eventTypes` array, then run `npm run generate` from `web/`
+4. Add schema in `shared/schemas/events.schema.json`
+5. Add test fixtures in `shared/test-fixtures/`
+
+### Adding a Sync Operation
+
+1. Add the new function in `web/src/services/sync/operations.ts`
+2. Export it from `web/src/services/sync/index.ts`
+3. Wire it into the bootstrap in `web/src/bootstrap/sync.ts`
+4. Add corresponding iOS implementation in `ios/Trunk/Services/Sync/SyncOperations.swift`
+
+### Adding a Twig View Component
+
+1. Create a new file in `web/src/ui/twig-view/` (e.g., `my-component.ts`)
+2. Import and use it from `web/src/ui/twig-view/index.ts`
+3. Follow the callback pattern — receive callbacks, don't import features directly
+
+### Adding a Bootstrap Step
+
+1. Determine which bootstrap phase it belongs to: `auth.ts`, `events.ts`, `sync.ts`, or `ui.ts`
+2. Add the initialization logic to the appropriate file in `web/src/bootstrap/`
+3. If it requires a new module, create the module first, then wire it in the bootstrap
 
 ### Modifying Progression Formulas
 
@@ -190,7 +216,7 @@ Always run `npm run generate` after modifying `shared/constants.json`.
 ### Debugging State Issues
 
 1. Press `d` then `b` (within 500ms) → Debug panel
-2. Check localStorage: `trunk-events-v1` (event log), `trunk-notes-v1` (legacy)
+2. Check localStorage: `trunk-events-v1` (event log)
 3. Use "Advance clock" to test time-based logic
 4. Check `web/src/events/derive.ts` for derivation bugs
 
@@ -214,7 +240,7 @@ Always run `npm run generate` after modifying `shared/constants.json`.
 Most functions receive `ctx` with all shared references:
 ```typescript
 function doSomething(ctx: AppContext) {
-  ctx.elements.sidebar  // DOM elements
+  ctx.elements.sidePanel  // DOM elements
   ctx.nodeLookup        // Map<nodeId, element>
   ctx.twigView          // Twig panel API
 }

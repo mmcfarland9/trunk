@@ -322,7 +322,7 @@ struct SproutActionsView: View {
         isUprooting = true
         errorMessage = nil
 
-        let soilReturned = Double(sprout.soilCost) * SharedConstants.Soil.uprootRefundRate
+        let soilReturned = sprout.soilCost * SharedConstants.Soil.uprootRefundRate
 
         Task {
             do {

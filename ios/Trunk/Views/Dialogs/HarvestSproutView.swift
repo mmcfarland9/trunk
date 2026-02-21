@@ -164,7 +164,7 @@ struct HarvestSproutView: View {
                                     .trunkFont(size: TrunkTheme.textBase)
                                     .foregroundStyle(Color.ink)
                                 Spacer()
-                                Text("+\(sprout.soilCost)")
+                                Text("+\(Int(sprout.soilCost))")
                                     .trunkFont(size: TrunkTheme.textBase)
                                     .foregroundStyle(Color.twig)
                             }

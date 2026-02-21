@@ -30,6 +30,7 @@ vi.mock('../services/sync/cache', () => ({
   isCacheValid: vi.fn(() => false),
   setCacheVersion: vi.fn(),
   clearCacheVersion: vi.fn(),
+  invalidateOnSyncFailure: vi.fn(),
 }))
 
 vi.mock('../services/sync/pending-uploads', () => ({
@@ -44,6 +45,8 @@ vi.mock('../services/sync/pending-uploads', () => ({
 vi.mock('../services/sync/status', () => ({
   notifyMetadataListeners: vi.fn(),
   setStatusDependencies: vi.fn(),
+  recordSyncFailure: vi.fn(),
+  resetSyncFailures: vi.fn(),
 }))
 
 // Helper event factories
@@ -70,6 +73,44 @@ function makeSyncEvent(event: TrunkEvent, id: string, created_at?: string) {
     client_id: `client-${id}`,
     client_timestamp: event.timestamp,
     created_at: created_at ?? event.timestamp,
+  }
+}
+
+/** Build a mock Supabase with configurable terminal results */
+function buildMockSupabase(opts?: {
+  selectResult?: Promise<any>
+  insertResult?: Promise<any>
+  deleteResult?: Promise<any>
+}) {
+  const defaultSelect = Promise.resolve({ data: [], error: null })
+  const defaultInsert = Promise.resolve({ error: null })
+  const defaultDelete = Promise.resolve({ error: null })
+
+  const selectEnd = opts?.selectResult ?? defaultSelect
+  const insertEnd = opts?.insertResult ?? defaultInsert
+  const deleteEnd = opts?.deleteResult ?? defaultDelete
+
+  return {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            gt: vi.fn(() => ({
+              abortSignal: vi.fn(() => selectEnd),
+            })),
+            abortSignal: vi.fn(() => selectEnd),
+          })),
+        })),
+      })),
+      insert: vi.fn(() => ({
+        abortSignal: vi.fn(() => insertEnd),
+      })),
+      delete: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          abortSignal: vi.fn(() => deleteEnd),
+        })),
+      })),
+    })),
   }
 }
 
@@ -125,14 +166,26 @@ describe('sync operations', () => {
     getPendingIdsMock.mockReturnValue([])
 
     // Default supabase mock
+    // Chain: .select().eq('user_id',...).order().gt()?.abortSignal()
     mockSupabase = {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+          eq: vi.fn(() => ({
+            order: vi.fn(() => ({
+              gt: vi.fn(() => ({
+                abortSignal: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              })),
+              abortSignal: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            })),
+          })),
         })),
-        insert: vi.fn(() => Promise.resolve({ error: null })),
+        insert: vi.fn(() => ({
+          abortSignal: vi.fn(() => Promise.resolve({ error: null })),
+        })),
         delete: vi.fn(() => ({
-          eq: vi.fn(() => Promise.resolve({ error: null })),
+          eq: vi.fn(() => ({
+            abortSignal: vi.fn(() => Promise.resolve({ error: null })),
+          })),
         })),
       })),
     }
@@ -170,13 +223,7 @@ describe('sync operations', () => {
     })
 
     it('successfully pushes an event', async () => {
-      const insertMock = vi.fn(() => Promise.resolve({ error: null }))
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        insert: insertMock,
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -189,19 +236,14 @@ describe('sync operations', () => {
       expect(result.error).toBe(null)
       expect(addPendingIdMock).toHaveBeenCalled()
       expect(removePendingIdMock).toHaveBeenCalled()
-      expect(savePendingIdsMock).toHaveBeenCalledTimes(2) // add + remove
+      // DR-4: pre-push save is debounced, post-success save is immediate = 1 immediate call
+      expect(savePendingIdsMock).toHaveBeenCalledTimes(1)
     })
 
     it('handles duplicate event (23505 error) gracefully', async () => {
-      const insertMock = vi.fn(() =>
-        Promise.resolve({ error: { code: '23505', message: 'duplicate key' } }),
-      )
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        insert: insertMock,
-      }))
+      mockSupabase = buildMockSupabase({
+        insertResult: Promise.resolve({ error: { code: '23505', message: 'duplicate key' } }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -216,15 +258,9 @@ describe('sync operations', () => {
     })
 
     it('leaves event in pending on non-duplicate error', async () => {
-      const insertMock = vi.fn(() =>
-        Promise.resolve({ error: { code: '42501', message: 'permission denied' } }),
-      )
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        insert: insertMock,
-      }))
+      mockSupabase = buildMockSupabase({
+        insertResult: Promise.resolve({ error: { code: '42501', message: 'permission denied' } }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -239,13 +275,9 @@ describe('sync operations', () => {
     })
 
     it('handles network exception during push', async () => {
-      const insertMock = vi.fn(() => Promise.reject(new Error('Network error')))
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        insert: insertMock,
-      }))
+      const rejection = Promise.reject(new Error('Network error'))
+      rejection.catch(() => {}) // Prevent unhandled rejection warning
+      mockSupabase = buildMockSupabase({ insertResult: rejection })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -288,14 +320,7 @@ describe('sync operations', () => {
     })
 
     it('successfully deletes all events and clears local cache', async () => {
-      const eqMock = vi.fn(() => Promise.resolve({ error: null }))
-      const deleteMock = vi.fn(() => ({ eq: eqMock }))
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        delete: deleteMock,
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -311,14 +336,9 @@ describe('sync operations', () => {
     })
 
     it('returns error on supabase delete failure', async () => {
-      const eqMock = vi.fn(() => Promise.resolve({ error: { message: 'delete failed' } }))
-      const deleteMock = vi.fn(() => ({ eq: eqMock }))
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        delete: deleteMock,
-      }))
+      mockSupabase = buildMockSupabase({
+        deleteResult: Promise.resolve({ error: { message: 'delete failed' } }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -332,14 +352,9 @@ describe('sync operations', () => {
     })
 
     it('handles network exception during delete', async () => {
-      const eqMock = vi.fn(() => Promise.reject(new Error('Network error')))
-      const deleteMock = vi.fn(() => ({ eq: eqMock }))
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        delete: deleteMock,
-      }))
+      const rejection = Promise.reject(new Error('Network error'))
+      rejection.catch(() => {}) // Prevent unhandled rejection warning
+      mockSupabase = buildMockSupabase({ deleteResult: rejection })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -362,14 +377,9 @@ describe('sync operations', () => {
       const event = makePlantedEvent()
       const syncEvent = makeSyncEvent(event, '1')
 
-      const gtMock = vi.fn(() => Promise.resolve({ data: [syncEvent], error: null }))
-      const orderMock = vi.fn(() => ({ gt: gtMock }))
-
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: orderMock,
-        })),
-      }))
+      mockSupabase = buildMockSupabase({
+        selectResult: Promise.resolve({ data: [syncEvent], error: null }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -388,15 +398,8 @@ describe('sync operations', () => {
     it('pulls zero events when no lastSync exists (first incremental)', async () => {
       isCacheValidMock.mockReturnValue(true)
       // No last sync set - pullEvents will query without .gt()
-      // order() needs to be thenable (returns promise directly)
 
-      const orderMock = vi.fn(() => Promise.resolve({ data: [], error: null }))
-
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: orderMock,
-        })),
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -421,14 +424,9 @@ describe('sync operations', () => {
       // Local events already have this timestamp
       getEventsMock.mockReturnValue([event])
 
-      const gtMock = vi.fn(() => Promise.resolve({ data: [syncEvent], error: null }))
-      const orderMock = vi.fn(() => ({ gt: gtMock }))
-
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: orderMock,
-        })),
-      }))
+      mockSupabase = buildMockSupabase({
+        selectResult: Promise.resolve({ data: [syncEvent], error: null }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -445,16 +443,9 @@ describe('sync operations', () => {
       isCacheValidMock.mockReturnValue(true)
       localStorage.setItem('trunk-last-sync', '2026-02-14T00:00:00Z')
 
-      const gtMock = vi.fn(() =>
-        Promise.resolve({ data: null, error: { message: 'query failed' } }),
-      )
-      const orderMock = vi.fn(() => ({ gt: gtMock }))
-
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: orderMock,
-        })),
-      }))
+      mockSupabase = buildMockSupabase({
+        selectResult: Promise.resolve({ data: null, error: { message: 'query failed' } }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -473,11 +464,7 @@ describe('sync operations', () => {
     it('uses full sync when cache is invalid', async () => {
       isCacheValidMock.mockReturnValue(false)
 
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -497,11 +484,9 @@ describe('sync operations', () => {
       const event = makePlantedEvent()
       const syncEvent = makeSyncEvent(event, '1')
 
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [syncEvent], error: null })),
-        })),
-      }))
+      mockSupabase = buildMockSupabase({
+        selectResult: Promise.resolve({ data: [syncEvent], error: null }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -519,13 +504,9 @@ describe('sync operations', () => {
     it('handles query error during full sync and falls back to cache', async () => {
       isCacheValidMock.mockReturnValue(false)
 
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() =>
-            Promise.resolve({ data: null, error: { message: 'connection error' } }),
-          ),
-        })),
-      }))
+      mockSupabase = buildMockSupabase({
+        selectResult: Promise.resolve({ data: null, error: { message: 'connection error' } }),
+      })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -543,11 +524,9 @@ describe('sync operations', () => {
     it('handles exception during full sync', async () => {
       isCacheValidMock.mockReturnValue(false)
 
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.reject(new Error('fetch failed'))),
-        })),
-      }))
+      const rejection = Promise.reject(new Error('fetch failed'))
+      rejection.catch(() => {}) // Prevent unhandled rejection warning
+      mockSupabase = buildMockSupabase({ selectResult: rejection })
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -571,13 +550,7 @@ describe('sync operations', () => {
       getPendingIdsMock.mockReturnValue(['pending-client-1'])
       getEventsMock.mockReturnValue([event])
 
-      const insertMock = vi.fn(() => Promise.resolve({ error: null }))
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        insert: insertMock,
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -605,11 +578,7 @@ describe('sync operations', () => {
       getPendingIdsMock.mockReturnValue(['stale-client-id'])
       getEventsMock.mockReturnValue([]) // No matching event
 
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,
@@ -625,11 +594,7 @@ describe('sync operations', () => {
 
   describe('forceFullSync', () => {
     it('clears cache version and last sync before syncing', async () => {
-      mockSupabase.from = vi.fn(() => ({
-        select: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      }))
+      mockSupabase = buildMockSupabase()
 
       vi.doMock('../lib/supabase', () => ({
         supabase: mockSupabase,

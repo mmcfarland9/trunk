@@ -185,6 +185,26 @@ export function setupHoverBranch(
   canvas.addEventListener('mouseleave', clearHover)
   canvas.addEventListener('click', handleClick)
   canvas.addEventListener('wheel', handleWheel, { passive: false })
+
+  // Keyboard focus support: highlight branch when focused via Tab
+  ctx.branchGroups.forEach((branchGroup, index) => {
+    branchGroup.branch.addEventListener('focusin', () => {
+      if (getViewMode() !== 'overview') return
+      if (index === getHoveredBranchIndex()) return
+
+      setHoveredBranchIndex(index)
+      scrollAccumulator = 0
+      cb.updateVisibility(ctx)
+      cb.updateFocus(branchGroup.branch, ctx)
+      cb.updateScopedProgress(ctx)
+      cb.updateSidebarSprouts(ctx)
+    })
+
+    branchGroup.branch.addEventListener('focusout', () => {
+      if (getViewMode() !== 'overview') return
+      clearHover()
+    })
+  })
 }
 
 function getEllipseRadii(
@@ -244,10 +264,10 @@ function getBranchIndexFromPosition(
 }
 
 export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
-  // Add hover listeners to all twigs for branch view sidebar preview
+  // Add hover and focus listeners to all twigs for branch view sidebar preview
   ctx.branchGroups.forEach((group) => {
     group.twigs.forEach((twig) => {
-      twig.addEventListener('mouseenter', () => {
+      const handleEnter = () => {
         if (getViewMode() !== 'branch') return
         const twigId = twig.dataset.nodeId
         if (!twigId || twigId === getHoveredTwigId()) return
@@ -255,9 +275,9 @@ export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
         setHoveredTwigId(twigId)
         cb.updateFocus(twig, ctx)
         cb.updateSidebarSprouts(ctx)
-      })
+      }
 
-      twig.addEventListener('mouseleave', () => {
+      const handleLeave = () => {
         if (getViewMode() !== 'branch') return
         if (getHoveredTwigId() === null) return
 
@@ -271,7 +291,12 @@ export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
           }
         }
         cb.updateSidebarSprouts(ctx)
-      })
+      }
+
+      twig.addEventListener('mouseenter', handleEnter)
+      twig.addEventListener('mouseleave', handleLeave)
+      twig.addEventListener('focusin', handleEnter)
+      twig.addEventListener('focusout', handleLeave)
     })
   })
 }

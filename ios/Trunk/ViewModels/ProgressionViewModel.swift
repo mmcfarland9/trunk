@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import Combine
+
+// REVIEW: Using Combine publisher from EventStore to auto-refresh. Alternative: manual refresh
+// on view appear, or @Published with observation. Combine chosen for consistency with SwiftUI patterns.
 
 @Observable
 final class ProgressionViewModel {
@@ -26,8 +30,16 @@ final class ProgressionViewModel {
     /// (the defaults from an empty EventStore look like real values).
     private(set) var hasLoaded = false
 
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
         recompute()
+        EventStore.shared.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refresh()
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Derived (cheap, from cached values)

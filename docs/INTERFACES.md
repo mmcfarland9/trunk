@@ -44,7 +44,6 @@ getAllWaterEntries(state: DerivedState, getTwigLabel?: (twigId: string) => strin
 **Time Queries:**
 ```typescript
 checkSproutWateredToday(sproutId: string, now?: Date): boolean
-checkSproutWateredThisWeek(sproutId: string, now?: Date): boolean
 wasSproutWateredThisWeek(events: readonly TrunkEvent[], sproutId: string, now?: Date): boolean
 wasSproutWateredToday(events: readonly TrunkEvent[], sproutId: string, now?: Date): boolean
 wasShoneThisWeek(events: readonly TrunkEvent[], now?: Date): boolean
@@ -63,6 +62,7 @@ generateLeafId(): string    // Returns "leaf-{uuid}"
 initEventStore(): void
 setEventStoreErrorCallbacks(quotaCallback: () => void, errorCallback?: (error: unknown) => void): void
 setEventSyncCallback(callback: ((event: TrunkEvent) => void) | null): void
+startVisibilityCacheInvalidation(): void  // Invalidate cached water/sun on tab visibility change
 ```
 
 **Event Validation:**
@@ -244,15 +244,7 @@ case 'my_new_event': {
 }
 ```
 
-3. **Add to validation** in `web/src/generated/constants.ts`:
-```typescript
-export const VALID_EVENT_TYPES = new Set([
-  ...,
-  'my_new_event'
-])
-```
-
-4. **Update `shared/constants.json`** eventTypes array.
+3. **Update `shared/constants.json`** → `eventTypes` array, then run `npm run generate` from `web/` to regenerate `web/src/generated/constants.ts`.
 
 ### Adding a New Dialog
 
@@ -338,7 +330,7 @@ func isSproutReady(_ sprout: DerivedSprout) -> Bool
 ```swift
 @MainActor
 final class SyncService: ObservableObject {
-  @Published private(set) var syncStatus: SyncStatus
+  @Published var syncStatus: SyncStatus
   @Published private(set) var detailedSyncStatus: DetailedSyncStatus
   @Published private(set) var lastConfirmedTimestamp: String?
 

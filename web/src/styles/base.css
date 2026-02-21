@@ -30,7 +30,10 @@
   --twig: #8b5a2b;
   --paper: #f8f6f1;
   --water: steelblue;
-  --sun: #d4a000;
+  /* REVIEW: Darkened from #d4a000 (2.2:1 contrast vs paper) to #856200 (5.19:1)
+     to meet WCAG 4.5:1 for text. Tradeoff: slightly less vibrant gold but still
+     warm amber that reads as "sun". Original was too light for text on #f8f6f1/#f3ebe0. */
+  --sun: #856200;
 
   /* Borders (3 treatments) */
   --border-subtle: rgba(60, 40, 20, 0.08);

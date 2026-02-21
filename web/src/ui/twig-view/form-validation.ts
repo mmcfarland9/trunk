@@ -44,6 +44,11 @@ export function updateFormState(state: FormState, elements: FormElements): void 
     const canAfford = canAffordSoil(cost)
     elements.soilCostDisplay.textContent = `Cost: ${cost} soil (${available} available)`
     elements.soilCostDisplay.classList.toggle('insufficient', !canAfford)
+    if (!canAfford) {
+      elements.soilCostDisplay.setAttribute('role', 'alert')
+    } else {
+      elements.soilCostDisplay.removeAttribute('role')
+    }
   } else {
     elements.soilCostDisplay.textContent = ''
     elements.soilCostDisplay.classList.remove('insufficient')

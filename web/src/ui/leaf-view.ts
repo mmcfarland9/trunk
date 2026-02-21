@@ -42,7 +42,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
     <div class="leaf-view-box">
       <button type="button" class="leaf-close-btn">× close</button>
       <div class="leaf-view-body">
-        <div class="leaf-log"></div>
+        <div class="leaf-log" role="list"></div>
       </div>
     </div>
   `
@@ -145,7 +145,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
         `
           : ''
         return `
-          <div class="log-entry log-entry-start" data-sprout-id="${escapeHtml(entry.sproutId)}">
+          <div class="log-entry log-entry-start" data-sprout-id="${escapeHtml(entry.sproutId)}" tabindex="0" role="listitem">
             <div class="log-entry-header">
               <span class="log-entry-type">Planted</span>
               <span class="log-entry-time">${timeStr}</span>
@@ -159,7 +159,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
       case 'watering':
         return `
-          <div class="log-entry log-entry-water" data-sprout-id="${escapeHtml(entry.sproutId)}">
+          <div class="log-entry log-entry-water" data-sprout-id="${escapeHtml(entry.sproutId)}" tabindex="0" role="listitem">
             <div class="log-entry-header">
               <span class="log-entry-type">Watered</span>
               <span class="log-entry-time">${timeStr}</span>
@@ -174,7 +174,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
         const emoji = getResultEmoji(entry.data.result || 1)
 
         return `
-          <div class="log-entry log-entry-completion ${isCompleted ? 'is-success' : 'is-failed'}" data-sprout-id="${escapeHtml(entry.sproutId)}">
+          <div class="log-entry log-entry-completion ${isCompleted ? 'is-success' : 'is-failed'}" data-sprout-id="${escapeHtml(entry.sproutId)}" tabindex="0" role="listitem">
             <div class="log-entry-header">
               <span class="log-entry-type">${isCompleted ? 'Harvested' : 'Pruned'}</span>
               <span class="log-entry-time">${timeStr}</span>
@@ -188,7 +188,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
       case 'uprooted':
         return `
-          <div class="log-entry log-entry-uprooted" data-sprout-id="${escapeHtml(entry.sproutId)}">
+          <div class="log-entry log-entry-uprooted" data-sprout-id="${escapeHtml(entry.sproutId)}" tabindex="0" role="listitem">
             <div class="log-entry-header">
               <span class="log-entry-type">Uprooted</span>
               <span class="log-entry-time">${timeStr}</span>
@@ -231,7 +231,28 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
     return container.classList.contains('is-open')
   }
 
-  // Keyboard navigation - on document to ensure we catch Escape regardless of focus
+  // Keyboard navigation for leaf items
+  logEl.addEventListener('keydown', (e) => {
+    const target = e.target as HTMLElement
+    if (!target.classList.contains('log-entry')) return
+
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      target.classList.toggle('is-selected')
+      return
+    }
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      const entries = Array.from(logEl.querySelectorAll<HTMLElement>('.log-entry'))
+      const idx = entries.indexOf(target)
+      if (idx === -1) return
+      const next = e.key === 'ArrowDown' ? entries[idx + 1] : entries[idx - 1]
+      if (next) next.focus()
+    }
+  })
+
+  // Escape handler - on document to ensure we catch it regardless of focus
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isOpen()) {
       e.preventDefault()

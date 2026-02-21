@@ -59,13 +59,17 @@ struct SoilChartView: View {
             Rectangle()
                 .stroke(Color.border, lineWidth: 1)
         )
+        // REVIEW: Chart accessibility provides summary label with current soil values.
+        // Alternative: per-data-point accessibility (more verbose but more detailed for VoiceOver users).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Soil chart showing capacity \(String(format: "%.1f", points.last?.capacity ?? 0)) and available \(String(format: "%.1f", points.last?.available ?? 0))")
     }
 
     // MARK: - Chart
 
     private func chartView(points: [SoilChartPoint]) -> some View {
         let maxCapacity = points.map(\.capacity).max() ?? 15
-        let selectedDate = (scrubIndex != nil && scrubIndex! < points.count) ? points[scrubIndex!].date : nil
+        let selectedDate = scrubIndex.flatMap { $0 < points.count ? points[$0].date : nil }
 
         return Chart {
             ForEach(Array(points.enumerated()), id: \.offset) { index, point in

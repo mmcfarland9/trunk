@@ -22,9 +22,8 @@ export type ErrorInfo = {
  */
 export function getErrorInfo(category: ErrorCategory, errorKey: string): ErrorInfo {
   const categoryErrors = errorCodesJson[category]
-  const errorInfo = categoryErrors[errorKey as keyof typeof categoryErrors]
 
-  if (!errorInfo) {
+  if (!(errorKey in categoryErrors)) {
     return {
       code: 'UNKNOWN',
       defaultMessage: 'An unknown error occurred',
@@ -32,7 +31,7 @@ export function getErrorInfo(category: ErrorCategory, errorKey: string): ErrorIn
     }
   }
 
-  return errorInfo as ErrorInfo
+  return categoryErrors[errorKey as keyof typeof categoryErrors] as ErrorInfo
 }
 
 /**

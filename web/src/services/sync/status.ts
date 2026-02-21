@@ -6,6 +6,10 @@ export type SyncMetadata = {
   status: DetailedSyncStatus
   lastConfirmedTimestamp: string | null
   pendingCount: number
+  // DR-6: Sync failure feedback
+  lastError: string | null
+  consecutiveFailures: number
+  lastFailureAt: string | null
 }
 
 type SyncMetadataListener = (meta: SyncMetadata) => void
@@ -21,6 +25,28 @@ export function setStatusDependencies(
 ): void {
   getCurrentSyncStatus = getSyncStatus
   getLastConfirmedTimestamp = getTimestamp
+}
+
+// DR-6: Sync failure tracking
+// REVIEW: Sync failure surfaced via status module. UI consumption TBD — could be toast, inline banner, or status indicator.
+let lastSyncError: string | null = null
+let consecutiveFailures = 0
+let lastFailureAt: string | null = null
+
+export function recordSyncFailure(error: string): void {
+  lastSyncError = error
+  consecutiveFailures++
+  lastFailureAt = new Date().toISOString()
+  notifyMetadataListeners()
+}
+
+export function resetSyncFailures(): void {
+  if (consecutiveFailures > 0) {
+    lastSyncError = null
+    consecutiveFailures = 0
+    lastFailureAt = null
+    notifyMetadataListeners()
+  }
 }
 
 export function getDetailedSyncStatus(): DetailedSyncStatus {
@@ -39,6 +65,9 @@ export function subscribeSyncMetadata(listener: SyncMetadataListener): () => voi
     status: getDetailedSyncStatus(),
     lastConfirmedTimestamp: getLastConfirmedTimestamp(),
     pendingCount: getPendingCount(),
+    lastError: lastSyncError,
+    consecutiveFailures,
+    lastFailureAt,
   })
   return () => {
     const index = metadataListeners.indexOf(listener)
@@ -51,6 +80,9 @@ export function notifyMetadataListeners(): void {
     status: getDetailedSyncStatus(),
     lastConfirmedTimestamp: getLastConfirmedTimestamp(),
     pendingCount: getPendingCount(),
+    lastError: lastSyncError,
+    consecutiveFailures,
+    lastFailureAt,
   }
   metadataListeners.forEach((l) => l(meta))
 }

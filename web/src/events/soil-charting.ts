@@ -1,7 +1,11 @@
 /**
  * Soil charting and history derivation.
  *
- * Separates soil chart bucketing logic from core state derivation for better modularity.
+ * This module intentionally duplicates some soil-tracking logic from derive.ts.
+ * Charting needs per-event soil snapshots (capacity + available at every soil-changing
+ * event) to draw time-series charts, whereas derive.ts only produces final aggregated
+ * state. Sharing a single replay would couple charting bucket granularity to the core
+ * state derivation loop, so we keep them separate.
  */
 
 import type { TrunkEvent } from './types'
