@@ -301,6 +301,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   // Radar chart — SVG overlay on the tree canvas
   const radarChart = buildRadarChart()
   ctx.elements.canvas.appendChild(radarChart.svg)
+  ctx.radarTick = radarChart.tick
 
   // Initial view setup
   updateStats(ctx)

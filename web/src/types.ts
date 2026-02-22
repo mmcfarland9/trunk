@@ -184,4 +184,5 @@ export type AppContext = {
   twigView?: TwigViewApi
   leafView?: LeafViewApi
   getUserDisplayName?: () => string
+  radarTick?: (time: number) => void
 }

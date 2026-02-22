@@ -4,12 +4,14 @@
 //
 //  8-axis radar chart showing life balance across branches.
 //  Renders behind the tree canvas as a subtle background visualization.
+//  Axis tips and data vertices sway with the same seeded wind as branches.
 //
 
 import SwiftUI
 
 struct RadarChartView: View {
     let events: [SyncEvent]
+    let windOffsetFor: (Int) -> CGPoint
 
     private let branchCount = SharedConstants.Tree.branchCount
 
@@ -51,10 +53,12 @@ struct RadarChartView: View {
     private func drawAxes(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat) {
         for i in 0..<branchCount {
             let angle = angleFor(i)
+            let wind = windOffsetFor(i)
             let end = pointAt(center: center, radius: maxRadius, angle: angle)
+            let swayedEnd = CGPoint(x: end.x + wind.x, y: end.y + wind.y)
             var path = Path()
             path.move(to: center)
-            path.addLine(to: end)
+            path.addLine(to: swayedEnd)
             context.stroke(path, with: .color(Color.inkFaint.opacity(0.12)), lineWidth: 0.5)
         }
     }
@@ -63,12 +67,15 @@ struct RadarChartView: View {
         var path = Path()
         for i in 0..<branchCount {
             let angle = angleFor(i)
-            let r = maxRadius * CGFloat(scores[i])
+            let s = scores[i]
+            let r = maxRadius * CGFloat(s)
+            let wind = windOffsetFor(i)
             let point = pointAt(center: center, radius: r, angle: angle)
+            let swayed = CGPoint(x: point.x + wind.x * CGFloat(s), y: point.y + wind.y * CGFloat(s))
             if i == 0 {
-                path.move(to: point)
+                path.move(to: swayed)
             } else {
-                path.addLine(to: point)
+                path.addLine(to: swayed)
             }
         }
         path.closeSubpath()
@@ -80,9 +87,12 @@ struct RadarChartView: View {
     private func drawDots(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
         for i in 0..<branchCount {
             let angle = angleFor(i)
-            let r = maxRadius * CGFloat(scores[i])
+            let s = scores[i]
+            let r = maxRadius * CGFloat(s)
+            let wind = windOffsetFor(i)
             let point = pointAt(center: center, radius: r, angle: angle)
-            let dotRect = CGRect(x: point.x - 2, y: point.y - 2, width: 4, height: 4)
+            let swayed = CGPoint(x: point.x + wind.x * CGFloat(s), y: point.y + wind.y * CGFloat(s))
+            let dotRect = CGRect(x: swayed.x - 2, y: swayed.y - 2, width: 4, height: 4)
             context.fill(Path(ellipseIn: dotRect), with: .color(Color.twig.opacity(0.6)))
         }
     }

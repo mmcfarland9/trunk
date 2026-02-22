@@ -99,7 +99,10 @@ struct TreeCanvasView: View {
 
         ZStack {
             // Radar chart background (behind everything)
-            RadarChartView(events: EventStore.shared.events)
+            RadarChartView(
+                events: EventStore.shared.events,
+                windOffsetFor: { index in windOffsetFor(index: index, time: time) }
+            )
                 .frame(width: radarSize, height: radarSize)
                 .position(center)
                 .allowsHitTesting(false)

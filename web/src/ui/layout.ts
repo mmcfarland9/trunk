@@ -1,6 +1,20 @@
 import type { AppContext } from '../types'
 import { BRANCH_COUNT, GUIDE_ANIMATION_DURATION } from '../constants'
 import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex } from '../state'
+import {
+  WIND_BRANCH_AMP,
+  WIND_TWIG_AMP,
+  WIND_PULSE,
+  WIND_MIN,
+  WIND_MAX,
+  WIND_FOCUS_BRANCH_SCALE,
+  WIND_FOCUS_TWIG_SCALE,
+  WIND_Y_DAMPING,
+  WIND_FLUTTER_SCALE,
+  seeded,
+  lerp,
+  clamp,
+} from '../utils/wind'
 
 // Layout constants
 const GUIDE_GAP = 8,
@@ -26,20 +40,6 @@ const TWIG_LINE_SPACING = 8,
   BRANCH_LINE_SPACING = 12
 const PREVIEW_FADE = 500,
   PREVIEW_OPACITY_MAX = 0.4
-
-// Wind animation: simulates organic sway using sine-based oscillation.
-// Each branch/twig gets a deterministic random speed and phase (via seeded()),
-// creating varied but repeatable motion. Y-axis is damped for realism.
-// PULSE adds subtle scale breathing; FLUTTER adds high-freq secondary sway.
-const WIND_BRANCH_AMP = 6,
-  WIND_TWIG_AMP = 10,
-  WIND_PULSE = 0.04,
-  WIND_MIN = 0.35,
-  WIND_MAX = 0.7
-const WIND_FOCUS_BRANCH_SCALE = 0.7,
-  WIND_FOCUS_TWIG_SCALE = 0.85
-const WIND_Y_DAMPING = 0.6,
-  WIND_FLUTTER_SCALE = 0.18
 
 let guideAnimationId = 0,
   windAnimationId = 0,
@@ -275,6 +275,8 @@ function applyWind(ctx: AppContext, timestamp: number): void {
       twig.style.top = `${y * p + Math.cos(time * sp * 0.9 + ph) * amp * WIND_Y_DAMPING - fl}px`
     })
   })
+
+  ctx.radarTick?.(time)
 }
 
 // Helpers
@@ -372,17 +374,6 @@ function getTwigRadius(el: HTMLElement): number {
     if (!Number.isNaN(p)) return p
   }
   return Math.hypot(el.offsetWidth || TWIG_BASE_SIZE, el.offsetHeight || TWIG_BASE_SIZE) / 2
-}
-
-function seeded(seed: number, salt: number): number {
-  const v = Math.sin(seed * salt) * 43758.5453
-  return v - Math.floor(v)
-}
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t
-}
-function clamp(v: number, min: number, max: number): number {
-  return Math.min(Math.max(v, min), max)
 }
 
 function buildRadialOffsets(
