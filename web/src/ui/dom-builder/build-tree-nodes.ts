@@ -8,7 +8,7 @@ type NodeClickHandler = (element: HTMLButtonElement, nodeId: string) => void
 export type TreeNodesElements = {
   mapPanel: HTMLElement
   canvas: HTMLDivElement
-  guideLayer: HTMLDivElement
+  guideLayer: HTMLCanvasElement
   trunk: HTMLButtonElement
   branchGroups: BranchGroup[]
   allNodes: HTMLButtonElement[]
@@ -56,7 +56,7 @@ export function buildTreeNodes(onNodeClick: NodeClickHandler): TreeNodesElements
   canvas.className = 'canvas'
 
   // Guide layer is OUTSIDE canvas to avoid transform issues
-  const guideLayer = document.createElement('div')
+  const guideLayer = document.createElement('canvas')
   guideLayer.className = 'guide-layer'
 
   // Trunk

@@ -95,7 +95,7 @@ export type AppElements = {
   header: HTMLElement
   canvas: HTMLDivElement
   trunk: HTMLButtonElement
-  guideLayer: HTMLDivElement
+  guideLayer: HTMLCanvasElement
   sidePanel: HTMLElement
   focusMeta: HTMLParagraphElement
   focusTitle: HTMLParagraphElement

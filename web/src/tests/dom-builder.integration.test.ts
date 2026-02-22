@@ -72,7 +72,7 @@ describe('DOM Builder Integration', () => {
     })
 
     it('has guide layer', () => {
-      expect(result.elements.guideLayer).toBeInstanceOf(HTMLDivElement)
+      expect(result.elements.guideLayer).toBeInstanceOf(HTMLCanvasElement)
     })
   })
 

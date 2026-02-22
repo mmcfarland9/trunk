@@ -31,12 +31,6 @@ struct TreeCanvasView: View {
     // Circular orbit ratio (matches branch view: 0.34 of smallest dimension)
     private let orbitRatio: CGFloat = 0.34
 
-    // Wind animation (web: WIND_BRANCH_AMP=6, WIND_MIN=0.35, WIND_MAX=0.7)
-    private let windAmplitude: CGFloat = 6.0
-    private let windYDamping: Double = 0.6
-    private let windMin: Double = 0.35
-    private let windMax: Double = 0.7
-
     // Guide line dot spacing (web: BRANCH_LINE_SPACING=12)
     private let guideGap: CGFloat = 8
     private let guideDotSpacing: CGFloat = 12
@@ -106,7 +100,7 @@ struct TreeCanvasView: View {
             // Radar chart background (behind everything)
             RadarChartView(
                 scores: radarScores,
-                windOffsetFor: { index in windOffsetFor(index: index, time: time) }
+                windOffsetFor: { index in Wind.branchOffset(index: index, time: time) }
             )
                 .frame(width: radarSize, height: radarSize)
                 .position(center)
@@ -121,7 +115,7 @@ struct TreeCanvasView: View {
                 guideGap: guideGap,
                 guideDotSpacing: guideDotSpacing,
                 angleForBranch: angleForBranch,
-                windOffsetFor: windOffsetFor,
+                windOffsetFor: { Wind.branchOffset(index: $0, time: $1) },
                 pointOnCircle: { c, r, a in pointOnCircle(center: c, radius: r, angle: a) }
             )
 
@@ -142,7 +136,7 @@ struct TreeCanvasView: View {
                 let angle = angleForBranch(index)
                 let position = pointOnCircle(center: center, radius: radius, angle: angle)
                 let data = cachedData[index]
-                let windOffset = windOffsetFor(index: index, time: time)
+                let windOffset = Wind.branchOffset(index: index, time: time)
 
                 InteractiveBranchNode(
                     index: index,
@@ -236,16 +230,6 @@ struct TreeCanvasView: View {
         lastOffset = .zero
     }
 
-    /// Seeded wind offset per branch (matches web: seeded speed + phase, Y damped to 60%)
-    private func windOffsetFor(index: Int, time: Double) -> CGPoint {
-        let seed = 97 + index * 41
-        let speed = lerp(windMin, windMax, seeded(seed: seed, salt: 13.7))
-        let phase = seeded(seed: seed, salt: 23.1) * Double.pi * 2
-        let x = sin(time * speed + phase) * windAmplitude
-        let y = cos(time * speed * 0.8 + phase) * windAmplitude * windYDamping
-        return CGPoint(x: x, y: y)
-    }
-
     private func angleForBranch(_ index: Int) -> Double {
         let startAngle = -Double.pi / 2
         let angleStep = (2 * Double.pi) / Double(branchCount)
@@ -266,16 +250,6 @@ struct TreeCanvasView: View {
         }
     }
 
-    // MARK: - Seeded random (matches web: Math.sin(seed * salt) * 43758.5453 fractional)
-
-    private func seeded(seed: Int, salt: Double) -> Double {
-        let v = sin(Double(seed) * salt) * 43758.5453
-        return v - floor(v)
-    }
-
-    private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {
-        a + (b - a) * t
-    }
 }
 
 // MARK: - Canvas Dot Guide Lines (all branches in a single Canvas)

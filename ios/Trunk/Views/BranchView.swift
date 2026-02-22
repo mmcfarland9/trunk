@@ -29,9 +29,6 @@ struct BranchView: View {
 
     private let twigCount = SharedConstants.Tree.twigCount
 
-    // Wind animation
-    private let windAmplitude: CGFloat = 8.0
-    private let windSpeed: Double = 0.4
 
     var body: some View {
         ZStack {
@@ -111,7 +108,7 @@ struct BranchView: View {
             // Guide lines from center to each twig
             ForEach(0..<twigCount, id: \.self) { twigIndex in
                 let angle = angleForTwig(twigIndex)
-                let windOffset = windOffsetFor(index: twigIndex, time: time)
+                let windOffset = Wind.twigOffset(branchIndex: branchIndex, twigIndex: twigIndex, time: time)
                 let endPoint = pointOnCircle(center: center, radius: radius, angle: angle)
                 let swayedEnd = CGPoint(
                     x: endPoint.x + windOffset.x,
@@ -129,10 +126,10 @@ struct BranchView: View {
                 activeSproutCount: branchActive
             )
             .position(center)
-            .offset(
-                x: sin(time * windSpeed * 0.3) * windAmplitude * 0.3,
-                y: cos(time * windSpeed * 0.25) * windAmplitude * 0.2
-            )
+            .offset({
+                let w = Wind.branchOffset(index: branchIndex, time: time, amplitude: Wind.branchAmplitude * 0.3)
+                return CGSize(width: w.x, height: w.y)
+            }())
             .opacity(centerAppeared ? 1 : 0)
             .scaleEffect(centerAppeared ? 1 : 0.7)
             .animation(.trunkSpring, value: centerAppeared)
@@ -141,7 +138,7 @@ struct BranchView: View {
             ForEach(0..<twigCount, id: \.self) { twigIndex in
                 let angle = angleForTwig(twigIndex)
                 let position = pointOnCircle(center: center, radius: radius, angle: angle)
-                let windOffset = windOffsetFor(index: twigIndex, time: time)
+                let windOffset = Wind.twigOffset(branchIndex: branchIndex, twigIndex: twigIndex, time: time)
                 let activeCount = twigActive[twigIndex]
 
                 Button {
@@ -176,14 +173,6 @@ struct BranchView: View {
             x: center.x + radius * cos(angle),
             y: center.y + radius * sin(angle)
         )
-    }
-
-    private func windOffsetFor(index: Int, time: Double) -> CGPoint {
-        let phase = Double(index) * 0.7 + Double(index * index) * 0.13
-        let speed = windSpeed * (0.85 + Double(index % 3) * 0.1)
-        let x = sin(time * speed + phase) * windAmplitude
-        let y = cos(time * speed * 0.8 + phase) * windAmplitude * 0.6
-        return CGPoint(x: x, y: y)
     }
 
     private func refreshSproutData() {

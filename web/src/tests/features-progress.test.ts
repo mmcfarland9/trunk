@@ -142,7 +142,7 @@ function createMockAppContext(): AppContext {
     header: document.createElement('header'),
     canvas: document.createElement('div'),
     trunk: document.createElement('button'),
-    guideLayer: document.createElement('div'),
+    guideLayer: document.createElement('canvas'),
     sidePanel: document.createElement('aside'),
     focusMeta: document.createElement('p'),
     focusTitle: document.createElement('p'),
