@@ -409,7 +409,6 @@
   gap: var(--space-3);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border-light);
-  margin-top: auto;
 }
 
 .keyboard-hint {
@@ -442,3 +441,13 @@
 
 /* When hovering branch in overview: show numbers hint */
 .canvas.is-previewing ~ .side-panel .hint-numbers { display: flex; }
+
+/* === Soil Chart Section === */
+.soil-chart-section {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 0;
+}
+
+/* Hide chart in twig/leaf view */
+.canvas.is-twig-zoomed ~ .side-panel .soil-chart-section { display: none; }

@@ -173,6 +173,7 @@ export type AppElements = {
   accountDialogSignOut: HTMLButtonElement
   accountDialogSave: HTMLButtonElement
   accountDialogResetData: HTMLButtonElement
+  soilChartSection: HTMLElement
 }
 
 export type AppContext = {

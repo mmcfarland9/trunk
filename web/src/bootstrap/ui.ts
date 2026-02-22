@@ -20,6 +20,7 @@ import { initHarvestDialog } from '../features/harvest-dialog'
 import { initShine } from '../features/shine-dialog'
 import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from '../features/log-dialogs'
 import { initAccountDialog } from '../features/account-dialog'
+import { buildSoilChart } from '../ui/soil-chart'
 import {
   returnToBranchView,
   enterBranchView,
@@ -125,6 +126,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       celebrateMeter(ctx.elements.waterMeter)
       celebrateMeter(ctx.elements.soilMeter)
       updateWaterStreak(ctx.elements)
+      soilChart.update()
     },
     getActiveSprouts: () => {
       const state = getState()
@@ -139,6 +141,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
     onHarvestComplete: () => {
       navCallbacks.onUpdateStats()
       celebrateMeter(ctx.elements.soilMeter)
+      soilChart.update()
     },
   })
 
@@ -152,6 +155,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       sunLogPopulate?.()
       celebrateMeter(ctx.elements.sunMeter)
       celebrateMeter(ctx.elements.soilMeter)
+      soilChart.update()
     },
   })
 
@@ -170,7 +174,10 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   const twigView = buildTwigView(mapPanel, {
     onClose: () => returnToBranchView(ctx, navCallbacks),
     onSave: navCallbacks.onUpdateStats,
-    onSoilChange: () => updateSoilMeter(ctx.elements),
+    onSoilChange: () => {
+      updateSoilMeter(ctx.elements)
+      soilChart.update()
+    },
     onOpenLeaf: (leafId, twigId, branchIndex) => {
       setViewModeState('leaf', branchIndex, twigId)
       ctx.leafView?.open(leafId, twigId, branchIndex)
@@ -221,7 +228,10 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       navCallbacks.onUpdateStats()
     },
     onSave: navCallbacks.onUpdateStats,
-    onSoilChange: () => updateSoilMeter(ctx.elements),
+    onSoilChange: () => {
+      updateSoilMeter(ctx.elements)
+      soilChart.update()
+    },
   })
 
   // Complete the context with twig and leaf views
@@ -277,6 +287,10 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       })
     },
   )
+
+  // Soil chart
+  const soilChart = buildSoilChart()
+  ctx.elements.soilChartSection.appendChild(soilChart.container)
 
   // Initial view setup
   updateStats(ctx)

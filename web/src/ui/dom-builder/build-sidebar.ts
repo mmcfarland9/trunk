@@ -35,6 +35,7 @@ export function buildSidebar(): HTMLElement {
       <p class="keyboard-hint hint-arrows" title="Cmd+Arrow to cycle"><kbd>⌘←</kbd><kbd>⌘→</kbd> Cycle<span class="visually-hidden"> - Press Cmd+Arrow to cycle between branches</span></p>
       <p class="keyboard-hint hint-numbers" title="Number keys to select"><kbd>1-8</kbd> Select<span class="visually-hidden"> - Press number keys 1 through 8 to select</span></p>
     </section>
+    <section class="panel-section soil-chart-section"></section>
   `
   return sidePanel
 }

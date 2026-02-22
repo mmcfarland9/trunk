@@ -328,6 +328,11 @@ function assembleElements(
       '.account-reset-data-btn',
       'account dialog reset data button',
     ),
+    soilChartSection: requireElement<HTMLElement>(
+      sidePanel,
+      '.soil-chart-section',
+      'soil chart section',
+    ),
   }
 }
 
