@@ -1,0 +1,21 @@
+/* === Radar Chart Overlay === */
+
+/* SVG sits inside .canvas, centered, behind tree nodes */
+.radar-chart-svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 55%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  transition: opacity 350ms ease;
+}
+
+/* Hide in branch and twig views */
+.canvas.is-zoomed .radar-chart-svg,
+.canvas.is-twig-zoomed .radar-chart-svg {
+  opacity: 0;
+}

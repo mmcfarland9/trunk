@@ -21,6 +21,7 @@ import { initShine } from '../features/shine-dialog'
 import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from '../features/log-dialogs'
 import { initAccountDialog } from '../features/account-dialog'
 import { buildSoilChart } from '../ui/soil-chart'
+import { buildRadarChart } from '../ui/radar-chart'
 import {
   returnToBranchView,
   enterBranchView,
@@ -127,6 +128,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       celebrateMeter(ctx.elements.soilMeter)
       updateWaterStreak(ctx.elements)
       soilChart.update()
+      radarChart.update()
     },
     getActiveSprouts: () => {
       const state = getState()
@@ -142,6 +144,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       navCallbacks.onUpdateStats()
       celebrateMeter(ctx.elements.soilMeter)
       soilChart.update()
+      radarChart.update()
     },
   })
 
@@ -156,6 +159,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       celebrateMeter(ctx.elements.sunMeter)
       celebrateMeter(ctx.elements.soilMeter)
       soilChart.update()
+      radarChart.update()
     },
   })
 
@@ -177,6 +181,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
     onSoilChange: () => {
       updateSoilMeter(ctx.elements)
       soilChart.update()
+      radarChart.update()
     },
     onOpenLeaf: (leafId, twigId, branchIndex) => {
       setViewModeState('leaf', branchIndex, twigId)
@@ -231,6 +236,7 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
     onSoilChange: () => {
       updateSoilMeter(ctx.elements)
       soilChart.update()
+      radarChart.update()
     },
   })
 
@@ -291,6 +297,10 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   // Soil chart
   const soilChart = buildSoilChart()
   ctx.elements.soilChartSection.appendChild(soilChart.container)
+
+  // Radar chart — SVG overlay on the tree canvas
+  const radarChart = buildRadarChart()
+  ctx.elements.canvas.appendChild(radarChart.svg)
 
   // Initial view setup
   updateStats(ctx)

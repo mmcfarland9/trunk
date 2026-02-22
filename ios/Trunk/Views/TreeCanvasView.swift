@@ -95,8 +95,15 @@ struct TreeCanvasView: View {
     @ViewBuilder
     private func treeContent(center: CGPoint, radius: CGFloat, time: Double, geo: GeometryProxy) -> some View {
         let cachedData = branchSproutData
+        let radarSize = min(geo.size.width, geo.size.height) * 0.65
 
         ZStack {
+            // Radar chart background (behind everything)
+            RadarChartView(events: EventStore.shared.events)
+                .frame(width: radarSize, height: radarSize)
+                .position(center)
+                .allowsHitTesting(false)
+
             // ASCII dot guide lines — single Canvas for all 8 branches
             CanvasDotGuideLines(
                 branchCount: branchCount,
