@@ -88,6 +88,25 @@
   background: var(--meter-color, var(--ink));
 }
 
+/* Celebration pulse after resource actions */
+@keyframes meter-celebrate {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.resource-meter.is-celebrating {
+  animation: meter-celebrate 500ms ease-out;
+}
+
+.water-streak-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.water-streak-value:empty {
+  display: none;
+}
+
 /* Profile badge - matches resource meter style */
 .profile-badge {
   display: flex;

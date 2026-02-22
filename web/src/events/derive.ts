@@ -9,7 +9,7 @@ import type { TrunkEvent } from './types'
 import { EVENT_TYPES } from './types'
 import type { SproutSeason, SproutEnvironment, Sprout, WaterEntry, SunEntry } from '../types'
 import constants from '../../../shared/constants.json'
-import { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
+import { getTodayResetTime, getWeekResetTime, getResetDayKey } from '../utils/calculations'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity
@@ -465,4 +465,66 @@ export function getAllWaterEntries(
   }
   // Sort by timestamp descending (newest first)
   return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+}
+
+/**
+ * Watering streak data
+ */
+export type WateringStreak = {
+  current: number
+  longest: number
+}
+
+/**
+ * Derive watering streak from events.
+ * A "watering day" runs from 6am to 6am (matching the daily reset).
+ * Current streak: consecutive days ending at today (or yesterday if not yet watered today).
+ * Longest streak: longest consecutive run ever.
+ */
+export function deriveWateringStreak(
+  events: readonly TrunkEvent[],
+  now: Date = new Date(),
+): WateringStreak {
+  const waterTimestamps = events
+    .filter((e) => e.type === 'sprout_watered')
+    .map((e) => new Date(e.timestamp))
+
+  if (waterTimestamps.length === 0) return { current: 0, longest: 0 }
+
+  // Build set of unique watering days (keyed by 6am boundary date)
+  const waterDays = new Set<string>()
+  for (const ts of waterTimestamps) {
+    waterDays.add(getResetDayKey(getTodayResetTime(ts)))
+  }
+
+  // Current streak: walk back from today (or yesterday if not watered today)
+  const todayReset = getTodayResetTime(now)
+  const cursor = new Date(todayReset)
+  if (!waterDays.has(getResetDayKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1)
+  }
+
+  let current = 0
+  while (waterDays.has(getResetDayKey(cursor))) {
+    current++
+    cursor.setDate(cursor.getDate() - 1)
+  }
+
+  // Longest streak: find longest consecutive run in sorted days
+  const sortedDays = [...waterDays].sort()
+  let longest = sortedDays.length > 0 ? 1 : 0
+  let run = 1
+  for (let i = 1; i < sortedDays.length; i++) {
+    const prev = new Date(sortedDays[i - 1] + 'T12:00:00')
+    prev.setDate(prev.getDate() + 1)
+    if (getResetDayKey(prev) === sortedDays[i]) {
+      run++
+    } else {
+      longest = Math.max(longest, run)
+      run = 1
+    }
+  }
+  longest = Math.max(longest, run)
+
+  return { current, longest }
 }

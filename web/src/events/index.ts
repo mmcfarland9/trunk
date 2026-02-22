@@ -18,7 +18,7 @@ export type {
 export { EVENT_TYPES } from './types'
 
 // Derivation
-export type { DerivedState, DerivedSprout, DerivedLeaf } from './derive'
+export type { DerivedState, DerivedSprout, DerivedLeaf, WateringStreak } from './derive'
 export {
   deriveState,
   deriveWaterAvailable,
@@ -38,6 +38,7 @@ export {
   generateSproutId,
   generateLeafId,
   getAllWaterEntries,
+  deriveWateringStreak,
 } from './derive'
 
 // Soil charting
@@ -69,4 +70,5 @@ export {
   canAffordWater,
   canAffordSun,
   getWaterCapacity,
+  getWateringStreak,
 } from './store'

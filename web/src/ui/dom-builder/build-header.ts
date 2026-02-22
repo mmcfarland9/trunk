@@ -1,4 +1,9 @@
-import { getSoilAvailable, getSoilCapacity, getWaterAvailable } from '../../state'
+import {
+  getSoilAvailable,
+  getSoilCapacity,
+  getWaterAvailable,
+  getWateringStreak,
+} from '../../state'
 import trunkLogo from '../../../assets/tree_icon_transp.png'
 
 export type HeaderElements = {
@@ -11,6 +16,7 @@ export type HeaderElements = {
   waterCircles: HTMLSpanElement[]
   sunCircle: HTMLSpanElement
   waterMeter: HTMLDivElement
+  waterStreakValue: HTMLSpanElement
   sunMeter: HTMLDivElement
   soilMeter: HTMLDivElement
 }
@@ -117,7 +123,16 @@ export function buildHeader(): HeaderElements {
   waterMeter.setAttribute('aria-valuemin', '0')
   waterMeter.setAttribute('aria-valuemax', '3')
   waterMeter.setAttribute('aria-label', `Water: ${initialWaterAvailable} of 3`)
-  waterMeter.append(waterLabel, waterTrack)
+  // Streak value (shown when streak > 0)
+  const waterStreakValue = document.createElement('span')
+  waterStreakValue.className = 'resource-meter-value water-streak-value'
+  const streak = getWateringStreak()
+  if (streak.current > 0) {
+    waterStreakValue.textContent = `${streak.current} / ${streak.longest}d`
+    waterStreakValue.title = `Current streak: ${streak.current} day${streak.current !== 1 ? 's' : ''}\nLongest: ${streak.longest} day${streak.longest !== 1 ? 's' : ''}`
+  }
+
+  waterMeter.append(waterLabel, waterTrack, waterStreakValue)
 
   // Global Sun meter - 1 circle
   const sunMeter = document.createElement('div')
@@ -158,6 +173,7 @@ export function buildHeader(): HeaderElements {
     waterCircles,
     sunCircle,
     waterMeter,
+    waterStreakValue,
     sunMeter,
     soilMeter,
   }

@@ -83,6 +83,10 @@ struct OverviewView: View {
 struct ResourceMetersView: View {
     let progression: ProgressionViewModel
 
+    @State private var soilCelebrating = false
+    @State private var waterCelebrating = false
+    @State private var sunCelebrating = false
+
     var body: some View {
         HStack(spacing: TrunkTheme.space3) {
             // Soil meter - horizontal bar with fill
@@ -103,6 +107,14 @@ struct ResourceMetersView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Soil: \(String(format: "%.1f", progression.soilAvailable)) of \(String(format: "%.1f", progression.soilCapacity))")
+            .scaleEffect(soilCelebrating ? 1.08 : 1.0)
+            .animation(.trunkBounce, value: soilCelebrating)
+            .onChange(of: progression.soilAvailable) {
+                soilCelebrating = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    soilCelebrating = false
+                }
+            }
 
             Spacer()
 
@@ -129,6 +141,21 @@ struct ResourceMetersView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Water: \(progression.waterAvailable) of \(progression.waterCapacity)")
+            .scaleEffect(waterCelebrating ? 1.08 : 1.0)
+            .animation(.trunkBounce, value: waterCelebrating)
+            .onChange(of: progression.waterAvailable) {
+                waterCelebrating = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    waterCelebrating = false
+                }
+            }
+
+            // Water streak (shown when active)
+            if progression.wateringStreak > 0 {
+                Text("\(progression.wateringStreak)/\(progression.longestWateringStreak)d")
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.trunkWater.opacity(0.7))
+            }
 
             // Sun meter - circle
             HStack(spacing: TrunkTheme.space1) {
@@ -153,6 +180,14 @@ struct ResourceMetersView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Sun: \(progression.sunAvailable) of \(progression.sunCapacity)")
+            .scaleEffect(sunCelebrating ? 1.08 : 1.0)
+            .animation(.trunkBounce, value: sunCelebrating)
+            .onChange(of: progression.sunAvailable) {
+                sunCelebrating = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    sunCelebrating = false
+                }
+            }
         }
         .padding(.horizontal, TrunkTheme.space2)
         .padding(.vertical, TrunkTheme.space2)

@@ -9,11 +9,12 @@
 
 import type { TrunkEvent } from './types'
 import { VALID_SEASONS, VALID_ENVIRONMENTS } from './types'
-import type { DerivedState } from './derive'
+import type { DerivedState, WateringStreak } from './derive'
 import {
   deriveState,
   deriveWaterAvailable,
   deriveSunAvailable,
+  deriveWateringStreak,
   wasSproutWateredThisWeek,
   wasSproutWateredToday,
   getTodayResetTime,
@@ -38,6 +39,7 @@ let cachedWaterAvailable: number | null = null
 let cachedSunAvailable: number | null = null
 let cachedWaterAt: number | null = null
 let cachedSunAt: number | null = null
+let cachedStreak: WateringStreak | null = null
 
 // Error callbacks
 let onQuotaError: (() => void) | null = null
@@ -170,6 +172,7 @@ function invalidateCache(): void {
   cachedSunAvailable = null
   cachedWaterAt = null
   cachedSunAt = null
+  cachedStreak = null
 }
 
 /**
@@ -226,6 +229,19 @@ export function getWaterAvailable(now: Date = new Date()): number {
   cachedWaterAvailable = deriveWaterAvailable(events, now)
   cachedWaterAt = now.getTime()
   return cachedWaterAvailable
+}
+
+/**
+ * Get sun available (cached, invalidates on weekly reset boundary)
+ */
+/**
+ * Get watering streak (cached, invalidates on new events)
+ */
+export function getWateringStreak(now: Date = new Date()): WateringStreak {
+  if (!cachedStreak) {
+    cachedStreak = deriveWateringStreak(events, now)
+  }
+  return cachedStreak
 }
 
 /**

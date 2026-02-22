@@ -53,7 +53,8 @@ export function initializeEvents(
     const isTyping =
       e.target instanceof HTMLInputElement ||
       e.target instanceof HTMLTextAreaElement ||
-      e.target instanceof HTMLSelectElement
+      e.target instanceof HTMLSelectElement ||
+      (e.target instanceof HTMLElement && e.target.isContentEditable)
 
     // Handle Escape: close dialogs first, then zoom back
     if (e.key === 'Escape') {
@@ -104,6 +105,32 @@ export function initializeEvents(
 
     // Don't handle other keys if user is typing
     if (isTyping) return
+
+    // Don't handle action shortcuts if any dialog is open
+    const anyDialogOpen =
+      dialogAPIs.waterDialog.isOpen() ||
+      dialogAPIs.harvestDialog.isOpen() ||
+      dialogAPIs.sunLog.isOpen() ||
+      dialogAPIs.soilBag.isOpen() ||
+      dialogAPIs.waterCan.isOpen() ||
+      dialogAPIs.account.isOpen()
+
+    // Action shortcuts: W = water, S = sun/shine, H = harvest
+    if (!anyDialogOpen && (e.key === 'w' || e.key === 'W')) {
+      e.preventDefault()
+      dialogAPIs.waterDialog.open()
+      return
+    }
+    if (!anyDialogOpen && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault()
+      dialogAPIs.sunLog.open()
+      return
+    }
+    if (!anyDialogOpen && (e.key === 'h' || e.key === 'H')) {
+      e.preventDefault()
+      dialogAPIs.harvestDialog.openReady()
+      return
+    }
 
     // Don't handle other keys if twig view is open
     if (ctx.twigView?.isOpen()) return

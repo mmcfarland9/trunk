@@ -373,6 +373,15 @@ private func processLeafCreated(event: SyncEvent, leaves: inout [String: Derived
 
 // MARK: - Water/Sun Availability Derivation
 
+/// Format a Date as "YYYY-MM-DD" using local calendar components.
+/// Shared day-key utility — use with getTodayResetTime() to identify
+/// which "day" (6am–6am) a timestamp belongs to.
+func dayKey(_ date: Date) -> String {
+    let calendar = Calendar.current
+    let components = calendar.dateComponents([.year, .month, .day], from: date)
+    return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+}
+
 /// Get reset time for daily water (6am local time)
 func getTodayResetTime(now: Date = Date()) -> Date {
     var calendar = Calendar.current
@@ -508,3 +517,63 @@ private func parseTimestamp(_ timestamp: String) -> Date {
 }
 
 // Payload parsing helpers (getString, getInt, getDouble) are in Utils/PayloadHelpers.swift
+
+// MARK: - Watering Streak
+
+/// Watering streak data
+struct WateringStreak {
+    let current: Int
+    let longest: Int
+}
+
+/// Derive watering streak from events.
+/// A "watering day" runs from 6am to 6am (matching the daily reset).
+/// Current streak: consecutive days ending at today (or yesterday if not yet watered today).
+/// Longest streak: longest consecutive run ever.
+func deriveWateringStreak(from events: [SyncEvent], now: Date = Date()) -> WateringStreak {
+    let waterTimestamps = events
+        .filter { $0.type == "sprout_watered" }
+        .map { parseTimestamp($0.clientTimestamp) }
+
+    guard !waterTimestamps.isEmpty else {
+        return WateringStreak(current: 0, longest: 0)
+    }
+
+    // Build set of unique watering days (keyed by 6am boundary date)
+    var waterDays = Set<String>()
+    for ts in waterTimestamps {
+        waterDays.insert(dayKey(getTodayResetTime(now: ts)))
+    }
+
+    // Current streak: walk back from today (or yesterday if not watered today)
+    let calendar = Calendar.current
+    var cursor = getTodayResetTime(now: now)
+    if !waterDays.contains(dayKey(cursor)) {
+        cursor = calendar.date(byAdding: .day, value: -1, to: cursor) ?? cursor
+    }
+
+    var current = 0
+    while waterDays.contains(dayKey(cursor)) {
+        current += 1
+        cursor = calendar.date(byAdding: .day, value: -1, to: cursor) ?? cursor
+    }
+
+    // Longest streak: find longest consecutive run in sorted days
+    let sortedDays = waterDays.sorted()
+    var longest = sortedDays.isEmpty ? 0 : 1
+    var run = 1
+    for i in 1..<sortedDays.count {
+        // Parse previous day at noon (DST-safe), add 1 day, compare key
+        let prevDate = ISO8601DateFormatter().date(from: sortedDays[i - 1] + "T12:00:00") ?? Date()
+        let nextExpected = calendar.date(byAdding: .day, value: 1, to: prevDate) ?? prevDate
+        if dayKey(nextExpected) == sortedDays[i] {
+            run += 1
+        } else {
+            longest = max(longest, run)
+            run = 1
+        }
+    }
+    longest = max(longest, run)
+
+    return WateringStreak(current: current, longest: longest)
+}

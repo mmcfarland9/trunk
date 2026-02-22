@@ -100,6 +100,17 @@ export function getNextSunReset(now: Date = new Date()): Date {
 }
 
 /**
+ * Format a reset-boundary Date as a YYYY-MM-DD day key.
+ * Use with getTodayResetTime() to identify which "day" (6am–6am) a timestamp belongs to.
+ */
+export function getResetDayKey(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/**
  * Format reset time as "Resets Wed 01/22 at 6:00 AM"
  */
 export function formatResetTime(date: Date): string {

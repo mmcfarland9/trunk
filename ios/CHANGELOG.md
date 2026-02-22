@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Upcoming Harvests sheet: tapping the Next Harvest panel shows all active sprouts sorted by harvest date
 - VoiceOver accessibility labels and hints on the Next Harvest panel and harvest list rows
+- Post-action celebration feedback: bounce animation on resource meters after watering, harvesting, or shining
+- Watering streak counter: displays current and longest-ever consecutive watering days near the water meter
 
 ### Changed
 - Replaced ASCII text progress bar in Next Harvest panel with a native SwiftUI rounded bar

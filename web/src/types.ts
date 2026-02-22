@@ -141,6 +141,7 @@ export type AppElements = {
   waterCanEmptyLog: HTMLParagraphElement
   waterCanLogEntries: HTMLDivElement
   waterMeter: HTMLDivElement
+  waterStreakValue: HTMLSpanElement
   sunLogDialog: HTMLDivElement
   sunLogDialogClose: HTMLButtonElement
   sunLogShineSection: HTMLDivElement

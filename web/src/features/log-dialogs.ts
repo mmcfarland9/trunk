@@ -64,7 +64,7 @@ function populateSunLog(elements: SunLogElements): void {
 export function initSunLogDialog(
   elements: SunLogElements & Pick<AppElements, 'sunMeter'>,
   callbacks: { onPopulateSunLogShine: () => void },
-): { populate: () => void; isOpen: () => boolean; close: () => void } {
+): { populate: () => void; open: () => void; isOpen: () => boolean; close: () => void } {
   const openDialog = () => {
     callbacks.onPopulateSunLogShine()
     populateSunLog(elements)
@@ -83,6 +83,7 @@ export function initSunLogDialog(
 
   return {
     populate: () => populateSunLog(elements),
+    open: openDialog,
     isOpen: () => !elements.sunLogDialog.classList.contains('hidden'),
     close: closeDialog,
   }

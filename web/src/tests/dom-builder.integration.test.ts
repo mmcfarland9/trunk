@@ -10,6 +10,7 @@ vi.mock('../state', () => ({
   getSoilAvailable: () => 10,
   getSoilCapacity: () => 10,
   getWaterAvailable: () => 3,
+  getWateringStreak: () => ({ current: 0, longest: 0 }),
   getNodeState: () => ({}),
   getSunLog: () => [],
   getSoilLog: () => [],

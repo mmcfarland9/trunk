@@ -34,6 +34,7 @@ final class EventStore: ObservableObject {
   private var cachedState: DerivedState?
   private var cachedWaterAvailable: Int?
   private var cachedSunAvailable: Int?
+  private var cachedStreak: WateringStreak?
 
   // Debounced disk write
   private var writeTask: Task<Void, Never>?
@@ -169,6 +170,16 @@ final class EventStore: ObservableObject {
     return sun
   }
 
+  /// Get watering streak (cached)
+  func getWateringStreak(now: Date = Date()) -> WateringStreak {
+    if let cached = cachedStreak {
+      return cached
+    }
+    let streak = deriveWateringStreak(from: events, now: now)
+    cachedStreak = streak
+    return streak
+  }
+
   /// Check if sprout was watered this week
   func checkSproutWateredThisWeek(sproutId: String, now: Date = Date()) -> Bool {
     wasSproutWateredThisWeek(events: events, sproutId: sproutId, now: now)
@@ -180,6 +191,7 @@ final class EventStore: ObservableObject {
     cachedState = nil
     cachedWaterAvailable = nil
     cachedSunAvailable = nil
+    cachedStreak = nil
   }
 
   /// Force refresh (e.g., when crossing time boundaries)

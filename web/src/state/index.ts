@@ -30,6 +30,7 @@ export {
   canAffordSoil,
   getWaterAvailable,
   getWaterCapacity,
+  getWateringStreak,
   canAffordWater,
   getSunAvailable,
   getSunCapacity,
@@ -44,6 +45,7 @@ export {
   getWeekResetTime,
   getNextWaterReset,
   getNextSunReset,
+  getResetDayKey,
   formatResetTime,
 } from '../utils/calculations'
 

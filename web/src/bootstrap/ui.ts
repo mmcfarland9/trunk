@@ -4,10 +4,13 @@ import {
   getSoilAvailable,
   getSoilCapacity,
   getWaterAvailable,
+  getWateringStreak,
+  getPresetLabel,
   setViewModeState,
   getActiveBranchIndex,
   getActiveTwigId,
 } from '../state'
+import constants from '../../../shared/constants.json'
 import { updateFocus, setFocusedNode } from '../ui/node-ui'
 import { buildTwigView } from '../ui/twig-view'
 import { buildLeafView } from '../ui/leaf-view'
@@ -33,14 +36,17 @@ export type DialogAPIs = {
   waterDialog: {
     isOpen: () => boolean
     close: () => void
+    open: () => void
   }
   harvestDialog: {
     isOpen: () => boolean
     close: () => void
+    openReady: () => boolean
   }
   sunLog: {
     isOpen: () => boolean
     close: () => void
+    open: () => void
   }
   soilBag: {
     isOpen: () => boolean
@@ -76,6 +82,32 @@ function updateWaterMeter(elements: AppElements): void {
   })
 }
 
+// Celebration animation — brief pulse on meter after action
+function celebrateMeter(meter: HTMLElement): void {
+  meter.classList.remove('is-celebrating')
+  void meter.offsetWidth
+  meter.classList.add('is-celebrating')
+  meter.addEventListener(
+    'animationend',
+    () => {
+      meter.classList.remove('is-celebrating')
+    },
+    { once: true },
+  )
+}
+
+// Water streak update function
+function updateWaterStreak(elements: AppElements): void {
+  const { current, longest } = getWateringStreak()
+  if (current > 0) {
+    elements.waterStreakValue.textContent = `${current} / ${longest}d`
+    elements.waterStreakValue.title = `Current streak: ${current} day${current !== 1 ? 's' : ''}\nLongest: ${longest} day${longest !== 1 ? 's' : ''}`
+  } else {
+    elements.waterStreakValue.textContent = ''
+    elements.waterStreakValue.title = ''
+  }
+}
+
 export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): DialogAPIs {
   // Set up storage error callbacks
   setEventStoreErrorCallbacks(
@@ -90,6 +122,9 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
     onWaterComplete: () => {
       navCallbacks.onUpdateStats()
       ctx.twigView?.refresh()
+      celebrateMeter(ctx.elements.waterMeter)
+      celebrateMeter(ctx.elements.soilMeter)
+      updateWaterStreak(ctx.elements)
     },
     getActiveSprouts: () => {
       const state = getState()
@@ -101,7 +136,10 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
 
   const harvestDialogApi = initHarvestDialog(ctx, {
     onSoilMeterChange: () => updateSoilMeter(ctx.elements),
-    onHarvestComplete: navCallbacks.onUpdateStats,
+    onHarvestComplete: () => {
+      navCallbacks.onUpdateStats()
+      celebrateMeter(ctx.elements.soilMeter)
+    },
   })
 
   // Late-binding container for sun log populate function
@@ -110,7 +148,11 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   const shineApi = initShine(ctx, {
     onSunMeterChange: () => shineApi.updateSunMeter(),
     onSoilMeterChange: () => updateSoilMeter(ctx.elements),
-    onShineComplete: () => sunLogPopulate?.(),
+    onShineComplete: () => {
+      sunLogPopulate?.()
+      celebrateMeter(ctx.elements.sunMeter)
+      celebrateMeter(ctx.elements.soilMeter)
+    },
   })
 
   // Initialize log dialogs
@@ -241,20 +283,47 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   updateFocus(null, ctx)
   updateSoilMeter(ctx.elements)
   updateWaterMeter(ctx.elements)
+  updateWaterStreak(ctx.elements)
   shineApi.updateSunMeter()
 
   return {
     waterDialog: {
       isOpen: () => waterDialogApi.isOpen(),
       close: () => waterDialogApi.closeWaterDialog(),
+      open: () => waterDialogApi.openWaterDialog(),
     },
     harvestDialog: {
       isOpen: () => harvestDialogApi.isOpen(),
       close: () => harvestDialogApi.closeHarvestDialog(),
+      openReady: () => {
+        const state = getState()
+        const now = Date.now()
+        const ready = [...state.sprouts.values()]
+          .filter((s) => s.state === 'active')
+          .find((s) => {
+            const durationMs = constants.seasons[s.season].durationMs
+            return new Date(s.plantedAt).getTime() + durationMs <= now
+          })
+        if (!ready) return false
+        harvestDialogApi.openHarvestDialog({
+          id: ready.id,
+          title: ready.title,
+          twigId: ready.twigId,
+          twigLabel: getPresetLabel(ready.twigId) || '',
+          season: ready.season,
+          environment: ready.environment,
+          soilCost: ready.soilCost,
+          bloomWither: ready.bloomWither,
+          bloomBudding: ready.bloomBudding,
+          bloomFlourish: ready.bloomFlourish,
+        })
+        return true
+      },
     },
     sunLog: {
       isOpen: () => sunLogApi.isOpen(),
       close: () => sunLogApi.close(),
+      open: () => sunLogApi.open(),
     },
     soilBag: {
       isOpen: () => soilBagApi.isOpen(),
@@ -274,4 +343,4 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   }
 }
 
-export { updateSoilMeter, updateWaterMeter }
+export { updateSoilMeter, updateWaterMeter, celebrateMeter }
