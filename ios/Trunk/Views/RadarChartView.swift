@@ -4,19 +4,18 @@
 //
 //  8-axis radar chart showing life balance across branches.
 //  Renders behind the tree canvas as a subtle background visualization.
-//  Axis tips and data vertices sway with the same seeded wind as branches.
+//  Axis tips and data vertices sway with wind passed from the parent view.
 //
 
 import SwiftUI
 
 struct RadarChartView: View {
-    let events: [SyncEvent]
+    let scores: [Double]
     let windOffsetFor: (Int) -> CGPoint
 
     private let branchCount = SharedConstants.Tree.branchCount
 
     var body: some View {
-        let scores = computeBranchScores()
         let allZero = scores.allSatisfy { $0 == 0 }
 
         GeometryReader { geo in
@@ -112,9 +111,10 @@ struct RadarChartView: View {
         )
     }
 
-    // MARK: - Data Computation
+    // MARK: - Score Computation (static, called once by parent)
 
-    private func computeBranchScores() -> [Double] {
+    static func computeScores(from events: [SyncEvent]) -> [Double] {
+        let branchCount = SharedConstants.Tree.branchCount
         var sproutTwigMap: [String: String] = [:]
         var branchCounts = Array(repeating: 0, count: branchCount)
 
@@ -126,7 +126,7 @@ struct RadarChartView: View {
                 if let sproutId = event.payload["sproutId"]?.stringValue,
                    let twigId = event.payload["twigId"]?.stringValue {
                     sproutTwigMap[sproutId] = twigId
-                    if let bi = extractBranchIndex(from: twigId) {
+                    if let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
                         branchCounts[bi] += 1
                     }
                 }
@@ -134,20 +134,20 @@ struct RadarChartView: View {
             case "sprout_watered":
                 if let sproutId = event.payload["sproutId"]?.stringValue,
                    let twigId = sproutTwigMap[sproutId],
-                   let bi = extractBranchIndex(from: twigId) {
+                   let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
                     branchCounts[bi] += 1
                 }
 
             case "sprout_harvested":
                 if let sproutId = event.payload["sproutId"]?.stringValue,
                    let twigId = sproutTwigMap[sproutId],
-                   let bi = extractBranchIndex(from: twigId) {
+                   let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
                     branchCounts[bi] += 1
                 }
 
             case "sun_shone":
                 if let twigId = event.payload["twigId"]?.stringValue,
-                   let bi = extractBranchIndex(from: twigId) {
+                   let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
                     branchCounts[bi] += 1
                 }
 
@@ -164,7 +164,7 @@ struct RadarChartView: View {
         return branchCounts.map { Double($0) / Double(maxCount) }
     }
 
-    private func extractBranchIndex(from twigId: String) -> Int? {
+    private static func extractBranchIndex(from twigId: String, branchCount: Int) -> Int? {
         for i in 0..<branchCount {
             if twigId.hasPrefix("branch-\(i)") {
                 return i

@@ -5,8 +5,6 @@
  * producing varied but repeatable organic sway. Y-axis is damped for realism.
  */
 
-import { BRANCH_COUNT } from '../constants'
-
 // Wind amplitude and speed range
 export const WIND_BRANCH_AMP = 6
 export const WIND_TWIG_AMP = 10
@@ -47,14 +45,4 @@ export function branchWindOffset(
     x: Math.sin(time * speed + phase) * amplitude,
     y: Math.cos(time * speed * 0.8 + phase) * amplitude * WIND_Y_DAMPING,
   }
-}
-
-/**
- * Pre-compute all 8 branch wind offsets for a given time.
- */
-export function allBranchWindOffsets(
-  time: number,
-  amplitude = WIND_BRANCH_AMP,
-): Array<{ x: number; y: number }> {
-  return Array.from({ length: BRANCH_COUNT }, (_, i) => branchWindOffset(i, time, amplitude))
 }

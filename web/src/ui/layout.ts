@@ -14,6 +14,7 @@ import {
   seeded,
   lerp,
   clamp,
+  branchWindOffset,
 } from '../utils/wind'
 
 // Layout constants
@@ -249,14 +250,12 @@ function applyWind(ctx: AppContext, timestamp: number): void {
 
   branchGroups.forEach((bg, idx) => {
     if (isFocusedBranch && idx !== activeBranchIndex) return
-    const seed = 97 + idx * 41
-    const speed = lerp(WIND_MIN, WIND_MAX, seeded(seed, 13.7))
-    const phase = seeded(seed, 23.1) * Math.PI * 2
+    const wind = branchWindOffset(idx, time, bAmp)
     const bx = getBase(bg.group, 'x'),
       by = getBase(bg.group, 'y')
     if (bx !== null && by !== null) {
-      bg.group.style.left = `${bx + Math.sin(time * speed + phase) * bAmp}px`
-      bg.group.style.top = `${by + Math.cos(time * speed * 0.8 + phase) * bAmp * WIND_Y_DAMPING}px`
+      bg.group.style.left = `${bx + wind.x}px`
+      bg.group.style.top = `${by + wind.y}px`
     }
     bg.twigs.forEach((twig) => {
       const x = getBase(twig, 'x'),

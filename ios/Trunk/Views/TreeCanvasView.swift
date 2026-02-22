@@ -45,6 +45,11 @@ struct TreeCanvasView: View {
     private let zoomOutThreshold: CGFloat = 0.7
     private let zoomInThreshold: CGFloat = 1.5
 
+    // Pre-computed scores for radar chart (hoisted out of TimelineView)
+    private var radarScores: [Double] {
+        RadarChartView.computeScores(from: EventStore.shared.events)
+    }
+
     // Pre-computed per-branch sprout data (hoisted out of TimelineView)
     private var branchSproutData: [(hasActive: Bool, activeCount: Int)] {
         (0..<branchCount).map { index in
@@ -100,7 +105,7 @@ struct TreeCanvasView: View {
         ZStack {
             // Radar chart background (behind everything)
             RadarChartView(
-                events: EventStore.shared.events,
+                scores: radarScores,
                 windOffsetFor: { index in windOffsetFor(index: index, time: time) }
             )
                 .frame(width: radarSize, height: radarSize)

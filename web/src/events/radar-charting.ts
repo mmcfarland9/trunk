@@ -7,6 +7,7 @@
  */
 
 import type { TrunkEvent } from './types'
+import { BRANCH_COUNT } from '../constants'
 import { parseTwigId } from '../utils/twig-id'
 import { getPresetLabel } from '../state'
 
@@ -20,8 +21,6 @@ export type BranchEngagement = {
   sunReflections: number
   harvested: number
 }
-
-const BRANCH_COUNT = 8
 
 export function computeBranchEngagement(events: readonly TrunkEvent[]): BranchEngagement[] {
   // Per-branch counters

@@ -6,6 +6,7 @@
  * imported from the shared wind utility (no duplication).
  */
 
+import { BRANCH_COUNT } from '../constants'
 import { getEvents } from '../events/store'
 import { computeBranchEngagement } from '../events/radar-charting'
 import { branchWindOffset } from '../utils/wind'
@@ -14,7 +15,6 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 
 const CENTER = 100
 const MAX_RADIUS = 80
-const BRANCH_COUNT = 8
 const GRID_RINGS = [0.25, 0.5, 0.75]
 
 // Wind amplitude in SVG units (proportional to 6px branch sway in pixel space)
