@@ -43,27 +43,6 @@ function setAttrs(el: SVGElement, attrs: Record<string, string | number>): void 
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v))
 }
 
-/**
- * Choose a text-anchor value based on the axis angle so labels don't
- * overlap the chart body.
- */
-function labelAnchor(angle: number): string {
-  const cos = Math.cos(angle)
-  if (cos > 0.3) return 'start'
-  if (cos < -0.3) return 'end'
-  return 'middle'
-}
-
-/**
- * Choose a dominant-baseline for vertical positioning of labels.
- */
-function labelBaseline(angle: number): string {
-  const sin = Math.sin(angle)
-  if (sin > 0.3) return 'hanging'
-  if (sin < -0.3) return 'auto'
-  return 'central'
-}
-
 export function buildRadarChart(): { svg: SVGSVGElement; update: () => void } {
   const svg = svgEl('svg') as SVGSVGElement
   svg.classList.add('radar-chart-svg')
@@ -77,21 +56,7 @@ export function buildRadarChart(): { svg: SVGSVGElement; update: () => void } {
     const engagement = computeBranchEngagement(events)
     const hasData = engagement.some((b) => b.rawTotal > 0)
 
-    if (!hasData) {
-      const text = svgEl('text')
-      setAttrs(text, {
-        x: CENTER,
-        y: CENTER,
-        'text-anchor': 'middle',
-        'dominant-baseline': 'central',
-        'font-size': '9',
-        'font-family': 'monospace',
-        fill: 'rgba(111,86,68,0.4)',
-      })
-      text.textContent = 'No activity yet'
-      svg.appendChild(text)
-      return
-    }
+    if (!hasData) return
 
     // Grid rings
     for (const frac of GRID_RINGS) {
@@ -112,7 +77,6 @@ export function buildRadarChart(): { svg: SVGSVGElement; update: () => void } {
       const angle = branchAngle(i)
       const tip = polar(angle, MAX_RADIUS)
 
-      // Axis line
       const line = svgEl('line')
       setAttrs(line, {
         x1: CENTER,
@@ -123,21 +87,6 @@ export function buildRadarChart(): { svg: SVGSVGElement; update: () => void } {
         'stroke-width': '0.5',
       })
       svg.appendChild(line)
-
-      // Label just outside the axis tip
-      const labelPos = polar(angle, MAX_RADIUS + 10)
-      const label = svgEl('text')
-      setAttrs(label, {
-        x: labelPos.x,
-        y: labelPos.y,
-        'text-anchor': labelAnchor(angle),
-        'dominant-baseline': labelBaseline(angle),
-        'font-size': '6',
-        'font-family': 'monospace',
-        fill: 'rgba(111,86,68,0.5)',
-      })
-      label.textContent = engagement[i].branchName
-      svg.appendChild(label)
     }
 
     // Data polygon

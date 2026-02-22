@@ -21,30 +21,13 @@ struct RadarChartView: View {
             let size = min(geo.size.width, geo.size.height)
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
             let maxRadius = size * 0.38
-            let labelRadius = maxRadius + 14
 
-            if allZero {
-                Text("No activity yet")
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint)
-                    .position(center)
-            } else {
-                ZStack {
-                    Canvas { context, _ in
-                        drawGrid(context: context, center: center, maxRadius: maxRadius)
-                        drawAxes(context: context, center: center, maxRadius: maxRadius)
-                        drawPolygon(context: context, center: center, maxRadius: maxRadius, scores: scores)
-                        drawDots(context: context, center: center, maxRadius: maxRadius, scores: scores)
-                    }
-
-                    ForEach(0..<branchCount, id: \.self) { index in
-                        let angle = angleFor(index)
-                        let pos = pointAt(center: center, radius: labelRadius, angle: angle)
-                        Text(SharedConstants.Tree.branchName(index))
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundStyle(Color.inkFaint.opacity(0.5))
-                            .position(pos)
-                    }
+            if !allZero {
+                Canvas { context, _ in
+                    drawGrid(context: context, center: center, maxRadius: maxRadius)
+                    drawAxes(context: context, center: center, maxRadius: maxRadius)
+                    drawPolygon(context: context, center: center, maxRadius: maxRadius, scores: scores)
+                    drawDots(context: context, center: center, maxRadius: maxRadius, scores: scores)
                 }
             }
         }
