@@ -82,6 +82,46 @@ final class AuthService {
         userFullName = metadata["full_name"]?.stringValue
     }
 
+    /// E2E test login via edge function. Returns true if the email is an
+    /// allowlisted test account and sign-in succeeded, false if not a test email.
+    func e2eLogin(email: String) async throws -> Bool {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard trimmed == "test@trunk.michaelpmcfarland.com" else { return false }
+
+        guard let client = SupabaseClientProvider.shared else {
+            throw AuthError.notConfigured
+        }
+
+        let url = URL(string: "\(Secrets.supabaseURL)/functions/v1/e2e-login")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(Secrets.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.httpBody = try JSONEncoder().encode(["email": trimmed])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw AuthError.e2eLoginFailed
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let session = json?["session"] as? [String: Any],
+              let accessToken = session["access_token"] as? String,
+              let refreshToken = session["refresh_token"] as? String else {
+            throw AuthError.e2eLoginFailed
+        }
+
+        let authSession = try await client.auth.setSession(
+            accessToken: accessToken,
+            refreshToken: refreshToken
+        )
+        self.session = authSession
+        self.user = authSession.user
+        await fetchProfile()
+        return true
+    }
+
     func requestCode(email: String) async throws {
         guard let client = SupabaseClientProvider.shared else {
             throw AuthError.notConfigured
@@ -117,11 +157,14 @@ final class AuthService {
 
 enum AuthError: LocalizedError {
     case notConfigured
+    case e2eLoginFailed
 
     var errorDescription: String? {
         switch self {
         case .notConfigured:
             return "Supabase is not configured"
+        case .e2eLoginFailed:
+            return "Test login failed"
         }
     }
 }

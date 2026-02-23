@@ -138,6 +138,13 @@ struct LoginView: View {
         errorMessage = nil
 
         do {
+            // E2E test account: skip OTP, sign in directly via edge function
+            if try await AuthService.shared.e2eLogin(email: email) {
+                // Auth state change will dismiss this view
+                isLoading = false
+                return
+            }
+
             try await AuthService.shared.requestCode(email: email)
             showCodeEntry = true
         } catch {
