@@ -65,6 +65,10 @@ export type DialogAPIs = {
   shine: {
     updateSunMeter: () => void
   }
+  charts: {
+    updateRadar: () => void
+    updateSoil: () => void
+  }
 }
 
 // Soil meter update function
@@ -364,6 +368,10 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
     },
     shine: {
       updateSunMeter: () => shineApi.updateSunMeter(),
+    },
+    charts: {
+      updateRadar: () => radarChart.update(),
+      updateSoil: () => soilChart.update(),
     },
   }
 }

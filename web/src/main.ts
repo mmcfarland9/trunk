@@ -71,6 +71,8 @@ function refreshUI(): void {
   updateSoilMeter(ctx.elements)
   updateWaterMeter(ctx.elements)
   dialogAPIs.shine.updateSunMeter()
+  dialogAPIs.charts.updateRadar()
+  dialogAPIs.charts.updateSoil()
   ctx.twigView?.refresh()
 }
 
