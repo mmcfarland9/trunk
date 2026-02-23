@@ -3,7 +3,7 @@
  * Tests the log history modals and sidebar Growing/Cultivated sections.
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 
 // --- Helpers ---
 
@@ -79,8 +79,8 @@ function makeHarvestEvent(sproutId: string, result: number, capacityGained: numb
 
 test.describe('Water Can Dialog', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
     await page.waitForTimeout(500)
@@ -171,8 +171,8 @@ test.describe('Water Can Dialog', () => {
 
 test.describe('Soil Bag Dialog', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
     await page.waitForTimeout(500)
@@ -320,8 +320,8 @@ test.describe('Soil Bag Dialog', () => {
 
 test.describe('Sidebar Sprout Lists', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
     await page.waitForTimeout(500)

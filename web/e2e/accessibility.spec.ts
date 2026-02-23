@@ -11,13 +11,13 @@
  * Requires: npm install -D @axe-core/playwright
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 import AxeBuilder from '@axe-core/playwright'
 
 test.describe('Accessibility Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
   })

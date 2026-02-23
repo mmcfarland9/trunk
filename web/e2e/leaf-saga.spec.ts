@@ -14,7 +14,8 @@
  * - Sprout cards with leaf: .sprout-card[data-action="open-leaf"]
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
+import type { Page } from '@playwright/test'
 
 /** Navigate from overview to branch-0, twig-0 */
 async function navigateToTwig(page: Page): Promise<void> {
@@ -47,8 +48,8 @@ async function openLeafView(page: Page): Promise<void> {
 
 test.describe('Leaf/Saga Lifecycle and Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
   })

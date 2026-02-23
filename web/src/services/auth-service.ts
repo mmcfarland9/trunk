@@ -50,11 +50,46 @@ function notifyListeners() {
   listeners.forEach((l) => l(authState))
 }
 
+const E2E_TEST_EMAIL = 'test@trunk.michaelpmcfarland.com'
+
+async function handleE2ELogin(): Promise<void> {
+  if (!supabase) return
+  const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/e2e-login`
+  try {
+    const res = await fetch(fnUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: E2E_TEST_EMAIL }),
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const session = data.session
+    if (session?.access_token && session?.refresh_token) {
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      })
+    }
+  } catch {
+    // E2E login failed — fall through to normal auth
+  }
+  // Strip ?e2e from URL without reload
+  const url = new URL(window.location.href)
+  url.searchParams.delete('e2e')
+  window.history.replaceState({}, '', url.pathname + url.search)
+}
+
 export async function initAuth(): Promise<void> {
   if (!supabase) {
     authState = { user: null, session: null, loading: false }
     notifyListeners()
     return
+  }
+
+  // E2E login: ?e2e in URL triggers automatic test-user auth via edge function
+  // Safe in production — edge function allowlists only the test email
+  if (new URLSearchParams(window.location.search).has('e2e')) {
+    await handleE2ELogin()
   }
 
   // Get initial session

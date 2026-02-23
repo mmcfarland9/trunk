@@ -4,7 +4,7 @@
  * using Playwright's clock API for deterministic time control.
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 
 /** Navigate from overview to branch-0 twig-0 */
 async function navigateToTwig(page: import('@playwright/test').Page): Promise<void> {
@@ -34,7 +34,7 @@ test.describe('Resource Time Resets', () => {
     // At 5:59 AM on Feb 15, getTodayResetTime() returns Feb 14 6 AM
     // Water events from Feb 14 evening count as "today's" water
     await page.clock.install({ time: new Date(2026, 1, 15, 5, 59, 0) })
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
 
     // Seed: 3 sprouts planted a week ago, each watered yesterday evening
     const plantTs = new Date(2026, 1, 8, 12, 0, 0).toISOString()
@@ -43,7 +43,13 @@ test.describe('Resource Time Resets', () => {
     const wt3 = new Date(2026, 1, 14, 22, 2, 0).toISOString()
 
     await page.evaluate(({ plantTs, wt1, wt2, wt3 }) => {
+      const authKeys: [string, string][] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)!
+        if (key.startsWith('sb-')) authKeys.push([key, localStorage.getItem(key)!])
+      }
       localStorage.clear()
+      for (const [k, v] of authKeys) localStorage.setItem(k, v)
       localStorage.setItem('trunk-events-v1', JSON.stringify([
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l1', twigId: 'branch-0-twig-0', name: 'Saga 1' },
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l2', twigId: 'branch-0-twig-0', name: 'Saga 2' },
@@ -81,7 +87,7 @@ test.describe('Resource Time Resets', () => {
   test('water does not reset before 6 AM', async ({ page }) => {
     // Install clock at 11 PM Saturday evening
     await page.clock.install({ time: new Date(2026, 1, 14, 23, 0, 0) })
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
 
     // Seed: 3 sprouts watered earlier this evening (all after today's 6 AM reset)
     const plantTs = new Date(2026, 1, 8, 12, 0, 0).toISOString()
@@ -90,7 +96,13 @@ test.describe('Resource Time Resets', () => {
     const wt3 = new Date(2026, 1, 14, 20, 2, 0).toISOString()
 
     await page.evaluate(({ plantTs, wt1, wt2, wt3 }) => {
+      const authKeys: [string, string][] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)!
+        if (key.startsWith('sb-')) authKeys.push([key, localStorage.getItem(key)!])
+      }
       localStorage.clear()
+      for (const [k, v] of authKeys) localStorage.setItem(k, v)
       localStorage.setItem('trunk-events-v1', JSON.stringify([
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l1', twigId: 'branch-0-twig-0', name: 'Saga 1' },
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l2', twigId: 'branch-0-twig-0', name: 'Saga 2' },
@@ -128,13 +140,19 @@ test.describe('Resource Time Resets', () => {
     // Feb 15, 2026 is a Sunday. Install clock at Sunday afternoon.
     // getWeekResetTime(Sun Feb 15) returns Monday Feb 9 6 AM
     await page.clock.install({ time: new Date(2026, 1, 15, 14, 0, 0) })
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
 
     // Seed: sun used earlier today (Sunday, after this week's Monday reset)
     const sunTs = new Date(2026, 1, 15, 10, 0, 0).toISOString()
 
     await page.evaluate(({ sunTs }) => {
+      const authKeys: [string, string][] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)!
+        if (key.startsWith('sb-')) authKeys.push([key, localStorage.getItem(key)!])
+      }
       localStorage.clear()
+      for (const [k, v] of authKeys) localStorage.setItem(k, v)
       localStorage.setItem('trunk-events-v1', JSON.stringify([
         { type: 'sun_shone', timestamp: sunTs, twigId: 'branch-0-twig-0', twigLabel: 'movement', content: 'Sunday reflection' },
       ]))
@@ -165,13 +183,19 @@ test.describe('Resource Time Resets', () => {
     // Wednesday Feb 18, 2026 afternoon
     // getWeekResetTime(Wed Feb 18) returns Mon Feb 16 6 AM
     await page.clock.install({ time: new Date(2026, 1, 18, 14, 0, 0) })
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
 
     // Seed: sun used Wednesday morning (after Monday's reset)
     const sunTs = new Date(2026, 1, 18, 10, 0, 0).toISOString()
 
     await page.evaluate(({ sunTs }) => {
+      const authKeys: [string, string][] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)!
+        if (key.startsWith('sb-')) authKeys.push([key, localStorage.getItem(key)!])
+      }
       localStorage.clear()
+      for (const [k, v] of authKeys) localStorage.setItem(k, v)
       localStorage.setItem('trunk-events-v1', JSON.stringify([
         { type: 'sun_shone', timestamp: sunTs, twigId: 'branch-0-twig-0', twigLabel: 'movement', content: 'Wednesday reflection' },
       ]))
@@ -200,14 +224,20 @@ test.describe('Resource Time Resets', () => {
   test('water meter displays correct remaining count after partial use', async ({ page }) => {
     // Stable noon time (well past 6 AM reset)
     await page.clock.install({ time: new Date(2026, 1, 15, 12, 0, 0) })
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
 
     // Seed: 1 sprout watered once today → 1 of 3 waters used
     const plantTs = new Date(2026, 1, 8, 12, 0, 0).toISOString()
     const waterTs = new Date(2026, 1, 15, 10, 0, 0).toISOString()
 
     await page.evaluate(({ plantTs, waterTs }) => {
+      const authKeys: [string, string][] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)!
+        if (key.startsWith('sb-')) authKeys.push([key, localStorage.getItem(key)!])
+      }
       localStorage.clear()
+      for (const [k, v] of authKeys) localStorage.setItem(k, v)
       localStorage.setItem('trunk-events-v1', JSON.stringify([
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l1', twigId: 'branch-0-twig-0', name: 'Saga' },
         { type: 'sprout_planted', timestamp: plantTs, sproutId: 's1', twigId: 'branch-0-twig-0', leafId: 'l1', title: 'Test Sprout', season: '1m', environment: 'fertile', soilCost: 3 },
@@ -229,14 +259,20 @@ test.describe('Resource Time Resets', () => {
   test('per-sprout daily watering limit', async ({ page }) => {
     // Stable noon time
     await page.clock.install({ time: new Date(2026, 1, 15, 12, 0, 0) })
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
 
     // Seed: 2 sprouts — sprout s1 already watered today, sprout s2 not
     const plantTs = new Date(2026, 1, 8, 12, 0, 0).toISOString()
     const waterTs = new Date(2026, 1, 15, 9, 0, 0).toISOString()
 
     await page.evaluate(({ plantTs, waterTs }) => {
+      const authKeys: [string, string][] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)!
+        if (key.startsWith('sb-')) authKeys.push([key, localStorage.getItem(key)!])
+      }
       localStorage.clear()
+      for (const [k, v] of authKeys) localStorage.setItem(k, v)
       localStorage.setItem('trunk-events-v1', JSON.stringify([
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l1', twigId: 'branch-0-twig-0', name: 'Saga 1' },
         { type: 'leaf_created', timestamp: plantTs, leafId: 'l2', twigId: 'branch-0-twig-0', name: 'Saga 2' },

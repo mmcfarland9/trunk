@@ -3,7 +3,7 @@
  * Tests the confirmation dialog, event creation, soil refund, and UI updates.
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 
 /** Soil uproot refund rate from shared/constants.json */
 const SOIL_UPROOT_REFUND_RATE = 0.25
@@ -88,8 +88,8 @@ async function navigateToTwig(page: import('@playwright/test').Page) {
 
 test.describe('Uproot Sprout', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
     await page.waitForTimeout(500)

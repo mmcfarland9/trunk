@@ -3,15 +3,12 @@
  * This proves what states actually exist vs what's in documentation.
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 
 test.describe('Sprout Lifecycle - Actual Behavior', () => {
   test.beforeEach(async ({ page }) => {
-    // Clear localStorage before each test
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => {
-      localStorage.clear()
-    })
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
   })

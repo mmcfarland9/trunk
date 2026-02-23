@@ -53,6 +53,7 @@ Pods/
 # Test artifacts
 web/test-results/
 web/coverage/
+web/e2e/.auth/
 .stryker-incremental.json
 
 # Generated reports

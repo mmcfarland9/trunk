@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
+const AUTH_FILE = 'e2e/.auth/e2e-tester.json'
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30000,
@@ -8,16 +10,24 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
+  projects: [
+    // Auth setup — runs first, authenticates as E2E Tester, saves storageState
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    // All E2E tests — run authenticated with the saved storageState
+    {
+      name: 'e2e',
+      dependencies: ['setup'],
+      use: { storageState: AUTH_FILE },
+      testIgnore: /auth\.setup\.ts/,
+    },
+  ],
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    // Always start fresh server for tests to ensure clean env
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120000,
-    // Disable Supabase for E2E tests - run in local-only mode
-    env: {
-      VITE_SUPABASE_URL: '',
-      VITE_SUPABASE_ANON_KEY: '',
-    },
   },
 })

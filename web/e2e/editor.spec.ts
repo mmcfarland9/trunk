@@ -5,14 +5,12 @@
  * It allows editing labels and notes for trunk, branches, and twigs.
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 
 test.describe('Editor Flows', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => {
-      localStorage.clear()
-    })
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
   })

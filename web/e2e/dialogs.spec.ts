@@ -3,12 +3,12 @@
  * Tests the journaling modals for daily water and weekly sun reflection.
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, resetAppState } from './fixtures'
 
 test.describe('Water Dialog', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     // Wait for canvas to be ready (trunk might have visibility quirks)
     await page.waitForSelector('.canvas')
@@ -417,8 +417,8 @@ test.describe('Water Dialog', () => {
 
 test.describe('Shine Dialog (Sun Log)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
     await page.waitForTimeout(500)
@@ -593,8 +593,8 @@ test.describe('Shine Dialog (Sun Log)', () => {
 
 test.describe('Dialog Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-    await page.evaluate(() => localStorage.clear())
+    await page.goto('/')
+    await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
     await page.waitForTimeout(500)
