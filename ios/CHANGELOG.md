@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Radar chart: reduced polygon fill opacity (0.07) and stroke opacity (0.20) for subtle overlay feel
 - Radar chart: aligned polygon reach with branch node positions (maxRadius 0.38 -> 0.52)
 - Radar chart: added minimum score floor (0.08) so sparse data still shows visible polygon shape
+- Extracted shared `TreeGeometry` utility (angle + point-on-circle), eliminating duplicate geometry in RadarChartView, TreeCanvasView, and BranchView
+- Radar chart: merged dual draw loops (polygon + dots) into a single pass
+- TreeCanvasView: cached `radarScores` as @State (refreshed on appear/version change, not per frame)
+- TreeCanvasView: simplified CanvasDotGuideLines by removing closure parameters in favour of direct TreeGeometry/Wind calls
+- TreeCanvasView: removed dead `isSelected` and `onDoubleTap` from InteractiveBranchNode
 
 ## [0.1.0] - 2026-01-29
 

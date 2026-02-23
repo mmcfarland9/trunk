@@ -39,10 +39,8 @@ struct TreeCanvasView: View {
     private let zoomOutThreshold: CGFloat = 0.7
     private let zoomInThreshold: CGFloat = 1.5
 
-    // Pre-computed scores for radar chart (hoisted out of TimelineView)
-    private var radarScores: [Double] {
-        RadarChartView.computeScores(from: EventStore.shared.events)
-    }
+    // Cached radar scores (refreshed on appear/version change, not per frame)
+    @State private var radarScores: [Double] = Array(repeating: 0.0, count: SharedConstants.Tree.branchCount)
 
     // Pre-computed per-branch sprout data (hoisted out of TimelineView)
     private var branchSproutData: [(hasActive: Bool, activeCount: Int)] {
@@ -85,7 +83,13 @@ struct TreeCanvasView: View {
                 .simultaneousGesture(doubleTapGesture(center: center, radius: radius))
             }
         }
-        .onAppear { isVisible = true }
+        .onAppear {
+            isVisible = true
+            radarScores = RadarChartView.computeScores(from: EventStore.shared.events)
+        }
+        .onChange(of: progression.version) {
+            radarScores = RadarChartView.computeScores(from: EventStore.shared.events)
+        }
         .onDisappear { isVisible = false }
     }
 
@@ -113,10 +117,7 @@ struct TreeCanvasView: View {
                 radius: radius,
                 time: time,
                 guideGap: guideGap,
-                guideDotSpacing: guideDotSpacing,
-                angleForBranch: angleForBranch,
-                windOffsetFor: { Wind.branchOffset(index: $0, time: $1) },
-                pointOnCircle: { c, r, a in pointOnCircle(center: c, radius: r, angle: a) }
+                guideDotSpacing: guideDotSpacing
             )
 
             // Invisible center tap target (reset to overview on double-tap)
@@ -133,8 +134,8 @@ struct TreeCanvasView: View {
 
             // Branch nodes
             ForEach(0..<branchCount, id: \.self) { index in
-                let angle = angleForBranch(index)
-                let position = pointOnCircle(center: center, radius: radius, angle: angle)
+                let angle = TreeGeometry.angle(for: index, count: branchCount)
+                let position = TreeGeometry.point(center: center, radius: radius, angle: angle)
                 let data = cachedData[index]
                 let windOffset = Wind.branchOffset(index: index, time: time)
 
@@ -142,12 +143,7 @@ struct TreeCanvasView: View {
                     index: index,
                     hasActiveSprouts: data.hasActive,
                     activeSproutCount: data.activeCount,
-                    isSelected: false,
                     onTap: {
-                        HapticManager.impact()
-                        onNavigateToBranch?(index)
-                    },
-                    onDoubleTap: {
                         HapticManager.impact()
                         onNavigateToBranch?(index)
                     }
@@ -203,8 +199,8 @@ struct TreeCanvasView: View {
         SpatialTapGesture(count: 2)
             .onEnded { value in
                 for i in 0..<branchCount {
-                    let angle = angleForBranch(i)
-                    let branchPos = pointOnCircle(center: center, radius: radius, angle: angle)
+                    let angle = TreeGeometry.angle(for: i, count: branchCount)
+                    let branchPos = TreeGeometry.point(center: center, radius: radius, angle: angle)
                     let distance = hypot(value.location.x - branchPos.x, value.location.y - branchPos.y)
 
                     if distance < 40 {
@@ -230,20 +226,6 @@ struct TreeCanvasView: View {
         lastOffset = .zero
     }
 
-    private func angleForBranch(_ index: Int) -> Double {
-        let startAngle = -Double.pi / 2
-        let angleStep = (2 * Double.pi) / Double(branchCount)
-        return startAngle + Double(index) * angleStep
-    }
-
-    /// Circular positioning (matches branch view layout)
-    private func pointOnCircle(center: CGPoint, radius: CGFloat, angle: Double) -> CGPoint {
-        CGPoint(
-            x: center.x + radius * CGFloat(cos(angle)),
-            y: center.y + radius * CGFloat(sin(angle))
-        )
-    }
-
     private func sproutsForBranch(_ branchIndex: Int) -> [DerivedSprout] {
         sprouts.filter { sprout in
             sprout.twigId.hasPrefix("branch-\(branchIndex)")
@@ -263,9 +245,6 @@ struct CanvasDotGuideLines: View {
     let time: Double
     let guideGap: CGFloat
     let guideDotSpacing: CGFloat
-    let angleForBranch: (Int) -> Double
-    let windOffsetFor: (Int, Double) -> CGPoint
-    let pointOnCircle: (CGPoint, CGFloat, Double) -> CGPoint
 
     private let dotSize: CGFloat = 2
     private let endGapExtra: CGFloat = 36
@@ -273,9 +252,9 @@ struct CanvasDotGuideLines: View {
     var body: some View {
         Canvas { context, _ in
             for index in 0..<branchCount {
-                let angle = angleForBranch(index)
-                let windOffset = windOffsetFor(index, time)
-                let endPoint = pointOnCircle(center, radius, angle)
+                let angle = TreeGeometry.angle(for: index, count: branchCount)
+                let windOffset = Wind.branchOffset(index: index, time: time)
+                let endPoint = TreeGeometry.point(center: center, radius: radius, angle: angle)
                 let swayedEnd = CGPoint(x: endPoint.x + windOffset.x, y: endPoint.y + windOffset.y)
 
                 let dx = swayedEnd.x - center.x
@@ -316,9 +295,7 @@ struct InteractiveBranchNode: View {
     let index: Int
     let hasActiveSprouts: Bool
     let activeSproutCount: Int
-    let isSelected: Bool
     let onTap: () -> Void
-    let onDoubleTap: () -> Void
 
     @State private var isPressed = false
 
@@ -331,7 +308,7 @@ struct InteractiveBranchNode: View {
             VStack(spacing: 0) {
                 Text(boxLines.topBorder)
                     .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(borderColor)
+                    .foregroundStyle(Color.inkFaint.opacity(0.5))
 
                 ForEach(Array(boxLines.middleRows.enumerated()), id: \.offset) { _, row in
                     Text(row)
@@ -341,7 +318,7 @@ struct InteractiveBranchNode: View {
 
                 Text(boxLines.bottomBorder)
                     .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(borderColor)
+                    .foregroundStyle(Color.inkFaint.opacity(0.5))
             }
 
             // Sprout indicator
@@ -364,10 +341,6 @@ struct InteractiveBranchNode: View {
         }, perform: {})
         .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
         .accessibilityIdentifier("branch-\(label)")
-    }
-
-    private var borderColor: Color {
-        isSelected ? Color.twig : Color.inkFaint.opacity(0.5)
     }
 
     // MARK: - Box label formatting (matches web formatBoxLabel)

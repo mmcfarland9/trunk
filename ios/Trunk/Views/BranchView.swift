@@ -107,9 +107,9 @@ struct BranchView: View {
         ZStack {
             // Guide lines from center to each twig
             ForEach(0..<twigCount, id: \.self) { twigIndex in
-                let angle = angleForTwig(twigIndex)
+                let angle = TreeGeometry.angle(for: twigIndex, count: twigCount)
                 let windOffset = Wind.twigOffset(branchIndex: branchIndex, twigIndex: twigIndex, time: time)
-                let endPoint = pointOnCircle(center: center, radius: radius, angle: angle)
+                let endPoint = TreeGeometry.point(center: center, radius: radius, angle: angle)
                 let swayedEnd = CGPoint(
                     x: endPoint.x + windOffset.x,
                     y: endPoint.y + windOffset.y
@@ -136,8 +136,8 @@ struct BranchView: View {
 
             // Twig nodes arranged radially
             ForEach(0..<twigCount, id: \.self) { twigIndex in
-                let angle = angleForTwig(twigIndex)
-                let position = pointOnCircle(center: center, radius: radius, angle: angle)
+                let angle = TreeGeometry.angle(for: twigIndex, count: twigCount)
+                let position = TreeGeometry.point(center: center, radius: radius, angle: angle)
                 let windOffset = Wind.twigOffset(branchIndex: branchIndex, twigIndex: twigIndex, time: time)
                 let activeCount = twigActive[twigIndex]
 
@@ -161,19 +161,6 @@ struct BranchView: View {
     }
 
     // MARK: - Helpers
-
-    private func angleForTwig(_ index: Int) -> Double {
-        let startAngle = -Double.pi / 2
-        let angleStep = (2 * Double.pi) / Double(twigCount)
-        return startAngle + Double(index) * angleStep
-    }
-
-    private func pointOnCircle(center: CGPoint, radius: Double, angle: Double) -> CGPoint {
-        CGPoint(
-            x: center.x + radius * cos(angle),
-            y: center.y + radius * sin(angle)
-        )
-    }
 
     private func refreshSproutData() {
         let state = EventStore.shared.getState()

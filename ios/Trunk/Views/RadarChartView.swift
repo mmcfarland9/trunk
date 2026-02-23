@@ -25,8 +25,7 @@ struct RadarChartView: View {
 
             if !allZero {
                 Canvas { context, _ in
-                    drawPolygon(context: context, center: center, maxRadius: maxRadius, scores: scores)
-                    drawDots(context: context, center: center, maxRadius: maxRadius, scores: scores)
+                    draw(context: context, center: center, maxRadius: maxRadius, scores: scores)
                 }
             }
         }
@@ -34,53 +33,34 @@ struct RadarChartView: View {
 
     // MARK: - Drawing
 
-    private func drawPolygon(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
+    private func draw(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
         var path = Path()
+        var dotPoints: [CGPoint] = []
+
         for i in 0..<branchCount {
-            let angle = angleFor(i)
+            let angle = TreeGeometry.angle(for: i, count: branchCount)
             let s = max(0.08, scores[i])
             let r = maxRadius * CGFloat(s)
             let wind = windOffsetFor(i)
-            let point = pointAt(center: center, radius: r, angle: angle)
-            let swayed = CGPoint(x: point.x + wind.x * CGFloat(s), y: point.y + wind.y * CGFloat(s))
+            let vertex = TreeGeometry.point(center: center, radius: r, angle: angle)
+            let swayed = CGPoint(x: vertex.x + wind.x * CGFloat(s), y: vertex.y + wind.y * CGFloat(s))
+
             if i == 0 {
                 path.move(to: swayed)
             } else {
                 path.addLine(to: swayed)
             }
+            dotPoints.append(swayed)
         }
         path.closeSubpath()
 
         context.fill(path, with: .color(Color.twig.opacity(0.07)))
         context.stroke(path, with: .color(Color.twig.opacity(0.20)), lineWidth: 1)
-    }
 
-    private func drawDots(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
-        for i in 0..<branchCount {
-            let angle = angleFor(i)
-            let s = max(0.08, scores[i])
-            let r = maxRadius * CGFloat(s)
-            let wind = windOffsetFor(i)
-            let point = pointAt(center: center, radius: r, angle: angle)
-            let swayed = CGPoint(x: point.x + wind.x * CGFloat(s), y: point.y + wind.y * CGFloat(s))
-            let dotRect = CGRect(x: swayed.x - 2, y: swayed.y - 2, width: 4, height: 4)
+        for pt in dotPoints {
+            let dotRect = CGRect(x: pt.x - 2, y: pt.y - 2, width: 4, height: 4)
             context.fill(Path(ellipseIn: dotRect), with: .color(Color.twig.opacity(0.35)))
         }
-    }
-
-    // MARK: - Geometry
-
-    private func angleFor(_ index: Int) -> Double {
-        let startAngle = -Double.pi / 2
-        let angleStep = (2 * Double.pi) / Double(branchCount)
-        return startAngle + Double(index) * angleStep
-    }
-
-    private func pointAt(center: CGPoint, radius: CGFloat, angle: Double) -> CGPoint {
-        CGPoint(
-            x: center.x + radius * CGFloat(cos(angle)),
-            y: center.y + radius * CGFloat(sin(angle))
-        )
     }
 
     // MARK: - Score Computation (static, called once by parent)
