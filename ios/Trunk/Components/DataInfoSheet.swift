@@ -131,6 +131,20 @@ struct DataInfoSheet: View {
                                     if let name = authService.userFullName {
                                         dataRow(label: "Name", value: name)
                                     }
+
+                                    Button {
+                                        Task {
+                                            try? await AuthService.shared.signOut()
+                                            dismiss()
+                                        }
+                                    } label: {
+                                        Text("SIGN OUT")
+                                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                            .foregroundStyle(Color.trunkDestructive)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, TrunkTheme.space2)
+                                    }
+                                    .padding(.top, TrunkTheme.space2)
                                 }
                             }
                         }
