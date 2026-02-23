@@ -4,12 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-  deriveState,
-  getLeavesForTwig,
-  getLeafById,
-  getSproutsByLeaf,
-} from '../events/derive'
+import { deriveState, getLeavesForTwig, getLeafById, getSproutsByLeaf } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
 // Helper to create a plant event
