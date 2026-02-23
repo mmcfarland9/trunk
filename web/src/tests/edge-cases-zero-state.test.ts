@@ -3,7 +3,7 @@
  * Verifies that all getters return safe defaults with no events.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import {
   deriveState,
   deriveWaterAvailable,

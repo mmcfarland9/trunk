@@ -9,7 +9,6 @@ import {
   deriveWaterAvailable,
   deriveSunAvailable,
   getActiveSprouts,
-  getCompletedSprouts,
   deriveWateringStreak,
 } from '../events/derive'
 import { getTodayResetTime, getWeekResetTime } from '../utils/calculations'

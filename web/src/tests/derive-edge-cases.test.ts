@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { deriveState, getActiveSprouts, getCompletedSprouts } from '../events/derive'
+import { deriveState } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
 // ---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ describe('deriveState — capacity clamping', () => {
   it('clamps soilCapacity to MAX_SOIL_CAPACITY (120)', () => {
     // Create events that push capacity past 120
     const events: TrunkEvent[] = []
-    let time = new Date('2026-01-01T10:00:00Z')
+    const time = new Date('2026-01-01T10:00:00Z')
 
     // Plant and harvest many 1y/barren sprouts with high capacity gain
     for (let i = 0; i < 20; i++) {

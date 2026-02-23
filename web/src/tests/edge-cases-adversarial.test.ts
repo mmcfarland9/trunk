@@ -6,9 +6,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   deriveState,
-  getActiveSprouts,
-  getCompletedSprouts,
-  getSproutsForTwig,
   getLeavesForTwig,
   getLeafById,
   getSproutsByLeaf,
