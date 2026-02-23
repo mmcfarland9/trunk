@@ -4,7 +4,7 @@
 //
 //  8-axis radar chart showing life balance across branches.
 //  Renders behind the tree canvas as a subtle background visualization.
-//  Axis tips and data vertices sway with wind passed from the parent view.
+//  Data polygon vertices sway with wind passed from the parent view.
 //
 
 import SwiftUI
@@ -21,12 +21,10 @@ struct RadarChartView: View {
         GeometryReader { geo in
             let size = min(geo.size.width, geo.size.height)
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-            let maxRadius = size * 0.38
+            let maxRadius = size * 0.52
 
             if !allZero {
                 Canvas { context, _ in
-                    drawGrid(context: context, center: center, maxRadius: maxRadius)
-                    drawAxes(context: context, center: center, maxRadius: maxRadius)
                     drawPolygon(context: context, center: center, maxRadius: maxRadius, scores: scores)
                     drawDots(context: context, center: center, maxRadius: maxRadius, scores: scores)
                 }
@@ -36,37 +34,11 @@ struct RadarChartView: View {
 
     // MARK: - Drawing
 
-    private func drawGrid(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat) {
-        for ring in 1...3 {
-            let ratio = CGFloat(ring) / 4.0
-            let r = maxRadius * ratio
-            let rect = CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)
-            context.stroke(
-                Path(ellipseIn: rect),
-                with: .color(Color.inkFaint.opacity(0.12)),
-                lineWidth: 0.5
-            )
-        }
-    }
-
-    private func drawAxes(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat) {
-        for i in 0..<branchCount {
-            let angle = angleFor(i)
-            let wind = windOffsetFor(i)
-            let end = pointAt(center: center, radius: maxRadius, angle: angle)
-            let swayedEnd = CGPoint(x: end.x + wind.x, y: end.y + wind.y)
-            var path = Path()
-            path.move(to: center)
-            path.addLine(to: swayedEnd)
-            context.stroke(path, with: .color(Color.inkFaint.opacity(0.12)), lineWidth: 0.5)
-        }
-    }
-
     private func drawPolygon(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
         var path = Path()
         for i in 0..<branchCount {
             let angle = angleFor(i)
-            let s = scores[i]
+            let s = max(0.08, scores[i])
             let r = maxRadius * CGFloat(s)
             let wind = windOffsetFor(i)
             let point = pointAt(center: center, radius: r, angle: angle)
@@ -79,20 +51,20 @@ struct RadarChartView: View {
         }
         path.closeSubpath()
 
-        context.fill(path, with: .color(Color.twig.opacity(0.12)))
-        context.stroke(path, with: .color(Color.twig.opacity(0.4)), lineWidth: 1)
+        context.fill(path, with: .color(Color.twig.opacity(0.07)))
+        context.stroke(path, with: .color(Color.twig.opacity(0.20)), lineWidth: 1)
     }
 
     private func drawDots(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
         for i in 0..<branchCount {
             let angle = angleFor(i)
-            let s = scores[i]
+            let s = max(0.08, scores[i])
             let r = maxRadius * CGFloat(s)
             let wind = windOffsetFor(i)
             let point = pointAt(center: center, radius: r, angle: angle)
             let swayed = CGPoint(x: point.x + wind.x * CGFloat(s), y: point.y + wind.y * CGFloat(s))
             let dotRect = CGRect(x: swayed.x - 2, y: swayed.y - 2, width: 4, height: 4)
-            context.fill(Path(ellipseIn: dotRect), with: .color(Color.twig.opacity(0.6)))
+            context.fill(Path(ellipseIn: dotRect), with: .color(Color.twig.opacity(0.35)))
         }
     }
 

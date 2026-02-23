@@ -12,11 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VoiceOver accessibility labels and hints on the Next Harvest panel and harvest list rows
 - Post-action celebration feedback: bounce animation on resource meters after watering, harvesting, or shining
 - Watering streak counter: displays current and longest-ever consecutive watering days near the water meter
+- Sign-out button in account data sheet
+- E2E test login via edge function for test@trunk email
 
 ### Changed
 - Replaced ASCII text progress bar in Next Harvest panel with a native SwiftUI rounded bar
 - Improved dark mode track visibility using the borderSubtle semantic color token
 - Next Harvest tap now opens a glanceable overview of all upcoming harvests instead of a single sprout detail
+- Radar chart: removed grid rings, axis spoke lines, and tick marks for cleaner look
+- Radar chart: reduced polygon fill opacity (0.07) and stroke opacity (0.20) for subtle overlay feel
+- Radar chart: aligned polygon reach with branch node positions (maxRadius 0.38 -> 0.52)
+- Radar chart: added minimum score floor (0.08) so sparse data still shows visible polygon shape
 
 ## [0.1.0] - 2026-01-29
 
