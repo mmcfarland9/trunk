@@ -1,0 +1,15 @@
+appId: mpmcf.Trunk
+name: Helper - Ensure logged in as E2E test user
+---
+
+# If on login screen, authenticate via email OTP
+- runFlow:
+    when:
+      visible: "Email address"
+    commands:
+      - tapOn: "Email address"
+      - inputText: "test@trunk.michaelpmcfarland.com"
+      - tapOn: "SEND CODE"
+      - extendedWaitUntil:
+          visible: "Today"
+          timeout: 20000

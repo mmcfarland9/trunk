@@ -2,12 +2,11 @@ appId: mpmcf.Trunk
 name: Sprout Lifecycle - Create, Water, Harvest
 ---
 
-# Launch with test auth
+# Ensure authenticated
 - launchApp:
     clearState: false
-    arguments:
-      testAuth: "true"
-      testEmail: "test@trunk.michaelpmcfarland.com"
+
+- runFlow: helpers/ensure-logged-in.yaml
 
 # Wait for app to load
 - extendedWaitUntil:

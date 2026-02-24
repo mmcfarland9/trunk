@@ -94,6 +94,7 @@ struct ResourceMetersView: View {
                 Text("Soil:")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
+                    .fixedSize()
 
                 SoilMeter(
                     available: progression.soilAvailable,
@@ -104,6 +105,7 @@ struct ResourceMetersView: View {
                 Text(String(format: "%.2f/%.2f", progression.soilAvailable, progression.soilCapacity))
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.twig)
+                    .fixedSize()
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Soil: \(String(format: "%.1f", progression.soilAvailable)) of \(String(format: "%.1f", progression.soilCapacity))")
@@ -148,13 +150,6 @@ struct ResourceMetersView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     waterCelebrating = false
                 }
-            }
-
-            // Water streak (shown when active)
-            if progression.wateringStreak > 0 {
-                Text("\(progression.wateringStreak)/\(progression.longestWateringStreak)d")
-                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                    .foregroundStyle(Color.trunkWater.opacity(0.7))
             }
 
             // Sun meter - circle

@@ -2,12 +2,11 @@ appId: mpmcf.Trunk
 name: Smoke Test - Basic Navigation
 ---
 
-# Launch with test auth (don't clear state - it corrupts SwiftData)
+# Ensure authenticated
 - launchApp:
     clearState: false
-    arguments:
-      testAuth: "true"
-      testEmail: "test@trunk.michaelpmcfarland.com"
+
+- runFlow: helpers/ensure-logged-in.yaml
 
 # Wait for app to fully load
 - extendedWaitUntil:

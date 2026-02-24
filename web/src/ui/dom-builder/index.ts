@@ -198,7 +198,6 @@ function assembleElements(
       'water can log entries container',
     ),
     waterMeter: headerResult.waterMeter,
-    waterStreakValue: headerResult.waterStreakValue,
     sunLogDialog: dialogsResult.sunLogDialog,
     sunLogDialogClose: requireElement<HTMLButtonElement>(
       dialogsResult.sunLogDialog,

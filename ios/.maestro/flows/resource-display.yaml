@@ -2,40 +2,31 @@ appId: mpmcf.Trunk
 name: Resource Display - Soil, Water, Sun
 ---
 
-# Launch with test auth
+# Ensure authenticated
 - launchApp:
     clearState: false
-    arguments:
-      testAuth: "true"
-      testEmail: "test@trunk.michaelpmcfarland.com"
+
+- runFlow: helpers/ensure-logged-in.yaml
 
 # Wait for app to load
 - extendedWaitUntil:
     visible: "Today"
     timeout: 15000
 
-# Verify resource meters are visible on Today tab
-# Soil meter
+# Verify resource meters via combined accessibility labels
 - assertVisible:
-    text: "soil"
-    optional: true
-
-# Water meter (shows drops remaining)
+    text: "Soil:.*"
 - assertVisible:
-    text: "water"
-    optional: true
-
-# Sun meter
+    text: "Water:.*"
 - assertVisible:
-    text: "sun"
-    optional: true
+    text: "Sun:.*"
 
-# Navigate to see active sprouts
-- runFlow:
-    when:
-      visible: "Active"
-    commands:
-      - tapOn: "Active"
-      - extendedWaitUntil:
-          visible: "Active Sprouts"
-          timeout: 3000
+# Navigate to Trunk to see meters in tree view
+- tapOn: "Trunk"
+- extendedWaitUntil:
+    visible:
+      id: "branch-CORE"
+    timeout: 5000
+
+# Take screenshot for visual validation
+- takeScreenshot: /tmp/ios-resource-display

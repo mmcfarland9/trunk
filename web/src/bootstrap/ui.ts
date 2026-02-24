@@ -4,7 +4,6 @@ import {
   getSoilAvailable,
   getSoilCapacity,
   getWaterAvailable,
-  getWateringStreak,
   getPresetLabel,
   setViewModeState,
   getActiveBranchIndex,
@@ -102,18 +101,6 @@ function celebrateMeter(meter: HTMLElement): void {
   )
 }
 
-// Water streak update function
-function updateWaterStreak(elements: AppElements): void {
-  const { current, longest } = getWateringStreak()
-  if (current > 0) {
-    elements.waterStreakValue.textContent = `${current} / ${longest}d`
-    elements.waterStreakValue.title = `Current streak: ${current} day${current !== 1 ? 's' : ''}\nLongest: ${longest} day${longest !== 1 ? 's' : ''}`
-  } else {
-    elements.waterStreakValue.textContent = ''
-    elements.waterStreakValue.title = ''
-  }
-}
-
 export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): DialogAPIs {
   // Set up storage error callbacks
   setEventStoreErrorCallbacks(
@@ -130,7 +117,6 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       ctx.twigView?.refresh()
       celebrateMeter(ctx.elements.waterMeter)
       celebrateMeter(ctx.elements.soilMeter)
-      updateWaterStreak(ctx.elements)
       soilChart.update()
       radarChart.update()
     },
@@ -312,7 +298,6 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   updateFocus(null, ctx)
   updateSoilMeter(ctx.elements)
   updateWaterMeter(ctx.elements)
-  updateWaterStreak(ctx.elements)
   shineApi.updateSunMeter()
 
   return {

@@ -48,8 +48,9 @@
 .resource-meter-value {
   font-size: var(--text-xs);
   color: var(--meter-color, var(--ink-faint));
-  min-width: 13ch;
+  min-width: 14ch;
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Meter color variants */
@@ -97,14 +98,6 @@
 
 .resource-meter.is-celebrating {
   animation: meter-celebrate 500ms ease-out;
-}
-
-.water-streak-value {
-  font-variant-numeric: tabular-nums;
-}
-
-.water-streak-value:empty {
-  display: none;
 }
 
 /* Profile badge - matches resource meter style */

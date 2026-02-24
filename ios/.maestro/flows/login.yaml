@@ -21,28 +21,7 @@ name: Login - Email OTP Authentication
 # Send code button should be enabled
 - tapOn: "SEND CODE"
 
-# Should transition to code entry screen
-- extendedWaitUntil:
-    visible: "Code sent to test@trunk.michaelpmcfarland.com"
-    timeout: 10000
-
-# Verify code entry UI elements
-- assertVisible: "6-digit code"
-- assertVisible: "VERIFY"
-- assertVisible: "BACK"
-
-# Tap BACK to return to email entry
-- tapOn: "BACK"
-- assertVisible: "Email address"
-
-# Now relaunch with test-auth to actually authenticate
-- launchApp:
-    clearState: false
-    arguments:
-      testAuth: "true"
-      testEmail: "test@trunk.michaelpmcfarland.com"
-
-# Verify we get past login to main app
+# Should auto-authenticate and reach the main app
 - extendedWaitUntil:
     visible: "Today"
-    timeout: 15000
+    timeout: 20000

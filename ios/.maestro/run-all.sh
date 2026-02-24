@@ -12,6 +12,18 @@
 
 set -euo pipefail
 
+# Java is required by Maestro — use Homebrew OpenJDK if system Java unavailable
+if ! java -version &>/dev/null; then
+  BREW_JDK="$(brew --prefix openjdk 2>/dev/null)/libexec/openjdk.jdk/Contents/Home"
+  if [ -d "$BREW_JDK" ]; then
+    export JAVA_HOME="$BREW_JDK"
+    export PATH="$JAVA_HOME/bin:$PATH"
+  else
+    echo "ERROR: Java not found. Install with: brew install openjdk"
+    exit 1
+  fi
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FLOWS_DIR="$SCRIPT_DIR/flows"
 
