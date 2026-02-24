@@ -242,15 +242,9 @@ export function renderLeafGroupedSprouts(
     container.append(card)
   })
 
-  standalone.forEach((sprout) => {
-    const card = createStackedLeafCard(
-      'No Leaf',
-      '',
-      [sprout],
-      isActive ? onWaterClick : undefined,
-      onLeafClick,
-      isActive ? onHarvestClick : undefined,
+  if (standalone.length > 0) {
+    console.warn(
+      `[progress-panel] ${standalone.length} sprout(s) without leafId — this should not happen`,
     )
-    container.append(card)
-  })
+  }
 }

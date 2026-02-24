@@ -167,7 +167,7 @@ struct JSONRoundTripTests {
             season: "2w",
             environment: "fertile",
             soilCost: 2,
-            leafId: nil,
+            leafId: "leaf-test",
             bloomWither: "Minimum",
             bloomBudding: "Medium",
             bloomFlourish: "Maximum"

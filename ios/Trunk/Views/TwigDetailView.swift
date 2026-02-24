@@ -163,8 +163,7 @@ struct SproutRow: View {
     let sprout: DerivedSprout
 
     private var leafName: String? {
-        guard let leafId = sprout.leafId else { return nil }
-        return EventStore.shared.getState().leaves[leafId]?.name
+        EventStore.shared.getState().leaves[sprout.leafId]?.name
     }
 
     var body: some View {

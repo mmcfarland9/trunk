@@ -18,7 +18,15 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const prompts = readFileSync(join(__dirname, '../shared/assets/watering-prompts.txt'), 'utf8')
+  .split('\n')
+  .filter(line => line.trim() && !line.trim().startsWith('#'))
+let waterIndex = 0
 
 const USER_ID = 'a4e226c0-e9b4-4723-8e09-60ec09524d24'
 
@@ -50,6 +58,15 @@ const L = {
   writingJourney: 'b8d2f3a0-0001-4bbb-c001-000000000001',
   morningRoutine: 'b8d2f3a0-0002-4bbb-c002-000000000002',
   guitarPath:     'b8d2f3a0-0003-4bbb-c003-000000000003',
+  gettingMoving:  'b8d2f3a0-0004-4bbb-c004-000000000004',
+  moneyAwareness: 'b8d2f3a0-0005-4bbb-c005-000000000005',
+  kitchenSkills:  'b8d2f3a0-0006-4bbb-c006-000000000006',
+  eatingWell:     'b8d2f3a0-0007-4bbb-c007-000000000007',
+  homeProjects:   'b8d2f3a0-0008-4bbb-c008-000000000008',
+  readingLife:    'b8d2f3a0-0009-4bbb-c009-000000000009',
+  innerStillness: 'b8d2f3a0-000a-4bbb-c00a-00000000000a',
+  gardenDreams:   'b8d2f3a0-000b-4bbb-c00b-00000000000b',
+  socialLife:     'b8d2f3a0-000c-4bbb-c00c-00000000000c',
 }
 
 // ─── Twig helpers ────────────────────────────────────────────────────────────
@@ -94,17 +111,17 @@ function plant(date, time, sproutId, twig, title, season, env, soilCost, blooms,
   const c = cid(ts)
   const e = {
     type: 'sprout_planted', timestamp: ts, sproutId, twigId: tid(twig),
-    title, season, environment: env, soilCost,
+    title, season, environment: env, soilCost, leafId,
     bloomWither: blooms[0], bloomBudding: blooms[1], bloomFlourish: blooms[2], client_id: c,
   }
-  if (leafId) e.leafId = leafId
   events.push({ type: e.type, payload: e, client_id: c, client_timestamp: ts })
 }
 
 function water(date, time, sproutId, content) {
   const ts = chicago(date, time)
   const c = cid(ts)
-  events.push({ type: 'sprout_watered', payload: { type: 'sprout_watered', timestamp: ts, sproutId, content, client_id: c }, client_id: c, client_timestamp: ts })
+  const prompt = prompts[waterIndex++ % prompts.length]
+  events.push({ type: 'sprout_watered', payload: { type: 'sprout_watered', timestamp: ts, sproutId, content, prompt, client_id: c }, client_id: c, client_timestamp: ts })
 }
 
 function harvest(date, time, sproutId, result, capacityGained, reflection) {
@@ -139,8 +156,9 @@ function leaf(date, time, leafId, twig, name) {
 leaf('2025-09-23', '09:00', L.writingJourney, '1-1', 'Writing Journey')
 plant('2025-09-23', '09:15', S.journal2w, '1-1', 'Journal daily for 2 weeks', '2w', 'fertile', 2,
   ['Wrote once', 'Wrote most days', 'Journaling feels natural'], L.writingJourney)
+leaf('2025-09-23', '09:25', L.gettingMoving, '0-0', 'Getting Moving')
 plant('2025-09-23', '09:30', S.walk20min, '0-0', 'Walk 20 min daily', '2w', 'fertile', 2,
-  ['Walked once', 'Walking most days', 'Daily walks are automatic'], null)
+  ['Walked once', 'Walking most days', 'Daily walks are automatic'], L.gettingMoving)
 water('2025-09-23', '20:00', S.journal2w, 'First entry. Feels weird writing to nobody. But also freeing.')
 water('2025-09-23', '20:15', S.walk20min, 'Evening walk around the block. Nice sunset.')
 water('2025-09-24', '07:30', S.journal2w, 'Morning pages. Stream of consciousness. Mostly anxieties.')
@@ -169,9 +187,10 @@ water('2025-10-05', '21:00', S.journal2w, 'Last entry before harvest. Two weeks 
 harvest('2025-10-06', '08:00', S.journal2w, 4, 0.3387, 'Two weeks of daily writing. Missed one day but the habit is forming. Surprised how much I had to say.')
 harvest('2025-10-06', '08:15', S.walk20min, 3, 0.1742, 'Walked most days. Some were just 10 minutes but I showed up.')
 plant('2025-10-06', '09:00', S.run5k, '0-0', 'Run a 5K', '3m', 'firm', 8,
-  ['Ran once', 'Running 2x/week', 'Completed a 5K'], null)
+  ['Ran once', 'Running 2x/week', 'Completed a 5K'], L.gettingMoving)
+leaf('2025-10-06', '09:10', L.moneyAwareness, '4-0', 'Money Awareness')
 plant('2025-10-06', '09:15', S.trackSpending, '4-0', 'Track spending for 1 month', '1m', 'fertile', 3,
-  ['Tracked 1 week', 'Tracked most days', 'Full month tracked with insights'], null)
+  ['Tracked 1 week', 'Tracked most days', 'Full month tracked with insights'], L.moneyAwareness)
 water('2025-10-06', '18:00', S.run5k, 'First run. Made it 8 minutes before stopping. Humbling start.')
 water('2025-10-07', '20:00', S.trackSpending, 'Set up a spreadsheet. Logged today\'s purchases.')
 water('2025-10-08', '06:30', S.run5k, 'Morning jog. 10 minutes. Legs are sore.')
@@ -219,8 +238,9 @@ water('2025-10-29', '17:30', S.run5k, 'Run in the rain. Oddly refreshing. 18 min
 water('2025-10-29', '22:00', S.shortStory, 'Wrote the climax. The keeper makes his choice.')
 water('2025-10-30', '21:00', S.trackSpending, 'End of month approaching. Budget mostly held.')
 water('2025-10-31', '20:00', S.guitar3chords, 'Halloween practice. Played for trick-or-treaters. They were polite about it.')
+leaf('2025-11-01', '08:55', L.kitchenSkills, '3-0', 'Kitchen Skills')
 plant('2025-11-01', '09:00', S.cook3recipes, '3-0', 'Cook 3 new recipes', '2w', 'fertile', 2,
-  ['Tried 1 recipe', 'Cooked 2 new dishes', 'Three new recipes in rotation'], null)
+  ['Tried 1 recipe', 'Cooked 2 new dishes', 'Three new recipes in rotation'], L.kitchenSkills)
 sun('2025-11-01', '10:30', '3-0', 'Cooking has been neglected. Time to feed myself better. Connected to the running too — fuel matters.')
 water('2025-11-01', '18:00', S.cook3recipes, 'Tried Thai basil chicken. Decent. Too much fish sauce.')
 water('2025-11-02', '14:00', S.run5k, 'Sunday run. 22 minutes. Might actually make the 5K.')
@@ -234,7 +254,7 @@ water('2025-11-05', '20:00', S.guitar3chords, 'Five chords now. Learning a full 
 water('2025-11-06', '17:30', S.run5k, 'Run in the cold. 15 minutes. Need gloves.')
 water('2025-11-06', '22:00', S.shortStory, 'Second draft done. Need fresh eyes before the final pass.')
 plant('2025-11-07', '08:00', S.emergencyFund, '4-0', 'Build an emergency fund tracker', '1m', 'firm', 5,
-  ['Researched savings accounts', 'Tracker built, first deposit made', 'Automated savings with clear target'], null)
+  ['Researched savings accounts', 'Tracker built, first deposit made', 'Automated savings with clear target'], L.moneyAwareness)
 water('2025-11-07', '20:00', S.emergencyFund, 'Researched high-yield savings accounts. Numbers are better than expected.')
 sun('2025-11-08', '11:00', '0-0', 'Running in November requires a different kind of commitment. The cold is a test. Passing it every time.')
 water('2025-11-08', '14:00', S.run5k, 'Weekend run. 24 minutes. So close to 5K distance.')
@@ -255,8 +275,9 @@ water('2025-11-15', '14:00', S.run5k, 'Long Saturday run. 26 minutes. 5K is with
 water('2025-11-16', '20:00', S.emergencyFund, 'Adjusted budget. Can do $75/week to savings.')
 
 // ── Week 9: Nov 17-23 ───────────────────────────────────────────────────────
+leaf('2025-11-17', '07:55', L.eatingWell, '0-1', 'Eating Well')
 plant('2025-11-17', '08:00', S.mealPrep, '0-1', 'Meal prep Sundays', '2w', 'fertile', 2,
-  ['Prepped one meal', 'Prepped 3 meals', 'Full week prepped'], null)
+  ['Prepped one meal', 'Prepped 3 meals', 'Full week prepped'], L.eatingWell)
 water('2025-11-17', '18:00', S.mealPrep, 'First meal prep Sunday. Made chili and rice bowls. Enough for 4 days.')
 water('2025-11-18', '06:30', S.run5k, 'Morning run. 18 minutes. Legs felt heavy.')
 water('2025-11-18', '21:00', S.guitar3chords, 'Guitar practice. Working on strumming patterns.')
@@ -264,7 +285,7 @@ water('2025-11-19', '20:00', S.emergencyFund, 'Emergency fund at $350. Ahead of 
 water('2025-11-20', '17:30', S.run5k, 'Short run. 12 minutes. Just didn\'t have it today.')
 water('2025-11-21', '21:00', S.guitar3chords, 'Tried barre chords. Impossible. Back to open chords.')
 plant('2025-11-21', '21:30', S.dailyWalks, '0-0', 'Take daily walks again', '2w', 'fertile', 2,
-  ['Walked once', 'Walking most days', 'Daily walks restored'], null)
+  ['Walked once', 'Walking most days', 'Daily walks restored'], L.gettingMoving)
 sun('2025-11-22', '10:00', '0-1', 'Meal prep saves money and time. Why didn\'t I do this sooner?')
 water('2025-11-22', '14:00', S.run5k, 'Saturday run. 25 minutes. Pushed through the mental wall.')
 water('2025-11-22', '18:00', S.dailyWalks, 'Afternoon walk. Getting dark early now.')
@@ -279,12 +300,12 @@ water('2025-11-26', '18:00', S.dailyWalks, 'Short walk. Cold but needed the air.
 harvest('2025-11-27', '08:00', S.mealPrep, 3, 0.1699, 'Meal prepped both weekends. Saved money and ate better.')
 water('2025-11-27', '21:00', S.guitar3chords, 'Thanksgiving guitar. Played for family. They clapped.')
 plant('2025-11-28', '09:00', S.mindfulWalk, '0-0', 'Walk with intention', '2w', 'fertile', 2,
-  ['Walked once mindfully', 'Walking with awareness most days', 'Mindful walking is natural'], null)
+  ['Walked once mindfully', 'Walking with awareness most days', 'Mindful walking is natural'], L.gettingMoving)
 water('2025-11-28', '15:00', S.dailyWalks, 'Post-Thanksgiving walk. Needed it.')
 water('2025-11-28', '16:00', S.mindfulWalk, 'First intentional walk. Noticed the trees. Really noticed.')
 sun('2025-11-29', '10:00', '2-2', 'Focus has been scattered. Too many sprouts active. Need to think about what matters most.')
 plant('2025-11-29', '20:00', S.dailyOutdoor, '0-0', 'Daily outdoor time', '2w', 'fertile', 2,
-  ['Went outside once', 'Outside most days', 'Daily outdoor habit locked in'], null)
+  ['Went outside once', 'Outside most days', 'Daily outdoor habit locked in'], L.gettingMoving)
 water('2025-11-29', '14:00', S.run5k, 'Saturday run. 27 minutes. Almost there.')
 water('2025-11-30', '17:00', S.mindfulWalk, 'Evening walk. Counted my steps. 2,000.')
 water('2025-11-30', '20:00', S.emergencyFund, 'Month-end. Emergency fund at $550.')
@@ -309,8 +330,9 @@ harvest('2025-12-22', '10:00', S.run5k, 4, 0.6050, 'Ran a 5K at the holiday fun 
 sun('2025-12-29', '15:00', '5-7', 'Year-end reflection. Proud of what I started in September. The lapse is real but so is the foundation.')
 
 // ── January: Recommitment ────────────────────────────────────────────────────
+leaf('2026-01-05', '09:55', L.homeProjects, '3-4', 'Home Projects')
 plant('2026-01-05', '10:00', S.organizeGarage, '3-4', 'Organize garage', '2w', 'fertile', 2,
-  ['Cleared one shelf', 'Garage is mostly organized', 'Garage is clean and everything has a place'], null)
+  ['Cleared one shelf', 'Garage is mostly organized', 'Garage is clean and everything has a place'], L.homeProjects)
 water('2026-01-05', '14:00', S.organizeGarage, 'Cleared out the first shelf. Found my old baseball glove.')
 water('2026-01-07', '11:00', S.organizeGarage, 'Sorted tools. Threw out a bag of junk. Feels lighter.')
 water('2026-01-09', '15:30', S.organizeGarage, 'Organized the workbench area. Starting to see the floor.')
@@ -351,8 +373,9 @@ water('2026-02-01', '10:00', S.parkRun, 'Gentle recovery walk. Listening to a po
 sun('2026-02-01', '11:30', '1-0', 'Picking up books again. Missed this. Two books this month feels ambitious but right.')
 water('2026-02-02', '07:00', S.parkRun, 'Monday jog. Starting the week with movement feels right.')
 water('2026-02-03', '07:15', S.parkRun, 'Short jog in the rain. Felt alive.')
+leaf('2026-02-03', '19:55', L.readingLife, '1-0', 'Reading Life')
 plant('2026-02-03', '20:00', S.read2books, '1-0', 'Read 2 books this month', '1m', 'firm', 5,
-  ['Started one book', 'Halfway through second book', 'Both books finished with notes'], null)
+  ['Started one book', 'Halfway through second book', 'Both books finished with notes'], L.readingLife)
 water('2026-02-03', '22:00', S.read2books, 'Started The Overstory by Richard Powers. Beautiful prose.')
 water('2026-02-04', '08:30', S.read2books, 'Read 30 pages on the train. Hooked.')
 water('2026-02-04', '18:00', S.parkRun, 'Rest day. Foam rolling and stretching instead.')
@@ -365,8 +388,9 @@ water('2026-02-08', '22:00', S.read2books, 'Finished The Overstory. Incredible. 
 water('2026-02-09', '07:00', S.parkRun, 'Monday run. Found my pace. Not fast, but steady.')
 
 // ── Feb 10+: Meditation + final stretch ──────────────────────────────────────
+leaf('2026-02-10', '06:55', L.innerStillness, '5-2', 'Inner Stillness')
 plant('2026-02-10', '07:00', S.meditate, '5-2', 'Meditate 10 min daily', '3m', 'fertile', 5,
-  ['Meditated once', 'Meditating most days', 'Daily meditation is effortless'], null)
+  ['Meditated once', 'Meditating most days', 'Daily meditation is effortless'], L.innerStillness)
 water('2026-02-10', '07:15', S.meditate, 'First meditation session. 10 minutes felt like an hour.')
 water('2026-02-10', '21:30', S.read2books, 'Started Piranesi by Susanna Clarke. Weird and wonderful.')
 water('2026-02-11', '07:00', S.parkRun, 'Short jog. Legs are tired but the habit is strong.')
@@ -383,8 +407,9 @@ water('2026-02-16', '06:45', S.meditate, 'Meditation before the run. Good combo.
 water('2026-02-16', '07:00', S.parkRun, 'Ran in the morning fog. Magical.')
 water('2026-02-16', '21:00', S.read2books, 'Started Circe by Madeline Miller. Mythology meets feminism.')
 water('2026-02-17', '07:00', S.meditate, '10 minutes of quiet. Getting hooked on the stillness.')
+leaf('2026-02-17', '18:55', L.gardenDreams, '3-6', 'Garden Dreams')
 plant('2026-02-17', '19:00', S.springGarden, '3-6', 'Plan spring garden', '2w', 'fertile', 2,
-  ['Browsed seed catalogs', 'Have a planting plan sketched', 'Full garden plan with timeline'], null)
+  ['Browsed seed catalogs', 'Have a planting plan sketched', 'Full garden plan with timeline'], L.gardenDreams)
 water('2026-02-17', '20:00', S.springGarden, 'Browsed seed catalogs online. Tomatoes and herbs for sure.')
 water('2026-02-18', '07:00', S.parkRun, 'Park run in the cold. Getting tougher.')
 water('2026-02-18', '07:15', S.meditate, 'Morning meditation. Actually looked forward to it today.')
@@ -395,8 +420,9 @@ water('2026-02-20', '07:00', S.meditate, 'Post-harvest meditation. Reflecting on
 water('2026-02-20', '16:00', S.springGarden, 'Measured the backyard plot. Bigger than I thought.')
 harvest('2026-02-20', '18:00', S.parkRun, 4, 0.4434, 'A month of park runs. Saturday mornings belong to the trail now.')
 water('2026-02-21', '07:00', S.meditate, '10 minutes. Noticed sounds I usually ignore. Birds outside.')
+leaf('2026-02-21', '10:55', L.socialLife, '6-2', 'Social Life')
 plant('2026-02-21', '11:00', S.gameNight, '6-2', 'Host game night', '2w', 'fertile', 2,
-  ['Texted friends about it', 'Date is set and planned', 'Hosted a great night, next one scheduled'], null)
+  ['Texted friends about it', 'Date is set and planned', 'Hosted a great night, next one scheduled'], L.socialLife)
 water('2026-02-21', '22:00', S.read2books, 'Halfway through Circe. Taking my time with this one.')
 water('2026-02-22', '10:00', S.gameNight, 'Texted the group chat. Saturday March 1st works for everyone.')
 water('2026-02-22', '14:00', S.springGarden, 'Ordered seeds online. Basil, tomatoes, peppers, cilantro.')

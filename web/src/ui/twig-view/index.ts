@@ -284,7 +284,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       const nodeId = getCurrentNodeId(state)
       if (!nodeId) return
 
-      let leafId: string | undefined
+      let leafId: string
       const leafChoice = elements.leafSelect.value
       if (leafChoice === '__new__') {
         const leafName = elements.newLeafNameInput.value.trim() || title
@@ -298,6 +298,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         })
       } else if (leafChoice) {
         leafId = leafChoice
+      } else {
+        return
       }
 
       const now = new Date()

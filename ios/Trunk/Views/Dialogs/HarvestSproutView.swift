@@ -291,7 +291,7 @@ struct HarvestSproutView: View {
         season: .threeMonths,
         environment: .firm,
         soilCost: 8,
-        leafId: nil,
+        leafId: "leaf-preview",
         bloomWither: "Completed one tutorial",
         bloomBudding: "Built a small app",
         bloomFlourish: "Published an app to the App Store",

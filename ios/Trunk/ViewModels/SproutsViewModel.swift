@@ -46,8 +46,7 @@ class SproutsViewModel {
                 if sprout.title.lowercased().contains(query) {
                     return true
                 }
-                if let leafId = sprout.leafId,
-                   let leaf = leaves[leafId],
+                if let leaf = leaves[sprout.leafId],
                    leaf.name.lowercased().contains(query) {
                     return true
                 }

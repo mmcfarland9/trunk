@@ -44,7 +44,7 @@ export interface SproutPlantedEvent extends BaseEvent {
   season: SproutSeason
   environment: SproutEnvironment
   soilCost: number
-  leafId?: string
+  leafId: string
   bloomWither?: string
   bloomBudding?: string
   bloomFlourish?: string
@@ -57,7 +57,7 @@ export interface SproutWateredEvent extends BaseEvent {
   type: 'sprout_watered'
   sproutId: string
   content: string
-  prompt?: string
+  prompt: string
 }
 
 /**

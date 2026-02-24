@@ -79,7 +79,7 @@ struct DerivedSprout: Identifiable {
     let season: Season
     let environment: SproutEnvironment
     let soilCost: Double
-    let leafId: String?
+    let leafId: String
     let bloomWither: String?
     let bloomBudding: String?
     let bloomFlourish: String?
@@ -219,7 +219,8 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
           let seasonRaw = getString(payload, "season"),
           let environmentRaw = getString(payload, "environment"),
           let season = Season(rawValue: seasonRaw),
-          let environment = SproutEnvironment(rawValue: environmentRaw) else {
+          let environment = SproutEnvironment(rawValue: environmentRaw),
+          let leafId = getString(payload, "leafId") else {
         return
     }
 
@@ -236,7 +237,7 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
         season: season,
         environment: environment,
         soilCost: soilCost,
-        leafId: getString(payload, "leafId"),
+        leafId: leafId,
         bloomWither: getString(payload, "bloomWither"),
         bloomBudding: getString(payload, "bloomBudding"),
         bloomFlourish: getString(payload, "bloomFlourish"),

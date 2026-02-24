@@ -72,6 +72,7 @@ function makeDerivedSprout(overrides?: Partial<DerivedSprout>): DerivedSprout {
     season: '1m',
     environment: 'fertile',
     soilCost: 3,
+    leafId: 'leaf-default',
     state: 'active',
     plantedAt: '2026-02-01T10:00:00Z',
     waterEntries: [],
@@ -90,7 +91,7 @@ function makeSprout(_twigId: string, overrides?: Record<string, unknown>) {
     soilCost: 3,
     createdAt: '2026-02-01T10:00:00Z',
     endDate: overrides?.endDate ?? '2026-03-01T15:00:00Z',
-    leafId: overrides?.leafId ?? undefined,
+    leafId: overrides?.leafId ?? 'leaf-default',
     ...overrides,
   }
 }
@@ -480,6 +481,7 @@ describe('updateSidebarSprouts', () => {
       makeSprout(derived.twigId, {
         id: derived.id,
         title: derived.title,
+        leafId: derived.leafId,
         state: 'completed',
         result: 4,
       }),
@@ -535,6 +537,7 @@ describe('updateSidebarSprouts', () => {
     vi.mocked(toSprout).mockReturnValue(
       makeSprout('branch-0-twig-0', {
         id: 's1',
+        leafId: 'leaf-default',
         endDate: '2020-01-01T00:00:00Z', // Past date
       }) as any,
     )
@@ -558,6 +561,7 @@ describe('updateSidebarSprouts', () => {
     vi.mocked(toSprout).mockReturnValue(
       makeSprout('branch-0-twig-0', {
         id: 's1',
+        leafId: 'leaf-default',
         endDate: '2020-01-01T00:00:00Z',
       }) as any,
     )
@@ -578,6 +582,7 @@ describe('updateSidebarSprouts', () => {
     vi.mocked(toSprout).mockReturnValue(
       makeSprout('branch-0-twig-0', {
         id: 's1',
+        leafId: 'leaf-default',
         endDate: '2030-06-15T15:00:00Z',
       }) as any,
     )
@@ -598,6 +603,7 @@ describe('updateSidebarSprouts', () => {
     vi.mocked(toSprout).mockReturnValue(
       makeSprout('branch-0-twig-0', {
         id: 's1',
+        leafId: 'leaf-default',
         endDate: undefined,
       }) as any,
     )
@@ -609,18 +615,18 @@ describe('updateSidebarSprouts', () => {
     expect(meta?.textContent).toBe('1m')
   })
 
-  it('handles standalone sprouts without leaf', () => {
+  it('all sprouts have leafId and render in leaf groups', () => {
     vi.mocked(getViewMode).mockReturnValue('twig')
     vi.mocked(getActiveTwigId).mockReturnValue('branch-0-twig-0')
 
-    const sprout = makeDerivedSprout({ id: 's1', twigId: 'branch-0-twig-0', leafId: undefined })
+    const sprout = makeDerivedSprout({ id: 's1', twigId: 'branch-0-twig-0', leafId: 'leaf-1' })
     vi.mocked(getActiveSprouts).mockReturnValue([sprout])
 
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
 
-    const header = ctx.elements.activeSproutsList.querySelector('.sidebar-stacked-header')
-    expect(header?.textContent).toBe('No Leaf')
+    const cards = ctx.elements.activeSproutsList.querySelectorAll('.sidebar-stacked-card')
+    expect(cards.length).toBe(1)
   })
 
   it('skips sprouts with invalid twig IDs in groupByBranch', () => {

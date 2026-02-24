@@ -49,7 +49,7 @@ export interface DerivedSprout {
   season: SproutSeason
   environment: SproutEnvironment
   soilCost: number
-  leafId?: string
+  leafId: string
   bloomWither?: string
   bloomBudding?: string
   bloomFlourish?: string
@@ -243,11 +243,9 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
     }
 
     // sproutsByLeaf
-    if (sprout.leafId) {
-      const leafList = sproutsByLeaf.get(sprout.leafId) || []
-      leafList.push(sprout)
-      sproutsByLeaf.set(sprout.leafId, leafList)
-    }
+    const leafList = sproutsByLeaf.get(sprout.leafId) || []
+    leafList.push(sprout)
+    sproutsByLeaf.set(sprout.leafId, leafList)
   }
 
   for (const leaf of leaves.values()) {

@@ -25,8 +25,8 @@ struct SproutDetailView: View {
     }
 
     private var leafName: String? {
-        guard let leafId = sprout?.leafId else { return nil }
-        return state.leaves[leafId]?.name
+        guard let sprout else { return nil }
+        return state.leaves[sprout.leafId]?.name
     }
 
     private static let dateFormatter: DateFormatter = {

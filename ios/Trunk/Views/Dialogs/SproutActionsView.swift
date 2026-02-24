@@ -350,7 +350,7 @@ struct SproutActionsView: View {
         season: .threeMonths,
         environment: .firm,
         soilCost: 8,
-        leafId: nil,
+        leafId: "leaf-preview",
         bloomWither: nil,
         bloomBudding: nil,
         bloomFlourish: nil,

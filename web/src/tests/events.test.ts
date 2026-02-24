@@ -69,6 +69,7 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
       ]
 
@@ -88,6 +89,7 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
         {
           type: 'sprout_watered',
@@ -116,12 +118,14 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
         {
           type: 'sprout_watered',
           timestamp: '2026-01-16T09:00:00Z',
           sproutId: 'sprout-1',
           content: 'Progress',
+          prompt: 'What did you do?',
         },
       ]
 
@@ -141,6 +145,7 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
         {
           type: 'sprout_harvested',
@@ -171,6 +176,7 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
         {
           type: 'sprout_harvested',
@@ -199,6 +205,7 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
         {
           type: 'sprout_uprooted',
@@ -229,6 +236,7 @@ describe('State Derivation from Events', () => {
           season: '2w' as const,
           environment: 'fertile' as const,
           soilCost: 2,
+          leafId: 'leaf-test',
         })),
         // Harvest with results 1-5
         ...[1, 2, 3, 4, 5].map((n) => ({
@@ -303,6 +311,7 @@ describe('State Derivation from Events', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-test',
         },
         {
           type: 'sun_shone',
@@ -350,6 +359,7 @@ describe('State Derivation from Events', () => {
           timestamp: '2026-01-03T09:00:00Z',
           sproutId: 'sprout-running',
           content: 'Went for first run, felt good!',
+          prompt: 'How did your run go?',
         },
         // Week 1: Shine on the twig
         {
@@ -365,6 +375,7 @@ describe('State Derivation from Events', () => {
           timestamp: '2026-01-10T09:00:00Z',
           sproutId: 'sprout-running',
           content: 'Ran 3 times this week!',
+          prompt: 'What progress did you make?',
         },
         // End of month: Harvest
         {
@@ -443,12 +454,14 @@ describe('Water Availability Derivation', () => {
         timestamp: water1,
         sproutId: 'sprout-1',
         content: 'First water',
+        prompt: 'What did you do?',
       },
       {
         type: 'sprout_watered',
         timestamp: water2,
         sproutId: 'sprout-2',
         content: 'Second water',
+        prompt: 'What did you do?',
       },
     ]
 
@@ -470,12 +483,14 @@ describe('Water Availability Derivation', () => {
         timestamp: yesterdayWater,
         sproutId: 'sprout-1',
         content: 'Yesterday water',
+        prompt: 'What did you do?',
       },
       {
         type: 'sprout_watered',
         timestamp: todayWater,
         sproutId: 'sprout-2',
         content: 'Today water',
+        prompt: 'What did you do?',
       },
     ]
 
@@ -541,6 +556,7 @@ describe('Sprout Watered This Week', () => {
         timestamp: '2026-01-28T10:00:00Z',
         sproutId: 'sprout-1',
         content: 'Watered',
+        prompt: 'What did you do?',
       },
     ]
 
@@ -556,6 +572,7 @@ describe('Sprout Watered This Week', () => {
         timestamp: '2026-01-20T10:00:00Z',
         sproutId: 'sprout-1',
         content: 'Watered',
+        prompt: 'What did you do?',
       },
     ]
 
@@ -610,6 +627,7 @@ describe('Helper Functions', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 2,
+        leafId: 'leaf-1',
       },
       {
         type: 'sprout_planted',
@@ -620,6 +638,7 @@ describe('Helper Functions', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 2,
+        leafId: 'leaf-1',
       },
       {
         type: 'sprout_harvested',
@@ -637,6 +656,7 @@ describe('Helper Functions', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 2,
+        leafId: 'leaf-1',
       },
     ]
 

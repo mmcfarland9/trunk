@@ -20,8 +20,7 @@ struct SproutListRow: View {
     }
 
     private var leafName: String? {
-        guard let leafId = sprout.leafId else { return nil }
-        return state.leaves[leafId]?.name
+        state.leaves[sprout.leafId]?.name
     }
 
     var body: some View {

@@ -48,7 +48,7 @@ struct TrunkEvent: Codable {
         season: String,
         environment: String,
         soilCost: Int,
-        leafId: String?,
+        leafId: String,
         bloomWither: String?,
         bloomBudding: String?,
         bloomFlourish: String?
@@ -69,7 +69,7 @@ struct TrunkEvent: Codable {
         )
     }
 
-    static func sproutWatered(timestamp: String, sproutId: String, content: String, prompt: String?) -> TrunkEvent {
+    static func sproutWatered(timestamp: String, sproutId: String, content: String, prompt: String) -> TrunkEvent {
         TrunkEvent(type: .sproutWatered, timestamp: timestamp, sproutId: sproutId, content: content, prompt: prompt)
     }
 

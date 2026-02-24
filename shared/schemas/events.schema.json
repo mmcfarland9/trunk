@@ -34,7 +34,7 @@
         "bloomBudding": { "type": "string", "maxLength": 60 },
         "bloomFlourish": { "type": "string", "maxLength": 60 }
       },
-      "required": ["type", "timestamp", "sproutId", "twigId", "title", "season", "environment", "soilCost"]
+      "required": ["type", "timestamp", "sproutId", "twigId", "title", "season", "environment", "soilCost", "leafId"]
     },
     "SproutWateredEvent": {
       "type": "object",
@@ -46,7 +46,7 @@
         "content": { "type": "string" },
         "prompt": { "type": "string" }
       },
-      "required": ["type", "timestamp", "sproutId", "content"]
+      "required": ["type", "timestamp", "sproutId", "content", "prompt"]
     },
     "SproutHarvestedEvent": {
       "type": "object",
