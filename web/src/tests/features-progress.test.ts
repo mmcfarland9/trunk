@@ -419,7 +419,7 @@ describe('updateSidebarSprouts', () => {
     expect(cards.length).toBe(1)
 
     const header = cards[0].querySelector('.sidebar-stacked-header')
-    expect(header?.textContent).toBe('▼Piano Journey')
+    expect(header?.textContent).toBe('Piano Journey')
   })
 
   it('updates count badges', () => {
@@ -659,7 +659,8 @@ describe('initSidebarSprouts', () => {
     initSidebarSprouts(ctx)
 
     expect(ctx.elements.activeSproutsToggle.classList.contains('is-expanded')).toBe(true)
-    expect(ctx.elements.cultivatedSproutsToggle.classList.contains('is-expanded')).toBe(true)
+    expect(ctx.elements.cultivatedSproutsToggle.classList.contains('is-expanded')).toBe(false)
+    expect(ctx.elements.cultivatedSproutsList.classList.contains('is-collapsed')).toBe(true)
   })
 
   it('toggles active section on click', () => {
@@ -681,9 +682,10 @@ describe('initSidebarSprouts', () => {
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
 
+    // Starts collapsed — click to expand
     ctx.elements.cultivatedSproutsToggle.click()
-    expect(ctx.elements.cultivatedSproutsToggle.classList.contains('is-expanded')).toBe(false)
-    expect(ctx.elements.cultivatedSproutsList.classList.contains('is-collapsed')).toBe(true)
+    expect(ctx.elements.cultivatedSproutsToggle.classList.contains('is-expanded')).toBe(true)
+    expect(ctx.elements.cultivatedSproutsList.classList.contains('is-collapsed')).toBe(false)
   })
 
   it('stores callbacks for subsequent updateSidebarSprouts calls', () => {

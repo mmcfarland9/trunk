@@ -157,11 +157,11 @@ export function initSidebarSprouts(
   storedWaterClick = onWaterClick
   storedHarvestClick = onHarvestClick
 
-  // Set default states: Both sections expanded
+  // Set default states: active expanded, cultivated collapsed
   activeSproutsToggle.classList.add('is-expanded')
   activeSproutsList.classList.remove('is-collapsed')
-  cultivatedSproutsToggle.classList.add('is-expanded')
-  cultivatedSproutsList.classList.remove('is-collapsed')
+  cultivatedSproutsToggle.classList.remove('is-expanded')
+  cultivatedSproutsList.classList.add('is-collapsed')
 
   // Set up collapsible toggles
   activeSproutsToggle.addEventListener('click', () => {

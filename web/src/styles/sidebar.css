@@ -120,27 +120,11 @@
   background: transparent;
 }
 
-/* Folder collapse arrows */
-.branch-folder-arrow,
-.twig-folder-arrow,
-.sidebar-stacked-arrow {
-  display: inline-block;
-  font-size: 0.55rem;
-  transition: transform 200ms ease;
-}
-
 /* Collapsed state hides children */
 .branch-folder.is-collapsed > :not(.branch-folder-header),
 .twig-folder.is-collapsed > :not(.twig-folder-header),
 .sidebar-stacked-card.is-collapsed .sidebar-stacked-rows {
   display: none;
-}
-
-/* Arrow rotates when collapsed */
-.branch-folder.is-collapsed .branch-folder-arrow,
-.twig-folder.is-collapsed .twig-folder-arrow,
-.sidebar-stacked-card.is-collapsed .sidebar-stacked-arrow {
-  transform: rotate(-90deg);
 }
 
 .branch-folder-label {

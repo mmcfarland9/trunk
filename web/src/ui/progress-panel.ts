@@ -73,10 +73,6 @@ export function createBranchFolder(
   header.type = 'button'
   header.className = 'branch-folder-header'
 
-  const arrow = document.createElement('span')
-  arrow.className = 'branch-folder-arrow'
-  arrow.textContent = '▼'
-
   const label = document.createElement('span')
   label.className = 'branch-folder-label'
   label.textContent = branchLabel
@@ -85,7 +81,7 @@ export function createBranchFolder(
   countEl.className = 'branch-folder-count'
   countEl.textContent = `(${count})`
 
-  header.append(arrow, label, countEl)
+  header.append(label, countEl)
   folder.append(header)
 
   header.addEventListener('click', () => {
@@ -104,10 +100,6 @@ export function createTwigFolder(twigId: string, twigLabel: string, count: numbe
   header.type = 'button'
   header.className = 'twig-folder-header'
 
-  const arrow = document.createElement('span')
-  arrow.className = 'twig-folder-arrow'
-  arrow.textContent = '▼'
-
   const label = document.createElement('span')
   label.className = 'twig-folder-label'
   label.textContent = twigLabel
@@ -116,7 +108,7 @@ export function createTwigFolder(twigId: string, twigLabel: string, count: numbe
   countEl.className = 'twig-folder-count'
   countEl.textContent = `(${count})`
 
-  header.append(arrow, label, countEl)
+  header.append(label, countEl)
   folder.append(header)
 
   header.addEventListener('click', () => {
@@ -139,14 +131,7 @@ export function createStackedLeafCard(
   header.type = 'button'
   header.className = 'sidebar-stacked-header'
 
-  const arrow = document.createElement('span')
-  arrow.className = 'sidebar-stacked-arrow'
-  arrow.textContent = '▼'
-
-  const headerLabel = document.createElement('span')
-  headerLabel.textContent = leafName
-
-  header.append(arrow, headerLabel)
+  header.textContent = leafName
   header.addEventListener('click', () => {
     card.classList.toggle('is-collapsed')
   })
