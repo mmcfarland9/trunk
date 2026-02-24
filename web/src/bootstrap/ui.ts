@@ -21,12 +21,7 @@ import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from '../feat
 import { initAccountDialog } from '../features/account-dialog'
 import { buildSoilChart } from '../ui/soil-chart'
 import { buildRadarChart } from '../ui/radar-chart'
-import {
-  returnToBranchView,
-  enterBranchView,
-  returnToOverview,
-  enterTwigView,
-} from '../features/navigation'
+import { returnToBranchView, returnToOverview } from '../features/navigation'
 
 export type NavCallbacks = {
   onPositionNodes: () => void
@@ -243,32 +238,11 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
     returnToBranchView(ctx, navCallbacks)
   })
 
-  // Initialize sidebar sprout sections with branch hover/click callbacks
+  // Initialize sidebar sprout sections
   initSidebarSprouts(
     ctx,
     (sprout) => waterDialogApi.openWaterDialog(sprout),
-    {
-      onClick: (index) => enterBranchView(index, ctx, navCallbacks),
-    },
-    (twigId, branchIndex) => {
-      // Navigate to twig view
-      const twig = ctx.nodeLookup.get(twigId)
-      if (twig) {
-        enterTwigView(twig, branchIndex, ctx, navCallbacks)
-      }
-    },
-    (leafId, twigId, branchIndex) => {
-      // Navigate to leaf view
-      const twig = ctx.nodeLookup.get(twigId)
-      if (twig) {
-        // Enter twig view first, then open leaf view
-        enterTwigView(twig, branchIndex, ctx, navCallbacks)
-        setViewModeState('leaf', branchIndex, twigId)
-        ctx.leafView?.open(leafId, twigId, branchIndex)
-      }
-    },
     (sprout) => {
-      // Open harvest dialog
       harvestDialogApi.openHarvestDialog({
         id: sprout.id,
         title: sprout.title,

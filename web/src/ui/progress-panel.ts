@@ -13,12 +13,6 @@ import { getPresetLabel } from '../state'
 
 export type SproutWithLocation = Sprout & { twigId: string; twigLabel: string; branchIndex: number }
 
-export type SidebarBranchCallbacks = {
-  onClick: (index: number) => void
-}
-
-export type SidebarTwigCallback = (twigId: string, branchIndex: number) => void
-export type SidebarLeafCallback = (leafId: string, twigId: string, branchIndex: number) => void
 export type SidebarHarvestCallback = (sprout: SproutWithLocation) => void
 
 // --- Helpers ---
@@ -70,7 +64,6 @@ export function createBranchFolder(
   branchIndex: number,
   branchLabel: string,
   count: number,
-  callbacks?: SidebarBranchCallbacks,
 ): HTMLDivElement {
   const folder = document.createElement('div')
   folder.className = 'branch-folder'
@@ -80,6 +73,10 @@ export function createBranchFolder(
   header.type = 'button'
   header.className = 'branch-folder-header'
 
+  const arrow = document.createElement('span')
+  arrow.className = 'branch-folder-arrow'
+  arrow.textContent = '▼'
+
   const label = document.createElement('span')
   label.className = 'branch-folder-label'
   label.textContent = branchLabel
@@ -88,23 +85,17 @@ export function createBranchFolder(
   countEl.className = 'branch-folder-count'
   countEl.textContent = `(${count})`
 
-  header.append(label, countEl)
+  header.append(arrow, label, countEl)
   folder.append(header)
 
-  if (callbacks) {
-    header.addEventListener('click', () => callbacks.onClick(branchIndex))
-  }
+  header.addEventListener('click', () => {
+    folder.classList.toggle('is-collapsed')
+  })
 
   return folder
 }
 
-export function createTwigFolder(
-  twigId: string,
-  twigLabel: string,
-  count: number,
-  onTwigClick?: SidebarTwigCallback,
-  branchIndex?: number,
-): HTMLDivElement {
+export function createTwigFolder(twigId: string, twigLabel: string, count: number): HTMLDivElement {
   const folder = document.createElement('div')
   folder.className = 'twig-folder'
   folder.dataset.twigId = twigId
@@ -112,6 +103,10 @@ export function createTwigFolder(
   const header = document.createElement('button')
   header.type = 'button'
   header.className = 'twig-folder-header'
+
+  const arrow = document.createElement('span')
+  arrow.className = 'twig-folder-arrow'
+  arrow.textContent = '▼'
 
   const label = document.createElement('span')
   label.className = 'twig-folder-label'
@@ -121,22 +116,20 @@ export function createTwigFolder(
   countEl.className = 'twig-folder-count'
   countEl.textContent = `(${count})`
 
-  header.append(label, countEl)
+  header.append(arrow, label, countEl)
   folder.append(header)
 
-  if (onTwigClick && branchIndex !== undefined) {
-    header.addEventListener('click', () => onTwigClick(twigId, branchIndex))
-  }
+  header.addEventListener('click', () => {
+    folder.classList.toggle('is-collapsed')
+  })
 
   return folder
 }
 
 export function createStackedLeafCard(
   leafName: string,
-  leafId: string,
   sprouts: SproutWithLocation[],
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  onLeafClick?: SidebarLeafCallback,
   onHarvestClick?: SidebarHarvestCallback,
 ): HTMLDivElement {
   const card = document.createElement('div')
@@ -145,12 +138,18 @@ export function createStackedLeafCard(
   const header = document.createElement('button')
   header.type = 'button'
   header.className = 'sidebar-stacked-header'
-  header.textContent = leafName
-  if (onLeafClick && sprouts[0]) {
-    header.addEventListener('click', () => {
-      onLeafClick(leafId, sprouts[0].twigId, sprouts[0].branchIndex)
-    })
-  }
+
+  const arrow = document.createElement('span')
+  arrow.className = 'sidebar-stacked-arrow'
+  arrow.textContent = '▼'
+
+  const headerLabel = document.createElement('span')
+  headerLabel.textContent = leafName
+
+  header.append(arrow, headerLabel)
+  header.addEventListener('click', () => {
+    card.classList.toggle('is-collapsed')
+  })
   card.append(header)
 
   const rows = document.createElement('div')
@@ -221,7 +220,6 @@ export function renderLeafGroupedSprouts(
   container: HTMLElement,
   isActive: boolean,
   onWaterClick?: (sprout: SproutWithLocation) => void,
-  onLeafClick?: SidebarLeafCallback,
   onHarvestClick?: SidebarHarvestCallback,
 ): void {
   const { standalone, byLeaf } = groupByLeaf(sprouts)
@@ -233,10 +231,8 @@ export function renderLeafGroupedSprouts(
     const leafName = leaf?.name || 'Unnamed Leaf'
     const card = createStackedLeafCard(
       leafName,
-      leafId,
       leafSprouts,
       isActive ? onWaterClick : undefined,
-      onLeafClick,
       isActive ? onHarvestClick : undefined,
     )
     container.append(card)

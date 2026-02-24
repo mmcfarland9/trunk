@@ -419,7 +419,7 @@ describe('updateSidebarSprouts', () => {
     expect(cards.length).toBe(1)
 
     const header = cards[0].querySelector('.sidebar-stacked-header')
-    expect(header?.textContent).toBe('Piano Journey')
+    expect(header?.textContent).toBe('▼Piano Journey')
   })
 
   it('updates count badges', () => {
@@ -545,7 +545,7 @@ describe('updateSidebarSprouts', () => {
     const onWaterClick = vi.fn()
     const onHarvestClick = vi.fn()
     const ctx = createMockAppContext()
-    initSidebarSprouts(ctx, onWaterClick, undefined, undefined, undefined, onHarvestClick)
+    initSidebarSprouts(ctx, onWaterClick, onHarvestClick)
 
     const harvestBtn = ctx.elements.activeSproutsList.querySelector('.action-btn-harvest')
     expect(harvestBtn).not.toBe(null)
@@ -688,13 +688,10 @@ describe('initSidebarSprouts', () => {
 
   it('stores callbacks for subsequent updateSidebarSprouts calls', () => {
     const onWaterClick = vi.fn()
-    const branchCallbacks = { onClick: vi.fn() }
-    const onTwigClick = vi.fn()
-    const onLeafClick = vi.fn()
     const onHarvestClick = vi.fn()
 
     const ctx = createMockAppContext()
-    initSidebarSprouts(ctx, onWaterClick, branchCallbacks, onTwigClick, onLeafClick, onHarvestClick)
+    initSidebarSprouts(ctx, onWaterClick, onHarvestClick)
 
     // Calling updateSidebarSprouts again should use stored callbacks
     updateSidebarSprouts(ctx)
