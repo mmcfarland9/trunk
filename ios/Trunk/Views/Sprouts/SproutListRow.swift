@@ -67,7 +67,7 @@ struct SproutListRow: View {
                 // Detail row
                 HStack(spacing: TrunkTheme.space2) {
                     // Status
-                    Text(sprout.state == .active ? "active" : sprout.state == .uprooted ? "uprooted" : "completed")
+                    Text(sprout.state == .active ? "active" : sprout.state == .uprooted ? "uprooted" : "cultivated")
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                         .foregroundStyle(sprout.state == .active ? Color.twig : sprout.state == .uprooted ? Color.trunkDestructive : Color.inkFaint)
 

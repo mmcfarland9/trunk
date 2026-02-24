@@ -148,7 +148,8 @@ export function createStackedLeafCard(
     title.className = 'sidebar-stacked-title'
     title.textContent = sprout.title || 'Untitled'
 
-    const isReady = sprout.endDate ? new Date(sprout.endDate) <= new Date() : false
+    const isCompleted = sprout.state === 'completed'
+    const isReady = !isCompleted && sprout.endDate ? new Date(sprout.endDate) <= new Date() : false
     if (isReady) {
       row.classList.add('is-ready')
     }
@@ -189,7 +190,13 @@ export function createStackedLeafCard(
 
     const meta = document.createElement('span')
     meta.className = 'sidebar-stacked-meta'
-    meta.textContent = sprout.endDate ? formatEndDate(sprout.endDate) : sprout.season
+    if (isCompleted && sprout.result) {
+      meta.textContent = `${sprout.result}/5`
+    } else if (sprout.endDate) {
+      meta.textContent = formatEndDate(sprout.endDate)
+    } else {
+      meta.textContent = sprout.season
+    }
     row.append(meta)
 
     rows.append(row)

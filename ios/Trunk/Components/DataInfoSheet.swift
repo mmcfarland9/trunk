@@ -81,7 +81,7 @@ struct DataInfoSheet: View {
                                     .monoLabel(size: TrunkTheme.textXs)
 
                                 dataRow(label: "Active", value: "\(activeCount)")
-                                dataRow(label: "Completed", value: "\(completedCount)")
+                                dataRow(label: "Cultivated", value: "\(completedCount)")
                                 dataRow(label: "Leaves", value: "\(leafCount)")
                             }
                         }

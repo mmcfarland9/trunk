@@ -10,7 +10,7 @@ import SwiftUI
 enum SproutFilter: String, CaseIterable {
     case all = "All"
     case active = "Active"
-    case completed = "Completed"
+    case completed = "Cultivated"
     case uprooted = "Uprooted"
 }
 

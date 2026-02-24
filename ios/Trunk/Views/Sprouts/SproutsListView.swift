@@ -62,7 +62,7 @@ struct SproutsListView: View {
                     .font(.system(size: TrunkTheme.textLg, design: .monospaced))
                     .foregroundStyle(Color.inkLight)
 
-                Text("done")
+                Text("cultivated")
                     .font(.system(size: TrunkTheme.textXs, design: .monospaced))
                     .foregroundStyle(Color.inkFaint)
             }
