@@ -1,6 +1,6 @@
 /* === Side Panel === */
 .side-panel { display: flex; flex-direction: column; gap: var(--space-1); animation: fade-in 600ms ease 100ms both; font-family: var(--font-ascii); font-size: var(--text-sm); height: 100%; }
-.panel-section { padding: var(--space-2) 0; flex-shrink: 0; }
+.panel-section { padding: var(--space-1) 0; flex-shrink: 0; }
 .panel-section.sprouts-section { padding: 0; flex: 1; min-height: 0; overflow-y: auto; position: relative; padding-top: 1.5rem; }
 .panel-section.is-empty { display: none; }
 .back-to-trunk,
@@ -15,8 +15,8 @@
 .focus-meta { margin: 0 0 var(--space-1); height: 1.2em; }
 .focus-title, .focus-note { margin: 0; color: var(--ink); line-height: 1.4; }
 .focus-title { font-weight: 400; margin-bottom: var(--space-1); }
-.focus-note { color: var(--ink-light); margin-bottom: 0.4em; }
-.focus-goal { margin: var(--space-2) 0 0; color: var(--ink-light); line-height: 1.4; }
+.focus-note { color: var(--ink-light); margin-bottom: 0.2em; }
+.focus-goal { margin: var(--space-1) 0 0; color: var(--ink-light); line-height: 1.4; }
 .focus-title.is-muted, .focus-note.is-muted, .focus-goal.is-muted { color: var(--ink-faint); }
 /* Progress elements hidden for now - kept for future use */
 .progress-count { display: none; margin: 0 0 var(--space-3); color: var(--ink); font-weight: 400; min-height: 3.6em; line-height: 1.2; }
