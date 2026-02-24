@@ -15,7 +15,7 @@
 .focus-meta { margin: 0 0 var(--space-1); height: 1.2em; }
 .focus-title, .focus-note { margin: 0; color: var(--ink); line-height: 1.4; }
 .focus-title { font-weight: 400; margin-bottom: var(--space-1); }
-.focus-note { color: var(--ink-light); margin-bottom: 0.2em; }
+.focus-note { color: var(--ink-light); margin-bottom: 0.2em; min-height: 2.8em; }
 .focus-goal { margin: var(--space-1) 0 0; color: var(--ink-light); line-height: 1.4; }
 .focus-title.is-muted, .focus-note.is-muted, .focus-goal.is-muted { color: var(--ink-faint); }
 /* Progress elements hidden for now - kept for future use */
