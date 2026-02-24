@@ -1,7 +1,7 @@
 /* === Side Panel === */
 .side-panel { display: flex; flex-direction: column; gap: var(--space-1); animation: fade-in 600ms ease 100ms both; font-family: var(--font-ascii); font-size: var(--text-sm); height: 100%; }
 .panel-section { padding: var(--space-2) 0; flex-shrink: 0; }
-.panel-section.sprouts-section { padding: 0; flex-shrink: 1; position: relative; padding-top: 1.5rem; }
+.panel-section.sprouts-section { padding: 0; flex: 1; min-height: 0; overflow-y: auto; position: relative; padding-top: 1.5rem; }
 .panel-section.is-empty { display: none; }
 .back-to-trunk,
 .back-to-branch {
@@ -28,9 +28,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .sprouts-toggle {
