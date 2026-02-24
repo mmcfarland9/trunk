@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Radar chart vertices now derive from animated branch positions instead of independent polar math, ensuring the polygon tracks the tree's elliptical geometry and wind sway exactly
+
 ### Added
 - Post-action celebration feedback: brief pulse animation on resource meters after watering, harvesting, or shining
 - Watering streak counter: displays current and longest-ever consecutive watering days near the water meter

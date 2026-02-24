@@ -183,5 +183,8 @@ export type AppContext = {
   twigView?: TwigViewApi
   leafView?: LeafViewApi
   getUserDisplayName?: () => string
-  radarTick?: (time: number) => void
+  radarTick?: (
+    branchPositions: ReadonlyArray<{ x: number; y: number } | undefined>,
+    center: { x: number; y: number },
+  ) => void
 }

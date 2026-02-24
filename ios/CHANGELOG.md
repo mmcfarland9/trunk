@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Radar chart: polygon vertices now derived from animated branch positions instead of independent geometry, ensuring radar polygon tracks branch node wind sway exactly
+
 ### Added
 - Upcoming Harvests sheet: tapping the Next Harvest panel shows all active sprouts sorted by harvest date
 - VoiceOver accessibility labels and hints on the Next Harvest panel and harvest list rows

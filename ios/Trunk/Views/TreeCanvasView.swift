@@ -98,17 +98,22 @@ struct TreeCanvasView: View {
     @ViewBuilder
     private func treeContent(center: CGPoint, radius: CGFloat, time: Double, geo: GeometryProxy) -> some View {
         let cachedData = branchSproutData
-        let radarSize = min(geo.size.width, geo.size.height) * 0.65
+
+        // Compute animated branch positions once (with wind), shared by radar + nodes
+        let branchPositions = (0..<branchCount).map { index -> CGPoint in
+            let angle = TreeGeometry.angle(for: index, count: branchCount)
+            let position = TreeGeometry.point(center: center, radius: radius, angle: angle)
+            let windOffset = Wind.branchOffset(index: index, time: time)
+            return CGPoint(x: position.x + windOffset.x, y: position.y + windOffset.y)
+        }
 
         ZStack {
-            // Radar chart background (behind everything)
+            // Radar chart background — vertices derived from branch positions
             RadarChartView(
                 scores: radarScores,
-                windOffsetFor: { index in Wind.branchOffset(index: index, time: time) }
+                branchPositions: branchPositions,
+                center: center
             )
-                .frame(width: radarSize, height: radarSize)
-                .position(center)
-                .allowsHitTesting(false)
 
             // ASCII dot guide lines — single Canvas for all 8 branches
             CanvasDotGuideLines(
@@ -132,12 +137,9 @@ struct TreeCanvasView: View {
                     HapticManager.tap()
                 }
 
-            // Branch nodes
+            // Branch nodes — positioned at the same animated branch positions
             ForEach(0..<branchCount, id: \.self) { index in
-                let angle = TreeGeometry.angle(for: index, count: branchCount)
-                let position = TreeGeometry.point(center: center, radius: radius, angle: angle)
                 let data = cachedData[index]
-                let windOffset = Wind.branchOffset(index: index, time: time)
 
                 InteractiveBranchNode(
                     index: index,
@@ -148,7 +150,7 @@ struct TreeCanvasView: View {
                         onNavigateToBranch?(index)
                     }
                 )
-                .position(x: position.x + windOffset.x, y: position.y + windOffset.y)
+                .position(branchPositions[index])
                 .transition(.scale.combined(with: .opacity))
             }
         }

@@ -4,53 +4,50 @@
 //
 //  8-axis radar chart showing life balance across branches.
 //  Renders behind the tree canvas as a subtle background visualization.
-//  Data polygon vertices sway with wind passed from the parent view.
+//  Polygon vertices are derived from animated branch positions so they
+//  track the same wind sway as the branch nodes.
 //
 
 import SwiftUI
 
 struct RadarChartView: View {
     let scores: [Double]
-    let windOffsetFor: (Int) -> CGPoint
+    let branchPositions: [CGPoint]
+    let center: CGPoint
 
     private let branchCount = SharedConstants.Tree.branchCount
 
     var body: some View {
         let allZero = scores.allSatisfy { $0 == 0 }
 
-        GeometryReader { geo in
-            let size = min(geo.size.width, geo.size.height)
-            let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-            let maxRadius = size * 0.52
-
-            if !allZero {
-                Canvas { context, _ in
-                    draw(context: context, center: center, maxRadius: maxRadius, scores: scores)
-                }
+        if !allZero {
+            Canvas { context, _ in
+                draw(context: context)
             }
+            .allowsHitTesting(false)
         }
     }
 
     // MARK: - Drawing
 
-    private func draw(context: GraphicsContext, center: CGPoint, maxRadius: CGFloat, scores: [Double]) {
+    private func draw(context: GraphicsContext) {
         var path = Path()
         var dotPoints: [CGPoint] = []
 
         for i in 0..<branchCount {
-            let angle = TreeGeometry.angle(for: i, count: branchCount)
             let s = max(0.08, scores[i])
-            let r = maxRadius * CGFloat(s)
-            let wind = windOffsetFor(i)
-            let vertex = TreeGeometry.point(center: center, radius: r, angle: angle)
-            let swayed = CGPoint(x: vertex.x + wind.x * CGFloat(s), y: vertex.y + wind.y * CGFloat(s))
+            let branchPos = branchPositions[i]
+            let vertex = CGPoint(
+                x: center.x + (branchPos.x - center.x) * CGFloat(s),
+                y: center.y + (branchPos.y - center.y) * CGFloat(s)
+            )
 
             if i == 0 {
-                path.move(to: swayed)
+                path.move(to: vertex)
             } else {
-                path.addLine(to: swayed)
+                path.addLine(to: vertex)
             }
-            dotPoints.append(swayed)
+            dotPoints.append(vertex)
         }
         path.closeSubpath()
 

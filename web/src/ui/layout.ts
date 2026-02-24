@@ -274,14 +274,19 @@ function applyWind(ctx: AppContext, timestamp: number): void {
   const tAmp = WIND_TWIG_AMP * (isFocusedBranch ? WIND_FOCUS_TWIG_SCALE : 1)
   const pulse = WIND_PULSE * (isFocusedBranch ? WIND_FOCUS_TWIG_SCALE : 1)
 
+  const branchPositions: Array<{ x: number; y: number } | undefined> = []
+
   branchGroups.forEach((bg, idx) => {
     if (isFocusedBranch && idx !== activeBranchIndex) return
     const wind = branchWindOffset(idx, time, bAmp)
     const bx = getBase(bg.group, 'x'),
       by = getBase(bg.group, 'y')
     if (bx !== null && by !== null) {
-      bg.group.style.left = `${bx + wind.x}px`
-      bg.group.style.top = `${by + wind.y}px`
+      const animX = bx + wind.x
+      const animY = by + wind.y
+      bg.group.style.left = `${animX}px`
+      bg.group.style.top = `${animY}px`
+      branchPositions[idx] = { x: animX, y: animY }
     }
     bg.twigs.forEach((twig) => {
       const x = getBase(twig, 'x'),
@@ -301,7 +306,12 @@ function applyWind(ctx: AppContext, timestamp: number): void {
     })
   })
 
-  ctx.radarTick?.(time)
+  // Radar vertices are derived from animated branch positions (overview only)
+  if (!isFocusedBranch) {
+    const { canvas } = ctx.elements
+    const center = { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 }
+    ctx.radarTick?.(branchPositions, center)
+  }
 }
 
 // Helpers
