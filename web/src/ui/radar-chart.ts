@@ -12,7 +12,9 @@ import { computeBranchEngagement } from '../events/radar-charting'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
-const GRID_RINGS = [0.25, 0.5, 0.75]
+// Max reach of the radar polygon as a fraction of center→branch distance.
+// Keeps the chart subtle — a score of 1.0 reaches 25% of the way to the branch.
+const REACH = 0.25
 
 function svgEl<K extends keyof SVGElementTagNameMap>(tag: K): SVGElementTagNameMap[K]
 function svgEl(tag: string): SVGElement
@@ -38,16 +40,12 @@ export function buildRadarChart(): {
   svg.setAttribute('preserveAspectRatio', 'none')
 
   // Persistent element references for per-frame updates
-  const gridPolygons: SVGPolygonElement[] = []
-  const axisLines: SVGLineElement[] = []
   const dataDots: SVGCircleElement[] = []
   let dataPolygon: SVGPolygonElement | null = null
   let scores: number[] = []
 
   function rebuild(): void {
     while (svg.firstChild) svg.removeChild(svg.firstChild)
-    gridPolygons.length = 0
-    axisLines.length = 0
     dataDots.length = 0
     dataPolygon = null
 
@@ -60,33 +58,6 @@ export function buildRadarChart(): {
     }
 
     scores = engagement.map((b) => b.score)
-
-    // Grid ring polygons (one per ring fraction, positioned each frame)
-    for (const _ of GRID_RINGS) {
-      const poly = svgEl('polygon') as SVGPolygonElement
-      setAttrs(poly, {
-        fill: 'none',
-        stroke: 'rgba(111,86,68,0.12)',
-        'stroke-width': '0.5',
-      })
-      gridPolygons.push(poly)
-      svg.appendChild(poly)
-    }
-
-    // Axis lines (from center to each branch position)
-    for (let i = 0; i < BRANCH_COUNT; i++) {
-      const line = svgEl('line') as SVGLineElement
-      setAttrs(line, {
-        x1: 0,
-        y1: 0,
-        x2: 0,
-        y2: 0,
-        stroke: 'rgba(111,86,68,0.12)',
-        'stroke-width': '0.5',
-      })
-      axisLines.push(line)
-      svg.appendChild(line)
-    }
 
     // Data polygon
     dataPolygon = svgEl('polygon') as SVGPolygonElement
@@ -122,36 +93,12 @@ export function buildRadarChart(): {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
     }
 
-    // Update grid ring polygons — each vertex at fraction f along center→branch
-    for (let g = 0; g < gridPolygons.length; g++) {
-      const frac = GRID_RINGS[g]
-      const pts: string[] = []
-      for (let i = 0; i < BRANCH_COUNT; i++) {
-        const pos = branchPositions[i]
-        if (!pos) continue
-        const x = center.x + frac * (pos.x - center.x)
-        const y = center.y + frac * (pos.y - center.y)
-        pts.push(`${x},${y}`)
-      }
-      gridPolygons[g]?.setAttribute('points', pts.join(' '))
-    }
-
-    // Update axis lines — from center to each branch position
-    for (let i = 0; i < BRANCH_COUNT; i++) {
-      const pos = branchPositions[i]
-      if (!pos || !axisLines[i]) continue
-      axisLines[i].setAttribute('x1', String(center.x))
-      axisLines[i].setAttribute('y1', String(center.y))
-      axisLines[i].setAttribute('x2', String(pos.x))
-      axisLines[i].setAttribute('y2', String(pos.y))
-    }
-
-    // Update data polygon and dots — vertex sits at score fraction along center→branch
+    // Update data polygon and dots — vertex at score × REACH along center→branch
     const polyPoints: string[] = []
     for (let i = 0; i < BRANCH_COUNT; i++) {
       const pos = branchPositions[i]
       if (!pos) continue
-      const s = scores[i]
+      const s = scores[i] * REACH
       const x = center.x + s * (pos.x - center.x)
       const y = center.y + s * (pos.y - center.y)
       polyPoints.push(`${x},${y}`)
