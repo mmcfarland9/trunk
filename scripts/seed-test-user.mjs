@@ -184,8 +184,8 @@ water('2025-10-04', '16:00', S.walk20min, 'Weekend stroll through the neighborho
 water('2025-10-05', '21:00', S.journal2w, 'Last entry before harvest. Two weeks of writing. I did it.')
 
 // ── Week 3: Oct 6-12 (First harvests, expanding) ────────────────────────────
-harvest('2025-10-06', '08:00', S.journal2w, 4, 0.3387, 'Two weeks of daily writing. Missed one day but the habit is forming. Surprised how much I had to say.')
-harvest('2025-10-06', '08:15', S.walk20min, 3, 0.1742, 'Walked most days. Some were just 10 minutes but I showed up.')
+harvest('2025-10-08', '08:00', S.journal2w, 4, 0.3387, 'Two weeks of daily writing. Missed one day but the habit is forming. Surprised how much I had to say.')
+harvest('2025-10-08', '08:15', S.walk20min, 3, 0.1742, 'Walked most days. Some were just 10 minutes but I showed up.')
 plant('2025-10-06', '09:00', S.run5k, '0-0', 'Run a 5K', '3m', 'firm', 8,
   ['Ran once', 'Running 2x/week', 'Completed a 5K'], L.gettingMoving)
 leaf('2025-10-06', '09:10', L.moneyAwareness, '4-0', 'Money Awareness')
@@ -248,7 +248,7 @@ water('2025-11-02', '14:00', S.run5k, 'Sunday run. 22 minutes. Might actually ma
 // ── Week 7: Nov 3-9 ─────────────────────────────────────────────────────────
 water('2025-11-03', '21:00', S.shortStory, 'Editing pass. Cut 200 words. Tighter now.')
 water('2025-11-04', '06:30', S.run5k, 'Morning run. 17 minutes. Consistent.')
-harvest('2025-11-04', '20:00', S.trackSpending, 3, 0.1712, 'Tracked spending for a full month. Eye-opening. The awareness alone changed my habits.')
+harvest('2025-11-06', '20:00', S.trackSpending, 3, 0.1712, 'Tracked spending for a full month. Eye-opening. The awareness alone changed my habits.')
 water('2025-11-05', '19:00', S.cook3recipes, 'Made shakshuka. Easy and delicious.')
 water('2025-11-05', '20:00', S.guitar3chords, 'Five chords now. Learning a full song.')
 water('2025-11-06', '17:30', S.run5k, 'Run in the cold. 15 minutes. Need gloves.')
@@ -265,11 +265,12 @@ water('2025-11-10', '06:30', S.run5k, 'Morning run. 20 minutes steady. No walk b
 water('2025-11-10', '21:00', S.shortStory, 'Final draft of the lighthouse story. 2,400 words. Done.')
 water('2025-11-11', '20:00', S.guitar3chords, 'Learning Wish You Were Here intro. Beautiful melody.')
 water('2025-11-11', '20:30', S.emergencyFund, 'Set up automatic transfers. $50/week to savings.')
-harvest('2025-11-12', '08:00', S.cook3recipes, 4, 0.3330, 'Three new recipes learned. Thai chicken is in rotation. Cooking feels less like a chore now.')
+harvest('2025-11-16', '08:00', S.cook3recipes, 4, 0.3330, 'Three new recipes learned. Thai chicken is in rotation. Cooking feels less like a chore now.')
 water('2025-11-12', '17:30', S.run5k, 'Midweek run. 22 minutes. Feeling strong.')
 water('2025-11-13', '21:00', S.emergencyFund, 'Tracking the emergency fund. $200 saved so far.')
 water('2025-11-14', '20:00', S.guitar3chords, 'Guitar. Can play a full song start to finish now. Rough but recognizable.')
-harvest('2025-11-14', '22:00', S.shortStory, 5, 0.5854, 'The lighthouse story is finished. Actually proud of it. Sent it to two friends.')
+harvest('2025-11-14', '21:00', S.guitar3chords, 4, 0.3319, 'Learned 5 chords. Fingers don\'t hurt anymore. Can play two songs badly.')
+harvest('2025-11-20', '22:00', S.shortStory, 5, 0.5854, 'The lighthouse story is finished. Actually proud of it. Sent it to two friends.')
 sun('2025-11-15', '10:00', '5-7', 'Reflecting on two months in. The tree is growing. Each harvest feels like proof that slow is okay.')
 water('2025-11-15', '14:00', S.run5k, 'Long Saturday run. 26 minutes. 5K is within reach.')
 water('2025-11-16', '20:00', S.emergencyFund, 'Adjusted budget. Can do $75/week to savings.')
@@ -280,10 +281,8 @@ plant('2025-11-17', '08:00', S.mealPrep, '0-1', 'Meal prep Sundays', '2w', 'fert
   ['Prepped one meal', 'Prepped 3 meals', 'Full week prepped'], L.eatingWell)
 water('2025-11-17', '18:00', S.mealPrep, 'First meal prep Sunday. Made chili and rice bowls. Enough for 4 days.')
 water('2025-11-18', '06:30', S.run5k, 'Morning run. 18 minutes. Legs felt heavy.')
-water('2025-11-18', '21:00', S.guitar3chords, 'Guitar practice. Working on strumming patterns.')
 water('2025-11-19', '20:00', S.emergencyFund, 'Emergency fund at $350. Ahead of schedule.')
 water('2025-11-20', '17:30', S.run5k, 'Short run. 12 minutes. Just didn\'t have it today.')
-water('2025-11-21', '21:00', S.guitar3chords, 'Tried barre chords. Impossible. Back to open chords.')
 plant('2025-11-21', '21:30', S.dailyWalks, '0-0', 'Take daily walks again', '2w', 'fertile', 2,
   ['Walked once', 'Walking most days', 'Daily walks restored'], L.gettingMoving)
 sun('2025-11-22', '10:00', '0-1', 'Meal prep saves money and time. Why didn\'t I do this sooner?')
@@ -293,12 +292,10 @@ water('2025-11-23', '11:00', S.mealPrep, 'Prepped chicken stir-fry and pasta. Fe
 
 // ── Week 10: Nov 24-30 ──────────────────────────────────────────────────────
 water('2025-11-24', '17:00', S.dailyWalks, 'Walk after work. Listened to an audiobook.')
-water('2025-11-24', '21:00', S.guitar3chords, 'Guitar. Back to basics. G-C-D sounds clean now.')
 water('2025-11-25', '06:30', S.run5k, 'Morning run. 20 minutes. Autopilot.')
 water('2025-11-25', '21:00', S.emergencyFund, 'Emergency fund update. $475. Getting there.')
 water('2025-11-26', '18:00', S.dailyWalks, 'Short walk. Cold but needed the air.')
-harvest('2025-11-27', '08:00', S.mealPrep, 3, 0.1699, 'Meal prepped both weekends. Saved money and ate better.')
-water('2025-11-27', '21:00', S.guitar3chords, 'Thanksgiving guitar. Played for family. They clapped.')
+harvest('2025-12-02', '08:00', S.mealPrep, 3, 0.1699, 'Meal prepped both weekends. Saved money and ate better.')
 plant('2025-11-28', '09:00', S.mindfulWalk, '0-0', 'Walk with intention', '2w', 'fertile', 2,
   ['Walked once mindfully', 'Walking with awareness most days', 'Mindful walking is natural'], L.gettingMoving)
 water('2025-11-28', '15:00', S.dailyWalks, 'Post-Thanksgiving walk. Needed it.')
@@ -309,22 +306,21 @@ plant('2025-11-29', '20:00', S.dailyOutdoor, '0-0', 'Daily outdoor time', '2w', 
 water('2025-11-29', '14:00', S.run5k, 'Saturday run. 27 minutes. Almost there.')
 water('2025-11-30', '17:00', S.mindfulWalk, 'Evening walk. Counted my steps. 2,000.')
 water('2025-11-30', '20:00', S.emergencyFund, 'Month-end. Emergency fund at $550.')
-harvest('2025-11-30', '21:00', S.dailyWalks, 3, 0.1693, 'Walked most days. Simple but effective.')
+harvest('2025-12-07', '08:00', S.dailyWalks, 3, 0.1693, 'Walked most days. Simple but effective.')
 plant('2025-11-30', '20:30', S.writeEveryOther, '1-1', 'Write every other day', '3m', 'firm', 8,
   ['Wrote once', 'Writing weekly', 'Writing every other day consistently'], L.writingJourney)
 
 // ── December: Burnout + harvests ─────────────────────────────────────────────
-harvest('2025-12-01', '09:00', S.mindfulWalk, 2, 0.1108, 'Mindful walking is harder than regular walking. Managed a few times.')
-harvest('2025-12-01', '17:00', S.guitar3chords, 4, 0.3319, 'Learned 5 chords. Fingers don\'t hurt anymore. Can play two songs badly.')
+harvest('2025-12-13', '09:00', S.mindfulWalk, 2, 0.1108, 'Mindful walking is harder than regular walking. Managed a few times.')
 water('2025-12-02', '16:30', S.dailyOutdoor, 'Short walk. Mind was elsewhere.')
-harvest('2025-12-03', '19:00', S.emergencyFund, 2, 0.2894, 'Budget tracking for a month. Didn\'t stick with it as well as I hoped.')
+harvest('2025-12-08', '19:00', S.emergencyFund, 2, 0.2894, 'Budget tracking for a month. Didn\'t stick with it as well as I hoped.')
 water('2025-12-04', '06:30', S.writeEveryOther, 'Barely half a page. Going through the motions.')
 water('2025-12-05', '16:00', S.dailyOutdoor, 'Didn\'t really walk, just sat outside for 5 minutes.')
 sun('2025-12-07', '11:00', '0-0', 'Haven\'t been moving much. Feeling the effects physically and mentally.')
 water('2025-12-08', '06:30', S.writeEveryOther, 'One sentence. I don\'t feel like writing.')
 uproot('2025-12-10', '10:00', S.dailyOutdoor, 0.50)
 uproot('2025-12-12', '10:00', S.writeEveryOther, 0.75)
-harvest('2025-12-22', '10:00', S.run5k, 4, 0.6050, 'Ran a 5K at the holiday fun run. 34 minutes. Not fast, but finished.')
+harvest('2026-01-05', '08:00', S.run5k, 4, 0.6050, 'Ran a 5K at the New Year\'s fun run. 34 minutes. Not fast, but finished.')
 
 // ── The break ────────────────────────────────────────────────────────────────
 sun('2025-12-29', '15:00', '5-7', 'Year-end reflection. Proud of what I started in September. The lapse is real but so is the foundation.')
