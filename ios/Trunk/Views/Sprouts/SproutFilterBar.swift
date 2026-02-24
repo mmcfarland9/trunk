@@ -15,7 +15,7 @@ enum SproutFilter: String, CaseIterable {
 }
 
 enum SproutSort: String, CaseIterable {
-    case planted = "Planted"
+    case planted = "Date planted"
     case alphabetical = "A-Z"
     case status = "Status"
 }
