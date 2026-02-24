@@ -14,12 +14,14 @@ class SproutsViewModel {
     var selectedSort: SproutSort = .planted
 
     var cachedSprouts: [DerivedSprout] = []
+    var cachedLeaves: [DerivedLeaf] = []
     var cachedState: DerivedState? = nil
 
     func refreshCachedState() {
         let state = EventStore.shared.getState()
         cachedState = state
         cachedSprouts = Array(state.sprouts.values)
+        cachedLeaves = Array(state.leaves.values)
     }
 
     func filteredSprouts() -> [DerivedSprout] {
@@ -78,5 +80,23 @@ class SproutsViewModel {
 
     var completedCount: Int {
         cachedSprouts.filter { $0.state == .completed }.count
+    }
+
+    var leafCount: Int {
+        cachedLeaves.count
+    }
+
+    func filteredLeaves() -> [DerivedLeaf] {
+        var leaves = cachedLeaves
+
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            let query = trimmed.lowercased()
+            leaves = leaves.filter { $0.name.lowercased().contains(query) }
+        }
+
+        leaves.sort { $0.createdAt > $1.createdAt }
+
+        return leaves
     }
 }
