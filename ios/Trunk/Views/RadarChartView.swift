@@ -66,10 +66,15 @@ struct RadarChartView: View {
 
     // MARK: - Score Computation (static, called once by parent)
 
+    // Flat per-event weights from soil recovery rates (constants.json)
+    private static let wWater = 0.05
+    private static let wSun = 0.35
+
     static func computeScores(from events: [SyncEvent]) -> [Double] {
         let branchCount = SharedConstants.Tree.branchCount
-        var sproutTwigMap: [String: String] = [:]
-        var branchCounts = Array(repeating: 0, count: branchCount)
+        // Map sproutId -> (twigId, soilCost) for harvest lookups
+        var sproutInfo: [String: (twigId: String, soilCost: Double)] = [:]
+        var weighted = Array(repeating: 0.0, count: branchCount)
 
         let sorted = events.sorted { $0.clientTimestamp < $1.clientTimestamp }
 
@@ -78,30 +83,33 @@ struct RadarChartView: View {
             case "sprout_planted":
                 if let sproutId = event.payload["sproutId"]?.stringValue,
                    let twigId = event.payload["twigId"]?.stringValue {
-                    sproutTwigMap[sproutId] = twigId
+                    let soilCost = event.payload["soilCost"]?.doubleValue ?? 0
+                    sproutInfo[sproutId] = (twigId: twigId, soilCost: soilCost)
                     if let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
-                        branchCounts[bi] += 1
+                        weighted[bi] += soilCost
                     }
                 }
 
             case "sprout_watered":
                 if let sproutId = event.payload["sproutId"]?.stringValue,
-                   let twigId = sproutTwigMap[sproutId],
+                   let twigId = sproutInfo[sproutId]?.twigId,
                    let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
-                    branchCounts[bi] += 1
+                    weighted[bi] += wWater
                 }
 
             case "sprout_harvested":
                 if let sproutId = event.payload["sproutId"]?.stringValue,
-                   let twigId = sproutTwigMap[sproutId],
-                   let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
-                    branchCounts[bi] += 1
+                   let info = sproutInfo[sproutId],
+                   let bi = extractBranchIndex(from: info.twigId, branchCount: branchCount) {
+                    let result = event.payload["result"]?.intValue ?? 3
+                    let rm = SharedConstants.Soil.resultMultipliers[result] ?? 0.7
+                    weighted[bi] += info.soilCost * rm
                 }
 
             case "sun_shone":
                 if let twigId = event.payload["twigId"]?.stringValue,
                    let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
-                    branchCounts[bi] += 1
+                    weighted[bi] += wSun
                 }
 
             default:
@@ -109,12 +117,12 @@ struct RadarChartView: View {
             }
         }
 
-        let maxCount = branchCounts.max() ?? 0
-        guard maxCount > 0 else {
+        let maxWeighted = weighted.max() ?? 0
+        guard maxWeighted > 0 else {
             return Array(repeating: 0.0, count: branchCount)
         }
 
-        return branchCounts.map { Double($0) / Double(maxCount) }
+        return weighted.map { $0 / maxWeighted }
     }
 
     private static func extractBranchIndex(from twigId: String, branchCount: Int) -> Int? {

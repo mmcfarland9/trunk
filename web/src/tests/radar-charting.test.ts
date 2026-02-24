@@ -199,13 +199,13 @@ describe('computeBranchEngagement — all branches', () => {
 describe('computeBranchEngagement — score normalization', () => {
   it('normalizes max branch to 1.0', () => {
     const events: TrunkEvent[] = [
-      // Branch 0 has 5 events (max)
+      // Branch 0: 2 plants (2+2=4) + 2 waters (0.1) + 1 sun (0.35) = 4.45 weighted
       plantEvent(0, 0, 'sp-1'),
       plantEvent(0, 1, 'sp-2'),
       waterEvent('sp-1'),
       waterEvent('sp-2'),
       sunEvent(0, 0),
-      // Branch 1 has 2 events
+      // Branch 1: 1 plant (2) + 1 water (0.05) = 2.05 weighted
       plantEvent(1, 0, 'sp-3'),
       waterEvent('sp-3'),
     ]
@@ -215,7 +215,8 @@ describe('computeBranchEngagement — score normalization', () => {
     expect(result[0].score).toBe(1) // max
     expect(result[0].rawTotal).toBe(5)
 
-    expect(result[1].score).toBeCloseTo(2 / 5) // 0.4
+    // Weighted: 2.05 / 4.45 ≈ 0.4607
+    expect(result[1].score).toBeCloseTo(2.05 / 4.45)
     expect(result[1].rawTotal).toBe(2)
   })
 
