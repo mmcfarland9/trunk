@@ -8,13 +8,14 @@
 
 import { BRANCH_COUNT } from '../constants'
 import { getEvents } from '../events/store'
-import { computeBranchEngagement } from '../events/radar-charting'
+import { computeBranchEngagement, type BranchEngagement } from '../events/radar-charting'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
-// Max reach of the radar polygon as a fraction of center→branch distance.
-// Keeps the chart subtle — a score of 1.0 reaches 25% of the way to the branch.
-const REACH = 0.25
+// Fraction of center→branch distance for the minimum (score=0) vertex.
+const FLOOR = 0.05
+// Additional fraction that a score of 1.0 adds on top of FLOOR.
+const REACH = 0.5
 
 function svgEl<K extends keyof SVGElementTagNameMap>(tag: K): SVGElementTagNameMap[K]
 function svgEl(tag: string): SVGElement
@@ -41,15 +42,18 @@ export function buildRadarChart(): {
 
   // Persistent element references for per-frame updates
   const dataDots: SVGCircleElement[] = []
+  const hitAreas: SVGCircleElement[] = []
   let dataPolygon: SVGPolygonElement | null = null
   let scores: number[] = []
+  let engagement: BranchEngagement[] = []
 
   function rebuild(): void {
     while (svg.firstChild) svg.removeChild(svg.firstChild)
     dataDots.length = 0
+    hitAreas.length = 0
     dataPolygon = null
 
-    const engagement = computeBranchEngagement(getEvents())
+    engagement = computeBranchEngagement(getEvents())
     const hasData = engagement.some((b) => b.rawTotal > 0)
 
     if (!hasData) {
@@ -71,12 +75,25 @@ export function buildRadarChart(): {
     })
     svg.appendChild(dataPolygon)
 
-    // Data dots
+    // Data dots + invisible hit areas with tooltips
     for (let i = 0; i < BRANCH_COUNT; i++) {
       const dot = svgEl('circle') as SVGCircleElement
       setAttrs(dot, { r: 2, fill: 'var(--twig)', 'fill-opacity': '0.6' })
       dataDots.push(dot)
       svg.appendChild(dot)
+
+      const hit = svgEl('circle') as SVGCircleElement
+      setAttrs(hit, {
+        r: 12,
+        fill: 'transparent',
+        'pointer-events': 'all',
+        cursor: 'default',
+      })
+      const title = svgEl('title')
+      title.textContent = formatTooltip(engagement[i])
+      hit.appendChild(title)
+      hitAreas.push(hit)
+      svg.appendChild(hit)
     }
   }
 
@@ -93,18 +110,22 @@ export function buildRadarChart(): {
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
     }
 
-    // Update data polygon and dots — vertex at score × REACH along center→branch
+    // Update data polygon, dots, and hit areas
     const polyPoints: string[] = []
     for (let i = 0; i < BRANCH_COUNT; i++) {
       const pos = branchPositions[i]
       if (!pos) continue
-      const s = scores[i] * REACH
+      const s = FLOOR + scores[i] * REACH
       const x = center.x + s * (pos.x - center.x)
       const y = center.y + s * (pos.y - center.y)
       polyPoints.push(`${x},${y}`)
       if (dataDots[i]) {
         dataDots[i].setAttribute('cx', String(x))
         dataDots[i].setAttribute('cy', String(y))
+      }
+      if (hitAreas[i]) {
+        hitAreas[i].setAttribute('cx', String(x))
+        hitAreas[i].setAttribute('cy', String(y))
       }
     }
     dataPolygon?.setAttribute('points', polyPoints.join(' '))
@@ -123,4 +144,14 @@ export function buildRadarChart(): {
 
   rebuild()
   return { svg, update, tick }
+}
+
+function formatTooltip(b: BranchEngagement): string {
+  return [
+    b.branchName,
+    `Planted: ${b.planted}`,
+    `Watered: ${b.watered}`,
+    `Sun: ${b.sunReflections}`,
+    `Harvested: ${b.harvested}`,
+  ].join('\n')
 }

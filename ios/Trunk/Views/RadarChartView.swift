@@ -16,8 +16,10 @@ struct RadarChartView: View {
     let center: CGPoint
 
     private let branchCount = SharedConstants.Tree.branchCount
-    /// Max reach as a fraction of center→branch distance (keeps chart subtle)
-    private let reach: CGFloat = 0.25
+    /// Minimum fraction of center→branch distance (score=0 floor)
+    private let floor: CGFloat = 0.05
+    /// Additional fraction that a score of 1.0 adds on top of floor
+    private let reach: CGFloat = 0.5
 
     var body: some View {
         let allZero = scores.allSatisfy { $0 == 0 }
@@ -37,7 +39,7 @@ struct RadarChartView: View {
         var dotPoints: [CGPoint] = []
 
         for i in 0..<branchCount {
-            let s = CGFloat(max(0.08, scores[i])) * reach
+            let s = floor + CGFloat(max(0.08, scores[i])) * reach
             let branchPos = branchPositions[i]
             let vertex = CGPoint(
                 x: center.x + (branchPos.x - center.x) * s,
