@@ -59,6 +59,7 @@ All scripts run from `web/` directory:
 | `ios/Trunk/` | iOS source |
 | `shared/constants.json` | All magic numbers |
 | `shared/formulas.md` | Progression math |
+| `shared/protocols.md` | Timestamp/ID standards for cross-platform parity |
 | `CLAUDE.md` | Detailed codebase guide |
 
 ---

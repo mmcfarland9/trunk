@@ -99,6 +99,59 @@ bucketSoilData(
 
 ---
 
+## Radar Charting API (web/src/events/radar-charting.ts)
+
+Derives per-branch engagement scores from the event log for the life-balance radar chart. Each branch gets a normalized 0–1 score based on weighted activity tied to the soil economy.
+
+```typescript
+type BranchEngagement = {
+  branchIndex: number
+  branchName: string
+  score: number        // normalized 0-1 (max branch = 1.0)
+  rawTotal: number     // raw event count
+  planted: number
+  watered: number
+  sunReflections: number
+  harvested: number
+}
+
+computeBranchEngagement(events: readonly TrunkEvent[]): BranchEngagement[]
+```
+
+---
+
+## Soil Charting API (web/src/events/soil-charting.ts)
+
+Replays events into per-event soil snapshots for time-series charting. Intentionally duplicates some soil-tracking logic from `derive.ts` — charting needs per-event snapshots while derive only produces final state.
+
+```typescript
+type SoilChartRange = '1d' | '1w' | '1m' | '3m' | '6m' | 'ytd' | 'all'
+
+interface SoilChartPoint {
+  timestamp: Date
+  capacity: number
+  available: number
+}
+
+computeRawSoilHistory(events: readonly TrunkEvent[]): RawSoilSnapshot[]
+bucketSoilData(rawHistory: readonly RawSoilSnapshot[], range: SoilChartRange, now?: Date): SoilChartPoint[]
+deriveSoilLog(events: readonly TrunkEvent[]): DerivedSoilEntry[]
+```
+
+---
+
+## Soil Chart UI (web/src/ui/soil-chart.ts)
+
+SVG-based soil capacity chart rendered in the sidebar with step-interpolated lines, hover scrubbing, and range selection.
+
+```typescript
+buildSoilChart(): { container: HTMLDivElement; update: () => void }
+```
+
+Call `update()` after events change to re-render the chart with current data.
+
+---
+
 ## View State API (web/src/state/view-state.ts)
 
 ```typescript

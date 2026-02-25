@@ -97,7 +97,8 @@ bootstrap/ (app initialization - split from main.ts)
          │   └── events/ ──► Event sourcing core
          │       ├── store.ts ──► Event log persistence
          │       ├── derive.ts ──► Computes current state
-         │       └── soil-charting.ts ──► Capacity tracking
+         │       ├── soil-charting.ts ──► Capacity tracking
+         │       └── radar-charting.ts ──► Per-branch engagement scores
          │
          ├── services/ ──► Cloud services (auth, sync)
          │   ├── auth-service.ts ──► Authentication logic
@@ -134,9 +135,9 @@ bootstrap/ (app initialization - split from main.ts)
          │   ├── twig-id.ts ──► Twig ID parsing
          │   ├── sprout-labels.ts ──► Sprout display labels
          │   ├── validate-import.ts ──► Import data validation
-         │   ├── error-codes.ts ──► Shared error code registry
          │   ├── escape-html.ts ──► HTML escaping (XSS prevention)
-         │   └── presets.ts ──► Preset label/note helpers
+         │   ├── presets.ts ──► Preset label/note helpers
+         │   └── wind.ts ──► Seeded wind sway animation for branches and radar
          │
          └── ui/
              ├── layout.ts ──► Node positioning, SVG guides
@@ -150,7 +151,9 @@ bootstrap/ (app initialization - split from main.ts)
              │   ├── build-panel.ts ──► Panel construction
              │   └── sprout-form.ts ──► Form state
              ├── leaf-view.ts ──► Saga history view
-             └── login-view.ts ──► Authentication UI
+             ├── login-view.ts ──► Authentication UI
+             ├── soil-chart.ts ──► SVG soil capacity chart in sidebar
+             └── radar-chart.ts ──► SVG radar/spider chart overlaid on tree map
 ```
 
 ### Callback Pattern
@@ -282,7 +285,7 @@ Storage: JSON file cache (ApplicationSupport/Trunk/events-cache.json) + UserDefa
          │  constants.json       │
          │  formulas.md          │
          │  schemas/*.json       │
-         │  trunk-map-preset.json│
+         │  protocols.md         │
          └───────────────────────┘
 ```
 
@@ -452,75 +455,7 @@ See [shared/sync-protocol.md](../shared/sync-protocol.md) for complete specifica
 
 ## Error Handling
 
-Both platforms use a shared error code registry to ensure consistent user-facing messages across web and iOS.
-
-### Error Code Registry
-
-**Location:** `shared/error-codes.json`
-
-**Structure:**
-```json
-{
-  "auth": {
-    "NOT_CONFIGURED": {
-      "code": "AUTH_001",
-      "defaultMessage": "...",
-      "userMessage": "..."
-    }
-  },
-  "sync": { ... },
-  "validation": { ... }
-}
-```
-
-### Categories
-
-| Category | Purpose | Example Codes |
-|----------|---------|---------------|
-| **auth** | Authentication errors | `NOT_CONFIGURED`, `INVALID_CODE`, `CODE_EXPIRED`, `RATE_LIMITED` |
-| **sync** | Cloud sync errors | `NOT_CONFIGURED`, `NOT_AUTHENTICATED`, `NETWORK_ERROR`, `CONFLICT` |
-| **validation** | Input/business logic validation | `TITLE_TOO_LONG`, `INSUFFICIENT_SOIL`, `NO_WATER`, `NO_SUN` |
-
-### Usage Examples
-
-**Web (TypeScript):**
-```typescript
-import { getUserMessage, getErrorInfo } from '@/utils/error-codes'
-
-// Get user-facing message
-const message = getUserMessage('auth', 'NOT_CONFIGURED')
-
-// Get full error info
-const info = getErrorInfo('sync', 'NOT_AUTHENTICATED')
-console.log(info.code)           // 'SYNC_002'
-console.log(info.userMessage)     // User-friendly message
-console.log(info.defaultMessage)  // Technical message
-```
-
-**iOS (Swift):**
-```swift
-import Foundation
-
-// Get user-facing message
-let message = ErrorCodes.getUserMessage(category: "auth", errorKey: "NOT_CONFIGURED")
-
-// Get full error info
-let info = ErrorCodes.shared.getErrorInfo(category: "sync", errorKey: "NOT_AUTHENTICATED")
-print(info.code)           // "SYNC_002"
-print(info.userMessage)     // User-friendly message
-print(info.defaultMessage)  // Technical message
-```
-
-### Design Principles
-
-1. **User messages are non-technical** — Explain what happened in plain language
-2. **Default messages are technical** — Used for logging and debugging
-3. **Codes are unique** — Each code maps to exactly one error condition
-4. **Categories are domain-aligned** — Matches service boundaries (auth, sync, validation)
-
-### Current Status
-
-> **Note:** Error code utilities exist on both platforms but are not yet used at call sites. The examples above show intended usage. Existing error handling in auth-service and sync-service will be migrated incrementally to use the shared registry.
+A shared error code registry exists at `shared/error-codes.json` for consistent user-facing messages. iOS has `ErrorCodes.swift` for reading these codes. The web utility module (`error-codes.ts`) was removed as dead code — it was never wired into call sites. Error handling on web currently uses inline messages in auth-service and sync-service.
 
 ---
 

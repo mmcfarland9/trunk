@@ -65,7 +65,6 @@ export const SOIL_UPROOT_REFUND_RATE = 0.25
 
 export const WATER_DAILY_CAPACITY = 3
 export const WATER_RESET_HOUR = 6
-export const WATER_RESET_INTERVAL_MS = 86400000
 
 // =============================================================================
 // Sun Constants
@@ -73,7 +72,6 @@ export const WATER_RESET_INTERVAL_MS = 86400000
 
 export const SUN_WEEKLY_CAPACITY = 1
 export const SUN_RESET_HOUR = 6
-export const SUN_RESET_INTERVAL_MS = 604800000
 
 // =============================================================================
 // Seasons

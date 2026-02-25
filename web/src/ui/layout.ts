@@ -49,8 +49,8 @@ let guideAnimationId = 0,
 let lastHoveredBranch: number | null = null
 
 // Position cache to avoid parseFloat in animation frames
-const positionCache = new Map<HTMLElement, { x: number; y: number }>()
-const twigRadiusCache = new Map<HTMLElement, number>()
+let positionCache = new WeakMap<HTMLElement, { x: number; y: number }>()
+let twigRadiusCache = new WeakMap<HTMLElement, number>()
 
 export function positionNodes(ctx: AppContext): void {
   const { canvas } = ctx.elements
@@ -163,11 +163,23 @@ const VARIANT_ALPHA: Record<string, number> = { trunk: 0.6, branch: 0.5, twig: 0
 function drawGuideLines(ctx: AppContext): void {
   const { canvas, trunk, guideLayer } = ctx.elements
   const { branchGroups } = ctx
-  const rect = canvas.getBoundingClientRect()
+
+  // M1: Per-frame rect cache to avoid repeated getBoundingClientRect calls
+  const rectCache = new Map<Element, DOMRect>()
+  const getCachedRect = (el: Element): DOMRect => {
+    let r = rectCache.get(el)
+    if (!r) {
+      r = el.getBoundingClientRect()
+      rectCache.set(el, r)
+    }
+    return r
+  }
+
+  const rect = getCachedRect(canvas)
   if (!rect.width || !rect.height) return
 
   const parent = guideLayer.parentElement
-  const parentRect = parent?.getBoundingClientRect()
+  const parentRect = parent ? getCachedRect(parent) : undefined
   guideLayer.style.left = `${parentRect ? rect.left - parentRect.left : rect.left}px`
   guideLayer.style.top = `${parentRect ? rect.top - parentRect.top : rect.top}px`
   guideLayer.style.width = `${rect.width}px`
@@ -192,19 +204,19 @@ function drawGuideLines(ctx: AppContext): void {
   if (viewMode === 'twig') return
 
   const colors = resolveGuideColors()
-  const trunkRect = trunk.getBoundingClientRect()
+  const trunkRect = getCachedRect(trunk)
   const trunkCenter = getCenterPoint(trunkRect, rect),
     trunkRadius = trunkRect.width / 2
 
   if (viewMode === 'branch' && activeBranchIndex !== null) {
     const bg = branchGroups[activeBranchIndex]
     if (bg) {
-      const mainRect = bg.branch.getBoundingClientRect()
+      const mainRect = getCachedRect(bg.branch)
       const mainCenter = getCenterPoint(mainRect, rect),
         mainRadius = Math.max(mainRect.width, mainRect.height) / 2
       drawLineBetween(c2d, colors, trunkCenter, trunkRadius, mainCenter, mainRadius, 'trunk')
       bg.twigs.forEach((twig) => {
-        const tr = twig.getBoundingClientRect()
+        const tr = getCachedRect(twig)
         drawLineBetween(
           c2d,
           colors,
@@ -219,7 +231,7 @@ function drawGuideLines(ctx: AppContext): void {
     }
   } else {
     branchGroups.forEach((bg) => {
-      const mr = bg.branch.getBoundingClientRect()
+      const mr = getCachedRect(bg.branch)
       drawLineBetween(
         c2d,
         colors,
@@ -239,11 +251,11 @@ function drawGuideLines(ctx: AppContext): void {
         PREVIEW_OPACITY_MAX * Math.min((performance.now() - previewStartTime) / PREVIEW_FADE, 1)
       const bg = branchGroups[hoveredBranchIndex]
       if (bg) {
-        const mr = bg.branch.getBoundingClientRect()
+        const mr = getCachedRect(bg.branch)
         const mc = getCenterPoint(mr, rect),
           mrad = Math.max(mr.width, mr.height) / 2
         bg.twigs.forEach((twig) => {
-          const tr = twig.getBoundingClientRect()
+          const tr = getCachedRect(twig)
           drawLineBetween(
             c2d,
             colors,

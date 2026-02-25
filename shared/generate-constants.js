@@ -119,7 +119,6 @@ export const SOIL_UPROOT_REFUND_RATE = ${constants.soil.uprootRefundRate}
 
 export const WATER_DAILY_CAPACITY = ${constants.water.dailyCapacity}
 export const WATER_RESET_HOUR = ${constants.water.resetHour}
-export const WATER_RESET_INTERVAL_MS = ${constants.water.resetIntervalMs}
 
 // =============================================================================
 // Sun Constants
@@ -127,7 +126,6 @@ export const WATER_RESET_INTERVAL_MS = ${constants.water.resetIntervalMs}
 
 export const SUN_WEEKLY_CAPACITY = ${constants.sun.weeklyCapacity}
 export const SUN_RESET_HOUR = ${constants.sun.resetHour}
-export const SUN_RESET_INTERVAL_MS = ${constants.sun.resetIntervalMs}
 
 // =============================================================================
 // Seasons

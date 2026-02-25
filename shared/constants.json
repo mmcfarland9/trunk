@@ -29,13 +29,11 @@
   },
   "water": {
     "dailyCapacity": 3,
-    "resetHour": 6,
-    "resetIntervalMs": 86400000
+    "resetHour": 6
   },
   "sun": {
     "weeklyCapacity": 1,
-    "resetHour": 6,
-    "resetIntervalMs": 604800000
+    "resetHour": 6
   },
   "seasons": {
     "2w": { "label": "2 weeks", "durationMs": 1209600000, "baseReward": 0.26 },

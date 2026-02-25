@@ -24,7 +24,7 @@ Features users would expect based on what's already built.
 | A8 | Per-sprout water history on web | Small | Data exists in `DerivedSprout.waterEntries`. Needs click-to-expand |
 | A9 | Streak tracking / consistency metrics | Medium | All timestamps exist. Needs derivation + display |
 | A10 | Notifications backend | Large | Account dialog has full prefs UI (channel, frequency, time). No backend sends anything |
-| A11 | Soil chart on web | Small | `soil-charting.ts` is complete. Zero chart UI |
+| A11 | ~~Soil chart on web~~ | ~~Small~~ | **DONE** — SVG chart in sidebar with range picker and hover scrub |
 | A12 | Twig/branch customization (rename) | Medium | Inputs exist but are readonly. Need label change events |
 | A13 | Today dashboard on web | Medium-Large | iOS has `TodayView.swift`. Web lands on tree overview |
 | A14 | Undo last action | Medium | Event sourcing supports `event_reverted` meta-event naturally |
@@ -79,10 +79,10 @@ Insights derivable from data the app already collects.
 
 | # | Feature | Scope | Notes |
 |---|---------|-------|-------|
-| D1 | Watering streak counter | Small | Consecutive days with `sprout_watered`. All data exists |
+| D1 | ~~Watering streak counter~~ | ~~Small~~ | **DONE** — Displays current and longest-ever consecutive watering days near the water meter |
 | D2 | Sun reflection streak | Small | Consecutive weeks with `sun_shone`. All data exists |
 | D3 | Perfect week badge | Small | All 3 waters daily + weekly sun. All data exists |
-| D4 | Life balance radar chart | Medium | 8-axis engagement by branch. All data exists |
+| D4 | ~~Life balance radar chart~~ | ~~Medium~~ | **DONE** — 8-axis spider chart overlaid on the tree map showing engagement per branch |
 | D5 | Neglected branch nudge | Small | Detect 30+ day gaps per branch. All data exists |
 | D6 | Attention heatmap over time | Medium | 8 branches x time matrix. All data exists |
 | D7 | Harvest success rate by season/environment | Small | Aggregate results from harvested events. All data exists |

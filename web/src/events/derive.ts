@@ -10,6 +10,7 @@ import { EVENT_TYPES } from './types'
 import type { SproutSeason, SproutEnvironment, Sprout, WaterEntry, SunEntry } from '../types'
 import constants from '../../../shared/constants.json'
 import { getTodayResetTime, getWeekResetTime, getResetDayKey } from '../utils/calculations'
+import { sortEventsByTimestamp } from './sort-events'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity
@@ -105,9 +106,7 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
   const sunEntries: SunEntry[] = []
 
   // Sort events by timestamp to ensure correct ordering
-  const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  )
+  const sortedEvents = sortEventsByTimestamp(events)
 
   // C13: Deduplicate events before replay to prevent double-counting
   const seenKeys = new Set<string>()
@@ -278,10 +277,10 @@ export function deriveWaterAvailable(
   events: readonly TrunkEvent[],
   now: Date = new Date(),
 ): number {
-  const resetTime = getTodayResetTime(now)
+  const resetMs = getTodayResetTime(now).getTime()
 
   const waterCount = events.filter(
-    (e) => e.type === 'sprout_watered' && new Date(e.timestamp) >= resetTime,
+    (e) => e.type === 'sprout_watered' && new Date(e.timestamp).getTime() >= resetMs,
   ).length
 
   return Math.max(0, WATER_DAILY_CAPACITY - waterCount)
@@ -292,10 +291,10 @@ export function deriveWaterAvailable(
  * Sun = capacity - shines since Monday 6am
  */
 export function deriveSunAvailable(events: readonly TrunkEvent[], now: Date = new Date()): number {
-  const resetTime = getWeekResetTime(now)
+  const resetMs = getWeekResetTime(now).getTime()
 
   const sunCount = events.filter(
-    (e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime,
+    (e) => e.type === 'sun_shone' && new Date(e.timestamp).getTime() >= resetMs,
   ).length
 
   return Math.max(0, SUN_WEEKLY_CAPACITY - sunCount)
@@ -309,11 +308,13 @@ export function wasSproutWateredThisWeek(
   sproutId: string,
   now: Date = new Date(),
 ): boolean {
-  const resetTime = getWeekResetTime(now)
+  const resetMs = getWeekResetTime(now).getTime()
 
   return events.some(
     (e) =>
-      e.type === 'sprout_watered' && e.sproutId === sproutId && new Date(e.timestamp) >= resetTime,
+      e.type === 'sprout_watered' &&
+      e.sproutId === sproutId &&
+      new Date(e.timestamp).getTime() >= resetMs,
   )
 }
 
@@ -325,11 +326,13 @@ export function wasSproutWateredToday(
   sproutId: string,
   now: Date = new Date(),
 ): boolean {
-  const resetTime = getTodayResetTime(now)
+  const resetMs = getTodayResetTime(now).getTime()
 
   return events.some(
     (e) =>
-      e.type === 'sprout_watered' && e.sproutId === sproutId && new Date(e.timestamp) >= resetTime,
+      e.type === 'sprout_watered' &&
+      e.sproutId === sproutId &&
+      new Date(e.timestamp).getTime() >= resetMs,
   )
 }
 
@@ -351,7 +354,11 @@ export function getLeavesForTwig(state: DerivedState, twigId: string): DerivedLe
  * Get active sprouts (not yet harvested)
  */
 export function getActiveSprouts(state: DerivedState): DerivedSprout[] {
-  return Array.from(state.activeSproutsByTwig.values()).flat()
+  const result: DerivedSprout[] = []
+  for (const sprouts of state.activeSproutsByTwig.values()) {
+    result.push(...sprouts)
+  }
+  return result
 }
 
 /**
@@ -419,8 +426,8 @@ export function getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSp
  * Check if any sun was shone this week
  */
 export function wasShoneThisWeek(events: readonly TrunkEvent[], now: Date = new Date()): boolean {
-  const resetTime = getWeekResetTime(now)
-  return events.some((e) => e.type === 'sun_shone' && new Date(e.timestamp) >= resetTime)
+  const resetMs = getWeekResetTime(now).getTime()
+  return events.some((e) => e.type === 'sun_shone' && new Date(e.timestamp).getTime() >= resetMs)
 }
 
 /**

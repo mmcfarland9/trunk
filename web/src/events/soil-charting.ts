@@ -10,6 +10,7 @@
 
 import type { TrunkEvent } from './types'
 import constants from '../../../shared/constants.json'
+import { sortEventsByTimestamp } from './sort-events'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity
@@ -52,9 +53,7 @@ export function computeRawSoilHistory(events: readonly TrunkEvent[]): RawSoilSna
   let available = STARTING_CAPACITY
   const history: RawSoilSnapshot[] = []
 
-  const sorted = [...events].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  )
+  const sorted = sortEventsByTimestamp(events)
 
   // Track planted sprouts for harvest reward calculation
   const sproutInfo = new Map<string, { soilCost: number }>()

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Radar chart vertices now derive from animated branch positions instead of independent polar math, ensuring the polygon tracks the tree's elliptical geometry and wind sway exactly
+- Layout caches (`positionCache`, `twigRadiusCache`) switched from Map to WeakMap for automatic GC of removed DOM elements
+- `getActiveSprouts()` replaced `Array.flat()` with direct push loop to avoid intermediate array allocations
+- Event filter functions (`deriveWaterAvailable`, `deriveSunAvailable`, `wasSproutWateredThisWeek`, `wasSproutWateredToday`, `wasShoneThisWeek`) pre-compute reset time as numeric ms instead of creating Date objects per comparison
+- `drawGuideLines()` now caches `getBoundingClientRect()` calls per frame to avoid layout thrashing at 60Hz
+- Extracted shared `sortEventsByTimestamp()` utility — `deriveState()` and `computeRawSoilHistory()` no longer duplicate sorting logic
+- Extracted sync modules: `sync/pull.ts`, `sync/push.ts`, `sync/retry.ts`, `sync/timeout.ts` from monolithic `operations.ts` (473 → ~170 lines)
+
+### Removed
+- `web/src/utils/error-codes.ts` — unused error code registry (never wired into call sites)
+- `shared/assets/trunk-map-preset.json` — orphaned preset file (labels moved to `constants.json`)
+- `shared/docs/validation-rules.md` — stale spec diverged from actual implementation
+- `shared/docs/event-derivation-algorithm.md` — out-of-sync pseudocode spec (platform implementations are source of truth)
+- `WATER_RESET_INTERVAL_MS` and `SUN_RESET_INTERVAL_MS` constants — unused in both `constants.json` and generated code
 
 ### Added
 - Post-action celebration feedback: brief pulse animation on resource meters after watering, harvesting, or shining
