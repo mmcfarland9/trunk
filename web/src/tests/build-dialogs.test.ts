@@ -92,21 +92,26 @@ describe('buildDialogs', () => {
   describe('account dialog specifics', () => {
     it('has tabs for notifications and data', () => {
       const tabs = dialogs.accountDialog.querySelectorAll('.account-tab')
-      expect(tabs.length).toBe(2)
-      expect((tabs[0] as HTMLElement).dataset.tab).toBe('notifications')
-      expect((tabs[1] as HTMLElement).dataset.tab).toBe('data')
+      expect(tabs.length).toBe(3)
+      expect((tabs[0] as HTMLElement).dataset.tab).toBe('preferences')
+      expect((tabs[1] as HTMLElement).dataset.tab).toBe('notifications')
+      expect((tabs[2] as HTMLElement).dataset.tab).toBe('data')
     })
 
-    it('has notifications tab active by default', () => {
+    it('has preferences tab active by default', () => {
       const activeTab = dialogs.accountDialog.querySelector('.account-tab.is-active') as HTMLElement
       expect(activeTab).not.toBeNull()
-      expect(activeTab.dataset.tab).toBe('notifications')
+      expect(activeTab.dataset.tab).toBe('preferences')
     })
 
-    it('has tab panels for notifications and data', () => {
+    it('has tab panels for preferences, notifications, and data', () => {
       const panels = dialogs.accountDialog.querySelectorAll('.account-tab-panel')
-      expect(panels.length).toBe(2)
-      // Notifications panel is visible, data panel is hidden
+      expect(panels.length).toBe(3)
+      // Notifications and data panels are hidden
+      const notifPanel = dialogs.accountDialog.querySelector(
+        '.account-tab-panel[data-tab="notifications"]',
+      ) as HTMLElement
+      expect(notifPanel.classList.contains('hidden')).toBe(true)
       const dataPanel = dialogs.accountDialog.querySelector(
         '.account-tab-panel[data-tab="data"]',
       ) as HTMLElement

@@ -12,10 +12,11 @@ export type {
   SproutWateredEvent,
   SproutHarvestedEvent,
   SproutUprootedEvent,
+  SproutEditedEvent,
   SunShoneEvent,
   LeafCreatedEvent,
 } from './types'
-export { EVENT_TYPES } from './types'
+export { EVENT_TYPES, validateEvent } from './types'
 
 // Derivation
 export type { DerivedState, DerivedSprout, DerivedLeaf, WateringStreak } from './derive'
@@ -50,7 +51,6 @@ export {
 } from './soil-charting'
 // Store
 export {
-  validateEvent,
   initEventStore,
   setEventStoreErrorCallbacks,
   setEventSyncCallback,

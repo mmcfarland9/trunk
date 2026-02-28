@@ -14,6 +14,7 @@ import { sortEventsByTimestamp } from './sort-events'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity
+const MAX_SOIL_CAPACITY = constants.soil.maxCapacity
 const SOIL_RECOVERY_PER_WATER = constants.soil.recoveryRates.waterUse
 const SOIL_RECOVERY_PER_SUN = constants.soil.recoveryRates.sunUse
 
@@ -76,7 +77,7 @@ export function computeRawSoilHistory(events: readonly TrunkEvent[]): RawSoilSna
 
       case 'sprout_harvested': {
         const info = sproutInfo.get(event.sproutId)
-        capacity += event.capacityGained
+        capacity = Math.min(capacity + event.capacityGained, MAX_SOIL_CAPACITY)
         available = Math.min(available + (info?.soilCost ?? 0), capacity)
         changed = true
         break

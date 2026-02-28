@@ -42,14 +42,11 @@ struct TreeCanvasView: View {
     // Cached radar scores (refreshed on appear/version change, not per frame)
     @State private var radarScores: [Double] = Array(repeating: 0.0, count: SharedConstants.Tree.branchCount)
 
-    // Pre-computed per-branch sprout data (hoisted out of TimelineView)
-    private var branchSproutData: [(hasActive: Bool, activeCount: Int)] {
-        (0..<branchCount).map { index in
-            let branchSprouts = sproutsForBranch(index)
-            let activeCount = branchSprouts.filter { $0.state == .active }.count
-            return (hasActive: activeCount > 0, activeCount: activeCount)
-        }
-    }
+    // Cached per-branch sprout data (refreshed on appear/version change, not per frame)
+    @State private var branchSproutData: [(hasActive: Bool, activeCount: Int)] = Array(
+        repeating: (hasActive: false, activeCount: 0),
+        count: SharedConstants.Tree.branchCount
+    )
 
     var body: some View {
         GeometryReader { geo in
@@ -85,10 +82,10 @@ struct TreeCanvasView: View {
         }
         .onAppear {
             isVisible = true
-            radarScores = RadarChartView.computeScores(from: EventStore.shared.events)
+            refreshCachedData()
         }
         .onChange(of: progression.version) {
-            radarScores = RadarChartView.computeScores(from: EventStore.shared.events)
+            refreshCachedData()
         }
         .onDisappear { isVisible = false }
     }
@@ -124,6 +121,7 @@ struct TreeCanvasView: View {
                 guideGap: guideGap,
                 guideDotSpacing: guideDotSpacing
             )
+            .equatable()
 
             // Invisible center tap target (reset to overview on double-tap)
             Color.clear
@@ -150,6 +148,7 @@ struct TreeCanvasView: View {
                         onNavigateToBranch?(index)
                     }
                 )
+                .equatable()
                 .position(branchPositions[index])
                 .transition(.scale.combined(with: .opacity))
             }
@@ -221,6 +220,17 @@ struct TreeCanvasView: View {
 
     // MARK: - Helpers
 
+    /// Refresh radar scores and branch sprout data from EventStore.
+    /// Called on appear and version change — not per frame.
+    private func refreshCachedData() {
+        radarScores = RadarChartView.computeScores(from: EventStore.shared.events)
+        branchSproutData = (0..<branchCount).map { index in
+            let branchSprouts = sproutsForBranch(index)
+            let activeCount = branchSprouts.filter { $0.state == .active }.count
+            return (hasActive: activeCount > 0, activeCount: activeCount)
+        }
+    }
+
     private func resetToOverview() {
         scale = 1.0
         lastScale = 1.0
@@ -240,7 +250,7 @@ struct TreeCanvasView: View {
 
 /// Renders dot guide lines for all branches using a single Canvas draw call,
 /// replacing the previous AsciiDotLine that created individual Text(".") views per dot.
-struct CanvasDotGuideLines: View {
+struct CanvasDotGuideLines: View, Equatable {
     let branchCount: Int
     let center: CGPoint
     let radius: CGFloat
@@ -250,6 +260,17 @@ struct CanvasDotGuideLines: View {
 
     private let dotSize: CGFloat = 2
     private let endGapExtra: CGFloat = 36
+
+    // Quantize time comparison to ~20fps — guide line sway is subtle
+    // and doesn't need full 60fps redraws.
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.branchCount == rhs.branchCount &&
+        lhs.center == rhs.center &&
+        lhs.radius == rhs.radius &&
+        lhs.guideGap == rhs.guideGap &&
+        lhs.guideDotSpacing == rhs.guideDotSpacing &&
+        Int(lhs.time * 20) == Int(rhs.time * 20)
+    }
 
     var body: some View {
         Canvas { context, _ in
@@ -293,13 +314,22 @@ struct CanvasDotGuideLines: View {
 
 // MARK: - Interactive Branch Node (Unicode box-drawing)
 
-struct InteractiveBranchNode: View {
+struct InteractiveBranchNode: View, Equatable {
     let index: Int
     let hasActiveSprouts: Bool
     let activeSproutCount: Int
     let onTap: () -> Void
 
     @State private var isPressed = false
+
+    // Compare data properties only — skip closure and @State.
+    // Allows SwiftUI to skip body re-evaluation inside TimelineView
+    // when only the .position() changes (wind sway).
+    static func == (lhs: InteractiveBranchNode, rhs: InteractiveBranchNode) -> Bool {
+        lhs.index == rhs.index &&
+        lhs.hasActiveSprouts == rhs.hasActiveSprouts &&
+        lhs.activeSproutCount == rhs.activeSproutCount
+    }
 
     var body: some View {
         let label = SharedConstants.Tree.branchName(index)

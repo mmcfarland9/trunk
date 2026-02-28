@@ -20,7 +20,7 @@ struct TrunkEvent: Codable {
     var title: String?
     var season: String?
     var environment: String?
-    var soilCost: Int?
+    var soilCost: Double?
     var leafId: String?
     var bloomWither: String?
     var bloomBudding: String?
@@ -30,7 +30,7 @@ struct TrunkEvent: Codable {
     var result: Int?
     var reflection: String?
     var capacityGained: Double?
-    var soilReturned: Int?
+    var soilReturned: Double?
     var twigLabel: String?
     var name: String?
 
@@ -47,7 +47,7 @@ struct TrunkEvent: Codable {
         title: String,
         season: String,
         environment: String,
-        soilCost: Int,
+        soilCost: Double,
         leafId: String,
         bloomWither: String?,
         bloomBudding: String?,
@@ -154,7 +154,7 @@ struct DataExportService {
             title: getString(payload, "title"),
             season: getString(payload, "season"),
             environment: getString(payload, "environment"),
-            soilCost: getInt(payload, "soilCost"),
+            soilCost: getDouble(payload, "soilCost"),
             leafId: getString(payload, "leafId"),
             bloomWither: getString(payload, "bloomWither"),
             bloomBudding: getString(payload, "bloomBudding"),
@@ -164,7 +164,7 @@ struct DataExportService {
             result: getInt(payload, "result"),
             reflection: getString(payload, "reflection"),
             capacityGained: getDouble(payload, "capacityGained"),
-            soilReturned: getInt(payload, "soilReturned"),
+            soilReturned: getDouble(payload, "soilReturned"),
             twigLabel: getString(payload, "twigLabel"),
             name: getString(payload, "name")
         )

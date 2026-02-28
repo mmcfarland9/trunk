@@ -23,11 +23,10 @@ enum ISO8601 {
     }()
 
     /// Parse an ISO8601 timestamp string, trying fractional seconds first.
-    /// Returns Date.distantPast if both formats fail.
-    static func parse(_ timestamp: String) -> Date {
+    /// Returns nil if both formats fail — callers must handle unparseable timestamps.
+    static func parse(_ timestamp: String) -> Date? {
         withFractional.date(from: timestamp)
             ?? withoutFractional.date(from: timestamp)
-            ?? Date.distantPast
     }
 
     /// Format a Date as ISO8601 with fractional seconds (milliseconds), in UTC.

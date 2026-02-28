@@ -180,11 +180,9 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
       }
 
       case EVENT_TYPES.SPROUT_UPROOTED: {
-        // Return partial soil
-        soilAvailable = roundSoil(Math.min(soilAvailable + event.soilReturned, soilCapacity))
-        // Transition sprout to uprooted state (preserve all data)
         const sprout = sprouts.get(event.sproutId)
         if (sprout && sprout.state === 'active') {
+          soilAvailable = roundSoil(Math.min(soilAvailable + event.soilReturned, soilCapacity))
           sprout.state = 'uprooted'
           sprout.uprootedAt = event.timestamp
         }
@@ -213,6 +211,18 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
           name: event.name,
           createdAt: event.timestamp,
         })
+        break
+      }
+
+      case EVENT_TYPES.SPROUT_EDITED: {
+        const sprout = sprouts.get(event.sproutId)
+        if (sprout) {
+          if (event.title !== undefined) sprout.title = event.title
+          if (event.bloomWither !== undefined) sprout.bloomWither = event.bloomWither
+          if (event.bloomBudding !== undefined) sprout.bloomBudding = event.bloomBudding
+          if (event.bloomFlourish !== undefined) sprout.bloomFlourish = event.bloomFlourish
+          if (event.leafId !== undefined) sprout.leafId = event.leafId
+        }
         break
       }
 

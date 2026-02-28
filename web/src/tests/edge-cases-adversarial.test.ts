@@ -141,7 +141,7 @@ describe('Edge Cases — Adversarial', () => {
       expect(sprout.uprootedAt).toBe('2026-01-05T10:00:00Z')
     })
 
-    it('soil is returned for both uproots (no state guard on soil return)', () => {
+    it('soil is only returned once (second uproot is a no-op)', () => {
       const events: TrunkEvent[] = [
         plantEvent(),
         {
@@ -159,8 +159,8 @@ describe('Edge Cases — Adversarial', () => {
       ]
 
       const state = deriveState(events)
-      // 10 - 2 (plant) + 1 (first uproot) + 1 (second uproot) = 10, capped at 10
-      expect(state.soilAvailable).toBe(10)
+      // 10 - 2 (plant) + 1 (first uproot only) = 9
+      expect(state.soilAvailable).toBe(9)
     })
   })
 
@@ -467,7 +467,7 @@ describe('Edge Cases — Adversarial', () => {
   })
 
   describe('uproot non-existent sprout', () => {
-    it('does not crash, soil still returned (no sprout guard on soil)', () => {
+    it('does not crash, no soil returned (sprout must exist and be active)', () => {
       const events: TrunkEvent[] = [
         {
           type: 'sprout_uprooted',
@@ -478,9 +478,8 @@ describe('Edge Cases — Adversarial', () => {
       ]
 
       const state = deriveState(events)
-      // Soil is returned regardless (no sprout guard on soilAvailable line)
-      // But capped at capacity
-      expect(state.soilAvailable).toBe(10) // 10 + 1 capped at 10
+      // No soil returned — sprout doesn't exist so guard prevents soil return
+      expect(state.soilAvailable).toBe(10)
       expect(state.sprouts.size).toBe(0)
     })
   })

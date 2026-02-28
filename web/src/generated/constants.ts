@@ -305,6 +305,7 @@ export const EVENT_TYPES = [
   'sprout_watered',
   'sprout_harvested',
   'sprout_uprooted',
+  'sprout_edited',
   'sun_shone',
   'leaf_created',
 ] as const

@@ -125,6 +125,7 @@ struct BranchView: View {
                 branchIndex: branchIndex,
                 activeSproutCount: branchActive
             )
+            .equatable()
             .position(center)
             .offset({
                 let w = Wind.branchOffset(index: branchIndex, time: time, amplitude: Wind.branchAmplitude * 0.3)
@@ -149,6 +150,7 @@ struct BranchView: View {
                         label: labelForTwig(twigIndex),
                         activeSproutCount: activeCount
                     )
+                    .equatable()
                 }
                 .buttonStyle(.plain)
                 .position(
@@ -179,9 +181,13 @@ struct BranchView: View {
 
 // MARK: - Branch Center Node
 
-struct BranchCenterNode: View {
+struct BranchCenterNode: View, Equatable {
     let branchIndex: Int
     let activeSproutCount: Int
+
+    static func == (lhs: BranchCenterNode, rhs: BranchCenterNode) -> Bool {
+        lhs.branchIndex == rhs.branchIndex && lhs.activeSproutCount == rhs.activeSproutCount
+    }
 
     var body: some View {
         VStack(spacing: 2) {
@@ -218,11 +224,17 @@ struct BranchCenterNode: View {
 
 // MARK: - Twig Node (radial)
 
-struct TwigNode: View {
+struct TwigNode: View, Equatable {
     let label: String
     let activeSproutCount: Int
 
     @State private var isPressed = false
+
+    // Compare data properties only — skip @State.
+    // Allows SwiftUI to skip body re-evaluation inside TimelineView.
+    static func == (lhs: TwigNode, rhs: TwigNode) -> Bool {
+        lhs.label == rhs.label && lhs.activeSproutCount == rhs.activeSproutCount
+    }
 
     private var hasSprouts: Bool {
         activeSproutCount > 0

@@ -1,0 +1,133 @@
+{
+  "_version": 1,
+  "_description": "Maximal events with every optional and required field populated. Used by web and iOS to verify no fields are lost during sync round-trip or state derivation.",
+
+  "events": [
+    {
+      "type": "leaf_created",
+      "timestamp": "2026-01-14T10:00:00.000Z",
+      "leafId": "leaf-xyz789",
+      "twigId": "branch-2-twig-5",
+      "name": "Guitar Journey"
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-15T10:30:00.000Z",
+      "sproutId": "sprout-abc123",
+      "twigId": "branch-2-twig-5",
+      "title": "Learn guitar chords",
+      "season": "3m",
+      "environment": "firm",
+      "soilCost": 7.5,
+      "leafId": "leaf-xyz789",
+      "bloomWither": "Give up after first week",
+      "bloomBudding": "Know 5 basic chords",
+      "bloomFlourish": "Play 3 full songs"
+    },
+    {
+      "type": "sprout_watered",
+      "timestamp": "2026-01-16T08:15:00.000Z",
+      "sproutId": "sprout-abc123",
+      "content": "Practiced Am and C chords for 20 minutes",
+      "prompt": "What did you work on today?"
+    },
+    {
+      "type": "sprout_planted",
+      "timestamp": "2026-01-16T10:00:00.000Z",
+      "sproutId": "sprout-def456",
+      "twigId": "branch-0-twig-3",
+      "title": "Daily stretching routine",
+      "season": "1m",
+      "environment": "fertile",
+      "soilCost": 3,
+      "leafId": "leaf-xyz789",
+      "bloomWither": "Skipped most days",
+      "bloomBudding": "Stretched 3x per week",
+      "bloomFlourish": "Stretched every day"
+    },
+    {
+      "type": "sun_shone",
+      "timestamp": "2026-01-20T09:00:00.000Z",
+      "twigId": "branch-2-twig-5",
+      "twigLabel": "technique",
+      "content": "Really enjoying the creative outlet. Want to explore more.",
+      "prompt": "How did this area of your life feel this week?"
+    },
+    {
+      "type": "sprout_uprooted",
+      "timestamp": "2026-02-01T14:00:00.000Z",
+      "sproutId": "sprout-def456",
+      "soilReturned": 0.75
+    },
+    {
+      "type": "sprout_harvested",
+      "timestamp": "2026-04-15T18:00:00.000Z",
+      "sproutId": "sprout-abc123",
+      "result": 4,
+      "reflection": "Learned 6 chords and can play 2 songs. Close to goal.",
+      "capacityGained": 1.205
+    }
+  ],
+
+  "expectedDerived": {
+    "soilCapacity": 11.205,
+    "soilAvailable": 8.6,
+    "sproutCount": 2,
+    "leafCount": 1,
+    "sunEntryCount": 1,
+    "sproutDetails": {
+      "sprout-abc123": {
+        "state": "completed",
+        "title": "Learn guitar chords",
+        "season": "3m",
+        "environment": "firm",
+        "soilCost": 7.5,
+        "leafId": "leaf-xyz789",
+        "bloomWither": "Give up after first week",
+        "bloomBudding": "Know 5 basic chords",
+        "bloomFlourish": "Play 3 full songs",
+        "result": 4,
+        "reflection": "Learned 6 chords and can play 2 songs. Close to goal.",
+        "waterEntryCount": 1,
+        "waterEntries": [
+          {
+            "content": "Practiced Am and C chords for 20 minutes",
+            "prompt": "What did you work on today?"
+          }
+        ]
+      },
+      "sprout-def456": {
+        "state": "uprooted",
+        "title": "Daily stretching routine",
+        "bloomWither": "Skipped most days",
+        "bloomBudding": "Stretched 3x per week",
+        "bloomFlourish": "Stretched every day",
+        "waterEntryCount": 0
+      }
+    },
+    "leafDetails": {
+      "leaf-xyz789": {
+        "name": "Guitar Journey",
+        "twigId": "branch-2-twig-5"
+      }
+    },
+    "sunEntryDetails": [
+      {
+        "content": "Really enjoying the creative outlet. Want to explore more.",
+        "prompt": "How did this area of your life feel this week?",
+        "twigId": "branch-2-twig-5",
+        "twigLabel": "technique"
+      }
+    ],
+    "_soilCalculation": [
+      "Events sorted by timestamp:",
+      "1. leaf_created 01-14 → no change. cap=10, avail=10",
+      "2. plant abc123 01-15 (cost 7.5) → avail=roundSoil(max(0,10-7.5))=2.5",
+      "3. water abc123 01-16T08:15 (+0.05) → avail=roundSoil(min(2.5+0.05,10))=2.55",
+      "4. plant def456 01-16T10:00 (cost 3) → avail=roundSoil(max(0,2.55-3))=0",
+      "5. sun 01-20 (+0.35) → avail=roundSoil(min(0+0.35,10))=0.35",
+      "6. uproot def456 02-01 (return 0.75) → avail=roundSoil(min(0.35+0.75,10))=1.1",
+      "7. harvest abc123 04-15 (cap+1.205, return 7.5) → cap=min(10+1.205,120)=11.205, avail=roundSoil(min(1.1+7.5,11.205))=8.6"
+    ]
+  }
+}

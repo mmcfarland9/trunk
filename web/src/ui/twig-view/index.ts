@@ -21,7 +21,11 @@ import {
   handleOpenLeafAction,
   handleWaterAction,
   handleHarvestAction,
+  handleEditAction,
 } from './event-handlers'
+import { setupConfirmDialog } from './confirm'
+import { setupKeyboard } from './keyboard'
+import { populateLeafSelect, setupLeafSelect } from './leaf-select'
 
 type TwigViewCallbacks = {
   onClose: () => void
@@ -49,27 +53,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   const elements = getElements(container)
   const state = createFormState()
 
-  // Confirm dialog helpers
-  function showConfirm(message: string, confirmLabel: string = 'Uproot'): Promise<boolean> {
-    elements.confirmMessage.textContent = message
-    elements.confirmConfirmBtn.textContent = confirmLabel
-    elements.confirmDialog.classList.remove('hidden')
-    elements.confirmConfirmBtn.focus()
-    return new Promise((resolve) => {
-      state.confirmResolve = resolve
-    })
-  }
-
-  function hideConfirm(result: boolean): void {
-    elements.confirmDialog.classList.add('hidden')
-    if (state.confirmResolve) {
-      state.confirmResolve(result)
-      state.confirmResolve = null
-    }
-  }
-
-  elements.confirmCancelBtn.addEventListener('click', () => hideConfirm(false))
-  elements.confirmConfirmBtn.addEventListener('click', () => hideConfirm(true))
+  const showConfirm = setupConfirmDialog(elements, state)
 
   // Helper functions
   function getSprouts(): Sprout[] {
@@ -183,6 +167,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         handleHarvestAction(actionEl, state, callbacks)
         break
       }
+      case 'edit': {
+        e.stopPropagation()
+        const card = actionEl.closest('.sprout-card') as HTMLElement
+        if (card) {
+          handleEditAction(card, state, renderSprouts)
+        }
+        break
+      }
       case 'open-leaf': {
         handleOpenLeafAction(actionEl, e, state, callbacks, close)
         break
@@ -255,16 +247,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
   // Form inputs
   elements.sproutTitleInput.addEventListener('input', updateForm)
-  elements.leafSelect.addEventListener('change', () => {
-    if (elements.leafSelect.value === '__new__') {
-      elements.newLeafNameInput.classList.remove('hidden')
-      elements.newLeafNameInput.focus()
-    } else {
-      elements.newLeafNameInput.classList.add('hidden')
-      elements.newLeafNameInput.value = ''
-    }
-    updateForm()
-  })
+  setupLeafSelect(elements.leafSelect, elements.newLeafNameInput, updateForm)
   elements.newLeafNameInput.addEventListener('input', updateForm)
   elements.witherInput.addEventListener('input', updateForm)
   elements.buddingInput.addEventListener('input', updateForm)
@@ -330,46 +313,10 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     }),
   )
 
-  // Keyboard handler
-  function handleKeydown(e: KeyboardEvent): void {
-    if (container.classList.contains('hidden')) return
+  setupKeyboard(container, callbacks, open, close)
 
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      e.stopImmediatePropagation()
-      close()
-      callbacks.onClose()
-      return
-    }
-
-    if (e.key === 'ArrowLeft' && e.metaKey && callbacks.onNavigate) {
-      e.preventDefault()
-      const prevTwig = callbacks.onNavigate('prev')
-      if (prevTwig) open(prevTwig)
-      return
-    }
-
-    if (e.key === 'ArrowRight' && e.metaKey && callbacks.onNavigate) {
-      e.preventDefault()
-      const nextTwig = callbacks.onNavigate('next')
-      if (nextTwig) open(nextTwig)
-      return
-    }
-  }
-  document.addEventListener('keydown', handleKeydown)
-
-  function populateLeafSelect(): void {
-    while (elements.leafSelect.options.length > 2) {
-      elements.leafSelect.remove(2)
-    }
-    const leaves = getLeaves()
-    leaves.forEach((leaf: DerivedLeaf) => {
-      const option = document.createElement('option')
-      option.value = leaf.id
-      option.textContent = leaf.name
-      elements.leafSelect.appendChild(option)
-    })
-    elements.leafSelect.selectedIndex = 0
+  function doPopulateLeafSelect(): void {
+    populateLeafSelect(elements.leafSelect, getLeaves)
   }
 
   function open(twigNode: HTMLButtonElement): void {
@@ -382,7 +329,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.noteInput.value = ''
 
     resetForm()
-    populateLeafSelect()
+    doPopulateLeafSelect()
     renderSprouts()
     container.classList.remove('hidden')
   }

@@ -25,7 +25,8 @@
           "title": "Run 5K",
           "season": "2w",
           "environment": "fertile",
-          "soilCost": 2
+          "soilCost": 2,
+          "leafId": "leaf-default"
         }
       ],
       "expected": {
@@ -50,7 +51,8 @@
           "title": "Big Goal",
           "season": "1y",
           "environment": "barren",
-          "soilCost": 24
+          "soilCost": 24,
+          "leafId": "leaf-default"
         }
       ],
       "expected": {
@@ -70,7 +72,8 @@
           "title": "Test",
           "season": "2w",
           "environment": "fertile",
-          "soilCost": 2
+          "soilCost": 2,
+          "leafId": "leaf-default"
         },
         {
           "type": "sprout_watered",
@@ -100,7 +103,8 @@
           "title": "Test",
           "season": "2w",
           "environment": "fertile",
-          "soilCost": 5
+          "soilCost": 5,
+          "leafId": "leaf-default"
         },
         {
           "type": "sun_shone",
@@ -128,7 +132,8 @@
           "title": "Run 5K",
           "season": "2w",
           "environment": "fertile",
-          "soilCost": 2
+          "soilCost": 2,
+          "leafId": "leaf-default"
         },
         {
           "type": "sprout_harvested",
@@ -167,7 +172,8 @@
           "title": "Abandoned goal",
           "season": "3m",
           "environment": "barren",
-          "soilCost": 10
+          "soilCost": 10,
+          "leafId": "leaf-default"
         },
         {
           "type": "sprout_uprooted",
@@ -213,13 +219,15 @@
           "title": "Run 5K",
           "season": "2w",
           "environment": "fertile",
-          "soilCost": 2
+          "soilCost": 2,
+          "leafId": "leaf-default"
         },
         {
           "type": "sprout_watered",
           "timestamp": "2026-01-02T09:00:00Z",
           "sproutId": "sprout-a",
-          "content": "Ran 2K today"
+          "content": "Ran 2K today",
+          "prompt": "How did it go?"
         },
         {
           "type": "sprout_harvested",
@@ -237,7 +245,8 @@
           "title": "Learn scales",
           "season": "3m",
           "environment": "barren",
-          "soilCost": 10
+          "soilCost": 10,
+          "leafId": "leaf-default"
         },
         {
           "type": "sun_shone",
@@ -274,13 +283,15 @@
           "type": "sprout_watered",
           "timestamp": "2026-01-28T09:00:00Z",
           "sproutId": "sprout-c",
-          "content": "Ran 6K today"
+          "content": "Ran 6K today",
+          "prompt": "What progress did you make?"
         },
         {
           "type": "sprout_watered",
           "timestamp": "2026-01-29T09:00:00Z",
           "sproutId": "sprout-c",
-          "content": "Ran 7K today"
+          "content": "Ran 7K today",
+          "prompt": "What progress did you make?"
         },
         {
           "type": "sprout_harvested",
@@ -349,7 +360,8 @@
           "title": "Test",
           "season": "2w",
           "environment": "fertile",
-          "soilCost": 1
+          "soilCost": 1,
+          "leafId": "leaf-default"
         },
         {
           "type": "sun_shone",

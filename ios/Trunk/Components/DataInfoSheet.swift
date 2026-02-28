@@ -43,9 +43,8 @@ struct DataInfoSheet: View {
     }()
 
     private var memberSince: String? {
-        guard let firstEvent = EventStore.shared.events.first else { return nil }
-        let date = ISO8601.parse(firstEvent.clientTimestamp)
-        guard date != .distantPast else { return nil }
+        guard let firstEvent = EventStore.shared.events.first,
+              let date = ISO8601.parse(firstEvent.clientTimestamp) else { return nil }
         return Self.memberSinceFormatter.string(from: date)
     }
 
@@ -196,8 +195,7 @@ struct DataInfoSheet: View {
 
     /// Parse ISO 8601 string, output as yyyy-MM-dd'T'HH:mm:ssZ (UTC, no fractional seconds).
     private func formatTimestamp(_ iso: String) -> String {
-        let date = ISO8601.parse(iso)
-        if date != .distantPast {
+        if let date = ISO8601.parse(iso) {
             return ISO8601.format(date)
         }
         // Fallback: strip fractional seconds manually

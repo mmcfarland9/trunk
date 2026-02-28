@@ -45,6 +45,13 @@
   --warning-tone: #8b6b2f;
   --error-tone: #8a4a3a;
 
+  /* Dialog */
+  --dialog-bg: rgba(255, 255, 255, 0.97);
+  --dialog-overlay: rgba(0, 0, 0, 0.5);
+  --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --dialog-blur: 4px;
+  --dialog-z: 1000;
+
   /* Legacy (for transition) */
   --char: 16px;
 }
@@ -66,6 +73,52 @@ body::after { background: repeating-linear-gradient(45deg, transparent 0px, tran
 .is-hidden { opacity: 0; pointer-events: none; transition: opacity 300ms ease-out; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
+/* === Quota Warning Banner === */
+.quota-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: rgba(138, 74, 58, 0.1);
+  border-bottom: 1px solid var(--error-tone);
+  animation: fade-in 200ms ease;
+}
+
+.quota-warning-message {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--error-tone);
+}
+
+.quota-warning-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.quota-warning-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms ease;
+}
+
+.quota-warning-close:hover {
+  color: var(--ink);
+}
+
 /* === Shared === */
 .focus-meta, .editor-label {
   font-size: var(--text-base);
@@ -74,3 +127,117 @@ body::after { background: repeating-linear-gradient(45deg, transparent 0px, tran
   letter-spacing: 0.1em;
   color: var(--ink-faint);
 }
+
+/* === Dark Mode === */
+
+/* OS-level dark mode (auto) */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+
+    --ink: #e8e0d4;
+    --ink-light: #c4b8a8;
+    --ink-faint: #8a7e70;
+    --wood: #c89860;
+    --twig: #b8884a;
+    --paper: #1a1714;
+    --water: #6aa8d4;
+    --sun: #d4a630;
+
+    --border-subtle: rgba(200, 180, 150, 0.08);
+    --border: rgba(200, 180, 150, 0.15);
+    --border-strong: rgba(200, 180, 150, 0.25);
+
+    --success-tone: var(--twig);
+    --warning-tone: #c4a050;
+    --error-tone: #c06050;
+
+    --dialog-bg: rgba(30, 27, 24, 0.97);
+    --dialog-overlay: rgba(0, 0, 0, 0.7);
+    --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  :root:not(.light) body {
+    background-color: #141210;
+  }
+
+  :root:not(.light) body::before {
+    background:
+      radial-gradient(ellipse 70% 60% at 78% 45%, rgba(60, 45, 30, 0.22) 0%, rgba(50, 40, 25, 0.08) 50%, transparent 70%),
+      radial-gradient(ellipse 45% 50% at 35% 20%, rgba(55, 42, 28, 0.18) 0%, rgba(50, 40, 25, 0.06) 45%, transparent 65%),
+      radial-gradient(ellipse 55% 45% at 18% 75%, rgba(50, 38, 25, 0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 35% at 55% 92%, rgba(55, 42, 30, 0.18) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 55% at 8% 45%, rgba(50, 40, 28, 0.15) 0%, transparent 55%),
+      radial-gradient(ellipse 30% 35% at 90% 15%, rgba(55, 42, 28, 0.16) 0%, transparent 50%),
+      radial-gradient(ellipse 45% 45% at 50% 50%, rgba(30, 25, 18, 0.2) 0%, transparent 55%);
+  }
+
+  :root:not(.light) body::after {
+    background:
+      repeating-linear-gradient(45deg, transparent 0px, transparent 1px, rgba(80, 65, 45, 0.04) 1px, rgba(80, 65, 45, 0.04) 2px),
+      repeating-linear-gradient(-45deg, transparent 0px, transparent 1px, rgba(70, 55, 35, 0.035) 1px, rgba(70, 55, 35, 0.035) 2px),
+      repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(75, 60, 40, 0.03) 2px, rgba(75, 60, 40, 0.03) 3px),
+      radial-gradient(ellipse 90% 90% at 50% 50%, transparent 40%, rgba(40, 32, 22, 0.12) 100%);
+  }
+
+  :root:not(.light) .login-view { background: #141210; }
+  :root:not(.light) .leaf-view-box { background: rgba(30, 27, 24, 0.97); }
+  :root:not(.light) .sun-log-shine-journal { background: rgba(30, 27, 24, 0.5); }
+  :root:not(.light) .account-dialog-header { background: rgba(255, 255, 255, 0.03); }
+  :root:not(.light) .account-tab.is-active { background: rgba(255, 255, 255, 0.04); }
+}
+
+/* Manual dark class override */
+html.dark {
+  color-scheme: dark;
+
+  --ink: #e8e0d4;
+  --ink-light: #c4b8a8;
+  --ink-faint: #8a7e70;
+  --wood: #c89860;
+  --twig: #b8884a;
+  --paper: #1a1714;
+  --water: #6aa8d4;
+  --sun: #d4a630;
+
+  --border-subtle: rgba(200, 180, 150, 0.08);
+  --border: rgba(200, 180, 150, 0.15);
+  --border-strong: rgba(200, 180, 150, 0.25);
+
+  --success-tone: var(--twig);
+  --warning-tone: #c4a050;
+  --error-tone: #c06050;
+
+  --dialog-bg: rgba(30, 27, 24, 0.97);
+  --dialog-overlay: rgba(0, 0, 0, 0.7);
+  --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+html.dark body {
+  background-color: #141210;
+}
+
+html.dark body::before {
+  background:
+    radial-gradient(ellipse 70% 60% at 78% 45%, rgba(60, 45, 30, 0.22) 0%, rgba(50, 40, 25, 0.08) 50%, transparent 70%),
+    radial-gradient(ellipse 45% 50% at 35% 20%, rgba(55, 42, 28, 0.18) 0%, rgba(50, 40, 25, 0.06) 45%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 18% 75%, rgba(50, 38, 25, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 35% at 55% 92%, rgba(55, 42, 30, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 55% at 8% 45%, rgba(50, 40, 28, 0.15) 0%, transparent 55%),
+    radial-gradient(ellipse 30% 35% at 90% 15%, rgba(55, 42, 28, 0.16) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 45% at 50% 50%, rgba(30, 25, 18, 0.2) 0%, transparent 55%);
+}
+
+html.dark body::after {
+  background:
+    repeating-linear-gradient(45deg, transparent 0px, transparent 1px, rgba(80, 65, 45, 0.04) 1px, rgba(80, 65, 45, 0.04) 2px),
+    repeating-linear-gradient(-45deg, transparent 0px, transparent 1px, rgba(70, 55, 35, 0.035) 1px, rgba(70, 55, 35, 0.035) 2px),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(75, 60, 40, 0.03) 2px, rgba(75, 60, 40, 0.03) 3px),
+    radial-gradient(ellipse 90% 90% at 50% 50%, transparent 40%, rgba(40, 32, 22, 0.12) 100%);
+}
+
+html.dark .login-view { background: #141210; }
+html.dark .leaf-view-box { background: rgba(30, 27, 24, 0.97); }
+html.dark .sun-log-shine-journal { background: rgba(30, 27, 24, 0.5); }
+html.dark .account-dialog-header { background: rgba(255, 255, 255, 0.03); }
+html.dark .account-tab.is-active { background: rgba(255, 255, 255, 0.04); }

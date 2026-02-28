@@ -220,11 +220,11 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
           let environmentRaw = getString(payload, "environment"),
           let season = Season(rawValue: seasonRaw),
           let environment = SproutEnvironment(rawValue: environmentRaw),
-          let leafId = getString(payload, "leafId") else {
+          let leafId = getString(payload, "leafId"),
+          let guardedTimestamp = parseTimestamp(event.clientTimestamp),
+          let soilCost = getDouble(payload, "soilCost") else {
         return
     }
-
-    let soilCost = getDouble(payload, "soilCost") ?? 0
 
     // Spend soil (clamped to 0 minimum)
     soilAvailable = roundSoil(max(0, soilAvailable - soilCost))
@@ -242,7 +242,7 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
         bloomBudding: getString(payload, "bloomBudding"),
         bloomFlourish: getString(payload, "bloomFlourish"),
         state: .active,
-        plantedAt: parseTimestamp(event.clientTimestamp),
+        plantedAt: guardedTimestamp,
         harvestedAt: nil,
         result: nil,
         reflection: nil,
@@ -255,13 +255,13 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
 private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
-    guard let sproutId = getString(payload, "sproutId") else {
+    guard let sproutId = getString(payload, "sproutId"),
+          let timestamp = parseTimestamp(event.clientTimestamp) else {
         return
     }
 
     let content = getString(payload, "content") ?? ""
     let prompt = getString(payload, "prompt")
-    let timestamp = parseTimestamp(event.clientTimestamp)
 
     // Add water entry to sprout
     if var sprout = sprouts[sproutId] {
@@ -283,14 +283,14 @@ private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double,
 private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
-    guard let sproutId = getString(payload, "sproutId") else {
+    guard let sproutId = getString(payload, "sproutId"),
+          let timestamp = parseTimestamp(event.clientTimestamp) else {
         return
     }
 
     let result = getInt(payload, "result")
     let reflection = getString(payload, "reflection")
     let capacityGained = getDouble(payload, "capacityGained") ?? 0
-    let timestamp = parseTimestamp(event.clientTimestamp)
 
     // Update sprout state
     if var sprout = sprouts[sproutId] {
@@ -312,11 +312,10 @@ private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double
 private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
-    guard let sproutId = getString(payload, "sproutId") else {
+    guard let sproutId = getString(payload, "sproutId"),
+          let soilReturned = getDouble(payload, "soilReturned") else {
         return
     }
-
-    let soilReturned = getDouble(payload, "soilReturned") ?? 0
 
     // Return partial soil
     soilAvailable = roundSoil(min(soilAvailable + soilReturned, soilCapacity))
@@ -332,11 +331,14 @@ private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double
 private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sunEntries: inout [DerivedSunEntry]) {
     let payload = event.payload
 
-    let content = getString(payload, "content") ?? ""
+    guard let timestamp = parseTimestamp(event.clientTimestamp),
+          let twigId = getString(payload, "twigId"),
+          let twigLabel = getString(payload, "twigLabel"),
+          let content = getString(payload, "content") else {
+        return
+    }
+
     let prompt = getString(payload, "prompt")
-    let twigId = getString(payload, "twigId") ?? ""
-    let twigLabel = getString(payload, "twigLabel") ?? ""
-    let timestamp = parseTimestamp(event.clientTimestamp)
 
     let sunEntry = DerivedSunEntry(
         timestamp: timestamp,
@@ -356,11 +358,10 @@ private func processLeafCreated(event: SyncEvent, leaves: inout [String: Derived
 
     guard let leafId = getString(payload, "leafId"),
           let twigId = getString(payload, "twigId"),
-          let name = getString(payload, "name") else {
+          let name = getString(payload, "name"),
+          let timestamp = parseTimestamp(event.clientTimestamp) else {
         return
     }
-
-    let timestamp = parseTimestamp(event.clientTimestamp)
 
     let leaf = DerivedLeaf(
         id: leafId,
@@ -441,7 +442,7 @@ func deriveWaterAvailable(from events: [SyncEvent], now: Date = Date()) -> Int {
     let resetTime = getTodayResetTime(now: now)
 
     let waterCount = events.filter { event in
-        event.type == "sprout_watered" && parseTimestamp(event.clientTimestamp) >= resetTime
+        event.type == "sprout_watered" && (parseTimestamp(event.clientTimestamp) ?? .distantPast) >= resetTime
     }.count
 
     return max(0, SharedConstants.Water.dailyCapacity - waterCount)
@@ -453,7 +454,7 @@ func deriveSunAvailable(from events: [SyncEvent], now: Date = Date()) -> Int {
     let resetTime = getWeekResetTime(now: now)
 
     let sunCount = events.filter { event in
-        event.type == "sun_shone" && parseTimestamp(event.clientTimestamp) >= resetTime
+        event.type == "sun_shone" && (parseTimestamp(event.clientTimestamp) ?? .distantPast) >= resetTime
     }.count
 
     return max(0, SharedConstants.Sun.weeklyCapacity - sunCount)
@@ -468,7 +469,7 @@ func wasSproutWateredThisWeek(events: [SyncEvent], sproutId: String, now: Date =
               let eventSproutId = getString(event.payload, "sproutId") else {
             return false
         }
-        return eventSproutId == sproutId && parseTimestamp(event.clientTimestamp) >= resetTime
+        return eventSproutId == sproutId && (parseTimestamp(event.clientTimestamp) ?? .distantPast) >= resetTime
     }
 }
 
@@ -513,7 +514,7 @@ func contextLabel(for leaf: DerivedLeaf) -> String {
 
 // MARK: - Payload Parsing Helpers
 
-private func parseTimestamp(_ timestamp: String) -> Date {
+private func parseTimestamp(_ timestamp: String) -> Date? {
     ISO8601.parse(timestamp)
 }
 
@@ -534,7 +535,7 @@ struct WateringStreak {
 func deriveWateringStreak(from events: [SyncEvent], now: Date = Date()) -> WateringStreak {
     let waterTimestamps = events
         .filter { $0.type == "sprout_watered" }
-        .map { parseTimestamp($0.clientTimestamp) }
+        .compactMap { parseTimestamp($0.clientTimestamp) }
 
     guard !waterTimestamps.isEmpty else {
         return WateringStreak(current: 0, longest: 0)

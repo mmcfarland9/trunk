@@ -181,10 +181,22 @@ function createAccountDialog(): HTMLDivElement {
         </div>
         <div class="account-section-divider"></div>
         <div class="account-tabs">
-          <button type="button" class="account-tab is-active" data-tab="notifications">Notifications</button>
+          <button type="button" class="account-tab is-active" data-tab="preferences">Preferences</button>
+          <button type="button" class="account-tab" data-tab="notifications">Notifications</button>
           <button type="button" class="account-tab" data-tab="data">Data</button>
         </div>
-        <div class="account-tab-panel" data-tab="notifications">
+        <div class="account-tab-panel" data-tab="preferences">
+          <div class="account-field">
+            <label class="account-label">Appearance</label>
+            <div class="account-radio-group account-theme-group">
+              <label class="account-radio"><input type="radio" name="theme" value="auto" /><span>Auto</span></label>
+              <label class="account-radio"><input type="radio" name="theme" value="light" /><span>Light</span></label>
+              <label class="account-radio"><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
+            </div>
+            <p class="account-field-hint">Auto follows your operating system preference.</p>
+          </div>
+        </div>
+        <div class="account-tab-panel hidden" data-tab="notifications">
           <div class="account-notifications-section is-disabled">
             <div class="account-field">
               <label class="account-label">Notifications <span class="account-coming-soon">Coming soon</span></label>

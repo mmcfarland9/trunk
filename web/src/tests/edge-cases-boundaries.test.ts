@@ -344,6 +344,7 @@ describe('Edge Cases — Boundaries', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 2,
+        leafId: 'leaf-default',
       }
       // validateEvent checks structure, not title length (UI enforces MAX_TITLE_LENGTH)
       expect(validateEvent(event)).toBe(true)
@@ -359,6 +360,7 @@ describe('Edge Cases — Boundaries', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 2,
+        leafId: 'leaf-default',
       }
       // validateEvent does NOT enforce MAX_TITLE_LENGTH — that's a UI constraint
       expect(validateEvent(event)).toBe(true)
@@ -432,6 +434,7 @@ describe('Edge Cases — Boundaries', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 0,
+        leafId: 'leaf-default',
       }
       expect(validateEvent(event)).toBe(true)
     })

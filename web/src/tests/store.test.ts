@@ -57,6 +57,7 @@ describe('Event Store', () => {
           season: '2w',
           environment: 'fertile',
           soilCost: 2,
+          leafId: 'leaf-default',
         },
       ]
       localStorage.setItem('trunk-events-v1', JSON.stringify(events))
@@ -457,6 +458,7 @@ describe('Event Store', () => {
         season: '2w',
         environment: 'fertile',
         soilCost: 2,
+        leafId: 'leaf-default',
       }
       appendEvent(oldEvent)
 
@@ -470,6 +472,7 @@ describe('Event Store', () => {
           season: '1m',
           environment: 'firm',
           soilCost: 5,
+          leafId: 'leaf-default',
         },
       ]
 
@@ -490,6 +493,7 @@ describe('Event Store', () => {
           season: '1m',
           environment: 'firm',
           soilCost: 5,
+          leafId: 'leaf-default',
         },
       ]
 

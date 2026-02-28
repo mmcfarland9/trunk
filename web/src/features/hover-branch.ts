@@ -34,6 +34,7 @@ export type HoverTwigCallbacks = {
 const HOVER_MIN_RADIUS_RATIO = 0.55
 const HOVER_MAX_RADIUS_RATIO = 1.35
 const SCROLL_THRESHOLD = 150 // pixels of scroll delta needed to trigger zoom
+const RECT_CACHE_TTL = 100 // ms — reuse getBoundingClientRect for this long
 
 export function setupHoverBranch(
   ctx: AppContext,
@@ -42,6 +43,18 @@ export function setupHoverBranch(
 ): void {
   const { canvas } = ctx.elements
   let scrollAccumulator = 0
+
+  // Throttled rect cache — avoids getBoundingClientRect on every mousemove
+  let cachedCanvasRect: DOMRect | null = null
+  let cachedRectTime = 0
+
+  function getCanvasRect(): DOMRect {
+    const now = performance.now()
+    if (cachedCanvasRect && now - cachedRectTime < RECT_CACHE_TTL) return cachedCanvasRect
+    cachedCanvasRect = canvas.getBoundingClientRect()
+    cachedRectTime = now
+    return cachedCanvasRect
+  }
 
   function clearHover(): void {
     if (getHoveredBranchIndex() !== null) {
@@ -61,7 +74,7 @@ export function setupHoverBranch(
       return
     }
 
-    const rect = canvas.getBoundingClientRect()
+    const rect = getCanvasRect()
     if (rect.width === 0 || rect.height === 0) return
 
     const centerX = rect.width / 2

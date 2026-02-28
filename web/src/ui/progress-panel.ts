@@ -214,7 +214,7 @@ export function renderLeafGroupedSprouts(
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onHarvestClick?: SidebarHarvestCallback,
 ): void {
-  const { standalone, byLeaf } = groupByLeaf(sprouts)
+  const { byLeaf } = groupByLeaf(sprouts)
 
   byLeaf.forEach((leafSprouts, leafId) => {
     const twigId = leafSprouts[0]?.twigId
@@ -230,9 +230,6 @@ export function renderLeafGroupedSprouts(
     container.append(card)
   })
 
-  if (standalone.length > 0) {
-    console.warn(
-      `[progress-panel] ${standalone.length} sprout(s) without leafId — this should not happen`,
-    )
-  }
+  // Standalone sprouts (no leafId) are structurally impossible per the data model —
+  // all sprouts require a leafId at creation. Silently skip if any appear.
 }

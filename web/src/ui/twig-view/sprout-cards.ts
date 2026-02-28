@@ -79,6 +79,7 @@ export function renderActiveCard(s: Sprout): string {
     <div class="sprout-card sprout-active-card ${ready ? 'is-ready' : 'is-growing'} ${hasLeaf ? 'is-clickable' : ''}" data-id="${escapeHtml(s.id)}" ${hasLeaf ? `data-leaf-id="${escapeHtml(s.leafId || '')}" data-action="open-leaf"` : ''} role="listitem" aria-label="${escapeHtml(s.title)} - ${ready ? 'ready to harvest' : 'growing'}">
       <div class="sprout-card-header">
         <span class="sprout-card-season">${getSeasonLabel(s.season)}</span>
+        <button type="button" class="sprout-edit-btn" data-action="edit" aria-label="Edit">edit</button>
         <button type="button" class="sprout-delete-btn" data-action="delete" aria-label="Uproot">x</button>
       </div>
       <p class="sprout-card-title">${escapeHtml(s.title)}</p>

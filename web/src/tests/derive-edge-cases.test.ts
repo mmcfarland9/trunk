@@ -273,14 +273,14 @@ describe('deriveState — invalid state transitions', () => {
     expect(state.soilAvailable).toBe(10)
   })
 
-  it('ignores uproot of non-existent sprout (but returns soil)', () => {
+  it('ignores uproot of non-existent sprout (no soil returned)', () => {
     const events: TrunkEvent[] = [uprootEvent({ sproutId: 'nonexistent', soilReturned: 1 })]
 
     const state = deriveState(events)
 
-    // Soil still returned (by design - uproot applies soilReturned regardless)
-    // but sprout state not changed since sprout doesn't exist
+    // No soil returned — sprout must exist and be active
     expect(state.sprouts.size).toBe(0)
+    expect(state.soilAvailable).toBe(10)
   })
 
   it('does not double-harvest a sprout', () => {

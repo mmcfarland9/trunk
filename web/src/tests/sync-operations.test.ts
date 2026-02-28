@@ -60,6 +60,7 @@ function makePlantedEvent(overrides?: Partial<SproutPlantedEvent>): SproutPlante
     season: '1m',
     environment: 'fertile',
     soilCost: 3,
+    leafId: 'leaf-default',
     ...overrides,
   }
 }

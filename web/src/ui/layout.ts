@@ -145,6 +145,13 @@ export function startWind(ctx: AppContext): void {
   windAnimationId = requestAnimationFrame(tick)
 }
 
+export function stopWind(): void {
+  if (windAnimationId) {
+    cancelAnimationFrame(windAnimationId)
+    windAnimationId = 0
+  }
+}
+
 // Cached guide line colors resolved from CSS custom properties
 let guideColors: { trunk: string; branch: string; twig: string } | null = null
 

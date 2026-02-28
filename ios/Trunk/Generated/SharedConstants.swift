@@ -862,6 +862,7 @@ enum SharedConstants {
             "sprout_watered",
             "sprout_harvested",
             "sprout_uprooted",
+            "sprout_edited",
             "sun_shone",
             "leaf_created"
         ]

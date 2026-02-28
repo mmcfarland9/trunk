@@ -16,6 +16,7 @@ struct HarvestSproutView: View {
     @State private var selectedResult: Int = 3
     @State private var isHarvesting = false
     @State private var animateSelection = false
+    @State private var reflection: String = ""
     @State private var errorMessage: String?
 
     private var resultEmojis: [(Int, String)] {
@@ -153,6 +154,23 @@ struct HarvestSproutView: View {
                         )
                     }
 
+                    // Reflection (optional)
+                    VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                        Text("REFLECTION")
+                            .monoLabel(size: TrunkTheme.textXs)
+
+                        TextField("Reflection (optional)", text: $reflection, axis: .vertical)
+                            .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                            .foregroundStyle(Color.ink)
+                            .lineLimit(3...6)
+                            .padding(TrunkTheme.space3)
+                            .background(Color.paper)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                    }
+
                     // Reward summary
                     VStack(alignment: .leading, spacing: TrunkTheme.space2) {
                         Text("REWARDS")
@@ -258,12 +276,16 @@ struct HarvestSproutView: View {
 
         Task {
             do {
-                try await SyncService.shared.pushEvent(type: "sprout_harvested", payload: [
+                var payload: [String: JSONValue] = [
                     "sproutId": .string(sprout.id),
                     "result": .int(selectedResult),
                     "capacityGained": .double(capacityGained),
                     "timestamp": .string(timestamp)
-                ])
+                ]
+                if !reflection.isEmpty {
+                    payload["reflection"] = .string(reflection)
+                }
+                try await SyncService.shared.pushEvent(type: "sprout_harvested", payload: payload)
             } catch {
                 // Push failed — event stays in local store, queued for retry on next sync
                 print("Harvest push failed, queued for retry: \(error)")

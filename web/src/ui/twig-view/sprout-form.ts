@@ -51,8 +51,8 @@ export function getEndDate(season: SproutSeason, startDate: Date = new Date()): 
       end.setFullYear(end.getFullYear() + 1)
       break
   }
-  // Set to 9am CST (UTC-6 = 15:00 UTC)
-  end.setUTCHours(15, 0, 0, 0)
+  // 9am in user's local timezone, matching the local-time convention used by reset boundaries
+  end.setHours(9, 0, 0, 0)
   return end
 }
 

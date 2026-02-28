@@ -1,7 +1,14 @@
 import type { Sprout, SproutSeason, SproutEnvironment } from '../../types'
 import type { FormState } from './sprout-form'
-import { SOIL_UPROOT_REFUND_RATE } from '../../generated/constants'
-import { appendEvent, getState, getSproutsForTwig, toSprout } from '../../events'
+import type { SproutEditedEvent } from '../../events/types'
+import {
+  SOIL_UPROOT_REFUND_RATE,
+  MAX_TITLE_LENGTH,
+  MAX_BLOOM_LENGTH,
+} from '../../generated/constants'
+import { appendEvent, getState, getSproutsForTwig, getLeavesForTwig, toSprout } from '../../events'
+import { escapeHtml } from '../../utils/escape-html'
+import { getSeasonLabel, getEnvironmentLabel } from '../../utils/sprout-labels'
 
 type HandlerCallbacks = {
   onSoilChange?: () => void
@@ -149,4 +156,101 @@ export function handleHarvestAction(
       bloomFlourish: sprout.bloomFlourish,
     })
   }
+}
+
+/**
+ * Handles edit button click on an active sprout card.
+ * Replaces card content with an inline edit form.
+ */
+export function handleEditAction(
+  card: HTMLElement,
+  state: FormState,
+  renderSprouts: () => void,
+): void {
+  const id = card.dataset.id
+  if (!id) return
+
+  const sprouts = getSprouts(state)
+  const sprout = sprouts.find((s) => s.id === id)
+  if (!sprout || sprout.state !== 'active') return
+
+  const nodeId = state.currentTwigNode?.dataset.nodeId
+  if (!nodeId) return
+
+  // Build leaf options from the current twig
+  const derivedState = getState()
+  const leaves = getLeavesForTwig(derivedState, nodeId)
+  const leafOptions = leaves
+    .map(
+      (l) =>
+        `<option value="${escapeHtml(l.id)}" ${l.id === sprout.leafId ? 'selected' : ''}>${escapeHtml(l.name)}</option>`,
+    )
+    .join('')
+
+  card.innerHTML = `
+    <div class="sprout-edit-form">
+      <p class="sprout-edit-readonly">${escapeHtml(getSeasonLabel(sprout.season))} · ${escapeHtml(getEnvironmentLabel(sprout.environment))}</p>
+      <input type="text" class="edit-title" value="${escapeHtml(sprout.title)}" placeholder="Title" maxlength="${MAX_TITLE_LENGTH}" />
+      <input type="text" class="edit-wither" value="${escapeHtml(sprout.bloomWither || '')}" placeholder="🥀 Wither" maxlength="${MAX_BLOOM_LENGTH}" />
+      <input type="text" class="edit-budding" value="${escapeHtml(sprout.bloomBudding || '')}" placeholder="🌱 Budding" maxlength="${MAX_BLOOM_LENGTH}" />
+      <input type="text" class="edit-flourish" value="${escapeHtml(sprout.bloomFlourish || '')}" placeholder="🌲 Flourish" maxlength="${MAX_BLOOM_LENGTH}" />
+      <select class="edit-leaf">${leafOptions}</select>
+      <div class="sprout-edit-actions">
+        <button type="button" class="action-btn action-btn-passive action-btn-neutral edit-cancel-btn">Cancel</button>
+        <button type="button" class="action-btn action-btn-progress action-btn-twig edit-save-btn">Save</button>
+      </div>
+    </div>
+  `
+
+  const titleInput = card.querySelector<HTMLInputElement>('.edit-title')!
+  const witherInput = card.querySelector<HTMLInputElement>('.edit-wither')!
+  const buddingInput = card.querySelector<HTMLInputElement>('.edit-budding')!
+  const flourishInput = card.querySelector<HTMLInputElement>('.edit-flourish')!
+  const leafSelect = card.querySelector<HTMLSelectElement>('.edit-leaf')!
+  const cancelBtn = card.querySelector<HTMLButtonElement>('.edit-cancel-btn')!
+  const saveBtn = card.querySelector<HTMLButtonElement>('.edit-save-btn')!
+
+  titleInput.focus()
+
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation()
+    renderSprouts()
+  })
+
+  saveBtn.addEventListener('click', (e) => {
+    e.stopPropagation()
+    const newTitle = titleInput.value.trim()
+    if (!newTitle) return
+
+    // Build sparse update — only include fields that changed
+    const event: SproutEditedEvent = {
+      type: 'sprout_edited',
+      timestamp: new Date().toISOString(),
+      sproutId: sprout.id,
+    }
+
+    if (newTitle !== sprout.title) event.title = newTitle
+    const newWither = witherInput.value.trim() || undefined
+    if (newWither !== (sprout.bloomWither || undefined)) event.bloomWither = newWither
+    const newBudding = buddingInput.value.trim() || undefined
+    if (newBudding !== (sprout.bloomBudding || undefined)) event.bloomBudding = newBudding
+    const newFlourish = flourishInput.value.trim() || undefined
+    if (newFlourish !== (sprout.bloomFlourish || undefined)) event.bloomFlourish = newFlourish
+    const newLeafId = leafSelect.value
+    if (newLeafId !== sprout.leafId) event.leafId = newLeafId
+
+    // Only emit if something actually changed
+    const hasChanges =
+      event.title !== undefined ||
+      event.bloomWither !== undefined ||
+      event.bloomBudding !== undefined ||
+      event.bloomFlourish !== undefined ||
+      event.leafId !== undefined
+
+    if (hasChanges) {
+      appendEvent(event)
+    }
+
+    renderSprouts()
+  })
 }

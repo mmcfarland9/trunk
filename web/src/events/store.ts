@@ -8,7 +8,8 @@
  */
 
 import type { TrunkEvent } from './types'
-import { VALID_SEASONS, VALID_ENVIRONMENTS } from './types'
+import { validateEvent } from './types'
+export { validateEvent } from './types'
 import type { DerivedState, WateringStreak } from './derive'
 import {
   deriveState,
@@ -22,7 +23,6 @@ import {
 } from './derive'
 import { safeSetItem } from '../utils/safe-storage'
 import sharedConstants from '../../../shared/constants.json'
-import { VALID_EVENT_TYPES } from '../generated/constants'
 
 const STORAGE_KEY = sharedConstants.storage.keys.events
 
@@ -47,58 +47,6 @@ let onSaveError: ((error: unknown) => void) | null = null
 
 // Sync callback - called when events are appended
 let onEventAppended: ((event: TrunkEvent) => void) | null = null
-
-/**
- * Validate that a value has the required shape of a TrunkEvent.
- * Checks for required fields (type, timestamp), known event type,
- * and per-event-type required fields.
- * Exported for use in sync validation (H3).
- *
- * // REVIEW: Strictness level — currently rejecting invalid events. Could warn+pass instead.
- */
-export function validateEvent(event: unknown): event is TrunkEvent {
-  if (typeof event !== 'object' || event === null) return false
-  const e = event as Record<string, unknown>
-
-  // Common required fields
-  if (typeof e.type !== 'string' || !VALID_EVENT_TYPES.has(e.type)) return false
-  if (typeof e.timestamp !== 'string' || e.timestamp.length === 0) return false
-
-  // Per-event-type required field checks
-  switch (e.type) {
-    case 'sprout_planted':
-      return (
-        typeof e.sproutId === 'string' &&
-        typeof e.twigId === 'string' &&
-        typeof e.title === 'string' &&
-        typeof e.season === 'string' &&
-        (VALID_SEASONS as readonly string[]).includes(e.season) &&
-        typeof e.environment === 'string' &&
-        (VALID_ENVIRONMENTS as readonly string[]).includes(e.environment) &&
-        typeof e.soilCost === 'number' &&
-        e.soilCost >= 0
-      )
-    case 'sprout_watered':
-      return typeof e.sproutId === 'string'
-    case 'sprout_harvested':
-      return (
-        typeof e.sproutId === 'string' &&
-        typeof e.result === 'number' &&
-        e.result >= 1 &&
-        e.result <= 5 &&
-        typeof e.capacityGained === 'number' &&
-        e.capacityGained >= 0
-      )
-    case 'sprout_uprooted':
-      return typeof e.sproutId === 'string'
-    case 'sun_shone':
-      return typeof e.twigId === 'string'
-    case 'leaf_created':
-      return typeof e.leafId === 'string' && typeof e.name === 'string'
-    default:
-      return false
-  }
-}
 
 /**
  * Load events from localStorage
@@ -176,11 +124,28 @@ function invalidateCache(): void {
 }
 
 /**
+ * Selectively invalidate caches based on event type.
+ * Derived state is always invalidated. Water/sun/streak caches are
+ * only cleared when the event type could affect their values.
+ */
+function invalidateCacheForEvent(eventType: string): void {
+  cachedState = null
+  if (eventType === 'sprout_watered') {
+    cachedWaterAvailable = null
+    cachedWaterAt = null
+    cachedStreak = null
+  } else if (eventType === 'sun_shone') {
+    cachedSunAvailable = null
+    cachedSunAt = null
+  }
+}
+
+/**
  * Append an event to the log
  */
 export function appendEvent(event: TrunkEvent): void {
   events.push(event)
-  invalidateCache()
+  invalidateCacheForEvent(event.type)
   saveEvents()
   // Sync to cloud if callback is set
   onEventAppended?.(event)
@@ -202,10 +167,11 @@ export function appendEvents(newEvents: TrunkEvent[]): void {
 
 /**
  * Get the full event log (read-only).
- * Returns a frozen copy to prevent external mutation of the internal array.
+ * Returns the internal array directly — TypeScript's `readonly` type prevents
+ * mutation at compile time. Avoids O(n) copy + freeze on every call.
  */
 export function getEvents(): readonly TrunkEvent[] {
-  return Object.freeze([...events])
+  return events
 }
 
 /**
@@ -231,9 +197,6 @@ export function getWaterAvailable(now: Date = new Date()): number {
   return cachedWaterAvailable
 }
 
-/**
- * Get sun available (cached, invalidates on weekly reset boundary)
- */
 /**
  * Get watering streak (cached, invalidates on new events)
  */

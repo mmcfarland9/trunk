@@ -274,6 +274,9 @@ export function updateFocus(target: HTMLButtonElement | null, ctx: AppContext): 
   focusGoal.textContent = ''
 }
 
+// Cache for formatTwigLabel — same label text always produces the same output
+const twigLabelCache = new Map<string, string>()
+
 const TWIG_TARGET_RATIO = 16 / 9
 const TWIG_LINE_PENALTY = 0.06
 const DEFAULT_TWIG_METRICS = {
@@ -318,6 +321,10 @@ function formatTwigLabel(label: string, element: HTMLButtonElement): string {
   const words = trimmed.split(/\s+/)
   if (words.length === 1) return trimmed
 
+  // Check cache — same label always produces the same line-break output
+  const cached = twigLabelCache.get(trimmed)
+  if (cached !== undefined) return cached
+
   const candidates = generateTwigLineCandidates(words)
   let best = candidates[0]
   let bestScore = Number.POSITIVE_INFINITY
@@ -331,7 +338,9 @@ function formatTwigLabel(label: string, element: HTMLButtonElement): string {
     }
   })
 
-  return best.join('\n')
+  const result = best.join('\n')
+  twigLabelCache.set(trimmed, result)
+  return result
 }
 
 function scoreTwigLines(lines: string[], metrics: TwigMetrics): number {

@@ -9,10 +9,11 @@ import {
   isTwigView,
 } from '../state'
 import { setNodeVisibility, setFocusedNode, updateFocus } from '../ui/node-ui'
-import { animateGuideLines } from '../ui/layout'
+import { animateGuideLines, startWind, stopWind } from '../ui/layout'
 
 let zoomTimeoutId = 0
 let zoomOriginTimeoutId = 0
+let repositionTimeoutId = 0
 const fadeTimeouts = new Map<number, number>() // branchIndex -> timeoutId
 
 // Clear all pending fade timeouts (used when leaving overview)
@@ -142,7 +143,18 @@ export function setViewMode(
     clearAllFadeTimeouts()
   }
 
+  // Clear any pending reposition timeout from a previous twig transition
+  if (repositionTimeoutId) {
+    window.clearTimeout(repositionTimeoutId)
+    repositionTimeoutId = 0
+  }
+
   setViewModeState(mode, branchIndex)
+
+  // Resume wind animation when returning to overview or branch view
+  if (mode === 'overview' || mode === 'branch') {
+    startWind(ctx)
+  }
 
   const shouldAnimate = previousMode !== mode || previousBranch !== getActiveBranchIndex()
 
@@ -217,9 +229,16 @@ export function enterTwigView(
   // Open the twig view
   ctx.twigView?.open(twigNode)
 
+  // Pause wind animation — tree canvas is hidden behind the twig panel
+  stopWind()
+
   // Delay repositioning until after branches fade out (350ms transition)
   // This prevents the "jump" before fade effect
-  window.setTimeout(() => {
+  if (repositionTimeoutId) {
+    window.clearTimeout(repositionTimeoutId)
+  }
+  repositionTimeoutId = window.setTimeout(() => {
+    repositionTimeoutId = 0
     callbacks.onPositionNodes()
   }, 350)
 

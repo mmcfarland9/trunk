@@ -25,6 +25,7 @@ function makeSyncEvent(overrides: Partial<SyncEvent> = {}): SyncEvent {
       season: '1m',
       environment: 'fertile',
       soilCost: 3,
+      leafId: 'leaf-default',
     },
     client_id: 'client-1',
     client_timestamp: '2024-06-15T12:00:00Z',
@@ -44,6 +45,7 @@ describe('localToSyncPayload', () => {
       season: '3m',
       environment: 'firm',
       soilCost: 8,
+      leafId: 'leaf-default',
       client_id: 'client-abc',
     }
 
@@ -468,6 +470,7 @@ describe('syncToLocalEvent validation (via validateSyncPayload)', () => {
         season: '1m',
         environment: 'fertile',
         soilCost: 3,
+        leafId: 'leaf-default',
         extraField: 'should be ignored',
         anotherUnknown: 42,
       },

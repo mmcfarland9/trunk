@@ -4,7 +4,7 @@
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   animation: scale-in 200ms ease;
@@ -121,7 +121,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--dialog-z);
   background: rgba(0, 0, 0, 0.3);
 }
 
@@ -177,87 +177,6 @@
   gap: var(--space-4);
 }
 
-.sprouts-dialog-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.sprouts-dialog-section-title {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  text-transform: uppercase;
-  margin: 0;
-}
-
-.sprouts-dialog-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.sprouts-dialog-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-}
-
-.sprouts-dialog-item-icon {
-  font-size: 1rem;
-}
-
-.sprouts-dialog-item-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.sprouts-dialog-item-path {
-  color: var(--ink-faint);
-  font-size: var(--text-xs);
-}
-
-.sprouts-dialog-item-title {
-  color: var(--ink);
-}
-
-.sprouts-dialog-item-meta {
-  color: var(--ink-faint);
-  font-size: var(--text-xs);
-}
-
-.sprouts-dialog-uproot {
-  background: transparent;
-  border: none;
-  font-size: 1rem;
-  line-height: 1;
-  color: var(--ink-faint);
-  cursor: pointer;
-  padding: 0 0.25rem;
-  opacity: 0;
-  transition: opacity 150ms ease, color 150ms ease;
-}
-
-.sprouts-dialog-item:hover .sprouts-dialog-uproot {
-  opacity: 1;
-}
-
-.sprouts-dialog-uproot:hover {
-  color: var(--error-tone);
-}
-
-.sprouts-dialog-empty {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  font-style: italic;
-}
 
 /* === Water Journaling Dialog === */
 .water-dialog {
@@ -266,10 +185,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -279,9 +198,9 @@
 
 .water-dialog-box {
   width: min(480px, 90vw);
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
 }
 
@@ -409,10 +328,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -422,9 +341,9 @@
 
 .harvest-dialog-box {
   width: min(480px, 90vw);
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
 }
 
@@ -583,10 +502,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -596,9 +515,9 @@
 
 .shine-dialog-box {
   width: min(480px, 90vw);
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
 }
 
@@ -685,176 +604,6 @@
   margin-top: var(--space-3);
 }
 
-/* === Settings Dialog === */
-.settings-dialog {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
-  animation: fade-in 150ms ease;
-}
-
-.settings-dialog.hidden {
-  display: none;
-}
-
-.settings-dialog-box {
-  width: min(420px, 90vw);
-  background: rgba(255, 255, 255, 0.97);
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  animation: scale-in 200ms ease;
-}
-
-.settings-dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.settings-dialog-title {
-  margin: 0;
-  font-family: var(--font-ascii);
-  font-size: var(--text-base);
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.settings-dialog-close {
-  background: transparent;
-  border: none;
-  font-size: var(--text-xl);
-  color: var(--ink-faint);
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: color 150ms ease;
-}
-
-.settings-dialog-close:hover {
-  color: var(--ink);
-}
-
-.settings-dialog-body {
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.settings-label {
-  font-family: var(--font-ascii);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.settings-name-input,
-.settings-email-input {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  background: transparent;
-  font-family: var(--font-body);
-  font-size: var(--text-base);
-  color: var(--ink);
-  transition: border-color 150ms ease;
-}
-
-.settings-name-input:focus,
-.settings-email-input:focus {
-  outline: none;
-  border-color: var(--twig);
-}
-
-.settings-name-input::placeholder,
-.settings-email-input::placeholder {
-  color: var(--ink-faint);
-}
-
-.settings-radio-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.settings-radio {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  cursor: pointer;
-  font-family: var(--font-ascii);
-  font-size: var(--text-sm);
-  color: var(--ink-light);
-}
-
-.settings-radio input[type="radio"] {
-  margin: 0;
-  cursor: pointer;
-}
-
-.settings-radio:has(input:checked) {
-  color: var(--ink);
-}
-
-.settings-checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.settings-checkbox {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  font-family: var(--font-ascii);
-  font-size: var(--text-sm);
-  color: var(--ink-light);
-}
-
-.settings-checkbox input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
-}
-
-.settings-checkbox:has(input:checked) {
-  color: var(--ink);
-}
-
-.settings-time-section.is-disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.settings-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--space-2);
-}
-
-.settings-note {
-  margin: 0;
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  text-align: center;
-  font-style: italic;
-}
-
 /* === Water Can Dialog === */
 .water-can-dialog {
   position: fixed;
@@ -862,10 +611,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -876,9 +625,9 @@
 .water-can-dialog-box {
   width: min(560px, 90vw);
   max-height: 80vh;
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
   display: flex;
   flex-direction: column;
@@ -965,48 +714,12 @@
   color: var(--ink-faint);
 }
 
-.water-can-empty-sprouts,
 .water-can-empty-log {
   margin: 0;
   text-align: center;
   color: var(--ink-faint);
   font-style: italic;
   padding: var(--space-3) 0;
-}
-
-/* Waterable sprouts list */
-.water-can-sprouts-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.water-can-sprout-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-2) var(--space-3);
-  background: rgba(70, 130, 180, 0.04);
-  border: 1px solid var(--border-subtle);
-}
-
-.water-can-sprout-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.water-can-sprout-title {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.water-can-sprout-meta {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
 }
 
 /* Water log entries */
@@ -1079,10 +792,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -1093,9 +806,9 @@
 .sun-log-dialog-box {
   width: min(560px, 90vw);
   max-height: 80vh;
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
   display: flex;
   flex-direction: column;
@@ -1314,10 +1027,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -1328,9 +1041,9 @@
 .soil-bag-dialog-box {
   width: min(480px, 90vw);
   max-height: 80vh;
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
   display: flex;
   flex-direction: column;
@@ -1457,10 +1170,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
   animation: fade-in 150ms ease;
 }
 
@@ -1472,9 +1185,9 @@
   width: min(420px, 90vw);
   max-height: 85vh;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--dialog-bg);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--dialog-shadow);
   animation: scale-in 200ms ease;
 }
 

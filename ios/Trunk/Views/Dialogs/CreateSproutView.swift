@@ -347,6 +347,7 @@ struct CreateSproutView: View {
 
         Task {
             do {
+                guard let leafId = selectedLeafId else { return }
                 var plantPayload: [String: JSONValue] = [
                     "sproutId": .string(sproutId),
                     "title": .string(trimmedTitle),
@@ -354,12 +355,16 @@ struct CreateSproutView: View {
                     "season": .string(season.rawValue),
                     "environment": .string(environment.rawValue),
                     "soilCost": .int(soilCost),
-                    "bloomWither": .string(bloomWither),
-                    "bloomBudding": .string(bloomBudding),
-                    "bloomFlourish": .string(bloomFlourish)
+                    "leafId": .string(leafId)
                 ]
-                if let leafId = selectedLeafId {
-                    plantPayload["leafId"] = .string(leafId)
+                if !bloomWither.isEmpty {
+                    plantPayload["bloomWither"] = .string(bloomWither)
+                }
+                if !bloomBudding.isEmpty {
+                    plantPayload["bloomBudding"] = .string(bloomBudding)
+                }
+                if !bloomFlourish.isEmpty {
+                    plantPayload["bloomFlourish"] = .string(bloomFlourish)
                 }
                 try await SyncService.shared.pushEvent(type: "sprout_planted", payload: plantPayload)
             } catch {

@@ -1,6 +1,7 @@
 import type { AppElements } from '../types'
 import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
 import { deleteAllEvents } from '../services/sync'
+import { getTheme, setTheme } from '../utils/theme'
 
 // --- Account Dialog ---
 
@@ -116,6 +117,14 @@ function populateAccountDialog(elements: AccountElements): void {
 
   // Update visibility of notification options based on channel
   updateNotifyOptionsVisibility(elements, notif.channel)
+
+  // Theme preference
+  const currentTheme = getTheme()
+  const themeInputs =
+    elements.accountDialog.querySelectorAll<HTMLInputElement>('input[name="theme"]')
+  themeInputs.forEach((input) => {
+    input.checked = input.value === currentTheme
+  })
 }
 
 export function initAccountDialog(elements: AccountElements): {
@@ -136,7 +145,7 @@ export function initAccountDialog(elements: AccountElements): {
 
   const openDialog = () => {
     populateAccountDialog(elements)
-    switchTab('notifications') // Reset to first tab
+    switchTab('preferences') // Reset to first tab
     elements.accountDialog.classList.remove('hidden')
   }
 
@@ -156,6 +165,15 @@ export function initAccountDialog(elements: AccountElements): {
   elements.accountDialogClose.addEventListener('click', closeDialog)
   elements.accountDialog.addEventListener('click', (e) => {
     if (e.target === elements.accountDialog) closeDialog()
+  })
+
+  // Theme preference — apply immediately on change
+  const themeInputs =
+    elements.accountDialog.querySelectorAll<HTMLInputElement>('input[name="theme"]')
+  themeInputs.forEach((input) => {
+    input.addEventListener('change', () => {
+      setTheme(input.value as 'auto' | 'light' | 'dark')
+    })
   })
 
   // Update notify options visibility when channel changes
@@ -234,6 +252,10 @@ export function initAccountDialog(elements: AccountElements): {
     elements.accountDialogSave.textContent = 'Save'
 
     if (error) {
+      elements.accountDialogSave.textContent = 'Error — try again'
+      setTimeout(() => {
+        elements.accountDialogSave.textContent = 'Save'
+      }, 2000)
     } else {
       closeDialog()
     }

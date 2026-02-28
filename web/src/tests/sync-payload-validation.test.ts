@@ -39,6 +39,7 @@ describe('syncToLocalEvent (validates payloads)', () => {
           season: '1m',
           environment: 'fertile',
           soilCost: 3,
+          leafId: 'leaf-default',
         }),
       )
 
@@ -413,6 +414,7 @@ describe('syncToLocalEvent (validates payloads)', () => {
           season: '1m',
           environment: 'fertile',
           soilCost: 3,
+          leafId: 'leaf-default',
           extraField: 'ignored',
           anotherExtra: 42,
         }),
@@ -476,6 +478,7 @@ describe('localToSyncPayload', () => {
       season: '1m',
       environment: 'fertile',
       soilCost: 3,
+      leafId: 'leaf-default',
       client_id: 'my-client-id',
     }
 
@@ -570,6 +573,7 @@ describe('localToSyncPayload', () => {
       season: '1m',
       environment: 'fertile',
       soilCost: 3,
+      leafId: 'leaf-default',
     }
 
     const payload = localToSyncPayload(event, 'user-123')
@@ -591,6 +595,7 @@ describe('syncToLocalEvent roundtrip', () => {
       season: '3m',
       environment: 'barren',
       soilCost: 10,
+      leafId: 'leaf-default',
       client_id: 'roundtrip-client',
     }
 

@@ -15,6 +15,13 @@
     />
     <meta name="theme-color" content="#2f5d50" />
     <title>Trunk</title>
+    <script>
+      // Apply saved theme preference before first paint to prevent flash
+      (function() {
+        var t = localStorage.getItem('trunk-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.classList.add(t);
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

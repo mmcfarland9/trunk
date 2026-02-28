@@ -93,6 +93,10 @@ export function updateScopedProgress(ctx: AppContext): void {
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedHarvestClick: SidebarHarvestCallback | undefined
 
+// Dirty check: skip DOM rebuild when inputs haven't changed
+let lastState: DerivedState | null = null
+let lastViewKey = ''
+
 function parseBranchIndex(twigId: string): number {
   // Parse "branch-X-twig-Y" to get X
   const match = twigId.match(/^branch-(\d+)-twig-\d+$/)
@@ -194,6 +198,12 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   const activeTwigId = getActiveTwigId()
   const hoveredBranchIndex = getHoveredBranchIndex()
   const hoveredTwigId = getHoveredTwigId()
+
+  // Dirty check: skip full DOM rebuild when state + view haven't changed
+  const viewKey = `${viewMode}|${activeBranchIndex}|${activeTwigId}|${hoveredBranchIndex}|${hoveredTwigId}`
+  if (state === lastState && viewKey === lastViewKey) return
+  lastState = state
+  lastViewKey = viewKey
 
   // Filter based on current view or hover state
   let filteredActive = active

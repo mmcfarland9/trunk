@@ -69,13 +69,13 @@ struct SoilHistoryService {
         var sproutInfo: [String: (season: String, environment: String, soilCost: Double, isActive: Bool)] = [:]
 
         // Starting point from first event
-        if let firstEvent = events.first {
-            let date = parseISO8601(firstEvent.clientTimestamp)
+        if let firstEvent = events.first,
+           let date = parseISO8601(firstEvent.clientTimestamp) {
             history.append(RawSoilSnapshot(date: date, capacity: capacity, available: available))
         }
 
         for event in events {
-            let date = parseISO8601(event.clientTimestamp)
+            guard let date = parseISO8601(event.clientTimestamp) else { continue }
             var changed = false
 
             switch event.type {
@@ -261,7 +261,7 @@ struct SoilHistoryService {
         return result
     }
 
-    private static func parseISO8601(_ timestamp: String) -> Date {
+    private static func parseISO8601(_ timestamp: String) -> Date? {
         ISO8601.parse(timestamp)
     }
 }

@@ -1,5 +1,9 @@
 import './styles/index.css'
+import { applyTheme } from './utils/theme'
 import { initEventStore } from './events/store'
+
+// Apply theme immediately to avoid flash of wrong color scheme
+applyTheme()
 import type { AppContext } from './types'
 import { getViewMode } from './state'
 import { buildApp } from './ui/dom-builder'
