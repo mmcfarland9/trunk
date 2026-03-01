@@ -118,3 +118,44 @@
 .node.trunk.is-minimized { left: var(--minimized-x, 50%); top: var(--minimized-y, 50%); opacity: 0.7; }
 .node.trunk.is-minimized .trunk-title::after { content: "*"; font-family: var(--font-display); font-size: calc(var(--char) * 4); position: relative; top: 0.2em; }
 .node.trunk.is-minimized:hover { opacity: 1; }
+
+/* === Node hover effects === */
+
+/* Scale on hover — must include base translate to prevent jump */
+.node.branch { transition: color 180ms ease, transform 120ms ease; }
+.node.branch:hover { transform: translate(-50%, -50%) scale(1.08); }
+
+.canvas.is-zoomed .branch-group.is-active .twig { transition: transform 120ms ease-out, color 150ms ease; }
+.canvas.is-zoomed .branch-group.is-active .twig:hover { transform: translate(-50%, -50%) scale(1.12); }
+
+/* Glow on hover — uses --wood which adapts to dark mode */
+.node.branch:hover { text-shadow: 0 0 8px color-mix(in srgb, var(--wood) 30%, transparent); }
+.canvas.is-zoomed .branch-group.is-active .twig:hover { text-shadow: 0 0 6px color-mix(in srgb, var(--wood) 25%, transparent); }
+
+/* === Node tooltip === */
+.node-tooltip {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  transform: translateX(-50%);
+  background: var(--paper);
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.node-tooltip.hidden { display: none; }
+.node-tooltip-arrow {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--border);
+}

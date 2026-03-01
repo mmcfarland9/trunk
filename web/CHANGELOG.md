@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Soil chart: smooth monotone cubic bezier interpolation (Fritsch-Carlson) replaces jagged step paths for all ranges except 1d — curves pass through every data point without overshooting
+- Soil chart: gradient area fill under capacity line (15% opacity at top fading to transparent) replaces flat 0.08 opacity fill
+- Soil chart: grid lines now use CSS custom properties (`--border-subtle`, `--ink-faint`) instead of hardcoded rgba — adapts to dark mode; lines are dashed and thinner (0.3px)
+- Soil chart: capacity line thicker (2px) with rounded linecap/linejoin and subtle shadow line (4px, 8% opacity) for depth
+- Soil chart: data dots larger (r=2) with paper-colored stroke for contrast against gradient fill
+- Soil chart: range transition fades SVG out/in over 150ms instead of instant swap
+- Soil chart: denser data points for wider ranges — 3m interval halved (7d→3.5d), 6m/ytd switched from semimonthly to weekly, all range target doubled (24→48 nodes)
+- Soil chart: hover scrubbing with per-dot interaction — hovered dot scales to r=3.5 with glow filter and color shift to --wood, vertical dashed rule line at hovered position, enhanced tooltip with labeled values
+- Trunk guide lines: straight dotted lines replaced with quadratic bezier curves — 10% perpendicular offset for trunk→branch, 5% for branch→twig, alternating direction by index
+- Trunk guide lines: continuous stroked curves with thickness tapering (1.3× base at source → 0.7× at target) replace individual dot circles — gives organic root-like feel
+- Trunk guide lines: per-segment opacity variation (brighter at endpoints, dimmer at midpoint) via 12-segment sampling along bezier
+- Trunk guide lines: shadow pass on trunk→branch lines (wider stroke at 12% opacity) for depth
+- Trunk guide lines: hover highlighting — hovered branch's line renders at full alpha while others dim to 30%; hovering trunk brightens all branch lines to 1.4× alpha
+- Node hover: branch nodes scale to 1.08× and twig nodes to 1.12× on hover with 120ms ease transition, preserving base translate(-50%, -50%)
+- Node hover: glow effect via text-shadow using color-mix with --wood — adapts to dark mode automatically
+
+### Added
+- Node tooltips: compact detail overlay appears on 150ms hover delay — branches show "{name} — N active", twigs show "{name} — N active, N total", trunk shows total active sprout count
+- Node tooltip: single shared DOM element repositioned per hover, immediate hide on mouseleave, viewport-clamped positioning, downward-pointing arrow caret
+
 ### Fixed
 - Double uproot soil refund: `deriveState` now only returns soil when uprooting an active, existing sprout — fixes duplicate uproot inflation (bug #1) and phantom sprout soil injection (bug #7)
 - Soil chart capacity cap: `computeRawSoilHistory` now caps capacity at `MAX_SOIL_CAPACITY` (120) on harvest events, matching `deriveState` behavior (bug #6)

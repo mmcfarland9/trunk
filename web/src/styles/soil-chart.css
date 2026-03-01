@@ -48,6 +48,7 @@
   display: block;
   width: 100%;
   height: auto;
+  transition: opacity 150ms ease;
 }
 
 .soil-chart-tooltip {
@@ -69,16 +70,50 @@
   display: none;
 }
 
-.soil-chart-tooltip-date {
-  color: var(--ink-faint);
-}
-
 .soil-chart-tooltip-cap {
   color: var(--twig);
 }
 
 .soil-chart-tooltip-avail {
   color: #44aa77;
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--border);
+}
+
+.soil-chart-tooltip-date {
+  color: var(--ink-faint);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--border);
+}
+
+/* Data dot hover states */
+.soil-chart-dot {
+  pointer-events: none;
+  transition: r 80ms ease-out, fill 80ms ease-out, filter 80ms ease-out;
+}
+
+.soil-chart-dot.is-hovered {
+  r: 3.5px;
+  fill: var(--wood);
+  filter: url(#soil-glow);
+}
+
+/* Vertical rule line */
+.soil-chart-rule {
+  stroke: var(--ink-faint);
+  stroke-width: 0.5;
+  stroke-dasharray: 3 2;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.soil-chart-rule.is-visible {
+  opacity: 0.3;
+}
+
+/* Hover area cursor */
+.soil-chart-hover-area {
+  cursor: crosshair;
 }
 
 .soil-chart-empty {

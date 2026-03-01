@@ -1,6 +1,8 @@
 import type { BranchGroup } from '../../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../../constants'
 import { syncNode } from '../node-ui'
+import { getPresetLabel } from '../../state'
+import { getState } from '../../events'
 import trunkLogo from '../../../assets/tree_icon_transp.png'
 
 type NodeClickHandler = (element: HTMLButtonElement, nodeId: string) => void
@@ -13,6 +15,7 @@ export type TreeNodesElements = {
   branchGroups: BranchGroup[]
   allNodes: HTMLButtonElement[]
   nodeLookup: Map<string, HTMLButtonElement>
+  tooltip: HTMLDivElement
 }
 
 function initializeNode(
@@ -41,6 +44,123 @@ function getBloomDelay(twigIndex: number): number {
   const delayStep = 40
   const distanceFromFront = Math.min(twigIndex, TWIG_COUNT - twigIndex)
   return baseDelay + distanceFromFront * delayStep
+}
+
+function getTooltipText(element: HTMLButtonElement): string {
+  const nodeId = element.dataset.nodeId
+  if (!nodeId) return ''
+
+  const state = getState()
+
+  if (element.classList.contains('trunk')) {
+    let total = 0
+    for (const sprouts of state.activeSproutsByTwig.values()) {
+      total += sprouts.length
+    }
+    return `${total} active sprout${total === 1 ? '' : 's'}`
+  }
+
+  if (element.classList.contains('branch')) {
+    const label = getPresetLabel(nodeId)
+    const branchIndex = element.dataset.branchIndex
+    let count = 0
+    if (branchIndex !== undefined) {
+      for (let j = 0; j < TWIG_COUNT; j += 1) {
+        const twigId = `branch-${branchIndex}-twig-${j}`
+        count += state.activeSproutsByTwig.get(twigId)?.length ?? 0
+      }
+    }
+    return `${label} — ${count} active`
+  }
+
+  if (element.classList.contains('twig')) {
+    const label = getPresetLabel(nodeId)
+    const sprouts = state.sproutsByTwig.get(nodeId) ?? []
+    const active = state.activeSproutsByTwig.get(nodeId) ?? []
+    if (label) {
+      return `${label} — ${active.length} active, ${sprouts.length} total`
+    }
+    return sprouts.length > 0 ? `${sprouts.length} sprout${sprouts.length === 1 ? '' : 's'}` : ''
+  }
+
+  return ''
+}
+
+function createTooltip(): HTMLDivElement {
+  const tooltip = document.createElement('div')
+  tooltip.className = 'node-tooltip hidden'
+
+  const text = document.createElement('span')
+  text.className = 'node-tooltip-text'
+  tooltip.append(text)
+
+  const arrow = document.createElement('div')
+  arrow.className = 'node-tooltip-arrow'
+  tooltip.append(arrow)
+
+  return tooltip
+}
+
+function positionTooltip(tooltip: HTMLDivElement, node: HTMLButtonElement): void {
+  const rect = node.getBoundingClientRect()
+  const tooltipRect = tooltip.getBoundingClientRect()
+
+  let left = rect.left + rect.width / 2
+  const top = rect.top - 8
+
+  // Clamp horizontally to viewport
+  const halfWidth = tooltipRect.width / 2
+  if (left - halfWidth < 4) left = halfWidth + 4
+  if (left + halfWidth > window.innerWidth - 4) left = window.innerWidth - 4 - halfWidth
+
+  tooltip.style.left = `${left}px`
+  tooltip.style.top = `${top}px`
+  tooltip.style.transform = `translateX(-50%) translateY(-100%)`
+}
+
+function attachTooltipListeners(nodes: HTMLButtonElement[], tooltip: HTMLDivElement): void {
+  let hoverTimer: ReturnType<typeof setTimeout> | null = null
+  let activeNode: HTMLButtonElement | null = null
+
+  const showTooltip = (node: HTMLButtonElement): void => {
+    const content = getTooltipText(node)
+    if (!content) return
+
+    const text = tooltip.querySelector<HTMLSpanElement>('.node-tooltip-text')
+    if (text) text.textContent = content
+
+    tooltip.classList.remove('hidden')
+    activeNode = node
+    positionTooltip(tooltip, node)
+  }
+
+  const hideTooltip = (): void => {
+    if (hoverTimer !== null) {
+      clearTimeout(hoverTimer)
+      hoverTimer = null
+    }
+    tooltip.classList.add('hidden')
+    activeNode = null
+  }
+
+  for (const node of nodes) {
+    node.addEventListener('mouseenter', () => {
+      hideTooltip()
+      hoverTimer = setTimeout(() => {
+        showTooltip(node)
+      }, 150)
+    })
+
+    node.addEventListener('mouseleave', () => {
+      hideTooltip()
+    })
+
+    node.addEventListener('mousemove', () => {
+      if (activeNode === node) {
+        positionTooltip(tooltip, node)
+      }
+    })
+  }
 }
 
 export function buildTreeNodes(onNodeClick: NodeClickHandler): TreeNodesElements {
@@ -141,7 +261,10 @@ export function buildTreeNodes(onNodeClick: NodeClickHandler): TreeNodesElements
     canvas.append(wrapper)
   }
 
-  mapPanel.append(canvas, guideLayer)
+  const tooltip = createTooltip()
+  mapPanel.append(canvas, guideLayer, tooltip)
+
+  attachTooltipListeners(allNodes, tooltip)
 
   return {
     mapPanel,
@@ -151,5 +274,6 @@ export function buildTreeNodes(onNodeClick: NodeClickHandler): TreeNodesElements
     branchGroups,
     allNodes,
     nodeLookup,
+    tooltip,
   }
 }

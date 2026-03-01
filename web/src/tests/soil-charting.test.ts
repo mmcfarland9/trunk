@@ -251,36 +251,36 @@ describe('bucketSoilData — all ranges', () => {
     expect(points.length).toBeLessThanOrEqual(33)
   })
 
-  it('3m range: generates weekly buckets (~13)', () => {
+  it('3m range: generates 3.5-day buckets (~26)', () => {
     const points = bucketSoilData(wideHistory, '3m', now)
 
-    expect(points.length).toBeGreaterThanOrEqual(12)
-    expect(points.length).toBeLessThanOrEqual(16)
+    expect(points.length).toBeGreaterThanOrEqual(23)
+    expect(points.length).toBeLessThanOrEqual(30)
   })
 
-  it('6m range: generates semimonthly buckets (~12)', () => {
+  it('6m range: generates weekly buckets (~26)', () => {
     const points = bucketSoilData(wideHistory, '6m', now)
 
-    expect(points.length).toBeGreaterThanOrEqual(10)
-    expect(points.length).toBeLessThanOrEqual(16)
+    expect(points.length).toBeGreaterThanOrEqual(23)
+    expect(points.length).toBeLessThanOrEqual(30)
   })
 
-  it('ytd range: generates semimonthly buckets from Jan 1', () => {
+  it('ytd range: generates weekly buckets from Jan 1', () => {
     const points = bucketSoilData(wideHistory, 'ytd', now)
 
-    // Jan 1 to Jan 15 — only 1 semimonthly boundary (Jan 1) + end
+    // Jan 1 to Jan 15 at weekly intervals: ~2-4 boundaries
     expect(points.length).toBeGreaterThanOrEqual(2)
-    expect(points.length).toBeLessThanOrEqual(4)
+    expect(points.length).toBeLessThanOrEqual(5)
 
     // First point should be on or after Jan 1
     expect(points[0].timestamp.getFullYear()).toBe(2026)
   })
 
-  it('all range: generates adaptive buckets (~24)', () => {
+  it('all range: generates adaptive buckets (~48)', () => {
     const points = bucketSoilData(wideHistory, 'all', now)
 
-    expect(points.length).toBeGreaterThanOrEqual(20)
-    expect(points.length).toBeLessThanOrEqual(28)
+    expect(points.length).toBeGreaterThanOrEqual(44)
+    expect(points.length).toBeLessThanOrEqual(54)
 
     // First point should be near the first event
     const firstEventTime = new Date('2025-01-15T10:00:00Z').getTime()

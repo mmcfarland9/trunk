@@ -1020,9 +1020,9 @@ describe('bucketSoilData', () => {
     const now = new Date('2026-01-31T12:00:00Z')
     const points = bucketSoilData(rawHistory, '6m', now)
 
-    // 6 months ~ 12 semimonthly periods + final = ~13 points
-    expect(points.length).toBeGreaterThanOrEqual(10)
-    expect(points.length).toBeLessThanOrEqual(16)
+    // 6 months ~ 26 weekly intervals + final
+    expect(points.length).toBeGreaterThanOrEqual(23)
+    expect(points.length).toBeLessThanOrEqual(30)
   })
 
   it('uses adaptive bucketing for "all" range', () => {
@@ -1043,9 +1043,9 @@ describe('bucketSoilData', () => {
     const now = new Date('2026-01-31T12:00:00Z')
     const points = bucketSoilData(rawHistory, 'all', now)
 
-    // Should aim for ~24 nodes (+/- final boundary)
-    expect(points.length).toBeGreaterThanOrEqual(20)
-    expect(points.length).toBeLessThanOrEqual(28)
+    // Should aim for ~48 nodes (+/- final boundary)
+    expect(points.length).toBeGreaterThanOrEqual(44)
+    expect(points.length).toBeLessThanOrEqual(54)
   })
 
   it('initializes carry-forward from events before range window', () => {
@@ -1119,8 +1119,8 @@ describe('bucketSoilData', () => {
     const now = new Date('2026-01-31T12:00:00Z')
     const points = bucketSoilData(rawHistory, '3m', now)
 
-    // 3 months ~ 13 weeks + final
-    expect(points.length).toBeGreaterThanOrEqual(12)
-    expect(points.length).toBeLessThanOrEqual(16)
+    // 3 months at 3.5-day intervals ~ 26 buckets + final
+    expect(points.length).toBeGreaterThanOrEqual(23)
+    expect(points.length).toBeLessThanOrEqual(30)
   })
 })

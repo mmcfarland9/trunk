@@ -105,10 +105,10 @@
       "1d": { "intervalSeconds": 3600 },
       "1w": { "intervalSeconds": 21600 },
       "1m": { "intervalSeconds": 86400 },
-      "3m": { "intervalSeconds": 604800 },
-      "6m": { "calendarSnap": "semimonthly" },
-      "ytd": { "calendarSnap": "semimonthly" },
-      "all": { "adaptive": true, "targetNodes": 24 }
+      "3m": { "intervalSeconds": 302400 },
+      "6m": { "intervalSeconds": 604800 },
+      "ytd": { "intervalSeconds": 604800 },
+      "all": { "adaptive": true, "targetNodes": 48 }
     }
   },
   "prompts": {
