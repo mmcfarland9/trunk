@@ -29,7 +29,6 @@
         "noUselessElse": "warn",
         "useDefaultParameterLast": "warn",
         "noNonNullAssertion": "warn",
-        "useNodejsImportProtocol": "warn",
         "useExponentiationOperator": "warn"
       },
       "complexity": {

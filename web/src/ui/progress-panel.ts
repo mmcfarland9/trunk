@@ -118,7 +118,7 @@ export function createTwigFolder(twigId: string, twigLabel: string, count: numbe
   return folder
 }
 
-export function createStackedLeafCard(
+function createStackedLeafCard(
   leafName: string,
   sprouts: SproutWithLocation[],
   onWaterClick?: (sprout: SproutWithLocation) => void,

@@ -26,7 +26,6 @@ export default {
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts',
     '!src/tests/**',
-    '!src/vite-env.d.ts',
   ],
 
   // Vitest-specific configuration

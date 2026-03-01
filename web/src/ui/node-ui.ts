@@ -142,7 +142,7 @@ function formatTwigBoxLabel(label: string, element: HTMLButtonElement): BoxForma
   }
 }
 
-export function getNodePlaceholder(element: HTMLButtonElement): string {
+function getNodePlaceholder(element: HTMLButtonElement): string {
   return element.dataset.placeholder || element.dataset.defaultLabel || 'Node'
 }
 

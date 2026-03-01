@@ -43,27 +43,6 @@ JSON Schema definitions for data structures (Sprout, Leaf, NodeData).
 // - JSONSchema2Swift
 ```
 
-### `assets/trunk-map-preset.json`
-Default labels for branches and twigs.
-
-**Structure:**
-```json
-{
-  "trunk": { "label": "My Life", "branches": [...] },
-  "branches": [
-    {
-      "defaultLabel": "Health",
-      "twigs": [
-        { "defaultLabel": "Movement" },
-        { "defaultLabel": "Nutrition" },
-        ...
-      ]
-    },
-    ...
-  ]
-}
-```
-
 ### `formulas.md`
 Mathematical specifications for the progression system.
 

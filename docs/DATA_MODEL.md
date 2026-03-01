@@ -21,6 +21,7 @@ All events are stored in the `trunk-events-v1` log with a `type` discriminator a
 | `sprout_harvested` | sproutId, result (1-5), reflection?, capacityGained | Sprout completed, capacity gained |
 | `sprout_uprooted` | sproutId, soilReturned | Sprout abandoned, partial soil returned |
 | `sun_shone` | twigId, twigLabel, content, prompt? | Weekly reflection on a twig |
+| `sprout_edited` | sproutId, title?, bloom1?, bloom3?, bloom5?, leafId? | Sparse merge of mutable sprout fields |
 | `leaf_created` | leafId, twigId, name | New saga (leaf) started |
 
 ---

@@ -17,10 +17,6 @@ enum TrunkEventType: String, Codable, Sendable {
     case sunShone = "sun_shone"
     case leafCreated = "leaf_created"
 
-    /// Validate that a string is a known event type
-    static func isValid(_ type: String) -> Bool {
-        Self(rawValue: type) != nil
-    }
 }
 
 struct SyncEvent: Codable, Sendable, Identifiable {
@@ -70,13 +66,6 @@ enum JSONValue: Codable, Sendable, Equatable {
     case array([JSONValue])
     case null
 
-    // MARK: - Convenience Initializers
-
-    init(_ value: String) { self = .string(value) }
-    init(_ value: Int) { self = .int(value) }
-    init(_ value: Double) { self = .double(value) }
-    init(_ value: Bool) { self = .bool(value) }
-
     // MARK: - Computed Properties
 
     var stringValue: String? {
@@ -95,11 +84,6 @@ enum JSONValue: Codable, Sendable, Equatable {
         case .int(let v): return Double(v)
         default: return nil
         }
-    }
-
-    var boolValue: Bool? {
-        if case .bool(let v) = self { return v }
-        return nil
     }
 
     // MARK: - Codable

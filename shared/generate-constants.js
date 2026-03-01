@@ -180,8 +180,6 @@ export const EVENT_TYPES = [
 ${constants.eventTypes.map((t) => `  '${t}'`).join(',\n')}
 ] as const
 
-export type EventType = typeof EVENT_TYPES[number]
-
 export const VALID_EVENT_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES)
 
 // =============================================================================
@@ -199,25 +197,6 @@ export const MAX_BLOOM_LENGTH = ${constants.validation.maxBloomLength}
 export const RECENT_WATER_LIMIT = ${constants.prompts.recentWaterLimit}
 export const RECENT_SHINE_LIMIT = ${constants.prompts.recentShineLimit}
 export const GENERIC_WEIGHT = ${constants.prompts.genericWeight}
-
-// =============================================================================
-// Chart Bucket Config
-// =============================================================================
-
-export type ChartBucketConfig =
-  | { intervalSeconds: number }
-  | { calendarSnap: 'semimonthly' }
-  | { adaptive: true; targetNodes: number }
-
-export const CHART_BUCKETS: Record<string, ChartBucketConfig> = {
-${Object.entries(constants.chart.buckets)
-  .map(([range, config]) => {
-    if (config.intervalSeconds) return `  '${range}': { intervalSeconds: ${config.intervalSeconds} }`
-    if (config.calendarSnap) return `  '${range}': { calendarSnap: '${config.calendarSnap}' }`
-    return `  '${range}': { adaptive: true, targetNodes: ${config.targetNodes} }`
-  })
-  .join(',\n')}
-}
 
 // =============================================================================
 // Watering Prompts

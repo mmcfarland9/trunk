@@ -62,7 +62,6 @@ export {
   getSunAvailable,
   checkSproutWateredToday,
   replaceEvents,
-  startVisibilityCacheInvalidation,
   // Resource getters (derived from events)
   getSoilAvailable,
   getSoilCapacity,

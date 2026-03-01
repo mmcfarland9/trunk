@@ -49,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Navigation timeout for deferred `positionNodes()` now properly cleaned up when navigating away mid-transition
 
 ### Removed
+- Dead code: `startVisibilityCacheInvalidation()` from store.ts and its re-export from events/index.ts
+- Dead code: `EventType` type, `ChartBucketConfig` type, and `CHART_BUCKETS` constant from generated constants (removed from generator)
+- Unnecessary `export` on `getDaysRemaining()`, `getNodePlaceholder()`, and `createStackedLeafCard()` — only used within their own files
+- Relocated `validate-import.ts` from `utils/` to `tests/` (test-only, never imported by production code)
+- Stale config: unused `@shared` path alias from tsconfig.json and vitest.config.ts, `useDefineForClassFields` (no classes), `useNodejsImportProtocol` rule (browser app), stale `vite-env.d.ts` exclusion from stryker.config.mjs
+- Security: removed `SUPABASE_SERVICE_ROLE_KEY` from `.env.local` (admin key should not exist in web client env)
+- 40 stale markdown files (~26,654 lines): completed plans, superseded audits, executed roadmaps
 - 34 orphaned CSS selectors (~260 lines) from settings dialog, legacy sprout items, and unbuilt water-can suggestions
 - `console.warn` for standalone sprouts in progress-panel (structurally impossible per data model)
 - Duplicate `validateSyncPayload()` in sync-types.ts — now imports shared `validateEvent()` from events/types.ts

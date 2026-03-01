@@ -25,9 +25,4 @@ export default defineConfig({
       },
     },
   },
-  resolve: {
-    alias: {
-      '@shared': new URL('../shared', import.meta.url).pathname
-    }
-  }
 })

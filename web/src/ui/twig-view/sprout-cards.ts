@@ -16,7 +16,7 @@ export function isReady(sprout: Sprout): boolean {
 /**
  * Gets the number of days remaining for a sprout.
  */
-export function getDaysRemaining(sprout: Sprout): number {
+function getDaysRemaining(sprout: Sprout): number {
   if (!sprout.endDate) return 0
   const end = new Date(sprout.endDate).getTime()
   const now = Date.now()

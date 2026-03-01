@@ -50,6 +50,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TreeCanvasView: simplified CanvasDotGuideLines by removing closure parameters in favour of direct TreeGeometry/Wind calls
 - TreeCanvasView: removed dead `isSelected` and `onDoubleTap` from InteractiveBranchNode
 
+### Removed
+- `ErrorCodes.swift` — entire file dead (84 lines), referenced non-existent bundle resource
+- `ActiveSproutsSection` and `ActiveSproutRow` in OverviewView.swift — unreachable views (~116 lines)
+- `TrunkEventType.isValid(_:)` — never called
+- `JSONValue.boolValue` — never accessed
+- 4 `JSONValue` convenience initializers — code uses `ExpressibleBy*Literal` conformances instead
+- `wateringStreak` and `longestWateringStreak` from ProgressionViewModel — written to but never read by any view
+- Added `// TEST-ONLY` annotation to `DataExportService.swift` (not yet wired to UI)
+
 ## [0.1.0] - 2026-01-29
 
 ### Added

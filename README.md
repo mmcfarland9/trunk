@@ -64,7 +64,7 @@ Growth is slow, deliberate, and intrinsically rewarding—like cultivating a bon
 - [Progression Formulas](./shared/formulas.md) - Mathematical formulas and growth curves
 - [Architecture](./docs/ARCHITECTURE.md) - System overview and diagrams
 - [Onboarding](./docs/ONBOARDING.md) - Quick start and common tasks
-- [Planning Documents](./docs/plans/) - Implementation plans and design docs
+- [Planning Documents](./docs/archive/plans/) - Implementation plans and design docs
 - [CLAUDE.md](./CLAUDE.md) - AI assistant instructions
 
 ## Contributing

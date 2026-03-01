@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-  validateSprout,
-  validateLeaf,
-  sanitizeSprout,
-  sanitizeLeaf,
-} from '../utils/validate-import'
+import { validateSprout, validateLeaf, sanitizeSprout, sanitizeLeaf } from './validate-import'
 
 describe('Sprout Validation', () => {
   it('should validate a complete sprout', () => {

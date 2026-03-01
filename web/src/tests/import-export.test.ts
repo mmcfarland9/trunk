@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { sanitizeSprout, sanitizeLeaf } from '../utils/validate-import'
+import { sanitizeSprout, sanitizeLeaf } from './validate-import'
 import type { Sprout, Leaf, NodeData } from '../types'
 
 describe('Import/Export Round-Trip', () => {

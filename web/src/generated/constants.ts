@@ -310,8 +310,6 @@ export const EVENT_TYPES = [
   'leaf_created',
 ] as const
 
-export type EventType = (typeof EVENT_TYPES)[number]
-
 export const VALID_EVENT_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES)
 
 // =============================================================================
@@ -329,25 +327,6 @@ export const MAX_BLOOM_LENGTH = 60
 export const RECENT_WATER_LIMIT = 10
 export const RECENT_SHINE_LIMIT = 15
 export const GENERIC_WEIGHT = 0.75
-
-// =============================================================================
-// Chart Bucket Config
-// =============================================================================
-
-export type ChartBucketConfig =
-  | { intervalSeconds: number }
-  | { calendarSnap: 'semimonthly' }
-  | { adaptive: true; targetNodes: number }
-
-export const CHART_BUCKETS: Record<string, ChartBucketConfig> = {
-  '1d': { intervalSeconds: 3600 },
-  '1w': { intervalSeconds: 21600 },
-  '1m': { intervalSeconds: 86400 },
-  '3m': { intervalSeconds: 604800 },
-  '6m': { calendarSnap: 'semimonthly' },
-  ytd: { calendarSnap: 'semimonthly' },
-  all: { adaptive: true, targetNodes: 24 },
-}
 
 // =============================================================================
 // Watering Prompts

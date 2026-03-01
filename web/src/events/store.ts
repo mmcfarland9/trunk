@@ -331,16 +331,3 @@ export function getEventCount(): number {
 export function exportEvents(): TrunkEvent[] {
   return [...events]
 }
-
-/**
- * C26: Start a visibilitychange listener that invalidates cached water/sun
- * availability when the page becomes visible. Ensures stale cache values
- * (e.g., tab left open across a 6am boundary) are refreshed.
- */
-export function startVisibilityCacheInvalidation(): void {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      invalidateCache()
-    }
-  })
-}

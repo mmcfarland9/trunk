@@ -20,8 +20,6 @@ final class ProgressionViewModel {
     private(set) var soilAvailable: Double = SharedConstants.Soil.startingCapacity
     private(set) var waterAvailable: Int = SharedConstants.Water.dailyCapacity
     private(set) var sunAvailable: Int = SharedConstants.Sun.weeklyCapacity
-    private(set) var wateringStreak: Int = 0
-    private(set) var longestWateringStreak: Int = 0
 
     /// Monotonically increasing counter that views can observe via .onChange
     /// to know when to refresh their local @State caches.
@@ -91,9 +89,7 @@ final class ProgressionViewModel {
         soilAvailable = state.soilAvailable
         waterAvailable = EventStore.shared.getWaterAvailable()
         sunAvailable = EventStore.shared.getSunAvailable()
-        let streak = EventStore.shared.getWateringStreak()
-        wateringStreak = streak.current
-        longestWateringStreak = streak.longest
+        // Streak computation available via EventStore.shared.getWateringStreak() if needed
     }
 
     /// Mark data as ready after first sync (success or error fallback).

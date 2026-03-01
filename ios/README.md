@@ -116,7 +116,6 @@ The iOS app uses shared specifications from `../shared/`:
 - `constants.json` — Numeric constants, formulas (parsed to Swift)
 - `schemas/*.schema.json` — Data structure contracts
 - `formulas.md` — Progression system formulas
-- `assets/trunk-map-preset.json` — Default tree labels
 
 Constants are generated as Swift code in `Trunk/Generated/SharedConstants.swift`.
 
