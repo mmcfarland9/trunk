@@ -175,14 +175,10 @@ struct RadarChartView: View {
             axisPath.move(to: center)
             axisPath.addLine(to: axisEnd)
 
-            let isHighlighted = tappedIndex == i
-            let axisOpacity = isHighlighted ? 0.35 : (tappedIndex != nil ? 0.04 : 0.10)
-            let axisWidth: CGFloat = isHighlighted ? 1.0 : 0.5
-
             context.stroke(
                 axisPath,
-                with: .color(Color.twig.opacity(axisOpacity)),
-                style: StrokeStyle(lineWidth: axisWidth, dash: isHighlighted ? [] : [2, 3])
+                with: .color(Color.twig.opacity(0.10)),
+                style: StrokeStyle(lineWidth: 0.5, dash: [2, 3])
             )
         }
 
@@ -194,19 +190,6 @@ struct RadarChartView: View {
         for (i, pt) in dotPoints.enumerated() {
             let isActive = tappedIndex == i
             let dotRadius: CGFloat = isActive ? 5 : 3.5
-
-            // Paper-colored ring
-            let ringRect = CGRect(
-                x: pt.x - dotRadius - 0.75,
-                y: pt.y - dotRadius - 0.75,
-                width: (dotRadius + 0.75) * 2,
-                height: (dotRadius + 0.75) * 2
-            )
-            context.stroke(
-                Path(ellipseIn: ringRect),
-                with: .color(Color.paper.opacity(0.9)),
-                lineWidth: 1.5
-            )
 
             // Filled dot
             let dotRect = CGRect(

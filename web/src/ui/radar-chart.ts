@@ -121,17 +121,6 @@ export function buildRadarChart(): {
   function onVertexEnter(index: number): void {
     activeHoverIndex = index
 
-    // Highlight active axis, dim others
-    for (let j = 0; j < axisLines.length; j++) {
-      if (j === index) {
-        axisLines[j].setAttribute('stroke-opacity', '0.4')
-        axisLines[j].setAttribute('stroke-width', '1')
-        axisLines[j].removeAttribute('stroke-dasharray')
-      } else {
-        axisLines[j].setAttribute('stroke-opacity', '0.04')
-      }
-    }
-
     // Scale up + glow on active dot
     const dot = dataDots[index]
     if (dot) {
@@ -146,13 +135,6 @@ export function buildRadarChart(): {
   function onVertexLeave(): void {
     const prev = activeHoverIndex
     activeHoverIndex = -1
-
-    // Reset all axes to base state
-    for (const line of axisLines) {
-      line.setAttribute('stroke-opacity', '0.12')
-      line.setAttribute('stroke-width', '0.5')
-      line.setAttribute('stroke-dasharray', '2 3')
-    }
 
     // Reset dot
     if (prev >= 0 && dataDots[prev]) {
@@ -216,13 +198,11 @@ export function buildRadarChart(): {
 
     // Vertex dots + invisible hit areas
     for (let i = 0; i < BRANCH_COUNT; i++) {
-      // Visible vertex marker with ring stroke
+      // Visible vertex marker
       const dot = svgEl('circle') as SVGCircleElement
       setAttrs(dot, {
         r: 3.5,
         fill: 'var(--twig)',
-        stroke: 'var(--paper)',
-        'stroke-width': 1.5,
       })
       dot.classList.add('radar-chart-dot')
       dataDots.push(dot)
