@@ -822,15 +822,33 @@
   font-size: var(--text-xs);
 }
 
+/* Responsive: stacked layout (sidebar below canvas) */
+@media (max-width: 960px) {
+  .twig-view {
+    position: relative;
+    inset: auto;
+    overflow-y: auto;
+  }
+
+  .leaf-view {
+    position: fixed;
+    inset: 0;
+  }
+}
+
 /* Responsive: stack columns on smaller screens */
 @media (max-width: 720px) {
+  .twig-view-header {
+    padding: 0 var(--space-2);
+  }
+
   .twig-view-body {
     grid-template-columns: 1fr;
     gap: var(--space-2);
   }
 
   .sprout-column {
-    max-height: 150px;
+    max-height: none;
   }
 }
 

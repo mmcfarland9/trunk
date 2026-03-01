@@ -77,7 +77,7 @@ export function buildSoilChart(): {
   const svg = document.createElementNS(SVG_NS, 'svg')
   svg.classList.add('soil-chart-svg')
   svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`)
-  svg.setAttribute('preserveAspectRatio', 'none')
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
 
   // Tooltip
   const tooltip = el('div', 'soil-chart-tooltip hidden')

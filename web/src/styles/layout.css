@@ -1,7 +1,7 @@
 /* === Shell === */
 .app-shell { width: min(1400px, 100%); display: flex; flex-direction: column; gap: 0.25rem; height: 100%; animation: fade-in 600ms ease; }
 .app-header { display: flex; justify-content: flex-start; align-items: center; gap: var(--space-3); padding-bottom: var(--space-2); margin-bottom: 1.5rem; position: relative; z-index: 20; }
-.header-logo { position: absolute; top: 2rem; right: -1.75rem; width: 144px; height: 144px; object-fit: contain; pointer-events: none; }
+.header-logo { position: absolute; top: 2rem; right: 0; width: 144px; height: 144px; object-fit: contain; pointer-events: none; }
 
 /* === Resource Meters (unified) === */
 .resource-meter {
@@ -23,7 +23,7 @@
 }
 
 .resource-meter-track {
-  width: 80px;
+  width: clamp(50px, 8vw, 80px);
   height: 6px;
   background: var(--border-subtle);
   border: 1px solid var(--border-subtle);
@@ -199,7 +199,7 @@
 .app-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 
 .meter-group { display: flex; gap: var(--space-2); margin-left: auto; align-items: center; }
-.app-body { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: minmax(0, 1fr); gap: 1.5rem; align-items: start; flex: 1; min-height: 0; }
+.app-body { display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 360px); grid-template-rows: minmax(0, 1fr); gap: 1.5rem; align-items: start; flex: 1; min-height: 0; }
 .map-panel { display: flex; flex-direction: column; gap: 1rem; align-items: center; margin-top: 3rem; position: relative; flex: 1; min-height: 0; }
 
 /* === Canvas === */
@@ -226,23 +226,32 @@
 
 /* === Responsive === */
 @media (max-width: 960px) {
-  body { padding: 1rem; }
+  body { padding: 1rem; overflow-y: auto; height: auto; min-height: 100vh; }
+  #app { height: auto; min-height: 100%; }
+  .app-shell { height: auto; min-height: 100%; }
   .app-header { flex-direction: column; align-items: flex-start; }
   .app-actions { justify-content: flex-start; }
   .meter-group { margin-left: 0; }
   .header-logo { align-self: flex-end; }
-  .app-body { grid-template-columns: 1fr; gap: 2rem; }
-  .map-panel { margin-top: 6px; }
+  .app-body { grid-template-columns: 1fr; grid-template-rows: auto auto; gap: 2rem; }
+  .map-panel { overflow: hidden; margin-top: 0; flex: none; }
   .side-panel { order: 2; }
+  .canvas { overflow: hidden; max-width: min(100%, 600px); margin: 0 auto; --base-scale: 1; }
+  .guide-layer { clip-path: inset(0); }
+  .soil-chart-section { max-width: 500px; }
 }
 @media (max-width: 720px) {
   body { padding: 0.85rem 0.75rem; }
   .app-shell { gap: 1.1rem; }
   .map-panel { margin-top: 4px; }
-  .header-logo { width: 64px; height: 64px; }
+  .header-logo { width: 64px; height: 64px; top: 1rem; }
+  .canvas { --base-scale: 1.1; }
+  .profile-email { max-width: 160px; }
 }
 @media (max-width: 520px) {
   .action-button { flex: 1; min-width: calc(50% - 0.25rem); }
+  .canvas { --base-scale: 0.9; }
+  .profile-email { max-width: 120px; }
 }
 
 /* Touch device improvements - min 44px touch targets */
