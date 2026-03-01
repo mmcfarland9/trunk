@@ -122,7 +122,7 @@ describe('Form Validation Edge Cases', () => {
       const elements = createMockElements()
       const state = validFormState()
       // 58 chars + 2 spaces of padding = within limit after trim
-      elements.sproutTitleInput.value = ' ' + 'A'.repeat(58) + ' '
+      elements.sproutTitleInput.value = ` ${'A'.repeat(58)} `
       elements.leafSelect.value = 'leaf-1'
 
       updateFormState(state, elements)

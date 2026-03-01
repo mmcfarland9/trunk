@@ -68,7 +68,7 @@ initializeSync(domResult.elements)
 const dialogAPIs = initializeUI(ctx, navCallbacks)
 
 function refreshUI(): void {
-  domResult.allNodes.forEach((node) => syncNode(node))
+  for (const node of domResult.allNodes) syncNode(node)
   updateStats(ctx)
   positionNodes(ctx)
   updateFocus(null, ctx)

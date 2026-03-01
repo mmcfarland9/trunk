@@ -161,7 +161,7 @@ export function appendEvents(newEvents: TrunkEvent[]): void {
   saveEvents()
   // Sync each to cloud if callback is set
   if (onEventAppended) {
-    newEvents.forEach((e) => onEventAppended?.(e))
+    for (const e of newEvents) onEventAppended?.(e)
   }
 }
 

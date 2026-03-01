@@ -47,7 +47,7 @@ export function subscribeToAuth(listener: AuthListener): () => void {
 }
 
 function notifyListeners() {
-  listeners.forEach((l) => l(authState))
+  for (const l of listeners) l(authState)
 }
 
 const E2E_TEST_EMAIL = 'test@trunk.michaelpmcfarland.com'

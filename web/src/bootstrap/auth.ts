@@ -55,7 +55,7 @@ export async function initializeAuth(
 
   try {
     await initAuth()
-  } catch (err) {
+  } catch {
     showAuthError(appElement, 'Unable to connect. Please refresh to try again.')
     return
   }

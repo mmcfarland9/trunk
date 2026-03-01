@@ -200,7 +200,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       btn.classList.remove('is-active')
       btn.setAttribute('aria-pressed', 'false')
     })
-    elements.envHints.forEach((h) => h.classList.remove('is-visible'))
+    for (const h of elements.envHints) h.classList.remove('is-visible')
     elements.endDateDisplay.textContent = ''
     elements.soilCostDisplay.textContent = ''
     updateForm()
@@ -238,9 +238,9 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         b.classList.toggle('is-active', isActive)
         b.setAttribute('aria-pressed', String(isActive))
       })
-      elements.envHints.forEach((h) =>
-        h.classList.toggle('is-visible', h.dataset.for === state.selectedEnvironment),
-      )
+      for (const h of elements.envHints) {
+        h.classList.toggle('is-visible', h.dataset.for === state.selectedEnvironment)
+      }
       updateForm()
     })
   })

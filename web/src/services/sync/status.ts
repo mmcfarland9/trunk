@@ -84,5 +84,5 @@ export function notifyMetadataListeners(): void {
     consecutiveFailures,
     lastFailureAt,
   }
-  metadataListeners.forEach((l) => l(meta))
+  for (const l of metadataListeners) l(meta)
 }

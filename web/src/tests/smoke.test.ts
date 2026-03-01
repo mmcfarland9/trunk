@@ -36,7 +36,9 @@ describe('App Smoke Tests', () => {
         removeItem: (key: string) => {
           delete storage[key]
         },
-        clear: () => Object.keys(storage).forEach((k) => delete storage[k]),
+        clear: () => {
+          for (const k of Object.keys(storage)) delete storage[k]
+        },
       },
     })
   })

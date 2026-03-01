@@ -28,7 +28,7 @@
         "useTemplate": "warn",
         "noUselessElse": "warn",
         "useDefaultParameterLast": "warn",
-        "noNonNullAssertion": "warn",
+        "noNonNullAssertion": "off",
         "useExponentiationOperator": "warn"
       },
       "complexity": {

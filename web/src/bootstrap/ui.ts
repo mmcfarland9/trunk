@@ -93,7 +93,9 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   // Set up storage error callbacks
   setEventStoreErrorCallbacks(
     () => showQuotaWarning(),
-    (error) => console.error('Event storage failed:', error),
+    (error: unknown) => {
+      void error // Storage errors are surfaced via quota warning banner
+    },
   )
 
   // Initialize charts

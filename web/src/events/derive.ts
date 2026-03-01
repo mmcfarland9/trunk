@@ -530,7 +530,7 @@ export function deriveWateringStreak(
   let longest = sortedDays.length > 0 ? 1 : 0
   let run = 1
   for (let i = 1; i < sortedDays.length; i++) {
-    const prev = new Date(sortedDays[i - 1] + 'T12:00:00')
+    const prev = new Date(`${sortedDays[i - 1]}T12:00:00`)
     prev.setDate(prev.getDate() + 1)
     if (getResetDayKey(prev) === sortedDays[i]) {
       run++

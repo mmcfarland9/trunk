@@ -486,9 +486,7 @@ describe('shine-dialog', () => {
       canAffordSunMock.mockReturnValue(true)
 
       // Use a counter to cycle through random values deterministically
-      let callCount = 0
       vi.spyOn(Math, 'random').mockImplementation(() => {
-        callCount++
         // Return 0 most of the time to pick first available item,
         // but vary to test rotation
         return 0

@@ -29,7 +29,7 @@ function loadPendingIds(): void {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
-        parsed.forEach((id: string) => pendingUploadIds.add(id))
+        for (const id of parsed) pendingUploadIds.add(id as string)
       }
     }
   } catch {

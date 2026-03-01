@@ -17,7 +17,9 @@ Object.defineProperty(globalThis, 'localStorage', {
     removeItem: (key: string) => {
       delete storage[key]
     },
-    clear: () => Object.keys(storage).forEach((k) => delete storage[k]),
+    clear: () => {
+      for (const k of Object.keys(storage)) delete storage[k]
+    },
     get length() {
       return Object.keys(storage).length
     },
@@ -28,5 +30,5 @@ Object.defineProperty(globalThis, 'localStorage', {
 
 // Reset localStorage between tests
 beforeEach(() => {
-  Object.keys(storage).forEach((k) => delete storage[k])
+  for (const k of Object.keys(storage)) delete storage[k]
 })

@@ -11,15 +11,6 @@ import type { TrunkEvent } from '../events/types'
 // Helpers
 // ---------------------------------------------------------------------------
 
-function waterAt(dateStr: string, sproutId = 'sprout-1'): TrunkEvent {
-  return {
-    type: 'sprout_watered',
-    timestamp: new Date(dateStr).toISOString(),
-    sproutId,
-    content: 'Progress',
-  }
-}
-
 /**
  * Create a water event using explicit local-time components.
  * Avoids timezone string ambiguity.

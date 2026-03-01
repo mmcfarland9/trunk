@@ -313,7 +313,7 @@ export function trapFocus(dialogBox: HTMLElement): () => void {
 
   return () => {
     dialogBox.removeEventListener('keydown', handleKeydown)
-    if (previouslyFocused && previouslyFocused.isConnected) {
+    if (previouslyFocused?.isConnected) {
       previouslyFocused.focus()
     } else {
       document.body.focus()

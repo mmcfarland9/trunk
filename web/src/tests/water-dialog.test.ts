@@ -48,7 +48,7 @@ vi.mock('../state', () => ({
 }))
 
 vi.mock('../utils/debounce', () => ({
-  preventDoubleClick: (fn: Function) => fn,
+  preventDoubleClick: (fn: (...args: unknown[]) => unknown) => fn,
 }))
 
 vi.mock('../events', () => ({
