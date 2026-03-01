@@ -406,13 +406,14 @@ export function buildSoilChart(): {
       setAttrs(ruleLine, { x1: cx, x2: cx })
       ruleLine.classList.add('is-visible')
 
-      const rect = svg.getBoundingClientRect()
-      const pxX = (cx / VB_W) * rect.width
+      const cssW = svg.clientWidth
+      const pxX = (cx / VB_W) * cssW
       tooltipCap.textContent = `Cap: ${pt.capacity.toFixed(2)}`
       tooltipAvail.textContent = `Avail: ${pt.available.toFixed(2)}`
       tooltipDate.textContent = tooltipDateFmt.format(pt.timestamp)
-      tooltip.style.left = `${Math.min(pxX, rect.width - 150)}px`
       tooltip.classList.remove('hidden')
+      const tooltipW = tooltip.offsetWidth
+      tooltip.style.left = `${Math.max(0, Math.min(pxX, cssW - tooltipW))}px`
     }
 
     function clearHover(): void {
