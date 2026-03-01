@@ -49,8 +49,8 @@ let guideAnimationId = 0,
 let lastHoveredBranch: number | null = null
 
 // Position cache to avoid parseFloat in animation frames
-let positionCache = new WeakMap<HTMLElement, { x: number; y: number }>()
-let twigRadiusCache = new WeakMap<HTMLElement, number>()
+const positionCache = new WeakMap<HTMLElement, { x: number; y: number }>()
+const twigRadiusCache = new WeakMap<HTMLElement, number>()
 
 export function positionNodes(ctx: AppContext): void {
   const { canvas } = ctx.elements
