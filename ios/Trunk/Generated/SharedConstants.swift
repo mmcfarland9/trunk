@@ -207,14 +207,16 @@ enum SharedConstants {
             "1d": 3600,
             "1w": 21600,
             "1m": 86400,
-            "3m": 604800
+            "3m": 302400,
+            "6m": 604800,
+            "ytd": 604800
         ]
 
         /// Ranges that use calendar-snapped semimonthly bucketing (1st & 15th of each month)
-        static let semimonthlyRanges: Set<String> = ["6m", "ytd"]
+        static let semimonthlyRanges: Set<String> = []
 
         /// Target node count for adaptive (ALL) range
-        static let adaptiveTargetNodes: Int = 24
+        static let adaptiveTargetNodes: Int = 48
     }
 
     // MARK: - Watering Prompts

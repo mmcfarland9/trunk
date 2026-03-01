@@ -21,6 +21,10 @@ import { getPresetLabel } from '../state'
 const W_WATER = 0.05
 const W_SUN = 0.35
 
+// Absolute ceiling: a branch at this weighted total = 100%.
+// Multiple branches can reach 100% independently.
+const ENGAGEMENT_CEILING = 100
+
 export type BranchEngagement = {
   branchIndex: number
   branchName: string
@@ -106,14 +110,12 @@ export function computeBranchEngagement(events: readonly TrunkEvent[]): BranchEn
     (_, i) => planted[i] + watered[i] + sunReflections[i] + harvested[i],
   )
 
-  const maxWeighted = Math.max(...weighted)
-
   return Array.from(
     { length: BRANCH_COUNT },
     (_, i): BranchEngagement => ({
       branchIndex: i,
       branchName: getPresetLabel(`branch-${i}`) || `Branch ${i + 1}`,
-      score: maxWeighted > 0 ? weighted[i] / maxWeighted : 0,
+      score: Math.min(1, weighted[i] / ENGAGEMENT_CEILING),
       rawTotal: rawTotals[i],
       planted: planted[i],
       watered: watered[i],

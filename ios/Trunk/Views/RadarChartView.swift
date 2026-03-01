@@ -208,6 +208,8 @@ struct RadarChartView: View {
     // Flat per-event weights from soil recovery rates (constants.json)
     private static let wWater = 0.05
     private static let wSun = 0.35
+    /// Absolute ceiling for engagement scoring (~1 year of consistent activity)
+    private static let engagementCeiling = 100.0
 
     static func computeScores(from events: [SyncEvent]) -> [Double] {
         let branchCount = SharedConstants.Tree.branchCount
@@ -256,12 +258,7 @@ struct RadarChartView: View {
             }
         }
 
-        let maxWeighted = weighted.max() ?? 0
-        guard maxWeighted > 0 else {
-            return Array(repeating: 0.0, count: branchCount)
-        }
-
-        return weighted.map { $0 / maxWeighted }
+        return weighted.map { min(1.0, $0 / engagementCeiling) }
     }
 
     private static func extractBranchIndex(from twigId: String, branchCount: Int) -> Int? {

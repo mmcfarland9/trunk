@@ -111,6 +111,9 @@
       "all": { "adaptive": true, "targetNodes": 48 }
     }
   },
+  "radarChart": {
+    "engagementCeiling": 100
+  },
   "prompts": {
     "recentWaterLimit": 10,
     "recentShineLimit": 15,

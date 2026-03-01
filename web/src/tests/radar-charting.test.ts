@@ -104,7 +104,7 @@ describe('computeBranchEngagement — single branch', () => {
 
     expect(result[0].planted).toBe(2)
     expect(result[0].rawTotal).toBe(2)
-    expect(result[0].score).toBe(1) // max branch = 1.0
+    expect(result[0].score).toBeGreaterThan(0)
   })
 
   it('counts watered events via sproutId lookup', () => {
@@ -124,7 +124,7 @@ describe('computeBranchEngagement — single branch', () => {
 
     expect(result[2].sunReflections).toBe(2)
     expect(result[2].rawTotal).toBe(2)
-    expect(result[2].score).toBe(1)
+    expect(result[2].score).toBeGreaterThan(0)
   })
 
   it('counts harvested events via sproutId lookup', () => {
@@ -196,8 +196,8 @@ describe('computeBranchEngagement — all branches', () => {
 // Score normalization
 // ---------------------------------------------------------------------------
 
-describe('computeBranchEngagement — score normalization', () => {
-  it('normalizes max branch to 1.0', () => {
+describe('computeBranchEngagement — absolute scoring', () => {
+  it('scores are absolute against ceiling, not relative to max branch', () => {
     const events: TrunkEvent[] = [
       // Branch 0: 2 plants (2+2=4) + 2 waters (0.1) + 1 sun (0.35) = 4.45 weighted
       plantEvent(0, 0, 'sp-1'),
@@ -212,11 +212,12 @@ describe('computeBranchEngagement — score normalization', () => {
 
     const result = computeBranchEngagement(events)
 
-    expect(result[0].score).toBe(1) // max
+    // Absolute: 4.45 / 100 = 0.0445
+    expect(result[0].score).toBeCloseTo(4.45 / 100)
     expect(result[0].rawTotal).toBe(5)
 
-    // Weighted: 2.05 / 4.45 ≈ 0.4607
-    expect(result[1].score).toBeCloseTo(2.05 / 4.45)
+    // Absolute: 2.05 / 100 = 0.0205
+    expect(result[1].score).toBeCloseTo(2.05 / 100)
     expect(result[1].rawTotal).toBe(2)
   })
 
@@ -228,7 +229,7 @@ describe('computeBranchEngagement — score normalization', () => {
     }
   })
 
-  it('all scores are 1.0 when all branches have equal activity', () => {
+  it('equal branches get equal scores (not all 1.0)', () => {
     const events: TrunkEvent[] = []
 
     for (let i = 0; i < BRANCH_COUNT; i++) {
@@ -237,14 +238,17 @@ describe('computeBranchEngagement — score normalization', () => {
 
     const result = computeBranchEngagement(events)
 
+    // All equal at 2/100 = 0.02 (absolute), not 1.0 (relative)
+    const first = result[0].score
     for (const branch of result) {
-      expect(branch.score).toBe(1) // all equal = all 1.0
+      expect(branch.score).toBe(first)
     }
+    expect(first).toBeCloseTo(0.02)
   })
 
-  it('scores range from 0 to 1', () => {
+  it('scores are capped at 1.0', () => {
     const events: TrunkEvent[] = [
-      // Heavily use branch 0
+      // Branch 0: many events, but scores can't exceed 1.0
       plantEvent(0, 0, 'sp-1'),
       plantEvent(0, 1, 'sp-2'),
       plantEvent(0, 2, 'sp-3'),
@@ -257,7 +261,6 @@ describe('computeBranchEngagement — score normalization', () => {
       harvestEvent('sp-2'),
       // Lightly use branch 1
       plantEvent(1, 0, 'sp-4'),
-      // Leave branches 2-7 empty
     ]
 
     const result = computeBranchEngagement(events)
@@ -267,9 +270,8 @@ describe('computeBranchEngagement — score normalization', () => {
       expect(branch.score).toBeLessThanOrEqual(1)
     }
 
-    expect(result[0].score).toBe(1) // max
+    expect(result[0].score).toBeGreaterThan(result[1].score)
     expect(result[1].score).toBeGreaterThan(0)
-    expect(result[1].score).toBeLessThan(1)
     // Empty branches
     for (let i = 2; i < BRANCH_COUNT; i++) {
       expect(result[i].score).toBe(0)
