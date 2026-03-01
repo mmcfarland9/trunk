@@ -109,7 +109,8 @@ struct TreeCanvasView: View {
             RadarChartView(
                 scores: radarScores,
                 branchPositions: branchPositions,
-                center: center
+                center: center,
+                branchNames: (0..<branchCount).map { SharedConstants.Tree.branchName($0) }
             )
 
             // ASCII dot guide lines — single Canvas for all 8 branches

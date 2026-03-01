@@ -37,7 +37,8 @@ const TWIG_SPREAD_ACTIVE = 1.8,
 const BLOOM_CAP_ACTIVE = 0.42,
   BLOOM_CAP_OVERVIEW = 0.22
 const BRANCH_ANGLE_STEP = (2 * Math.PI) / BRANCH_COUNT
-const CURVE_SEGMENTS = 12
+const TWIG_LINE_SPACING = 8,
+  BRANCH_LINE_SPACING = 12
 const PREVIEW_FADE = 500,
   PREVIEW_OPACITY_MAX = 0.4
 
@@ -165,8 +166,6 @@ function resolveGuideColors(): { trunk: string; branch: string; twig: string } {
 }
 
 const VARIANT_ALPHA: Record<string, number> = { trunk: 0.6, branch: 0.5, twig: 0.4 }
-const VARIANT_LINE_WIDTH: Record<string, number> = { trunk: 1.5, branch: 1.0, twig: 0.8 }
-const BEZIER_OFFSET: Record<string, number> = { trunk: 0.1, branch: 0.1, twig: 0.05 }
 
 function drawGuideLines(ctx: AppContext): void {
   const { canvas, trunk, guideLayer } = ctx.elements
@@ -222,19 +221,8 @@ function drawGuideLines(ctx: AppContext): void {
       const mainRect = getCachedRect(bg.branch)
       const mainCenter = getCenterPoint(mainRect, rect),
         mainRadius = Math.max(mainRect.width, mainRect.height) / 2
-      drawLineBetween(
-        c2d,
-        colors,
-        trunkCenter,
-        trunkRadius,
-        mainCenter,
-        mainRadius,
-        'trunk',
-        GUIDE_GAP,
-        undefined,
-        activeBranchIndex,
-      )
-      bg.twigs.forEach((twig, ti) => {
+      drawLineBetween(c2d, colors, trunkCenter, trunkRadius, mainCenter, mainRadius, 'trunk')
+      bg.twigs.forEach((twig) => {
         const tr = getCachedRect(twig)
         drawLineBetween(
           c2d,
@@ -245,22 +233,12 @@ function drawGuideLines(ctx: AppContext): void {
           Math.max(tr.width, tr.height) / 2,
           'twig',
           TWIG_GAP,
-          undefined,
-          ti,
         )
       })
     }
   } else {
-    const trunkHovered = trunk.matches(':hover')
-    branchGroups.forEach((bg, idx) => {
+    branchGroups.forEach((bg) => {
       const mr = getCachedRect(bg.branch)
-      const branchAlpha = trunkHovered
-        ? Math.min((VARIANT_ALPHA['branch'] ?? 0.5) * 1.4, 0.9)
-        : hoveredBranchIndex !== null
-          ? idx === hoveredBranchIndex
-            ? undefined
-            : (VARIANT_ALPHA['branch'] ?? 0.5) * 0.3
-          : undefined
       drawLineBetween(
         c2d,
         colors,
@@ -269,9 +247,6 @@ function drawGuideLines(ctx: AppContext): void {
         getCenterPoint(mr, rect),
         Math.max(mr.width, mr.height) / 2,
         'branch',
-        GUIDE_GAP,
-        branchAlpha,
-        idx,
       )
     })
     if (hoveredBranchIndex !== null) {
@@ -286,7 +261,7 @@ function drawGuideLines(ctx: AppContext): void {
         const mr = getCachedRect(bg.branch)
         const mc = getCenterPoint(mr, rect),
           mrad = Math.max(mr.width, mr.height) / 2
-        bg.twigs.forEach((twig, ti) => {
+        bg.twigs.forEach((twig) => {
           const tr = getCachedRect(twig)
           drawLineBetween(
             c2d,
@@ -298,7 +273,6 @@ function drawGuideLines(ctx: AppContext): void {
             'twig',
             TWIG_GAP,
             opacity,
-            ti,
           )
         })
       }
@@ -370,7 +344,6 @@ function drawLineBetween(
   variant: 'branch' | 'twig' | 'trunk',
   gap2 = GUIDE_GAP,
   opacity?: number,
-  curveIndex = 0,
 ): void {
   const dx = p2.x - p1.x,
     dy = p2.y - p1.y,
@@ -378,82 +351,44 @@ function drawLineBetween(
   if (!dist) return
   const ux = dx / dist,
     uy = dy / dist
-
-  const sx = p1.x + ux * (r1 + GUIDE_GAP),
-    sy = p1.y + uy * (r1 + GUIDE_GAP)
-  const ex = p2.x - ux * (r2 + gap2),
-    ey = p2.y - uy * (r2 + gap2)
-
-  // Bezier control point: perpendicular offset at midpoint
-  const mx = (sx + ex) / 2,
-    my = (sy + ey) / 2
-  const segDist = Math.hypot(ex - sx, ey - sy)
-  const offset = segDist * (BEZIER_OFFSET[variant] ?? 0.05)
-  const sign = curveIndex % 2 === 0 ? 1 : -1
-  const cpx = mx + -uy * offset * sign,
-    cpy = my + ux * offset * sign
-
-  drawCurveLine(c2d, colors, sx, sy, cpx, cpy, ex, ey, variant, opacity)
+  drawDotLine(
+    c2d,
+    colors,
+    p1.x + ux * (r1 + GUIDE_GAP),
+    p1.y + uy * (r1 + GUIDE_GAP),
+    p2.x - ux * (r2 + gap2),
+    p2.y - uy * (r2 + gap2),
+    variant,
+    opacity,
+  )
 }
 
-function drawCurveLine(
+const DOT_RADIUS = 1.5
+
+function drawDotLine(
   c2d: CanvasRenderingContext2D,
   colors: { trunk: string; branch: string; twig: string },
   x1: number,
   y1: number,
-  cpx: number,
-  cpy: number,
   x2: number,
   y2: number,
   variant: 'branch' | 'twig' | 'trunk',
   opacity?: number,
 ): void {
+  const dx = x2 - x1,
+    dy = y2 - y1,
+    dist = Math.hypot(dx, dy)
+  const spacing = variant === 'twig' ? TWIG_LINE_SPACING : BRANCH_LINE_SPACING,
+    n = Math.max(1, Math.floor(dist / spacing))
   const alpha = opacity ?? VARIANT_ALPHA[variant] ?? 0.5
-  const baseWidth = VARIANT_LINE_WIDTH[variant] ?? 1.0
-  const startW = baseWidth * 1.3
-  const endW = baseWidth * 0.7
-
-  c2d.lineCap = 'round'
-  c2d.strokeStyle = colors[variant]
-
-  // Shadow pass for trunk lines (depth effect)
-  if (variant === 'trunk') {
-    c2d.lineWidth = startW + 1.5
-    c2d.globalAlpha = alpha * 0.12
+  c2d.globalAlpha = alpha
+  c2d.fillStyle = colors[variant]
+  for (let i = 0; i < n; i++) {
+    const t = n > 1 ? i / (n - 1) : 0.5
     c2d.beginPath()
-    c2d.moveTo(x1, y1)
-    c2d.quadraticCurveTo(cpx, cpy, x2, y2)
-    c2d.stroke()
+    c2d.arc(x1 + dx * t, y1 + dy * t, DOT_RADIUS, 0, Math.PI * 2)
+    c2d.fill()
   }
-
-  // Segmented drawing: taper width + edge-bright opacity along the curve
-  let prevX = x1,
-    prevY = y1
-  for (let i = 1; i <= CURVE_SEGMENTS; i++) {
-    const t = i / CURVE_SEGMENTS
-    const tMid = (i - 0.5) / CURVE_SEGMENTS
-
-    // Quadratic bezier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
-    const it = 1 - t
-    const px = it * it * x1 + 2 * it * t * cpx + t * t * x2
-    const py = it * it * y1 + 2 * it * t * cpy + t * t * y2
-
-    // Taper width: thick at source, thin at target
-    c2d.lineWidth = startW + (endW - startW) * tMid
-
-    // Opacity: brighter near endpoints, slightly dimmer in the middle
-    const edgeBrightness = 1 - Math.sin(tMid * Math.PI) * 0.25
-    c2d.globalAlpha = alpha * edgeBrightness
-
-    c2d.beginPath()
-    c2d.moveTo(prevX, prevY)
-    c2d.lineTo(px, py)
-    c2d.stroke()
-
-    prevX = px
-    prevY = py
-  }
-
   c2d.globalAlpha = 1
 }
 
