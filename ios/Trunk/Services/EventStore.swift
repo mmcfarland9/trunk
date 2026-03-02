@@ -31,10 +31,9 @@ final class EventStore: ObservableObject {
   private(set) var pendingUploadClientIds: Set<String> = []
 
   // Cached derived state (invalidated on event changes)
+  // Water, sun, streak, and soil history are now included in DerivedState
+  // and computed in a single pass (no separate derivation functions needed).
   private var cachedState: DerivedState?
-  private var cachedWaterAvailable: Int?
-  private var cachedSunAvailable: Int?
-  private var cachedStreak: WateringStreak?
 
   // Debounced disk write
   private var writeTask: Task<Void, Never>?
@@ -140,44 +139,30 @@ final class EventStore: ObservableObject {
 
   // MARK: - State Derivation
 
-  /// Get derived state (cached)
-  func getState() -> DerivedState {
+  /// Get derived state (cached).
+  /// State now includes water/sun/streak/soilHistory — computed in a single pass.
+  func getState(now: Date = Date()) -> DerivedState {
     if let cached = cachedState {
       return cached
     }
-    let state = deriveState(from: events)
+    let state = deriveState(from: events, now: now)
     cachedState = state
     return state
   }
 
-  /// Get water available (cached)
+  /// Get water available (reads from consolidated DerivedState)
   func getWaterAvailable(now: Date = Date()) -> Int {
-    if let cached = cachedWaterAvailable {
-      return cached
-    }
-    let water = deriveWaterAvailable(from: events, now: now)
-    cachedWaterAvailable = water
-    return water
+    getState(now: now).waterAvailable
   }
 
-  /// Get sun available (cached)
+  /// Get sun available (reads from consolidated DerivedState)
   func getSunAvailable(now: Date = Date()) -> Int {
-    if let cached = cachedSunAvailable {
-      return cached
-    }
-    let sun = deriveSunAvailable(from: events, now: now)
-    cachedSunAvailable = sun
-    return sun
+    getState(now: now).sunAvailable
   }
 
-  /// Get watering streak (cached)
+  /// Get watering streak (reads from consolidated DerivedState)
   func getWateringStreak(now: Date = Date()) -> WateringStreak {
-    if let cached = cachedStreak {
-      return cached
-    }
-    let streak = deriveWateringStreak(from: events, now: now)
-    cachedStreak = streak
-    return streak
+    getState(now: now).wateringStreak
   }
 
   /// Check if sprout was watered this week
@@ -189,9 +174,6 @@ final class EventStore: ObservableObject {
 
   private func invalidateCache() {
     cachedState = nil
-    cachedWaterAvailable = nil
-    cachedSunAvailable = nil
-    cachedStreak = nil
   }
 
   /// Force refresh (e.g., when crossing time boundaries)
@@ -213,7 +195,6 @@ final class EventStore: ObservableObject {
 
     do {
       let encoder = JSONEncoder()
-      encoder.outputFormatting = .prettyPrinted
       return try encoder.encode(cached)
     } catch {
       print("EventStore: Failed to encode cache — \(error.localizedDescription)")

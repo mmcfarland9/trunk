@@ -126,6 +126,11 @@ struct DerivedState {
     var sprouts: [String: DerivedSprout]
     var leaves: [String: DerivedLeaf]
     var sunEntries: [DerivedSunEntry]
+    var waterAvailable: Int
+    var sunAvailable: Int
+    var wateringStreak: WateringStreak
+    var soilHistory: [RawSoilSnapshot]
+    var radarScores: [Double]
 }
 
 // MARK: - Soil Rounding
@@ -153,14 +158,43 @@ private func getEventDedupeKey(_ event: SyncEvent) -> String {
 // MARK: - State Derivation
 
 /// Derive complete state from event log.
-/// This replays all events to compute current state.
-func deriveState(from events: [SyncEvent]) -> DerivedState {
+/// This replays all events to compute current state, including water/sun/streak
+/// and radar scores in a single pass (avoiding redundant event iteration).
+func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
     var soilCapacity = SharedConstants.Soil.startingCapacity
     var soilAvailable = SharedConstants.Soil.startingCapacity
 
     var sprouts: [String: DerivedSprout] = [:]
     var leaves: [String: DerivedLeaf] = [:]
     var sunEntries: [DerivedSunEntry] = []
+
+    // Single-pass accumulators for water/sun/streak
+    let waterResetTime = getTodayResetTime(now: now)
+    let sunResetTime = getWeekResetTime(now: now)
+    var waterCountSinceReset = 0
+    var sunCountSinceReset = 0
+    var waterTimestamps: [Date] = []
+
+    // Soil history snapshots (replaces SoilHistoryService.computeSoilHistory)
+    var soilHistory: [RawSoilSnapshot] = []
+    var soilHistorySproutInfo: [String: (soilCost: Double, isActive: Bool)] = [:]
+
+    // Radar score accumulators (replaces RadarChartView.computeScores)
+    let branchCount = SharedConstants.Tree.branchCount
+    var radarWeighted = Array(repeating: 0.0, count: branchCount)
+    var radarSproutInfo: [String: (twigId: String, soilCost: Double)] = [:]
+    let radarWWater = 0.05
+    let radarWSun = 0.35
+    let radarCeiling = 100.0
+
+    // Timestamp cache: avoid re-parsing the same ISO8601 string multiple times
+    var timestampCache: [String: Date] = [:]
+    func cachedParse(_ ts: String) -> Date? {
+        if let cached = timestampCache[ts] { return cached }
+        let parsed = ISO8601.parse(ts)
+        if let parsed { timestampCache[ts] = parsed }
+        return parsed
+    }
 
     // Sort events by timestamp to ensure correct ordering (matches web derive.ts)
     let sorted = events.sorted { ($0.clientTimestamp) < ($1.clientTimestamp) }
@@ -174,46 +208,194 @@ func deriveState(from events: [SyncEvent]) -> DerivedState {
         return true
     }
 
+    // Add starting point for soil history from first event
+    if let firstEvent = dedupedEvents.first,
+       let date = cachedParse(firstEvent.clientTimestamp) {
+        soilHistory.append(RawSoilSnapshot(date: date, capacity: soilCapacity, available: soilAvailable))
+    }
+
     for event in dedupedEvents {
+        // Parse timestamp ONCE per event, reuse for all processing
+        let eventTimestamp = cachedParse(event.clientTimestamp)
+
         switch event.type {
         case "sprout_planted":
-            processSproutPlanted(event: event, soilAvailable: &soilAvailable, sprouts: &sprouts)
+            processSproutPlanted(event: event, timestamp: eventTimestamp, soilAvailable: &soilAvailable, sprouts: &sprouts)
+            // Radar: accumulate soil cost per branch
+            if let sproutId = getString(event.payload, "sproutId"),
+               let twigId = getString(event.payload, "twigId") {
+                let soilCost = getDouble(event.payload, "soilCost") ?? 0
+                radarSproutInfo[sproutId] = (twigId: twigId, soilCost: soilCost)
+                if let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
+                    radarWeighted[bi] += soilCost
+                }
+            }
+            // Soil history tracking
+            if let sproutId = getString(event.payload, "sproutId"),
+               let soilCost = getDouble(event.payload, "soilCost"),
+               let date = eventTimestamp {
+                soilHistorySproutInfo[sproutId] = (soilCost: soilCost, isActive: true)
+                soilHistory.append(RawSoilSnapshot(date: date, capacity: soilCapacity, available: soilAvailable))
+            }
 
         case "sprout_watered":
-            processSproutWatered(event: event, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sprouts: &sprouts)
+            processSproutWatered(event: event, timestamp: eventTimestamp, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sprouts: &sprouts)
+            // Radar: water recovery per branch
+            if let sproutId = getString(event.payload, "sproutId"),
+               let twigId = radarSproutInfo[sproutId]?.twigId,
+               let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
+                radarWeighted[bi] += radarWWater
+            }
+            // Water counting + streak accumulation
+            if let ts = eventTimestamp {
+                waterTimestamps.append(ts)
+                if ts >= waterResetTime {
+                    waterCountSinceReset += 1
+                }
+                // Soil history tracking
+                if let sproutId = getString(event.payload, "sproutId"),
+                   let info = soilHistorySproutInfo[sproutId], info.isActive {
+                    soilHistory.append(RawSoilSnapshot(date: ts, capacity: soilCapacity, available: soilAvailable))
+                }
+            }
 
         case "sprout_harvested":
-            processSproutHarvested(event: event, soilCapacity: &soilCapacity, soilAvailable: &soilAvailable, sprouts: &sprouts)
+            processSproutHarvested(event: event, timestamp: eventTimestamp, soilCapacity: &soilCapacity, soilAvailable: &soilAvailable, sprouts: &sprouts)
+            // Radar: harvest reward per branch
+            if let sproutId = getString(event.payload, "sproutId"),
+               let info = radarSproutInfo[sproutId],
+               let bi = extractBranchIndex(from: info.twigId, branchCount: branchCount) {
+                let result = getInt(event.payload, "result") ?? 3
+                let rm = SharedConstants.Soil.resultMultipliers[result] ?? 0.7
+                radarWeighted[bi] += info.soilCost * rm
+            }
+            // Soil history tracking
+            if let sproutId = getString(event.payload, "sproutId"),
+               let date = eventTimestamp,
+               let info = soilHistorySproutInfo[sproutId] {
+                soilHistorySproutInfo[sproutId] = (soilCost: info.soilCost, isActive: false)
+                soilHistory.append(RawSoilSnapshot(date: date, capacity: soilCapacity, available: soilAvailable))
+            }
 
         case "sprout_uprooted":
-            processSproutUprooted(event: event, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sprouts: &sprouts)
+            processSproutUprooted(event: event, timestamp: eventTimestamp, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sprouts: &sprouts)
+            // Soil history tracking
+            if let sproutId = getString(event.payload, "sproutId"),
+               let date = eventTimestamp {
+                if let info = soilHistorySproutInfo[sproutId] {
+                    soilHistorySproutInfo[sproutId] = (soilCost: info.soilCost, isActive: false)
+                }
+                soilHistory.append(RawSoilSnapshot(date: date, capacity: soilCapacity, available: soilAvailable))
+            }
 
         case "sun_shone":
-            processSunShone(event: event, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sunEntries: &sunEntries)
+            processSunShone(event: event, timestamp: eventTimestamp, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sunEntries: &sunEntries)
+            // Radar: sun recovery per branch
+            if let twigId = getString(event.payload, "twigId"),
+               let bi = extractBranchIndex(from: twigId, branchCount: branchCount) {
+                radarWeighted[bi] += radarWSun
+            }
+            // Sun counting + soil history
+            if let ts = eventTimestamp {
+                if ts >= sunResetTime {
+                    sunCountSinceReset += 1
+                }
+                soilHistory.append(RawSoilSnapshot(date: ts, capacity: soilCapacity, available: soilAvailable))
+            }
 
         case "sprout_edited":
             processSproutEdited(event: event, sprouts: &sprouts)
 
         case "leaf_created":
-            processLeafCreated(event: event, leaves: &leaves)
+            processLeafCreated(event: event, timestamp: eventTimestamp, leaves: &leaves)
 
         default:
             break
         }
     }
 
+    // Add current date as final soil history point
+    soilHistory.append(RawSoilSnapshot(date: now, capacity: soilCapacity, available: soilAvailable))
+
+    // Compute streak from collected timestamps
+    let streak = computeStreakFromTimestamps(waterTimestamps, now: now)
+
+    // Normalize radar scores
+    let radarScores = radarWeighted.map { min(1.0, $0 / radarCeiling) }
+
     return DerivedState(
         soilCapacity: soilCapacity,
         soilAvailable: soilAvailable,
         sprouts: sprouts,
         leaves: leaves,
-        sunEntries: sunEntries
+        sunEntries: sunEntries,
+        waterAvailable: max(0, SharedConstants.Water.dailyCapacity - waterCountSinceReset),
+        sunAvailable: max(0, SharedConstants.Sun.weeklyCapacity - sunCountSinceReset),
+        wateringStreak: streak,
+        soilHistory: soilHistory,
+        radarScores: radarScores
     )
+}
+
+/// Extract branch index from twig ID (e.g. "branch-3-twig-..." → 3)
+private func extractBranchIndex(from twigId: String, branchCount: Int) -> Int? {
+    for i in 0..<branchCount {
+        if twigId.hasPrefix("branch-\(i)") {
+            return i
+        }
+    }
+    return nil
+}
+
+/// Compute watering streak from pre-collected timestamps (avoids re-iterating events).
+private func computeStreakFromTimestamps(_ timestamps: [Date], now: Date) -> WateringStreak {
+    guard !timestamps.isEmpty else {
+        return WateringStreak(current: 0, longest: 0)
+    }
+
+    // Build set of unique watering days (keyed by 6am boundary date)
+    var waterDays = Set<String>()
+    for ts in timestamps {
+        waterDays.insert(dayKey(getTodayResetTime(now: ts)))
+    }
+
+    // Current streak: walk back from today (or yesterday if not watered today)
+    let calendar = Calendar.current
+    var cursor = getTodayResetTime(now: now)
+    if !waterDays.contains(dayKey(cursor)) {
+        cursor = calendar.date(byAdding: .day, value: -1, to: cursor) ?? cursor
+    }
+
+    var current = 0
+    while waterDays.contains(dayKey(cursor)) {
+        current += 1
+        cursor = calendar.date(byAdding: .day, value: -1, to: cursor) ?? cursor
+    }
+
+    // Longest streak: find longest consecutive run in sorted days
+    let sortedDays = waterDays.sorted()
+    var longest = sortedDays.isEmpty ? 0 : 1
+    var run = 1
+    let noonFormatter = ISO8601DateFormatter()
+    noonFormatter.formatOptions = [.withInternetDateTime]
+    for i in 1..<sortedDays.count {
+        let prevDate = noonFormatter.date(from: sortedDays[i - 1] + "T12:00:00Z") ?? Date()
+        let nextExpected = calendar.date(byAdding: .day, value: 1, to: prevDate) ?? prevDate
+        if dayKey(nextExpected) == sortedDays[i] {
+            run += 1
+        } else {
+            longest = max(longest, run)
+            run = 1
+        }
+    }
+    longest = max(longest, run)
+
+    return WateringStreak(current: current, longest: longest)
 }
 
 // MARK: - Event Processing
 
-private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
+private func processSproutPlanted(event: SyncEvent, timestamp: Date?, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
     guard let sproutId = getString(payload, "sproutId"),
@@ -224,7 +406,7 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
           let season = Season(rawValue: seasonRaw),
           let environment = SproutEnvironment(rawValue: environmentRaw),
           let leafId = getString(payload, "leafId"),
-          let guardedTimestamp = parseTimestamp(event.clientTimestamp),
+          let guardedTimestamp = timestamp,
           let soilCost = getDouble(payload, "soilCost") else {
         return
     }
@@ -255,11 +437,11 @@ private func processSproutPlanted(event: SyncEvent, soilAvailable: inout Double,
     sprouts[sproutId] = sprout
 }
 
-private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sprouts: inout [String: DerivedSprout]) {
+private func processSproutWatered(event: SyncEvent, timestamp: Date?, soilAvailable: inout Double, soilCapacity: Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
     guard let sproutId = getString(payload, "sproutId"),
-          let timestamp = parseTimestamp(event.clientTimestamp) else {
+          let ts = timestamp else {
         return
     }
 
@@ -269,7 +451,7 @@ private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double,
     // Add water entry to sprout
     if var sprout = sprouts[sproutId] {
         let waterEntry = DerivedWaterEntry(
-            timestamp: timestamp,
+            timestamp: ts,
             content: content,
             prompt: prompt
         )
@@ -283,11 +465,11 @@ private func processSproutWatered(event: SyncEvent, soilAvailable: inout Double,
     }
 }
 
-private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
+private func processSproutHarvested(event: SyncEvent, timestamp: Date?, soilCapacity: inout Double, soilAvailable: inout Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
     guard let sproutId = getString(payload, "sproutId"),
-          let timestamp = parseTimestamp(event.clientTimestamp) else {
+          let ts = timestamp else {
         return
     }
 
@@ -300,7 +482,7 @@ private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double
         sprout.state = .completed
         sprout.result = result
         sprout.reflection = reflection
-        sprout.harvestedAt = timestamp
+        sprout.harvestedAt = ts
 
         // Return soil cost + gain capacity
         // C14: Clamp capacity to maxCapacity (no rounding — capacity retains full precision)
@@ -312,7 +494,7 @@ private func processSproutHarvested(event: SyncEvent, soilCapacity: inout Double
     }
 }
 
-private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sprouts: inout [String: DerivedSprout]) {
+private func processSproutUprooted(event: SyncEvent, timestamp: Date?, soilAvailable: inout Double, soilCapacity: Double, sprouts: inout [String: DerivedSprout]) {
     let payload = event.payload
 
     guard let sproutId = getString(payload, "sproutId"),
@@ -326,15 +508,15 @@ private func processSproutUprooted(event: SyncEvent, soilAvailable: inout Double
     // Transition sprout to uprooted state (preserve all data)
     if var sprout = sprouts[sproutId], sprout.state == .active {
         sprout.state = .uprooted
-        sprout.uprootedAt = parseTimestamp(event.clientTimestamp)
+        sprout.uprootedAt = timestamp
         sprouts[sproutId] = sprout
     }
 }
 
-private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soilCapacity: Double, sunEntries: inout [DerivedSunEntry]) {
+private func processSunShone(event: SyncEvent, timestamp: Date?, soilAvailable: inout Double, soilCapacity: Double, sunEntries: inout [DerivedSunEntry]) {
     let payload = event.payload
 
-    guard let timestamp = parseTimestamp(event.clientTimestamp),
+    guard let ts = timestamp,
           let twigId = getString(payload, "twigId"),
           let twigLabel = getString(payload, "twigLabel"),
           let content = getString(payload, "content") else {
@@ -344,7 +526,7 @@ private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soil
     let prompt = getString(payload, "prompt")
 
     let sunEntry = DerivedSunEntry(
-        timestamp: timestamp,
+        timestamp: ts,
         content: content,
         prompt: prompt,
         twigId: twigId,
@@ -385,13 +567,13 @@ private func processSproutEdited(event: SyncEvent, sprouts: inout [String: Deriv
     sprouts[sproutId] = sprout
 }
 
-private func processLeafCreated(event: SyncEvent, leaves: inout [String: DerivedLeaf]) {
+private func processLeafCreated(event: SyncEvent, timestamp: Date?, leaves: inout [String: DerivedLeaf]) {
     let payload = event.payload
 
     guard let leafId = getString(payload, "leafId"),
           let twigId = getString(payload, "twigId"),
           let name = getString(payload, "name"),
-          let timestamp = parseTimestamp(event.clientTimestamp) else {
+          let ts = timestamp else {
         return
     }
 
@@ -399,7 +581,7 @@ private func processLeafCreated(event: SyncEvent, leaves: inout [String: Derived
         id: leafId,
         twigId: twigId,
         name: name,
-        createdAt: timestamp
+        createdAt: ts
     )
 
     leaves[leafId] = leaf
@@ -596,9 +778,11 @@ func deriveWateringStreak(from events: [SyncEvent], now: Date = Date()) -> Water
     let sortedDays = waterDays.sorted()
     var longest = sortedDays.isEmpty ? 0 : 1
     var run = 1
+    let noonFmt = ISO8601DateFormatter()
+    noonFmt.formatOptions = [.withInternetDateTime]
     for i in 1..<sortedDays.count {
         // Parse previous day at noon (DST-safe), add 1 day, compare key
-        let prevDate = ISO8601DateFormatter().date(from: sortedDays[i - 1] + "T12:00:00") ?? Date()
+        let prevDate = noonFmt.date(from: sortedDays[i - 1] + "T12:00:00Z") ?? Date()
         let nextExpected = calendar.date(byAdding: .day, value: 1, to: prevDate) ?? prevDate
         if dayKey(nextExpected) == sortedDays[i] {
             run += 1

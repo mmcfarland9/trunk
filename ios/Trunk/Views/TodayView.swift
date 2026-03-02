@@ -154,8 +154,8 @@ struct TodayView: View {
             }
         cachedNextHarvestSprout = cachedUpcomingSprouts.first
 
-        // Soil capacity history (raw snapshots before bucketing)
-        cachedRawSoilHistory = SoilHistoryService.computeSoilHistory()
+        // Soil capacity history (now included in DerivedState — no separate replay needed)
+        cachedRawSoilHistory = state.soilHistory
     }
 
     // MARK: - Helpers

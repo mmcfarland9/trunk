@@ -44,7 +44,8 @@ struct SoilCapacityTests {
                 "title": "Test 1",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_harvested", timestamp: "2026-01-15T10:00:00Z", payload: [
                 "sproutId": "sprout-1",
@@ -57,7 +58,8 @@ struct SoilCapacityTests {
                 "title": "Test 2",
                 "season": "2w",
                 "environment": "firm",
-                "soilCost": 3
+                "soilCost": 3,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_harvested", timestamp: "2026-01-30T10:00:00Z", payload: [
                 "sproutId": "sprout-2",
@@ -82,7 +84,8 @@ struct SoilCapacityTests {
                 "title": "Test",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 5
+                "soilCost": 5,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_watered", timestamp: "2026-01-02T10:00:00Z", payload: [
                 "sproutId": "sprout-1",
@@ -209,7 +212,8 @@ struct SproutsForTwigTests {
                 "title": "First Twig",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_planted", timestamp: "2026-01-01T11:00:00Z", payload: [
                 "sproutId": "sprout-2",
@@ -217,7 +221,8 @@ struct SproutsForTwigTests {
                 "title": "Second Twig",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_planted", timestamp: "2026-01-01T12:00:00Z", payload: [
                 "sproutId": "sprout-3",
@@ -225,7 +230,8 @@ struct SproutsForTwigTests {
                 "title": "First Twig Again",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ])
         ]
 
@@ -286,7 +292,8 @@ struct ActiveSproutsTests {
                 "title": "Active 1",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_planted", timestamp: "2026-01-01T11:00:00Z", payload: [
                 "sproutId": "completed-1",
@@ -294,7 +301,8 @@ struct ActiveSproutsTests {
                 "title": "Completed 1",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_harvested", timestamp: "2026-01-15T10:00:00Z", payload: [
                 "sproutId": "completed-1",
@@ -323,7 +331,8 @@ struct CompletedSproutsTests {
                 "title": "Active",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_planted", timestamp: "2026-01-01T11:00:00Z", payload: [
                 "sproutId": "completed-1",
@@ -331,7 +340,8 @@ struct CompletedSproutsTests {
                 "title": "Completed",
                 "season": "2w",
                 "environment": "fertile",
-                "soilCost": 2
+                "soilCost": 2,
+                "leafId": "leaf-default"
             ]),
             makeEvent(type: "sprout_harvested", timestamp: "2026-01-15T10:00:00Z", payload: [
                 "sproutId": "completed-1",

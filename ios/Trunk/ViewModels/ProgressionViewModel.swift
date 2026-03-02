@@ -85,12 +85,13 @@ final class ProgressionViewModel {
     }
 
     private func recompute() {
+        // Single getState() call — water/sun/streak are now computed in the same pass
         let state = EventStore.shared.getState()
         soilCapacity = state.soilCapacity
         soilAvailable = state.soilAvailable
-        waterAvailable = EventStore.shared.getWaterAvailable()
-        sunAvailable = EventStore.shared.getSunAvailable()
-        wateringStreak = EventStore.shared.getWateringStreak().current
+        waterAvailable = state.waterAvailable
+        sunAvailable = state.sunAvailable
+        wateringStreak = state.wateringStreak.current
     }
 
     /// Mark data as ready after first sync (success or error fallback).

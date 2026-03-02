@@ -224,7 +224,8 @@ struct TreeCanvasView: View {
     /// Refresh radar scores and branch sprout data from EventStore.
     /// Called on appear and version change — not per frame.
     private func refreshCachedData() {
-        radarScores = RadarChartView.computeScores(from: EventStore.shared.events)
+        let state = EventStore.shared.getState()
+        radarScores = state.radarScores
         branchSproutData = (0..<branchCount).map { index in
             let branchSprouts = sproutsForBranch(index)
             let activeCount = branchSprouts.filter { $0.state == .active }.count

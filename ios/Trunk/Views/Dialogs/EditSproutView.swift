@@ -24,15 +24,8 @@ struct EditSproutView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    // Derived state from EventStore
-    private var state: DerivedState {
-        EventStore.shared.getState()
-    }
-
-    /// Leaves belonging to this sprout's twig
-    private var twigLeaves: [DerivedLeaf] {
-        getLeavesForTwig(from: state, twigId: sprout.twigId)
-    }
+    // Cached leaves (refreshed on appear/version change, not per keystroke)
+    @State private var twigLeaves: [DerivedLeaf] = []
 
     private var isValid: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -216,6 +209,12 @@ struct EditSproutView: View {
             }
         } message: {
             Text("Enter a name for this saga")
+        }
+        .onAppear {
+            twigLeaves = getLeavesForTwig(from: EventStore.shared.getState(), twigId: sprout.twigId)
+        }
+        .onChange(of: progression.version) {
+            twigLeaves = getLeavesForTwig(from: EventStore.shared.getState(), twigId: sprout.twigId)
         }
     }
 

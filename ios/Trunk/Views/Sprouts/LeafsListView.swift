@@ -93,7 +93,7 @@ struct LeafsListView: View {
     // MARK: - Leaf List
 
     private var leafList: some View {
-        VStack(spacing: TrunkTheme.space2) {
+        LazyVStack(spacing: TrunkTheme.space2) {
             ForEach(leaves, id: \.id) { leaf in
                 NavigationLink {
                     LeafDetailView(leafId: leaf.id)

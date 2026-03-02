@@ -78,7 +78,7 @@ struct SproutsListView: View {
     // MARK: - Sprout List
 
     private var sproutList: some View {
-        VStack(spacing: TrunkTheme.space2) {
+        LazyVStack(spacing: TrunkTheme.space2) {
             ForEach(sprouts, id: \.id) { sprout in
                 NavigationLink {
                     SproutDetailView(sproutId: sprout.id)
