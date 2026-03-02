@@ -10,6 +10,7 @@ test.describe('Resource Management', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   test('displays initial soil capacity of 10', async ({ page }) => {

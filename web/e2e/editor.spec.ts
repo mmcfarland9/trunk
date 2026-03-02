@@ -13,6 +13,7 @@ test.describe('Editor Flows', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   test('focus section shows node details', async ({ page }) => {

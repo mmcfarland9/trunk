@@ -42,5 +42,30 @@ export async function seedEvents(page: Page, events: unknown[]): Promise<void> {
   }, events)
 }
 
-export const test = base
+/**
+ * Block Supabase REST API sync so tests run against local state only.
+ * GET /events is aborted (app falls back to localStorage cache).
+ * POST/PATCH returns 201 (push appears to succeed, no retry loops).
+ */
+async function isolateFromSupabase(page: Page): Promise<void> {
+  await page.route('**/rest/v1/events**', (route) => {
+    const method = route.request().method()
+    if (method === 'GET') {
+      route.abort('connectionrefused')
+    } else {
+      route.fulfill({ status: 201, contentType: 'application/json', body: '{}' })
+    }
+  })
+}
+
+/**
+ * Extended test fixture that automatically blocks Supabase sync.
+ * All E2E tests run against local state only — no cross-test pollution via server.
+ */
+export const test = base.extend({
+  page: async ({ page }, use) => {
+    await isolateFromSupabase(page)
+    await use(page)
+  },
+})
 export { expect }

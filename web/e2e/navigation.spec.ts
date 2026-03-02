@@ -16,6 +16,7 @@ test.describe('Navigation', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   test('starts in overview mode', async ({ page }) => {

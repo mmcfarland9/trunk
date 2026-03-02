@@ -20,6 +20,7 @@ test.describe('Accessibility Tests', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   test('overview page has acceptable accessibility', async ({ page }) => {

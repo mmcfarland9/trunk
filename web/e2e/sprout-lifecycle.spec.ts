@@ -11,6 +11,7 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   test('creating a sprout goes directly to ACTIVE, not draft', async ({ page }) => {

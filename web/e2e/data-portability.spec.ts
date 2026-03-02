@@ -10,6 +10,7 @@ test.describe('Data Portability - Persistence', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   test('data persists across page refresh', async ({ page }) => {
@@ -34,9 +35,10 @@ test.describe('Data Portability - Persistence', () => {
     await page.click('.sprout-set-btn')
     await page.waitForTimeout(300)
 
-    // Refresh page
-    await page.reload()
+    // Refresh page — navigate to clean URL to reset view from hash routing
+    await page.goto('/')
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
 
     // Navigate back to twig
     await page.click('.node.branch', { force: true })

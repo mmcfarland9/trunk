@@ -52,6 +52,7 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     await resetAppState(page)
     await page.reload()
     await page.waitForSelector('.canvas')
+    await page.waitForTimeout(500)
   })
 
   // ── LEAF CREATION ──────────────────────────────────────────────────────────
