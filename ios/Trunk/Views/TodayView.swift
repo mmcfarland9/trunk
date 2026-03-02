@@ -49,6 +49,8 @@ struct TodayView: View {
                         // Water a sprout
                         WaterSectionView(
                             canWater: progression.waterAvailable > 0 && !activeSprouts.isEmpty,
+                            hasActiveSprouts: !activeSprouts.isEmpty,
+                            wateringStreak: progression.wateringStreak,
                             onTap: { showWaterSheet = true }
                         )
                         .animatedCard(index: 1)
@@ -63,6 +65,13 @@ struct TodayView: View {
                         // Next harvest countdown
                         if let nextSprout = cachedNextHarvestSprout {
                             NextHarvestView(sprout: nextSprout, onTap: { showUpcomingHarvests = true })
+                                .animatedCard(index: 3)
+                        } else {
+                            Text("Your first harvest will appear here")
+                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                .foregroundStyle(Color.inkFaint)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(TrunkTheme.space3)
                                 .animatedCard(index: 3)
                         }
 

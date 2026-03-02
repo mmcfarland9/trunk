@@ -185,6 +185,50 @@ extension SyncService {
     }
   }
 
+  /// Delete all events from the server and clear local cache.
+  /// Mirrors web's deleteAllEvents in sync/operations.ts.
+  func deleteAllEvents() async throws {
+    guard let client = SupabaseClientProvider.shared else {
+      throw SyncError.notConfigured
+    }
+
+    guard let userId = AuthService.shared.user?.id else {
+      throw SyncError.notAuthenticated
+    }
+
+    try await client
+      .from("events")
+      .delete()
+      .eq("user_id", value: userId.uuidString)
+      .execute()
+
+    clearLocalCache()
+  }
+
+  /// Import events from an export payload: delete existing, batch insert, full sync.
+  func importEvents(_ inserts: [SyncEventInsert]) async throws {
+    guard let client = SupabaseClientProvider.shared else {
+      throw SyncError.notConfigured
+    }
+
+    // 1. Delete all existing events
+    try await deleteAllEvents()
+
+    // 2. Batch insert in chunks to avoid request size limits
+    let chunkSize = 100
+    for start in stride(from: 0, to: inserts.count, by: chunkSize) {
+      let end = min(start + chunkSize, inserts.count)
+      let batch = Array(inserts[start..<end])
+      try await client
+        .from("events")
+        .insert(batch)
+        .execute()
+    }
+
+    // 3. Force full sync to rebuild local state
+    _ = await forceFullSync()
+  }
+
   /// Clear local cache (events and sync timestamp)
   /// Used to ensure cloud is always source of truth
   func clearLocalCache() {

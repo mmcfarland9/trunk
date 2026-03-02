@@ -1,4 +1,9 @@
-import { getSoilAvailable, getSoilCapacity, getWaterAvailable } from '../../state'
+import {
+  getSoilAvailable,
+  getSoilCapacity,
+  getWaterAvailable,
+  getWateringStreak,
+} from '../../state'
 import trunkLogo from '../../../assets/tree_icon_transp.png'
 
 export type HeaderElements = {
@@ -6,9 +11,11 @@ export type HeaderElements = {
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
   syncButton: HTMLButtonElement
+  syncStatusIcon: HTMLSpanElement
   soilMeterFill: HTMLDivElement
   soilMeterValue: HTMLSpanElement
   waterCircles: HTMLSpanElement[]
+  waterStreakLabel: HTMLSpanElement
   sunCircle: HTMLSpanElement
   waterMeter: HTMLDivElement
   sunMeter: HTMLDivElement
@@ -50,10 +57,15 @@ export function buildHeader(): HeaderElements {
   syncButton.innerHTML =
     '<svg class="sync-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>'
 
+  // Sync status indicator (hidden until authenticated)
+  const syncStatusIcon = document.createElement('span')
+  syncStatusIcon.className = 'sync-status-icon hidden'
+  syncStatusIcon.setAttribute('aria-live', 'polite')
+
   // Wrap badge + sync in a stretch group so sync button matches badge height
   const profileGroup = document.createElement('div')
   profileGroup.className = 'profile-group'
-  profileGroup.append(profileBadge, syncButton)
+  profileGroup.append(profileBadge, syncStatusIcon, syncButton)
 
   actions.append(profileGroup)
 
@@ -87,6 +99,8 @@ export function buildHeader(): HeaderElements {
     'aria-label',
     `Soil: ${initialAvailable.toFixed(2)} of ${initialCapacity.toFixed(2)}`,
   )
+  soilMeter.title =
+    'Soil is your planting budget — spend it to plant sprouts, earn it back by watering and harvesting.'
   soilMeter.append(soilLabel, soilTrack, soilValue)
 
   // Global Water meter - 3 circles
@@ -112,13 +126,25 @@ export function buildHeader(): HeaderElements {
     waterTrack.append(circle)
   }
 
+  // Watering streak label (hidden when streak is 0)
+  const waterStreakLabel = document.createElement('span')
+  waterStreakLabel.className = 'water-streak-label'
+  const initialStreak = getWateringStreak()
+  if (initialStreak.current > 0) {
+    waterStreakLabel.textContent = `${initialStreak.current}d streak`
+  } else {
+    waterStreakLabel.classList.add('hidden')
+  }
+
   waterMeter.setAttribute('role', 'meter')
   waterMeter.setAttribute('aria-valuenow', String(initialWaterAvailable))
   waterMeter.setAttribute('aria-valuemin', '0')
   waterMeter.setAttribute('aria-valuemax', '3')
   waterMeter.setAttribute('aria-label', `Water: ${initialWaterAvailable} of 3`)
 
-  waterMeter.append(waterLabel, waterTrack)
+  waterMeter.title =
+    'Water your active sprouts daily by journaling — 3 waters per day, resets at 6 AM.'
+  waterMeter.append(waterLabel, waterTrack, waterStreakLabel)
 
   // Global Sun meter - 1 circle
   const sunMeter = document.createElement('div')
@@ -140,6 +166,7 @@ export function buildHeader(): HeaderElements {
   sunMeter.setAttribute('aria-valuemin', '0')
   sunMeter.setAttribute('aria-valuemax', '1')
   sunMeter.setAttribute('aria-label', 'Sun: 1 of 1')
+  sunMeter.title = 'Reflect on any area of your life once per week — resets Monday at 6 AM.'
   sunMeter.append(sunLabel, sunTrack)
 
   // Meter group for visual cohesion
@@ -154,9 +181,11 @@ export function buildHeader(): HeaderElements {
     profileBadge,
     profileEmail,
     syncButton,
+    syncStatusIcon,
     soilMeterFill: soilFill,
     soilMeterValue: soilValue,
     waterCircles,
+    waterStreakLabel,
     sunCircle,
     waterMeter,
     sunMeter,

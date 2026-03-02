@@ -6,5 +6,5 @@ export {
   startVisibilitySync,
 } from './operations'
 export { subscribeToRealtime, unsubscribeFromRealtime } from './realtime'
-export { getDetailedSyncStatus, subscribeSyncMetadata } from './status'
+export { getDetailedSyncStatus, subscribeSyncMetadata, recordSyncFailure } from './status'
 export type { SyncMetadata } from './status'

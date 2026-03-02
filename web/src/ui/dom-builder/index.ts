@@ -91,6 +91,7 @@ function assembleElements(
     profileBadge: headerResult.profileBadge,
     profileEmail: headerResult.profileEmail,
     syncButton: headerResult.syncButton,
+    syncStatusIcon: headerResult.syncStatusIcon,
     syncTimestamp: requireElement<HTMLSpanElement>(
       dialogsResult.accountDialog,
       '.sync-timestamp',
@@ -170,6 +171,7 @@ function assembleElements(
     soilMeterFill: headerResult.soilMeterFill,
     soilMeterValue: headerResult.soilMeterValue,
     waterCircles: headerResult.waterCircles,
+    waterStreakLabel: headerResult.waterStreakLabel,
     sunCircle: headerResult.sunCircle,
     waterCanDialog: dialogsResult.waterCanDialog,
     waterCanDialogClose: requireElement<HTMLButtonElement>(
@@ -321,6 +323,16 @@ function assembleElements(
       dialogsResult.accountDialog,
       '.account-save-btn',
       'account dialog save button',
+    ),
+    accountDialogExportData: requireElement<HTMLButtonElement>(
+      dialogsResult.accountDialog,
+      '.account-export-data-btn',
+      'account dialog export data button',
+    ),
+    accountDialogImportData: requireElement<HTMLButtonElement>(
+      dialogsResult.accountDialog,
+      '.account-import-data-btn',
+      'account dialog import data button',
     ),
     accountDialogResetData: requireElement<HTMLButtonElement>(
       dialogsResult.accountDialog,

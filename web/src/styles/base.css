@@ -119,6 +119,36 @@ body::after { background: repeating-linear-gradient(45deg, transparent 0px, tran
   color: var(--ink);
 }
 
+/* === Toast === */
+.toast-container {
+  position: fixed;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  padding: var(--space-2) var(--space-4);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease, transform 200ms ease;
+  z-index: 9000;
+  max-width: 80vw;
+  text-align: center;
+}
+
+.toast-container.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-container.is-hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+}
+
 /* === Shared === */
 .focus-meta, .editor-label {
   font-size: var(--text-base);
@@ -180,6 +210,7 @@ body::after { background: repeating-linear-gradient(45deg, transparent 0px, tran
       radial-gradient(ellipse 90% 90% at 50% 50%, transparent 40%, rgba(40, 32, 22, 0.12) 100%);
   }
 
+  :root:not(.light) .auth-loading { background: #141210; }
   :root:not(.light) .login-view { background: #141210; }
   :root:not(.light) .leaf-view-box { background: rgba(30, 27, 24, 0.97); }
   :root:not(.light) .sun-log-shine-journal { background: rgba(30, 27, 24, 0.5); }
@@ -236,6 +267,7 @@ html.dark body::after {
     radial-gradient(ellipse 90% 90% at 50% 50%, transparent 40%, rgba(40, 32, 22, 0.12) 100%);
 }
 
+html.dark .auth-loading { background: #141210; }
 html.dark .login-view { background: #141210; }
 html.dark .leaf-view-box { background: rgba(30, 27, 24, 0.97); }
 html.dark .sun-log-shine-journal { background: rgba(30, 27, 24, 0.5); }

@@ -80,6 +80,27 @@ final class AuthService {
     func fetchProfile() async {
         guard let metadata = user?.userMetadata else { return }
         userFullName = metadata["full_name"]?.stringValue
+        userTimezone = metadata["timezone"]?.stringValue
+    }
+
+    private(set) var userTimezone: String?
+
+    /// Update user profile metadata (full_name, timezone)
+    func updateProfile(fullName: String, timezone: String) async throws {
+        guard let client = SupabaseClientProvider.shared else {
+            throw AuthError.notConfigured
+        }
+
+        let _ = try await client.auth.update(user: UserAttributes(
+            data: [
+                "full_name": .string(fullName),
+                "timezone": .string(timezone)
+            ]
+        ))
+
+        // Update local cache
+        userFullName = fullName.isEmpty ? nil : fullName
+        userTimezone = timezone
     }
 
     /// E2E test login via edge function. Returns true if the email is an

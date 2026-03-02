@@ -15,6 +15,8 @@ struct DataInfoSheet: View {
     @Environment(AuthService.self) private var authService
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showSettings = false
+
     private var state: DerivedState {
         EventStore.shared.getState()
     }
@@ -132,17 +134,20 @@ struct DataInfoSheet: View {
                                     }
 
                                     Button {
-                                        Task {
-                                            try? await AuthService.shared.signOut()
-                                            dismiss()
-                                        }
+                                        showSettings = true
                                     } label: {
-                                        Text("SIGN OUT")
+                                        Text("SETTINGS")
                                             .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                            .foregroundStyle(Color.trunkDestructive)
+                                            .foregroundStyle(Color.ink)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, TrunkTheme.space2)
+                                            .background(Color.parchment)
+                                            .overlay(
+                                                Rectangle()
+                                                    .stroke(Color.border, lineWidth: 1)
+                                            )
                                     }
+                                    .buttonStyle(.plain)
                                     .padding(.top, TrunkTheme.space2)
                                 }
                             }
@@ -168,6 +173,10 @@ struct DataInfoSheet: View {
             }
         }
         .presentationDetents([.medium])
+        .sheet(isPresented: $showSettings) {
+            SettingsView(progression: progression)
+                .environment(authService)
+        }
     }
 
     // MARK: - Helpers

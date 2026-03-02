@@ -237,6 +237,15 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   activeSproutsList.replaceChildren()
   cultivatedSproutsList.replaceChildren()
 
+  // Empty state hint when no sprouts exist at all
+  if (filteredActive.length === 0 && filteredCultivated.length === 0) {
+    const hint = document.createElement('p')
+    hint.className = 'sprouts-empty-hint'
+    hint.textContent = 'Plant your first sprout by clicking any twig on the tree.'
+    activeSproutsList.append(hint)
+    return
+  }
+
   // Determine display mode: twig view (or hovering twig), branch view (or hovering branch), or overview
   const isHoveringBranch = viewMode === 'overview' && hoveredBranchIndex !== null
   const isHoveringTwig = viewMode === 'branch' && hoveredTwigId !== null

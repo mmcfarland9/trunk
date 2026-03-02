@@ -7,7 +7,9 @@ import {
   unsubscribeFromRealtime,
   smartSync,
   startVisibilitySync,
+  recordSyncFailure,
 } from '../services/sync'
+import { showToast } from '../ui/toast'
 import { setEventSyncCallback } from '../events/store'
 import { syncNode } from '../ui/node-ui'
 import type { AppContext } from '../types'
@@ -26,7 +28,12 @@ function showLoadingState(appElement: HTMLElement): void {
   appElement.classList.add('hidden')
   loadingView = document.createElement('div')
   loadingView.className = 'auth-loading'
-  loadingView.textContent = 'Loading...'
+  const brand = document.createElement('div')
+  brand.className = 'auth-loading-brand'
+  brand.textContent = 'TRUNK'
+  const spinner = document.createElement('div')
+  spinner.className = 'spinner auth-loading-spinner'
+  loadingView.append(brand, spinner)
   document.body.prepend(loadingView)
 }
 
@@ -108,6 +115,8 @@ export async function initializeAuth(
         setEventSyncCallback((event) => {
           pushEvent(event).then(({ error: pushError }) => {
             if (pushError) {
+              recordSyncFailure(pushError)
+              showToast('Sync failed — changes saved locally and will retry.')
             }
           })
         })
@@ -131,6 +140,7 @@ export async function initializeAuth(
       if (state.user) {
         ctx.elements.profileBadge.classList.remove('hidden')
         ctx.elements.syncButton.classList.remove('hidden')
+        ctx.elements.syncStatusIcon.classList.remove('hidden')
         // Force square: CSS aspect-ratio unreliable in flex stretch context
         requestAnimationFrame(() => {
           const btn = ctx.elements.syncButton
@@ -143,6 +153,7 @@ export async function initializeAuth(
       } else {
         ctx.elements.profileBadge.classList.add('hidden')
         ctx.elements.syncButton.classList.add('hidden')
+        ctx.elements.syncStatusIcon.classList.add('hidden')
         ctx.elements.profileEmail.textContent = ''
         callbacks.onAuthStateChange(false)
       }

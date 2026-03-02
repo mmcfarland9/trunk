@@ -3,6 +3,7 @@ import { calculateCapacityReward, getSoilCapacity } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { getResultEmoji } from '../utils/sprout-labels'
 import { appendEvent } from '../events'
+import { trapFocus } from '../ui/dom-builder/build-dialogs'
 
 type HarvestDialogCallbacks = {
   onSoilMeterChange: () => void
@@ -30,6 +31,8 @@ export function initHarvestDialog(
   ctx: AppContext,
   callbacks: HarvestDialogCallbacks,
 ): HarvestDialogApi {
+  let releaseFocusTrap: (() => void) | null = null
+
   // Harvest dialog state
   let currentHarvestSprout: {
     id: string
@@ -105,11 +108,14 @@ export function initHarvestDialog(
 
     updateResultDisplay(3)
     harvestDialog.classList.remove('hidden')
-    harvestDialogSlider.focus()
+    const dialogBox = harvestDialog.querySelector<HTMLElement>('[role="dialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
   }
 
   function closeHarvestDialog() {
     const { harvestDialog, harvestDialogReflection } = ctx.elements
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     harvestDialog.classList.add('hidden')
     harvestDialogReflection.value = ''
     currentHarvestSprout = null

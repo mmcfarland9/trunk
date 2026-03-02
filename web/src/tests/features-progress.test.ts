@@ -211,6 +211,8 @@ function createMockAppContext(): AppContext {
     accountDialogShineCheckbox: document.createElement('input'),
     accountDialogSignOut: document.createElement('button'),
     accountDialogSave: document.createElement('button'),
+    accountDialogExportData: document.createElement('button'),
+    accountDialogImportData: document.createElement('button'),
     accountDialogResetData: document.createElement('button'),
   }
 
@@ -347,7 +349,11 @@ describe('updateSidebarSprouts', () => {
     const ctx = createMockAppContext()
     initSidebarSprouts(ctx)
 
-    expect(ctx.elements.activeSproutsList.children.length).toBe(0)
+    // Active list contains the empty-state hint
+    expect(ctx.elements.activeSproutsList.children.length).toBe(1)
+    expect(ctx.elements.activeSproutsList.querySelector('.sprouts-empty-hint')?.textContent).toBe(
+      'Plant your first sprout by clicking any twig on the tree.',
+    )
     expect(ctx.elements.cultivatedSproutsList.children.length).toBe(0)
   })
 

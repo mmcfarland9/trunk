@@ -112,6 +112,7 @@ export type AppElements = {
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
   syncButton: HTMLButtonElement
+  syncStatusIcon: HTMLSpanElement
   syncTimestamp: HTMLSpanElement
   syncState: HTMLSpanElement
   sproutsDialog: HTMLDivElement
@@ -133,6 +134,7 @@ export type AppElements = {
   soilMeterFill: HTMLDivElement
   soilMeterValue: HTMLSpanElement
   waterCircles: HTMLSpanElement[]
+  waterStreakLabel: HTMLSpanElement
   sunCircle: HTMLSpanElement
   waterCanDialog: HTMLDivElement
   waterCanDialogClose: HTMLButtonElement
@@ -171,6 +173,8 @@ export type AppElements = {
   accountDialogShineCheckbox: HTMLInputElement
   accountDialogSignOut: HTMLButtonElement
   accountDialogSave: HTMLButtonElement
+  accountDialogExportData: HTMLButtonElement
+  accountDialogImportData: HTMLButtonElement
   accountDialogResetData: HTMLButtonElement
   soilChartSection: HTMLElement
 }

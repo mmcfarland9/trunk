@@ -1,4 +1,5 @@
 import { subscribeSyncMetadata, forceFullSync } from '../services/sync'
+import type { DetailedSyncStatus } from '../services/sync/status'
 import type { AppElements } from '../types'
 
 /** Format ISO 8601 timestamp to UTC seconds precision: yyyy-MM-ddTHH:mm:ssZ */
@@ -27,6 +28,9 @@ export function initializeSync(elements: AppElements): void {
     }
     stateEl.textContent = stateMap[meta.status] || ''
     stateEl.dataset.status = meta.status
+
+    // Update header sync status icon
+    updateSyncStatusIcon(elements.syncStatusIcon, meta.status)
   })
 
   // Sync button — spinning icon next to profile badge
@@ -46,4 +50,19 @@ export function initializeSync(elements: AppElements): void {
       window.location.reload()
     }
   })
+}
+
+const syncIconConfig: Record<DetailedSyncStatus, { text: string; tooltip: string }> = {
+  synced: { text: '\u2713', tooltip: 'Synced' },
+  syncing: { text: '', tooltip: 'Syncing\u2026' },
+  loading: { text: '', tooltip: 'Syncing\u2026' },
+  pendingUpload: { text: '', tooltip: 'Uploading changes\u2026' },
+  offline: { text: '\u26A0', tooltip: 'Offline \u2014 changes saved locally' },
+}
+
+function updateSyncStatusIcon(el: HTMLSpanElement, status: DetailedSyncStatus): void {
+  const config = syncIconConfig[status]
+  el.dataset.status = status
+  el.textContent = config.text
+  el.title = config.tooltip
 }

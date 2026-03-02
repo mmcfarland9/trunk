@@ -15,6 +15,7 @@ struct SproutActionsView: View {
 
     @State private var showingWaterSheet = false
     @State private var showingHarvestSheet = false
+    @State private var showingEditSheet = false
     @State private var isUprooting = false
     @State private var errorMessage: String?
     @State private var showUprootConfirmation = false
@@ -135,6 +136,11 @@ struct SproutActionsView: View {
                 HarvestSproutView(sprout: sprout, progression: progression)
             }
         }
+        .sheet(isPresented: $showingEditSheet) {
+            NavigationStack {
+                EditSproutView(sprout: sprout, progression: progression)
+            }
+        }
     }
 
     // MARK: - Active State
@@ -194,6 +200,16 @@ struct SproutActionsView: View {
                 .monoLabel(size: TrunkTheme.textXs)
 
             VStack(spacing: TrunkTheme.space2) {
+                Button {
+                    showingEditSheet = true
+                } label: {
+                    HStack(spacing: TrunkTheme.space1) {
+                        Text("✏️")
+                        Text("EDIT SPROUT")
+                    }
+                }
+                .buttonStyle(.trunk)
+
                 Button {
                     showingWaterSheet = true
                 } label: {

@@ -10,6 +10,7 @@ import {
 } from '../state'
 import { setNodeVisibility, setFocusedNode, updateFocus } from '../ui/node-ui'
 import { animateGuideLines, startWind, stopWind } from '../ui/layout'
+import { pushView } from './history'
 
 let zoomTimeoutId = 0
 let zoomOriginTimeoutId = 0
@@ -177,6 +178,7 @@ export function setViewMode(
 
 export function returnToOverview(ctx: AppContext, callbacks: NavigationCallbacks): void {
   setViewMode('overview', ctx, callbacks)
+  pushView('overview')
   callbacks.onUpdateStats() // Update sidebar to show branches
 
   // Clear focus so trunk info shows in sidebar
@@ -190,6 +192,7 @@ export function enterBranchView(
   focusNode?: HTMLButtonElement | null,
 ): void {
   setViewMode('branch', ctx, callbacks, index)
+  pushView('branch', index)
   callbacks.onUpdateStats() // Update sidebar to show twigs
 
   const target = focusNode ?? ctx.branchGroups[index]?.branch ?? null
@@ -211,6 +214,7 @@ export function enterTwigView(
   // The branches fade out anyway, so no need to zoom toward the twig
   const previousMode = getViewMode()
   setViewModeState('twig', branchIndex, twigId)
+  pushView('twig', branchIndex, twigId)
 
   const shouldAnimate = previousMode !== 'twig'
   if (shouldAnimate) {
@@ -254,6 +258,7 @@ export function returnToBranchView(ctx: AppContext, callbacks: NavigationCallbac
 
   ctx.twigView?.close()
   setViewMode('branch', ctx, callbacks, branchIndex)
+  pushView('branch', branchIndex)
   callbacks.onUpdateStats()
 
   // Focus on the branch

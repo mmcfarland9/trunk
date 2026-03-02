@@ -1,4 +1,5 @@
 import type { FormState } from './sprout-form'
+import { trapFocus } from '../dom-builder/build-dialogs'
 
 type ConfirmElements = {
   confirmDialog: HTMLDivElement
@@ -15,17 +16,22 @@ export function setupConfirmDialog(
   elements: ConfirmElements,
   state: FormState,
 ): (message: string, confirmLabel?: string) => Promise<boolean> {
+  let releaseFocusTrap: (() => void) | null = null
+
   function showConfirm(message: string, confirmLabel: string = 'Uproot'): Promise<boolean> {
     elements.confirmMessage.textContent = message
     elements.confirmConfirmBtn.textContent = confirmLabel
     elements.confirmDialog.classList.remove('hidden')
-    elements.confirmConfirmBtn.focus()
+    const dialogBox = elements.confirmDialog.querySelector<HTMLElement>('[role="alertdialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
     return new Promise((resolve) => {
       state.confirmResolve = resolve
     })
   }
 
   function hideConfirm(result: boolean): void {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     elements.confirmDialog.classList.add('hidden')
     if (state.confirmResolve) {
       state.confirmResolve(result)

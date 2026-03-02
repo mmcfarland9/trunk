@@ -1,227 +1,104 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
+## What This Is
 
-## Monorepo Structure
-
-**This is a monorepo with multiple projects:**
-
-- `web/` - Vite + TypeScript web application
-- `ios/` - Swift + SwiftUI iOS application (in development)
-- `shared/` - Platform-agnostic constants, schemas, and specifications
-
-**When working on web app:**
-- Change directory to `web/`
-- Run `npm install` and `npm run dev` from `web/`
-- All build commands run from `web/` directory
-
-**When working on iOS app:**
-- Change directory to `ios/`
-- Open `Trunk.xcodeproj` in Xcode
-
-**Shared specifications:**
-- Constants: `shared/constants.json`
-- Schemas: `shared/schemas/*.schema.json`
-- Formulas: `shared/formulas.md`
-- Default map: `shared/assets/trunk-map-preset.json`
-
-**Related documentation:**
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
-- [ONBOARDING.md](docs/ONBOARDING.md) — Quick start, common tasks, contributing
-- [DATA_MODEL.md](docs/DATA_MODEL.md) — Entity relationships, event types, storage
-- [INTERFACES.md](docs/INTERFACES.md) — Module APIs, extension points
+Trunk is a personal growth tracker built around gardening metaphors. Users plant sprouts (goals) on a 64-twig tree, water them daily, reflect weekly via sun, and harvest when complete. Soil capacity grows over a lifetime. Both web and iOS apps are fully implemented with event-sourced sync via Supabase.
 
 ---
 
-## Build Commands (Web App)
+## Monorepo
 
+```
+web/     Vite + TypeScript (vanilla DOM, no framework)
+ios/     Swift 5.9+ / SwiftUI (iOS 17+)
+shared/  Constants, schemas, formulas, prompts
+docs/    Architecture, data model, interfaces, onboarding, runbook
+```
+
+**Build (web)** — all commands from `web/`:
 ```bash
-cd web
-npm run dev           # Start Vite development server
-npm run build         # Compile TypeScript and build for production
-npm run preview       # Preview production build locally
-npm test              # Run unit tests (Vitest)
-npm run test:watch    # Run tests in watch mode
-npm run test:coverage # Run tests with coverage report
-npm run test:e2e      # Run E2E tests (Playwright)
-npm run test:mutation # Run mutation tests (Stryker)
+npm run dev            # Vite dev server
+npm run build          # tsc + vite build
+npm test               # Vitest
+npm run test:e2e       # Playwright
+npm run generate       # Regenerate constants from shared/
 ```
 
-TypeScript strict mode handles type checking (`noUnusedLocals`, `noUnusedParameters`).
+**Build (iOS)** — open `ios/Trunk.xcodeproj` in Xcode. Maestro E2E: `ios/.maestro/run-all.sh`.
+
+**Before committing**: `cd web && npx biome format --write src/` — Lefthook pre-commit runs Biome check + `tsc --noEmit`.
 
 ---
 
-## What is Trunk?
+## Architecture
 
-Trunk is a **personal growth and goal-tracking application** built around gardening metaphors. Users cultivate "sprouts" (goals) on a visual tree structure, nurturing them with daily attention ("water") and weekly reflection ("sun") to grow their capacity over time.
+**Event-sourced**: All state derived by replaying an immutable event log. No mutable stored state. Seven event types:
 
-**Philosophy**: Growth is slow, deliberate, and intrinsically rewarding—like cultivating a bonsai tree. The system rewards patience, commitment, and honest effort over decades, not sprints.
+| Event | Key Fields |
+|-------|------------|
+| `sprout_planted` | sproutId, twigId, title, season, environment, soilCost, leafId |
+| `sprout_watered` | sproutId, content, prompt |
+| `sprout_harvested` | sproutId, result (1-5), capacityGained, reflection? |
+| `sprout_uprooted` | sproutId, soilReturned |
+| `sprout_edited` | sproutId, then any field (sparse merge) |
+| `sun_shone` | twigId, twigLabel, content, prompt? |
+| `leaf_created` | leafId, twigId, name |
 
-**Tagline**: "Reap what you sow"
+**Derivation**: `web/src/events/derive.ts` / `ios/Trunk/Services/EventDerivation.swift` — sorts events, deduplicates by `client_id`, replays into `DerivedState` (soil, sprouts, leaves, indexed lookups). Both platforms must produce identical results.
 
----
+**Sync**: Local-first, optimistic push to Supabase `events` table. Incremental pull (by `created_at`), full-sync fallback. Realtime subscription for multi-device. Pending uploads tracked and retried. Dedup via `UNIQUE(client_id)` server-side.
 
-## Conceptual Model
+**Web patterns**: `AppContext` carries all DOM refs + feature APIs. Features coordinate via callback objects (`NavCallbacks`), not direct imports. View state is in-memory only. Hash-based routing (`#/branch/3/twig/branch-3-twig-5`) for browser history.
 
-### The Tree Structure (64 Twigs)
-
-```
-                    TRUNK (root/overview)
-                       │
-        ┌──────┬───────┼───────┬──────┐
-     BRANCH  BRANCH  BRANCH  BRANCH  ... (8 total)
-        │
-   ┌────┼────┐
-  TWIG TWIG TWIG ... (8 per branch = 64 total)
-```
-
-- **Trunk**: The root of your life map. Overview of all branches.
-- **Branches** (8): Major life domains (e.g., "Health", "Career", "Relationships")
-- **Twigs** (64): Specific facets within each domain (e.g., "Movement", "Nutrition" under Health)
-
-Each twig can hold **sprouts** (goals) and **leaves** (sagas of related goals).
-
-### Sprouts (Goals)
-
-A **sprout** is a goal you're cultivating. Key properties:
-
-| Property | Description |
-|----------|-------------|
-| **Title** | What you're trying to accomplish |
-| **Season** | Duration: 2w, 1m, 3m, 6m, 1y |
-| **Environment** | Difficulty: fertile (easy), firm (stretch), barren (hard) |
-| **State** | active → completed or uprooted |
-| **Bloom** | Success criteria at 1/5, 3/5, 5/5 outcomes |
-| **Result** | 1-5 scale when harvested |
-
-**Lifecycle**: Plant (costs soil) → Grow (water daily) → Harvest (gain capacity) or Uproot (partial refund)
-
-### Leaves (Sagas)
-
-A **leaf** is a named trajectory of related sprouts—a continuing story. Each leaf has a name that describes the saga (e.g., "Learning Piano", "Fitness Journey"). Multiple active sprouts can belong to the same leaf, allowing concurrent work on related goals.
-
-### Resources: Soil, Water, Sun
-
-| Resource | Represents | Capacity | Restores | Used For |
-|----------|------------|----------|----------|----------|
-| **Soil** | Focus/energy budget | Grows over lifetime (10→120) | Harvesting (soil cost returned + capacity gained), watering (+0.05/water), shining (+0.35/sun) | Planting sprouts |
-| **Water** | Daily attention | 3/day | 6:00 AM local | Watering active sprouts |
-| **Sun** | Weekly reflection | 1/week | 6:00 AM Monday | Shining on any twig |
-
-**Key insight**: Water requires active sprouts. Sun works on any twig, so you can always reflect even with no active goals.
+**iOS patterns**: MVVM with `@Observable` ViewModels. `EventStore` is a `@MainActor` singleton with debounced disk writes. `ProgressionViewModel` and `SproutsViewModel` observe store changes.
 
 ---
 
-## Navigation & Views
+## Key Conventions
 
-Four view modes with zoom-style navigation:
+**Naming**: Files `kebab-case.ts` (web) / `PascalCase.swift` (iOS). Exports `camelCase`. Constants `UPPER_SNAKE_CASE`. CSS classes `kebab-case` with `.is-*` state modifiers.
 
-```
-OVERVIEW ──scroll/click──► BRANCH ──scroll/click──► TWIG ──click leaf──► LEAF
-    ▲                          ▲                        ▲
-    └────── scroll up ─────────┴──── scroll up ─────────┘
-```
+**Code style**: 2-space indent (web), strict TypeScript. Biome for formatting + linting. Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`, `perf:`.
 
-| View | Shows | Sidebar Content |
-|------|-------|-----------------|
-| **Overview** | All 8 branches around trunk | Global stats, all active sprouts |
-| **Branch** | Single branch with 8 twigs | Branch stats, branch's sprouts |
-| **Twig** | Full twig detail panel | Sprout management, create/edit/harvest |
-| **Leaf** | Leaf saga view | Sprout chain history |
+**Twig IDs**: Format `branch-{N}-twig-{twigId}` — e.g., `branch-3-twig-branch-3-twig-5`. Parsed by `parseTwigId()` in both platforms.
 
-**Hover behavior**: In overview, hovering a branch highlights it and shows its sprouts in sidebar.
+**Entity IDs**: `sprout-{uuid}`, `leaf-{uuid}` — lowercase prefix-UUID.
 
-### Keyboard Navigation
+**Client IDs**: `{ISO8601}-{random}` — used for event deduplication.
 
-| Key | Context | Action |
-|-----|---------|--------|
-| `Escape` | Any dialog open | Close dialog |
-| `Escape` | Twig view | Return to branch view |
-| `Escape` | Branch view | Return to overview |
-| `1-8` | Overview (not hovering) | Jump to branch N |
-| `1-8` | Overview (hovering branch) | Jump to twig N in hovered branch |
-| `1-8` | Branch view | Jump to twig N in current branch |
-| `Cmd+←` / `Cmd+→` | Branch view | Cycle to previous/next branch |
-| `←` / `→` | Twig view | Navigate to previous/next twig |
-| `d` then `b` | Anywhere | Toggle debug panel (within 500ms) |
-
-Visual keyboard hints appear in the sidebar when shortcuts are available for the current view.
+**Export format**: Version 4. Structure: `{ version, exportedAt, events, circles, settings }`.
 
 ---
 
-## Progression System
+## Non-Obvious Gotchas
 
-Soil capacity grows from 10 to ~120 over years of consistent goal completion. Planting costs and capacity rewards scale with season length and difficulty. See `shared/formulas.md` for complete formulas (both platforms must implement identically).
+**6am reset boundary**: Water resets at 6:00 AM local daily, sun at 6:00 AM Monday. Streak calculation uses 6am-to-6am days, not midnight. If `hour < 6`, reset time is yesterday/last week.
 
----
+**Generated constants**: `shared/constants.json` → `web/src/generated/constants.ts` + `ios/Trunk/Generated/SharedConstants.swift`. Run `node shared/generate-constants.js` after editing. Generated files are checked in.
 
-## Data Model
+**soilCost is Double**: Not Int. Fractional values are valid. `DataExportService` uses `Double?` for `soilCost` and `soilReturned`.
 
-State is fully event-sourced. See [docs/DATA_MODEL.md](docs/DATA_MODEL.md) for entity relationships, event types, and storage details.
+**Wind seeding must match**: Branch seed = `97 + index * 41`, twig seed = `131 + branchIndex * 71 + twigIndex * 17`. Both platforms use `sin(seed * salt) * 43758.5453` fractional part. Radar chart vertices derive from animated branch positions (coupled to wind).
 
----
+**Guard-let on iOS**: `EventDerivation` skips malformed events via `guard let` instead of defaulting to empty/zero. Intentional — prevents bad data from corrupting state.
 
-## Module Architecture
+**Concurrent sync guard**: Web reuses a single `currentSyncPromise`. iOS checks `syncStatus != .syncing`. Don't bypass these.
 
-Key directories (full architecture in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
+**Supabase is optional**: Both platforms handle null client gracefully. App works local-only without credentials.
 
-- `bootstrap/` — App initialization (auth, events, sync, ui)
-- `events/` — Event sourcing core (store, derive, soil-charting)
-- `services/sync/` — Cloud sync modules (index, operations, cache, pending-uploads, realtime, status)
-- `features/` — Business logic (navigation, dialogs, progress)
-- `ui/` — DOM construction (dom-builder/, twig-view/, layout, node-ui)
-- `state/` — View state and convenience re-exports (navigation, resource getters, calculations, presets)
-- `utils/` — Pure utilities
+**E2E test user**: `test@trunk.michaelpmcfarland.com` — web uses `?e2e` URL param, iOS uses edge function `e2e-login`. Seed data: `scripts/seed-test-user.mjs`.
 
 ---
 
-## Key Patterns
+## Documentation Index
 
-**AppContext**: Central context object passed to most functions, contains all DOM element references, node lookup maps, and feature APIs (twigView, leafView, etc.).
-
-**Callback Objects**: Features receive callbacks to coordinate with other modules without direct imports. See [docs/INTERFACES.md](docs/INTERFACES.md) for module APIs.
-
----
-
-## Import/Export
-
-**Export**: Downloads `trunk{timestamp}.json` with:
-- Version number
-- All node data (labels, notes, sprouts, leaves)
-- Sun log and soil log
-
-**Import**: Replaces all data after confirmation. Validates structure and ignores unknown node IDs.
-
-Export reminder appears after 7 days without export.
-
----
-
-## Code Style
-
-- **Indentation**: 2 spaces
-- **TypeScript**: Strict mode (`noUnusedLocals`, `noUnusedParameters`)
-- **Target**: ES2022 with ESNext modules
-- **Formatter/Linter**: Biome (`web/biome.json`) — handles both formatting and linting
-- **Pre-commit hooks**: Lefthook — runs Biome checks before commit
-- **Naming**:
-  - Files: `kebab-case.ts`
-  - Exports: `camelCase`
-  - Constants: `UPPER_SNAKE_CASE`
-  - CSS classes: `kebab-case` with `.is-*` state modifiers
-
-## Commit Guidelines
-
-Use Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`
-
----
-
-## Additional Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, event sourcing, sync architecture |
-| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, contributing |
-| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Entity relationships, event types, storage |
-| [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs, extension points |
-| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deployment, common issues |
-| [docs/VERSIONING.md](docs/VERSIONING.md) | Version strategy, release process |
+| Document | Covers |
+|----------|--------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, module graph, sync flow, callback patterns |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Event schemas, DerivedState shape, storage keys, enums |
+| [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs for both platforms |
+| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, gotchas |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deployment, troubleshooting |
+| [docs/VERSIONING.md](docs/VERSIONING.md) | Semver strategy, release process |
+| [shared/formulas.md](shared/formulas.md) | Soil economy: costs, rewards, diminishing returns |
+| [shared/sync-protocol.md](shared/sync-protocol.md) | Sync protocol specification |

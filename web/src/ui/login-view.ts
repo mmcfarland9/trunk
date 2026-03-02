@@ -20,6 +20,7 @@ export function createLoginView(): HTMLElement {
     <div class="login-card">
       <h1>Trunk</h1>
       <p class="login-subtitle">Reap what you sow</p>
+      <p class="login-description">Trunk is a personal growth tracker built around gardening metaphors. Plant goals as sprouts, water them with daily journaling, and harvest the results over weeks and months.</p>
 
       <form class="login-form email-form">
         <label for="login-email">Email address</label>

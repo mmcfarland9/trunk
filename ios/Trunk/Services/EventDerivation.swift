@@ -75,14 +75,14 @@ struct DerivedWaterEntry: Identifiable {
 struct DerivedSprout: Identifiable {
     let id: String
     let twigId: String
-    let title: String
+    var title: String
     let season: Season
     let environment: SproutEnvironment
     let soilCost: Double
-    let leafId: String
-    let bloomWither: String?
-    let bloomBudding: String?
-    let bloomFlourish: String?
+    var leafId: String
+    var bloomWither: String?
+    var bloomBudding: String?
+    var bloomFlourish: String?
     var state: SproutState
     let plantedAt: Date
     var harvestedAt: Date?
@@ -190,6 +190,9 @@ func deriveState(from events: [SyncEvent]) -> DerivedState {
 
         case "sun_shone":
             processSunShone(event: event, soilAvailable: &soilAvailable, soilCapacity: soilCapacity, sunEntries: &sunEntries)
+
+        case "sprout_edited":
+            processSproutEdited(event: event, sprouts: &sprouts)
 
         case "leaf_created":
             processLeafCreated(event: event, leaves: &leaves)
@@ -351,6 +354,35 @@ private func processSunShone(event: SyncEvent, soilAvailable: inout Double, soil
 
     // Soil recovery from sun
     soilAvailable = roundSoil(min(soilAvailable + SharedConstants.Soil.sunRecovery, soilCapacity))
+}
+
+/// Sparse-merge mutable sprout fields. Matches web derive.ts:217-227.
+/// Only overwrites fields present in the payload — absent fields are left unchanged.
+private func processSproutEdited(event: SyncEvent, sprouts: inout [String: DerivedSprout]) {
+    let payload = event.payload
+
+    guard let sproutId = getString(payload, "sproutId"),
+          var sprout = sprouts[sproutId] else {
+        return
+    }
+
+    if let title = getString(payload, "title") {
+        sprout.title = title
+    }
+    if let bloomWither = getString(payload, "bloomWither") {
+        sprout.bloomWither = bloomWither
+    }
+    if let bloomBudding = getString(payload, "bloomBudding") {
+        sprout.bloomBudding = bloomBudding
+    }
+    if let bloomFlourish = getString(payload, "bloomFlourish") {
+        sprout.bloomFlourish = bloomFlourish
+    }
+    if let leafId = getString(payload, "leafId") {
+        sprout.leafId = leafId
+    }
+
+    sprouts[sproutId] = sprout
 }
 
 private func processLeafCreated(event: SyncEvent, leaves: inout [String: DerivedLeaf]) {

@@ -1,3 +1,31 @@
+/* === Auth Loading === */
+.auth-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5, 1.5rem);
+  background: #f3ebe0;
+  z-index: 9999;
+}
+
+.auth-loading-brand {
+  font-family: var(--font-ascii, monospace);
+  font-size: var(--text-xl, 1.125rem);
+  font-weight: normal;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wood, #6b4423);
+}
+
+.auth-loading-spinner {
+  width: 24px;
+  height: 24px;
+}
+
+/* === Login View === */
 .login-view {
   position: fixed;
   inset: 0;
@@ -44,11 +72,20 @@
 }
 
 .login-subtitle {
-  margin: 0 0 var(--space-5, 1.5rem);
+  margin: 0 0 var(--space-3, 0.75rem);
   font-family: var(--font-ascii, monospace);
   font-size: var(--text-sm, 0.75rem);
   color: var(--ink-faint, #6f5644);
   font-style: italic;
+}
+
+.login-description {
+  margin: 0 0 var(--space-5, 1.5rem);
+  font-family: var(--font-body, sans-serif);
+  font-size: var(--text-sm, 0.75rem);
+  color: var(--ink-faint, #6f5644);
+  line-height: 1.5;
+  max-width: 28ch;
 }
 
 .login-form {

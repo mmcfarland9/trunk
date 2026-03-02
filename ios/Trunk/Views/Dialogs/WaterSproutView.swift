@@ -64,7 +64,7 @@ struct WaterSproutView: View {
                         Text("JOURNAL ENTRY")
                             .monoLabel(size: TrunkTheme.textXs)
 
-                        TextField("Write something...", text: $note, axis: .vertical)
+                        TextField("Write a brief note about your progress", text: $note, axis: .vertical)
                             .trunkFont(size: TrunkTheme.textBase)
                             .foregroundStyle(Color.ink)
                             .lineLimit(3...6)

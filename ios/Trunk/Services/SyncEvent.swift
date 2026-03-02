@@ -14,6 +14,7 @@ enum TrunkEventType: String, Codable, Sendable {
     case sproutWatered = "sprout_watered"
     case sproutHarvested = "sprout_harvested"
     case sproutUprooted = "sprout_uprooted"
+    case sproutEdited = "sprout_edited"
     case sunShone = "sun_shone"
     case leafCreated = "leaf_created"
 

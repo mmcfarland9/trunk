@@ -5,6 +5,7 @@ import { preventDoubleClick } from '../utils/debounce'
 import { appendEvent, getWaterAvailable, checkSproutWateredToday } from '../events'
 import { escapeHtml } from '../utils/escape-html'
 import sharedConstants from '../../../shared/constants.json'
+import { trapFocus } from '../ui/dom-builder/build-dialogs'
 
 type ActiveSproutInfo = {
   id: string
@@ -20,7 +21,7 @@ type WaterDialogCallbacks = {
 }
 
 type WaterDialogApi = {
-  openWaterDialog: (sprout?: ActiveSproutInfo) => void
+  openWaterDialog: (sprout?: ActiveSproutInfo) => boolean
   closeWaterDialog: () => void
   isOpen: () => boolean
 }
@@ -72,7 +73,11 @@ function selectDailySprouts(sprouts: ActiveSproutInfo[]): ActiveSproutInfo[] {
 }
 
 export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks): WaterDialogApi {
+  let releaseFocusTrap: (() => void) | null = null
+
   function closeWaterDialog(): void {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     ctx.elements.waterDialog.classList.add('hidden')
   }
 
@@ -91,12 +96,12 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
     })
   }
 
-  function openWaterDialog(targetSprout?: ActiveSproutInfo): void {
+  function openWaterDialog(targetSprout?: ActiveSproutInfo): boolean {
     // If targeting a specific sprout that's already watered today, don't open
-    if (targetSprout && checkSproutWateredToday(targetSprout.id)) return
+    if (targetSprout && checkSproutWateredToday(targetSprout.id)) return false
 
     const sprouts = targetSprout ? [targetSprout] : selectDailySprouts(callbacks.getActiveSprouts())
-    if (sprouts.length === 0) return
+    if (sprouts.length === 0) return false
 
     const prompts = getUniquePrompts(sprouts.length)
     const body = ctx.elements.waterDialogBody
@@ -114,7 +119,7 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
           <p class="water-dialog-sprout-name">${escapeHtml(sprout.title)}</p>
         </div>
         <p class="water-dialog-prompt">${escapeHtml(prompts[i])}</p>
-        <textarea class="water-dialog-journal" placeholder="Write something..." maxlength="2000"></textarea>
+        <textarea class="water-dialog-journal" placeholder="Write a brief note about your progress" maxlength="2000"></textarea>
         <div class="water-dialog-section-footer">
           <span class="water-dialog-soil-gain">${escapeHtml(soilGainText)}</span>
           <button type="button" class="action-btn action-btn-progress action-btn-water water-dialog-pour" disabled>Pour</button>
@@ -167,11 +172,10 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
 
     ctx.elements.waterDialog.classList.remove('hidden')
 
-    // Focus first textarea
-    const firstTextarea = body.querySelector<HTMLTextAreaElement>('textarea')
-    if (firstTextarea) {
-      firstTextarea.focus()
-    }
+    const dialogBox = ctx.elements.waterDialog.querySelector<HTMLElement>('[role="dialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
+
+    return true
   }
 
   // Wire up close handlers

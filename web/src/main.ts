@@ -5,7 +5,7 @@ import { initEventStore } from './events/store'
 // Apply theme immediately to avoid flash of wrong color scheme
 applyTheme()
 import type { AppContext } from './types'
-import { getViewMode } from './state'
+import { getViewMode, setViewModeState } from './state'
 import { buildApp } from './ui/dom-builder'
 import { positionNodes } from './ui/layout'
 import { updateStats } from './features/progress'
@@ -17,9 +17,10 @@ import {
 } from './features/navigation'
 import { initializeAuth } from './bootstrap/auth'
 import { initializeSync } from './bootstrap/sync'
-import { initializeUI, updateSoilMeter, updateWaterMeter } from './bootstrap/ui'
+import { initializeUI, updateSoilMeter, updateWaterMeter, updateWaterStreak } from './bootstrap/ui'
 import { initializeEvents } from './bootstrap/events'
 import { updateFocus, syncNode } from './ui/node-ui'
+import { initHistory } from './features/history'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) throw new Error('Root container "#app" not found.')
@@ -74,6 +75,7 @@ function refreshUI(): void {
   updateFocus(null, ctx)
   updateSoilMeter(ctx.elements)
   updateWaterMeter(ctx.elements)
+  updateWaterStreak(ctx.elements)
   dialogAPIs.shine.updateSunMeter()
   dialogAPIs.charts.updateRadar()
   dialogAPIs.charts.updateSoil()
@@ -89,3 +91,9 @@ initializeAuth(app, ctx, {
 
 initializeEvents(ctx, navCallbacks, dialogAPIs)
 setViewMode('overview', ctx, navCallbacks)
+initHistory(ctx, navCallbacks, {
+  onOpenLeaf: (leafId, twigId, branchIndex) => {
+    setViewModeState('leaf', branchIndex, twigId)
+    ctx.leafView?.open(leafId, twigId, branchIndex)
+  },
+})

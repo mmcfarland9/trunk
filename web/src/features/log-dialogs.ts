@@ -9,6 +9,7 @@ import {
 } from '../state'
 import { getState, getAllWaterEntries, getEvents, deriveSoilLog } from '../events'
 import { formatDateShort, formatDateWithYear } from '../utils/date-formatting'
+import { trapFocus } from '../ui/dom-builder/build-dialogs'
 
 // --- Helper Functions ---
 
@@ -65,13 +66,19 @@ export function initSunLogDialog(
   elements: SunLogElements & Pick<AppElements, 'sunMeter'>,
   callbacks: { onPopulateSunLogShine: () => void },
 ): { populate: () => void; open: () => void; isOpen: () => boolean; close: () => void } {
+  let releaseFocusTrap: (() => void) | null = null
+
   const openDialog = () => {
     callbacks.onPopulateSunLogShine()
     populateSunLog(elements)
     elements.sunLogDialog.classList.remove('hidden')
+    const dialogBox = elements.sunLogDialog.querySelector<HTMLElement>('[role="dialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
   }
 
   const closeDialog = () => {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     elements.sunLogDialog.classList.add('hidden')
   }
 
@@ -134,12 +141,18 @@ export function initSoilBagDialog(elements: SoilBagElements & Pick<AppElements, 
   isOpen: () => boolean
   close: () => void
 } {
+  let releaseFocusTrap: (() => void) | null = null
+
   const openDialog = () => {
     populateSoilBag(elements)
     elements.soilBagDialog.classList.remove('hidden')
+    const dialogBox = elements.soilBagDialog.querySelector<HTMLElement>('[role="dialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
   }
 
   const closeDialog = () => {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     elements.soilBagDialog.classList.add('hidden')
   }
 
@@ -213,12 +226,18 @@ export function initWaterCanDialog(elements: WaterCanElements & Pick<AppElements
   isOpen: () => boolean
   close: () => void
 } {
+  let releaseFocusTrap: (() => void) | null = null
+
   const openDialog = () => {
     populateWaterCan(elements)
     elements.waterCanDialog.classList.remove('hidden')
+    const dialogBox = elements.waterCanDialog.querySelector<HTMLElement>('[role="dialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
   }
 
   const closeDialog = () => {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     elements.waterCanDialog.classList.add('hidden')
   }
 

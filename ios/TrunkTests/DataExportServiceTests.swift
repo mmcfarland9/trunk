@@ -247,6 +247,7 @@ struct TrunkEventTypeTests {
         #expect(TrunkEventType.sproutWatered.rawValue == "sprout_watered")
         #expect(TrunkEventType.sproutHarvested.rawValue == "sprout_harvested")
         #expect(TrunkEventType.sproutUprooted.rawValue == "sprout_uprooted")
+        #expect(TrunkEventType.sproutEdited.rawValue == "sprout_edited")
         #expect(TrunkEventType.sunShone.rawValue == "sun_shone")
         #expect(TrunkEventType.leafCreated.rawValue == "leaf_created")
     }

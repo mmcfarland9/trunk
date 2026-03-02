@@ -62,6 +62,7 @@ export {
   getSunAvailable,
   checkSproutWateredToday,
   replaceEvents,
+  exportEvents,
   // Resource getters (derived from events)
   getSoilAvailable,
   getSoilCapacity,

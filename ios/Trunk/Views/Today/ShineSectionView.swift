@@ -33,5 +33,12 @@ struct ShineSectionView: View {
         }
         .buttonStyle(.plain)
         .disabled(!canShine)
+
+        if !canShine {
+            Text("Sun restores Monday at 6:00 AM")
+                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                .foregroundStyle(Color.inkFaint)
+                .padding(.top, TrunkTheme.space1)
+        }
     }
 }

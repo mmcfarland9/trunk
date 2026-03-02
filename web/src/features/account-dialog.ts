@@ -1,7 +1,10 @@
 import type { AppElements } from '../types'
 import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
 import { deleteAllEvents } from '../services/sync'
+import { exportEvents, replaceEvents } from '../events'
 import { getTheme, setTheme } from '../utils/theme'
+import { STORAGE_KEYS } from '../generated/constants'
+import { trapFocus } from '../ui/dom-builder/build-dialogs'
 
 // --- Account Dialog ---
 
@@ -20,6 +23,8 @@ type AccountElements = Pick<
   | 'accountDialogShineCheckbox'
   | 'accountDialogSignOut'
   | 'accountDialogSave'
+  | 'accountDialogExportData'
+  | 'accountDialogImportData'
   | 'accountDialogResetData'
   | 'profileBadge'
 >
@@ -127,6 +132,77 @@ function populateAccountDialog(elements: AccountElements): void {
   })
 }
 
+function showResetConfirmation(elements: AccountElements, closeDialog: () => void): void {
+  // Build confirmation overlay inside the account dialog
+  const overlay = document.createElement('div')
+  overlay.className = 'reset-confirm-overlay'
+  overlay.innerHTML = `
+    <div class="reset-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-desc">
+      <h3 id="reset-confirm-title" class="reset-confirm-title">Delete All Data</h3>
+      <p id="reset-confirm-desc" class="reset-confirm-message">
+        This will permanently remove all your sprouts, leaves, journal entries, and activity history. This action cannot be undone.
+      </p>
+      <label class="reset-confirm-label" for="reset-confirm-input">Type <strong>DELETE</strong> to confirm</label>
+      <input id="reset-confirm-input" type="text" class="reset-confirm-input account-input" autocomplete="off" spellcheck="false" />
+      <div class="reset-confirm-actions">
+        <button type="button" class="action-btn action-btn-passive action-btn-neutral reset-confirm-cancel">Cancel</button>
+        <button type="button" class="action-btn action-btn-progress action-btn-error reset-confirm-submit" disabled>Delete Everything</button>
+      </div>
+    </div>
+  `
+
+  const input = overlay.querySelector<HTMLInputElement>('.reset-confirm-input')!
+  const submitBtn = overlay.querySelector<HTMLButtonElement>('.reset-confirm-submit')!
+  const cancelBtn = overlay.querySelector<HTMLButtonElement>('.reset-confirm-cancel')!
+
+  const alertDialogBox = overlay.querySelector<HTMLElement>('[role="alertdialog"]')!
+  let releaseFocusTrap: (() => void) | null = null
+
+  const cleanup = () => {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
+    overlay.remove()
+  }
+
+  // Enable submit only when input is exactly "DELETE"
+  input.addEventListener('input', () => {
+    submitBtn.disabled = input.value !== 'DELETE'
+  })
+
+  cancelBtn.addEventListener('click', cleanup)
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) cleanup()
+  })
+
+  submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true
+    submitBtn.textContent = 'Deleting...'
+    input.disabled = true
+    cancelBtn.disabled = true
+
+    const { error } = await deleteAllEvents()
+
+    if (error) {
+      submitBtn.disabled = false
+      submitBtn.textContent = 'Delete Everything'
+      input.disabled = false
+      cancelBtn.disabled = false
+      input.value = ''
+      submitBtn.disabled = true
+      // Show inline error
+      const msg = overlay.querySelector('.reset-confirm-message')!
+      msg.textContent = `Failed to delete data: ${error}. Please try again.`
+    } else {
+      cleanup()
+      closeDialog()
+      window.location.reload()
+    }
+  })
+
+  elements.accountDialog.querySelector('.account-dialog-box')!.appendChild(overlay)
+  releaseFocusTrap = trapFocus(alertDialogBox)
+}
+
 export function initAccountDialog(elements: AccountElements): {
   isOpen: () => boolean
   close: () => void
@@ -143,13 +219,19 @@ export function initAccountDialog(elements: AccountElements): {
     })
   }
 
+  let releaseFocusTrap: (() => void) | null = null
+
   const openDialog = () => {
     populateAccountDialog(elements)
     switchTab('preferences') // Reset to first tab
     elements.accountDialog.classList.remove('hidden')
+    const dialogBox = elements.accountDialog.querySelector<HTMLElement>('[role="dialog"]')
+    if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
   }
 
   const closeDialog = () => {
+    releaseFocusTrap?.()
+    releaseFocusTrap = null
     elements.accountDialog.classList.add('hidden')
   }
 
@@ -188,30 +270,57 @@ export function initAccountDialog(elements: AccountElements): {
     await signOut()
   })
 
-  // Reset all data with confirmation
-  elements.accountDialogResetData.addEventListener('click', async () => {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete ALL your data?\n\n' +
-        'This will permanently remove all your sprouts, leaves, journal entries, and activity history.\n\n' +
-        'This action cannot be undone.',
-    )
+  // Export data — download events as JSON
+  elements.accountDialogExportData.addEventListener('click', () => {
+    const events = exportEvents()
+    const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `trunk${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    localStorage.setItem(STORAGE_KEYS.lastExport, Date.now().toString())
+  })
 
-    if (!confirmed) return
+  // Import data — file picker + confirmation
+  elements.accountDialogImportData.addEventListener('click', () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.addEventListener('change', () => {
+      const file = input.files?.[0]
+      if (!file) return
 
-    elements.accountDialogResetData.disabled = true
-    elements.accountDialogResetData.textContent = 'Deleting...'
+      const reader = new FileReader()
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result as string)
+          if (!Array.isArray(data)) {
+            alert('Invalid file: expected an array of events.')
+            return
+          }
 
-    const { error } = await deleteAllEvents()
+          const confirmed = window.confirm(
+            `Import ${data.length} events?\n\nThis will replace ALL existing data. This action cannot be undone.`,
+          )
+          if (!confirmed) return
 
-    elements.accountDialogResetData.disabled = false
-    elements.accountDialogResetData.textContent = 'Reset All Data'
+          replaceEvents(data)
+          closeDialog()
+          window.location.reload()
+        } catch {
+          alert('Failed to read file: invalid JSON.')
+        }
+      }
+      reader.readAsText(file)
+    })
+    input.click()
+  })
 
-    if (error) {
-      alert(`Failed to delete data: ${error}`)
-    } else {
-      closeDialog()
-      window.location.reload()
-    }
+  // Reset all data with typed DELETE confirmation
+  elements.accountDialogResetData.addEventListener('click', () => {
+    showResetConfirmation(elements, closeDialog)
   })
 
   elements.accountDialogSave.addEventListener('click', async () => {

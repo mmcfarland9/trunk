@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Watering streak indicator on the water meter in the header — shows "Xd streak" when the user has watered on consecutive days (6am-to-6am boundaries); hidden when streak is 0; updates on water actions and full UI refresh
+- Export reminder toast: nudges users to back up their data when no export has been recorded in 7 days (configurable via `EXPORT_REMINDER_DAYS`) — fires once per session on app load, only when events exist
+- Open Graph meta tags: og:title, og:description, og:type, and og:image for professional link sharing
+- Sync status indicator icon in header: persistent icon between profile badge and sync button — checkmark when synced, CSS spinner when syncing/uploading, warning when offline — with tooltip showing full status text
+- Browser history navigation: `history.pushState()` on every view transition (overview ↔ branch ↔ twig ↔ leaf) with `popstate` listener — back button drills out one level, forward button re-enters; twig arrow-key cycling uses `replaceState` to avoid history bloat; deep linking via hash fragments (`#/branch/3/twig/branch-3-twig-5`)
+- Toast notification system (`ui/toast.ts`): reusable auto-dismiss toast (2.5s) for lightweight feedback — wired into W/S/H keyboard shortcuts: "All sprouts watered today", "Already reflected this week", "No sprouts ready to harvest"
+- New-user onboarding cues: login page description explaining what Trunk is, empty-state sidebar hint ("Plant your first sprout by clicking any twig on the tree"), title-attribute tooltips on Soil/Water/Sun meters explaining each resource in one sentence
+- Export/Import data buttons in Account > Data tab: Export downloads all events as timestamped JSON; Import reads a JSON file, confirms before replacing, then reloads — uses existing `exportEvents()` and `replaceEvents()` from the event store
+- Beta readiness report (`BETA_READINESS.md`) — full codebase audit identifying 6 launch blockers, 5 week-one essentials, 8 accepted risks, and 8 deferred features across web and iOS
+
 ### Changed
+- CLAUDE.md rewritten from scratch — verified against current codebase, removed stale content, tightened to ~100 lines
+- Reset All Data: replaced browser `window.confirm()` with custom typed-DELETE confirmation dialog — requires typing "DELETE" to enable the destructive action
+- Auth loading screen: replaced unstyled "Loading..." text with centered TRUNK branding and CSS spinner, matching the app's monospace font and earthy color scheme — supports dark mode
+- Water dialog textarea: updated placeholder text to "Write a brief note about your progress" for better UX guidance on both web and iOS
+- Meta description in index.html: updated to accurately describe Trunk as a goal-tracking app with gardening metaphors ("Cultivate personal growth by nurturing goals as sprouts on a visual tree. Water daily, shine weekly. Reap what you sow.")
 - Soil chart: smooth monotone cubic bezier interpolation (Fritsch-Carlson) replaces jagged step paths for all ranges except 1d — curves pass through every data point without overshooting
 - Soil chart: gradient area fill under capacity line (15% opacity at top fading to transparent) replaces flat 0.08 opacity fill
 - Soil chart: grid lines now use CSS custom properties (`--border-subtle`, `--ink-faint`) instead of hardcoded rgba — adapts to dark mode; lines are dashed and thinner (0.3px)
@@ -26,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - iOS radar chart: tap-interactive vertices with haptic feedback, auto-dismissing popover label, axis highlighting on tap
 
 ### Fixed
+- Focus trap: wired `trapFocus()` into all 7 dialogs (water, harvest, account, sun log, soil bag, water can, confirm/uproot) and the reset-confirmation alertdialog — previously the function existed but was never called, allowing Tab to escape modal dialogs
+- Sync push errors now surface a toast notification ("Sync failed — changes saved locally and will retry") and record the failure in sync status tracking — previously errors were silently swallowed
 - Double uproot soil refund: `deriveState` now only returns soil when uprooting an active, existing sprout — fixes duplicate uproot inflation (bug #1) and phantom sprout soil injection (bug #7)
 - Soil chart capacity cap: `computeRawSoilHistory` now caps capacity at `MAX_SOIL_CAPACITY` (120) on harvest events, matching `deriveState` behavior (bug #6)
 - `validateEvent()` now enforces required schema fields: `leafId` on sprout_planted, `content` on sprout_watered, `soilReturned` on sprout_uprooted, `twigLabel`+`content` on sun_shone, `twigId` on leaf_created — `prompt` intentionally excluded for backward compatibility (bug #4)

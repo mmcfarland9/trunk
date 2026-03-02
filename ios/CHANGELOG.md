@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Watering streak indicator in Water section on Today tab — shows "Xd streak" inline when the user has watered on consecutive days (6am-to-6am boundaries); hidden when streak is 0; re-wired `wateringStreak` property in `ProgressionViewModel` from `EventStore.shared.getWateringStreak()`
+- Today tab empty states: explanatory text for new users below disabled water button ("Plant your first sprout to start watering"), below disabled shine button ("Sun restores Monday at 6:00 AM"), and a harvest placeholder ("Your first harvest will appear here") when no sprouts are planted
+- Edit sprout: `EditSproutView` sheet for editing active sprout title, bloom descriptions (wither/budding/flourish), and leaf assignment — emits `sprout_edited` event with sparse merge (only changed fields), matching web schema; triggered via "Edit Sprout" button in `SproutActionsView`
+- Settings sheet: `SettingsView` with display name editing, timezone picker, sign-out, and reset-all-data with confirmation dialog — accessible from DataInfoSheet's account section; `AuthService.updateProfile(fullName:timezone:)` saves to Supabase auth metadata; `SyncService.deleteAllEvents()` deletes server-side events then clears local cache
+- Export/Import data: "EXPORT DATA" button generates v4 JSON via `DataExportService` and presents system file exporter; "IMPORT DATA" button opens file picker for JSON, parses with `parseImport()`, shows confirmation dialog with event count, then deletes existing events and batch-inserts imported events to Supabase before forcing a full sync
+
 ### Fixed
+- `EventDerivation`: added `sprout_edited` event handling — new `TrunkEventType.sproutEdited` enum case + `processSproutEdited()` sparse-merges mutable fields (title, bloomWither, bloomBudding, bloomFlourish, leafId), matching web `derive.ts:217-227`; previously these events were silently discarded causing cross-platform data divergence
 - `DataExportService`: changed `soilCost` and `soilReturned` from `Int?` to `Double?` — prevents truncation of fractional soil values during export/import round-trips (bug #2)
 - Harvest events now include optional `reflection` field with TextField in harvest UI, conditionally included in push payload when non-empty (bug #3)
 - `CreateSproutView`: `leafId` now always included in sprout_planted payload via `guard let` enforcement (bug #5)
@@ -57,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `JSONValue.boolValue` — never accessed
 - 4 `JSONValue` convenience initializers — code uses `ExpressibleBy*Literal` conformances instead
 - `wateringStreak` and `longestWateringStreak` from ProgressionViewModel — written to but never read by any view
-- Added `// TEST-ONLY` annotation to `DataExportService.swift` (not yet wired to UI)
+- `// TEST-ONLY` annotation from `DataExportService.swift` (now wired to SettingsView)
 
 ## [0.1.0] - 2026-01-29
 

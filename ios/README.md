@@ -27,8 +27,11 @@ ios/
 │   │   ├── TodayView.swift
 │   │   ├── SproutsView.swift
 │   │   │
+│   │   ├── SettingsView.swift
+│   │   │
 │   │   ├── Dialogs/            # Modal views
 │   │   │   ├── CreateSproutView.swift
+│   │   │   ├── EditSproutView.swift
 │   │   │   ├── WaterSproutView.swift
 │   │   │   ├── WaterDailySproutsView.swift
 │   │   │   ├── HarvestSproutView.swift
@@ -39,12 +42,16 @@ ios/
 │   │   │   ├── SproutsListView.swift
 │   │   │   ├── SproutListRow.swift
 │   │   │   ├── SproutDetailView.swift
-│   │   │   └── SproutFilterBar.swift
+│   │   │   ├── SproutFilterBar.swift
+│   │   │   ├── LeafsListView.swift
+│   │   │   ├── LeafListRow.swift
+│   │   │   └── LeafDetailView.swift
 │   │   │
 │   │   └── Today/              # Today tab components
 │   │       ├── WaterSectionView.swift
 │   │       ├── ShineSectionView.swift
 │   │       ├── NextHarvestView.swift
+│   │       ├── UpcomingHarvestsView.swift
 │   │       └── SoilChartView.swift
 │   │
 │   ├── ViewModels/             # MVVM view models
@@ -70,6 +77,7 @@ ios/
 │   │       └── PendingUploads.swift
 │   │
 │   ├── Components/             # Reusable components
+│   │   ├── BloomDescriptionsView.swift
 │   │   ├── GreetingHeader.swift
 │   │   ├── SyncIndicatorView.swift
 │   │   ├── DataInfoSheet.swift
@@ -90,7 +98,11 @@ ios/
 │   │   └── Secrets.swift
 │   │
 │   └── Utils/                  # Utilities
-│       └── ErrorCodes.swift
+│       ├── PayloadHelpers.swift
+│       ├── Timeout.swift
+│       ├── TreeGeometry.swift
+│       ├── TwigIdParser.swift
+│       └── Wind.swift
 │
 ├── TrunkTests/                 # Unit tests
 └── TrunkUITests/               # UI tests

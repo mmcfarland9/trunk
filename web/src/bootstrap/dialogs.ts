@@ -1,7 +1,7 @@
 import type { AppContext } from '../types'
 import type { NavCallbacks, DialogAPIs } from './ui'
 import type { ChartOps } from './charts'
-import { updateSoilMeter, updateWaterMeter, celebrateMeter } from './meters'
+import { updateSoilMeter, updateWaterMeter, updateWaterStreak, celebrateMeter } from './meters'
 import { getState } from '../events/store'
 import { getPresetLabel, setViewModeState, getActiveBranchIndex, getActiveTwigId } from '../state'
 import constants from '../../../shared/constants.json'
@@ -15,6 +15,7 @@ import { initShine } from '../features/shine-dialog'
 import { initSunLogDialog, initSoilBagDialog, initWaterCanDialog } from '../features/log-dialogs'
 import { initAccountDialog } from '../features/account-dialog'
 import { returnToBranchView, returnToOverview } from '../features/navigation'
+import { pushView, replaceView } from '../features/history'
 
 export function initDialogs(
   ctx: AppContext,
@@ -30,6 +31,7 @@ export function initDialogs(
       ctx.twigView?.refresh()
       celebrateMeter(ctx.elements.waterMeter)
       celebrateMeter(ctx.elements.soilMeter)
+      updateWaterStreak(ctx.elements)
       charts.updateSoil()
       charts.updateRadar()
     },
@@ -88,6 +90,7 @@ export function initDialogs(
     },
     onOpenLeaf: (leafId, twigId, branchIndex) => {
       setViewModeState('leaf', branchIndex, twigId)
+      pushView('leaf', branchIndex, twigId, leafId)
       ctx.leafView?.open(leafId, twigId, branchIndex)
     },
     onNavigate: (direction) => {
@@ -111,6 +114,7 @@ export function initDialogs(
         const newTwigId = newTwig.dataset.nodeId
         if (newTwigId) {
           setViewModeState('twig', activeBranchIndex, newTwigId)
+          replaceView('twig', activeBranchIndex, newTwigId)
           setFocusedNode(newTwig, ctx, (target) => updateFocus(target, ctx))
         }
       }
@@ -130,6 +134,7 @@ export function initDialogs(
         const twig = ctx.nodeLookup.get(activeTwigId)
         if (twig) {
           setViewModeState('twig', activeBranchIndex, activeTwigId)
+          pushView('twig', activeBranchIndex, activeTwigId)
           ctx.twigView?.open(twig)
         }
       }
@@ -181,6 +186,7 @@ export function initDialogs(
   updateFocus(null, ctx)
   updateSoilMeter(ctx.elements)
   updateWaterMeter(ctx.elements)
+  updateWaterStreak(ctx.elements)
   shineApi.updateSunMeter()
 
   return {

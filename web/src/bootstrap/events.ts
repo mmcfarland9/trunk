@@ -3,6 +3,8 @@ import type { NavCallbacks, DialogAPIs } from './ui'
 import { positionNodes, startWind } from '../ui/layout'
 import { setupHoverBranch, setupHoverTwig } from '../features/hover-branch'
 import { getViewMode, getActiveBranchIndex } from '../state'
+import { showToast } from '../ui/toast'
+import { wasShoneThisWeek, getEvents } from '../events'
 import {
   returnToOverview,
   enterBranchView,
@@ -118,17 +120,25 @@ export function initializeEvents(
     // Action shortcuts: W = water, S = sun/shine, H = harvest
     if (!anyDialogOpen && (e.key === 'w' || e.key === 'W')) {
       e.preventDefault()
-      dialogAPIs.waterDialog.open()
+      if (!dialogAPIs.waterDialog.open()) {
+        showToast('All sprouts watered today')
+      }
       return
     }
     if (!anyDialogOpen && (e.key === 's' || e.key === 'S')) {
       e.preventDefault()
-      dialogAPIs.sunLog.open()
+      if (wasShoneThisWeek(getEvents())) {
+        showToast('Already reflected this week')
+      } else {
+        dialogAPIs.sunLog.open()
+      }
       return
     }
     if (!anyDialogOpen && (e.key === 'h' || e.key === 'H')) {
       e.preventDefault()
-      dialogAPIs.harvestDialog.openReady()
+      if (!dialogAPIs.harvestDialog.openReady()) {
+        showToast('No sprouts ready to harvest')
+      }
       return
     }
 
