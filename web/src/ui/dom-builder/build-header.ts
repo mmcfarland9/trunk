@@ -65,7 +65,7 @@ export function buildHeader(): HeaderElements {
   // Wrap badge + sync in a stretch group so sync button matches badge height
   const profileGroup = document.createElement('div')
   profileGroup.className = 'profile-group'
-  profileGroup.append(profileBadge, syncStatusIcon, syncButton)
+  profileGroup.append(profileBadge, syncButton, syncStatusIcon)
 
   actions.append(profileGroup)
 

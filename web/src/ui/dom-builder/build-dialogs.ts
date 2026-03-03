@@ -247,13 +247,9 @@ function createAccountDialog(): HTMLDivElement {
             <p class="account-field-hint">Your data syncs automatically across devices. All activity is stored securely in the cloud.</p>
           </div>
           <div class="account-section-divider"></div>
-          <div class="account-field">
-            <label class="account-label">Export / Import</label>
-            <p class="account-field-hint">Download a backup of all your data, or restore from a previous backup.</p>
-            <div class="account-data-actions">
+          <div class="account-data-actions">
               <button type="button" class="action-btn action-btn-passive action-btn-neutral account-export-data-btn">Export Data</button>
               <button type="button" class="action-btn action-btn-passive action-btn-neutral account-import-data-btn">Import Data</button>
-            </div>
           </div>
           <div class="account-section-divider"></div>
           <div class="account-field">
