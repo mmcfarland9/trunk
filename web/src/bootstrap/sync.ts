@@ -60,9 +60,24 @@ const syncIconConfig: Record<DetailedSyncStatus, { text: string; tooltip: string
   offline: { text: '\u26A0', tooltip: 'Offline \u2014 changes saved locally' },
 }
 
+let fadeTimer: ReturnType<typeof setTimeout> | null = null
+
 function updateSyncStatusIcon(el: HTMLSpanElement, status: DetailedSyncStatus): void {
   const config = syncIconConfig[status]
   el.dataset.status = status
   el.textContent = config.text
   el.title = config.tooltip
+
+  // Show the icon
+  el.classList.add('is-visible')
+  if (fadeTimer) clearTimeout(fadeTimer)
+
+  // Active states stay visible; terminal states fade after 3s
+  if (status === 'syncing' || status === 'loading' || status === 'pendingUpload') {
+    return
+  }
+  fadeTimer = setTimeout(() => {
+    el.classList.remove('is-visible')
+    fadeTimer = null
+  }, 3000)
 }
