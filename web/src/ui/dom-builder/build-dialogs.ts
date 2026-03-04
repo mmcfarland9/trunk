@@ -183,68 +183,70 @@ function createAccountDialog(): HTMLDivElement {
           <button type="button" class="account-tab" data-tab="notifications">Notifications</button>
           <button type="button" class="account-tab" data-tab="data">Data</button>
         </div>
-        <div class="account-tab-panel" data-tab="preferences">
-          <div class="account-field">
-            <label class="account-label">Appearance</label>
-            <div class="account-radio-group account-theme-group">
-              <label class="account-radio"><input type="radio" name="theme" value="auto" /><span>Auto</span></label>
-              <label class="account-radio"><input type="radio" name="theme" value="light" /><span>Light</span></label>
-              <label class="account-radio"><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
-            </div>
-            <p class="account-field-hint">Auto follows your operating system preference.</p>
-          </div>
-        </div>
-        <div class="account-tab-panel hidden" data-tab="notifications">
-          <div class="account-notifications-section">
+        <div class="account-tab-panels">
+          <div class="account-tab-panel" data-tab="preferences">
             <div class="account-field">
-              <label class="account-label">Notify Me Via</label>
-              <div class="account-radio-group account-channel-group">
-                <label class="account-radio"><input type="radio" name="notify-channel" value="email" /><span>Email</span></label>
-                <label class="account-radio"><input type="radio" name="notify-channel" value="none" /><span>Off</span></label>
+              <label class="account-label">Appearance</label>
+              <div class="account-radio-group account-theme-group">
+                <label class="account-radio"><input type="radio" name="theme" value="auto" /><span>Auto</span></label>
+                <label class="account-radio"><input type="radio" name="theme" value="light" /><span>Light</span></label>
+                <label class="account-radio"><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
               </div>
+              <p class="account-field-hint">Auto follows your operating system preference.</p>
             </div>
-            <div class="account-field account-notify-options">
-              <label class="account-label">Check-in Reminders</label>
-              <div class="account-radio-group account-frequency-group">
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" /><span>Daily</span></label>
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" /><span>Every 3 days</span></label>
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" /><span>Weekly</span></label>
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="off" /><span>Off</span></label>
+          </div>
+          <div class="account-tab-panel hidden" data-tab="notifications">
+            <div class="account-notifications-section">
+              <div class="account-field">
+                <label class="account-label">Notify Me Via</label>
+                <div class="account-radio-group account-channel-group">
+                  <label class="account-radio"><input type="radio" name="notify-channel" value="email" /><span>Email</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-channel" value="none" /><span>Off</span></label>
+                </div>
               </div>
-            </div>
-            <div class="account-field account-notify-options">
-              <label class="account-label">Preferred Time</label>
-              <div class="account-radio-group account-time-group">
-                <label class="account-radio"><input type="radio" name="notify-time" value="morning" /><span>Morning</span></label>
-                <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" /><span>Afternoon</span></label>
-                <label class="account-radio"><input type="radio" name="notify-time" value="evening" /><span>Evening</span></label>
+              <div class="account-field account-notify-options">
+                <label class="account-label">Check-in Reminders</label>
+                <div class="account-radio-group account-frequency-group">
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" /><span>Daily</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" /><span>Every 3 days</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" /><span>Weekly</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="off" /><span>Off</span></label>
+                </div>
               </div>
-            </div>
-            <div class="account-field account-notify-options">
-              <label class="account-label">Event Notifications</label>
-              <div class="account-checkbox-group">
-                <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" /><span>Sprout ready to harvest</span></label>
-                <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" /><span>Shine available</span></label>
+              <div class="account-field account-notify-options">
+                <label class="account-label">Preferred Time</label>
+                <div class="account-radio-group account-time-group">
+                  <label class="account-radio"><input type="radio" name="notify-time" value="morning" /><span>Morning</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" /><span>Afternoon</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-time" value="evening" /><span>Evening</span></label>
+                </div>
+              </div>
+              <div class="account-field account-notify-options">
+                <label class="account-label">Event Notifications</label>
+                <div class="account-checkbox-group">
+                  <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" /><span>Sprout ready to harvest</span></label>
+                  <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" /><span>Shine available</span></label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="account-tab-panel hidden" data-tab="data">
-          <div class="account-field">
-            <label class="account-label">Cloud Sync</label>
-            <div class="account-sync-status">
-              <span class="sync-status-line">
-                <span class="sync-timestamp"></span>
-                <span class="sync-state"></span>
-              </span>
+          <div class="account-tab-panel hidden" data-tab="data">
+            <div class="account-field">
+              <label class="account-label">Cloud Sync</label>
+              <div class="account-sync-status">
+                <span class="sync-status-line">
+                  <span class="sync-timestamp"></span>
+                  <span class="sync-state"></span>
+                </span>
+              </div>
+              <p class="account-field-hint">Syncs automatically and stored securely in the cloud.</p>
             </div>
-            <p class="account-field-hint">Syncs automatically and stored securely in the cloud.</p>
-          </div>
-          <div class="account-section-divider"></div>
-          <div class="account-field">
-            <label class="account-label">Reset All Data</label>
-            <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity. This cannot be undone.</p>
-            <button type="button" class="action-btn action-btn-passive action-btn-destructive account-reset-data-btn">Reset All Data</button>
+            <div class="account-section-divider"></div>
+            <div class="account-field">
+              <label class="account-label">Reset All Data</label>
+              <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity. This cannot be undone.</p>
+              <button type="button" class="action-btn action-btn-passive action-btn-destructive account-reset-data-btn">Reset All Data</button>
+            </div>
           </div>
         </div>
         <div class="account-actions">

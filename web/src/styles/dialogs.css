@@ -1465,15 +1465,20 @@ select.account-input {
   background: rgba(0, 0, 0, 0.02);
 }
 
+.account-tab-panels {
+  display: grid;
+}
+
 .account-tab-panel {
+  grid-row: 1;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-height: 120px;
 }
 
 .account-tab-panel.hidden {
-  display: none;
+  visibility: hidden;
 }
 
 .account-field-hint {
