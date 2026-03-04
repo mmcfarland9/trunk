@@ -85,7 +85,6 @@
   font-size: var(--text-sm, 0.75rem);
   color: var(--ink-faint, #6f5644);
   line-height: 1.5;
-  max-width: 28ch;
 }
 
 .login-form {
