@@ -221,6 +221,7 @@ export function initAccountDialog(elements: AccountElements): {
     elements.accountDialog.classList.remove('hidden')
     const dialogBox = elements.accountDialog.querySelector<HTMLElement>('[role="dialog"]')
     if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   }
 
   const closeDialog = () => {
