@@ -1,7 +1,6 @@
 import type { AppContext } from '../types'
-import { setEventStoreErrorCallbacks, exportEvents, getEvents } from '../events/store'
-import { STORAGE_KEYS, EXPORT_REMINDER_DAYS } from '../generated/constants'
-import { showToast } from '../ui/toast'
+import { setEventStoreErrorCallbacks, exportEvents } from '../events/store'
+import { STORAGE_KEYS } from '../generated/constants'
 import { initCharts } from './charts'
 import { initDialogs } from './dialogs'
 
@@ -92,28 +91,6 @@ export function showQuotaWarning(): void {
   document.body.prepend(banner)
 }
 
-/**
- * Show a toast if the user hasn't exported data in EXPORT_REMINDER_DAYS.
- * Only fires once per session (on app load) and only when events exist.
- */
-function checkExportReminder(): void {
-  if (getEvents().length === 0) return
-
-  const lastExport = localStorage.getItem(STORAGE_KEYS.lastExport)
-  const thresholdMs = EXPORT_REMINDER_DAYS * 24 * 60 * 60 * 1000
-
-  if (lastExport) {
-    const elapsed = Date.now() - Number(lastExport)
-    if (elapsed < thresholdMs) return
-  }
-
-  // No export ever recorded, or it's been too long
-  showToast(
-    'It\u2019s been a while since your last export. Back up your data in Account \u203A Data.',
-    5000,
-  )
-}
-
 export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): DialogAPIs {
   // Set up storage error callbacks
   setEventStoreErrorCallbacks(
@@ -122,9 +99,6 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
       void error // Storage errors are surfaced via quota warning banner
     },
   )
-
-  // Check if user should be reminded to export
-  checkExportReminder()
 
   // Initialize charts
   const charts = initCharts(ctx)
