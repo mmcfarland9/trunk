@@ -258,6 +258,73 @@
   overflow-y: auto;
 }
 
+/* Water dialog suggestions */
+.water-dialog-suggestions {
+  background: rgba(70, 130, 180, 0.06);
+  border: 1px solid rgba(70, 130, 180, 0.2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.water-dialog-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(70, 130, 180, 0.1);
+  padding: var(--space-2) 0;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 200ms ease;
+}
+
+.water-dialog-suggestion:first-child {
+  padding-top: 0;
+}
+
+.water-dialog-suggestion:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.water-dialog-suggestion-name {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  transition: color 150ms ease;
+}
+
+.water-dialog-suggestion:hover .water-dialog-suggestion-name {
+  color: var(--water);
+}
+
+.water-dialog-suggestion-meta {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.water-dialog-suggestion.is-watered {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.water-dialog-suggestion.is-watered .water-dialog-suggestion-name {
+  text-decoration: line-through;
+}
+
+/* Highlight animation for suggestion scroll-to */
+.water-dialog-section.is-highlighted {
+  animation: water-highlight 800ms ease;
+}
+
+@keyframes water-highlight {
+  0%, 100% { border-color: var(--border); }
+  30% { border-color: var(--water); }
+}
+
 /* Multi-sprout water sections */
 .water-dialog-section {
   padding: var(--space-4);
@@ -1226,10 +1293,20 @@
 }
 
 .account-dialog-body {
-  padding: var(--space-5);
+  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+}
+
+.account-field-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.account-field-row > .account-field {
+  flex: 1;
+  min-width: 0;
 }
 
 .account-field {
@@ -1287,33 +1364,13 @@ select.account-input {
 .account-section-divider {
   height: 1px;
   background: var(--border-subtle);
-  margin: var(--space-2) 0;
-}
-
-.account-data-actions {
-  display: flex;
-  gap: var(--space-2);
+  margin: var(--space-1) 0;
 }
 
 .account-notifications-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-.account-notifications-section.is-disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.account-coming-soon {
-  font-size: var(--text-xs);
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--ink-faint);
-  font-style: italic;
-  margin-left: var(--space-2);
+  gap: var(--space-3);
 }
 
 .account-radio-group {
@@ -1380,7 +1437,7 @@ select.account-input {
 .account-tabs {
   display: flex;
   gap: var(--space-1);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .account-tab {
@@ -1411,7 +1468,7 @@ select.account-input {
 .account-tab-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   min-height: 120px;
 }
 

@@ -125,17 +125,12 @@ describe('buildDialogs', () => {
       expect(save).not.toBeNull()
     })
 
-    it('has name and phone inputs', () => {
+    it('has name input', () => {
       const nameInput = dialogs.accountDialog.querySelector(
         '.account-name-input',
       ) as HTMLInputElement
-      const phoneInput = dialogs.accountDialog.querySelector(
-        '.account-phone-input',
-      ) as HTMLInputElement
       expect(nameInput).not.toBeNull()
       expect(nameInput.type).toBe('text')
-      expect(phoneInput).not.toBeNull()
-      expect(phoneInput.type).toBe('tel')
     })
 
     it('has timezone select', () => {

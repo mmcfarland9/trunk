@@ -285,11 +285,6 @@ function assembleElements(
       '.account-name-input',
       'account dialog name input',
     ),
-    accountDialogPhoneInput: requireElement<HTMLInputElement>(
-      dialogsResult.accountDialog,
-      '.account-phone-input',
-      'account dialog phone input',
-    ),
     accountDialogTimezoneSelect: requireElement<HTMLSelectElement>(
       dialogsResult.accountDialog,
       '.account-timezone-select',
@@ -323,16 +318,6 @@ function assembleElements(
       dialogsResult.accountDialog,
       '.account-save-btn',
       'account dialog save button',
-    ),
-    accountDialogExportData: requireElement<HTMLButtonElement>(
-      dialogsResult.accountDialog,
-      '.account-export-data-btn',
-      'account dialog export data button',
-    ),
-    accountDialogImportData: requireElement<HTMLButtonElement>(
-      dialogsResult.accountDialog,
-      '.account-import-data-btn',
-      'account dialog import data button',
     ),
     accountDialogResetData: requireElement<HTMLButtonElement>(
       dialogsResult.accountDialog,

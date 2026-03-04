@@ -1,9 +1,7 @@
 import type { AppElements } from '../types'
 import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
 import { deleteAllEvents } from '../services/sync'
-import { exportEvents, replaceEvents } from '../events'
 import { getTheme, setTheme } from '../utils/theme'
-import { STORAGE_KEYS } from '../generated/constants'
 import { trapFocus } from '../ui/dom-builder/build-dialogs'
 
 // --- Account Dialog ---
@@ -14,7 +12,6 @@ type AccountElements = Pick<
   | 'accountDialogClose'
   | 'accountDialogEmail'
   | 'accountDialogNameInput'
-  | 'accountDialogPhoneInput'
   | 'accountDialogTimezoneSelect'
   | 'accountDialogChannelInputs'
   | 'accountDialogFrequencyInputs'
@@ -23,8 +20,6 @@ type AccountElements = Pick<
   | 'accountDialogShineCheckbox'
   | 'accountDialogSignOut'
   | 'accountDialogSave'
-  | 'accountDialogExportData'
-  | 'accountDialogImportData'
   | 'accountDialogResetData'
   | 'profileBadge'
 >
@@ -100,7 +95,6 @@ function populateAccountDialog(elements: AccountElements): void {
 
   elements.accountDialogEmail.textContent = user?.email || ''
   elements.accountDialogNameInput.value = profile.full_name || ''
-  elements.accountDialogPhoneInput.value = profile.phone || ''
   populateTimezoneSelect(
     elements.accountDialogTimezoneSelect,
     profile.timezone || 'America/New_York',
@@ -270,54 +264,6 @@ export function initAccountDialog(elements: AccountElements): {
     await signOut()
   })
 
-  // Export data — download events as JSON
-  elements.accountDialogExportData.addEventListener('click', () => {
-    const events = exportEvents()
-    const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `trunk${Date.now()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    localStorage.setItem(STORAGE_KEYS.lastExport, Date.now().toString())
-  })
-
-  // Import data — file picker + confirmation
-  elements.accountDialogImportData.addEventListener('click', () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.addEventListener('change', () => {
-      const file = input.files?.[0]
-      if (!file) return
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result as string)
-          if (!Array.isArray(data)) {
-            alert('Invalid file: expected an array of events.')
-            return
-          }
-
-          const confirmed = window.confirm(
-            `Import ${data.length} events?\n\nThis will replace ALL existing data. This action cannot be undone.`,
-          )
-          if (!confirmed) return
-
-          replaceEvents(data)
-          closeDialog()
-          window.location.reload()
-        } catch {
-          alert('Failed to read file: invalid JSON.')
-        }
-      }
-      reader.readAsText(file)
-    })
-    input.click()
-  })
-
   // Reset all data with typed DELETE confirmation
   elements.accountDialogResetData.addEventListener('click', () => {
     showResetConfirmation(elements, closeDialog)
@@ -334,7 +280,6 @@ export function initAccountDialog(elements: AccountElements): {
 
     const profile = {
       full_name: elements.accountDialogNameInput.value.trim(),
-      phone: elements.accountDialogPhoneInput.value.trim(),
       timezone: elements.accountDialogTimezoneSelect.value,
       notifications: {
         channel: getSelectedRadio(elements.accountDialogChannelInputs) as 'email' | 'sms' | 'none',

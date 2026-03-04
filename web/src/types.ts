@@ -164,7 +164,6 @@ export type AppElements = {
   accountDialogClose: HTMLButtonElement
   accountDialogEmail: HTMLParagraphElement
   accountDialogNameInput: HTMLInputElement
-  accountDialogPhoneInput: HTMLInputElement
   accountDialogTimezoneSelect: HTMLSelectElement
   accountDialogChannelInputs: NodeListOf<HTMLInputElement>
   accountDialogFrequencyInputs: NodeListOf<HTMLInputElement>
@@ -173,8 +172,6 @@ export type AppElements = {
   accountDialogShineCheckbox: HTMLInputElement
   accountDialogSignOut: HTMLButtonElement
   accountDialogSave: HTMLButtonElement
-  accountDialogExportData: HTMLButtonElement
-  accountDialogImportData: HTMLButtonElement
   accountDialogResetData: HTMLButtonElement
   soilChartSection: HTMLElement
 }

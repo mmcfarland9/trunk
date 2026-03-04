@@ -202,7 +202,6 @@ function createMockAppContext(): AppContext {
     accountDialogClose: document.createElement('button'),
     accountDialogEmail: document.createElement('p'),
     accountDialogNameInput: document.createElement('input'),
-    accountDialogPhoneInput: document.createElement('input'),
     accountDialogTimezoneSelect: document.createElement('select'),
     accountDialogChannelInputs: document.querySelectorAll('.channel-input'),
     accountDialogFrequencyInputs: document.querySelectorAll('.frequency-input'),
@@ -211,8 +210,6 @@ function createMockAppContext(): AppContext {
     accountDialogShineCheckbox: document.createElement('input'),
     accountDialogSignOut: document.createElement('button'),
     accountDialogSave: document.createElement('button'),
-    accountDialogExportData: document.createElement('button'),
-    accountDialogImportData: document.createElement('button'),
     accountDialogResetData: document.createElement('button'),
   }
 

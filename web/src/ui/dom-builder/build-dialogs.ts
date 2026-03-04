@@ -167,17 +167,15 @@ function createAccountDialog(): HTMLDivElement {
           <label class="account-label">Email</label>
           <p class="account-email"></p>
         </div>
-        <div class="account-field">
-          <label class="account-label" for="account-name">Full Name</label>
-          <input type="text" id="account-name" class="account-input account-name-input" placeholder="Your name" />
-        </div>
-        <div class="account-field">
-          <label class="account-label" for="account-phone">Phone</label>
-          <input type="tel" id="account-phone" class="account-input account-phone-input" placeholder="555 123 4567" />
-        </div>
-        <div class="account-field">
-          <label class="account-label" for="account-timezone">Time Zone</label>
-          <select id="account-timezone" class="account-input account-timezone-select"></select>
+        <div class="account-field-row">
+          <div class="account-field">
+            <label class="account-label" for="account-name">Full Name</label>
+            <input type="text" id="account-name" class="account-input account-name-input" placeholder="Your name" />
+          </div>
+          <div class="account-field">
+            <label class="account-label" for="account-timezone">Time Zone</label>
+            <select id="account-timezone" class="account-input account-timezone-select"></select>
+          </div>
         </div>
         <div class="account-section-divider"></div>
         <div class="account-tabs">
@@ -197,40 +195,36 @@ function createAccountDialog(): HTMLDivElement {
           </div>
         </div>
         <div class="account-tab-panel hidden" data-tab="notifications">
-          <div class="account-notifications-section is-disabled">
-            <div class="account-field">
-              <label class="account-label">Notifications <span class="account-coming-soon">Coming soon</span></label>
-            </div>
+          <div class="account-notifications-section">
             <div class="account-field">
               <label class="account-label">Notify Me Via</label>
               <div class="account-radio-group account-channel-group">
-                <label class="account-radio"><input type="radio" name="notify-channel" value="email" disabled /><span>Email</span></label>
-                <label class="account-radio"><input type="radio" name="notify-channel" value="sms" disabled /><span>Text</span></label>
-                <label class="account-radio"><input type="radio" name="notify-channel" value="none" disabled /><span>Off</span></label>
+                <label class="account-radio"><input type="radio" name="notify-channel" value="email" /><span>Email</span></label>
+                <label class="account-radio"><input type="radio" name="notify-channel" value="none" /><span>Off</span></label>
               </div>
             </div>
             <div class="account-field account-notify-options">
               <label class="account-label">Check-in Reminders</label>
               <div class="account-radio-group account-frequency-group">
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" disabled /><span>Daily</span></label>
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" disabled /><span>Every 3 days</span></label>
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" disabled /><span>Weekly</span></label>
-                <label class="account-radio"><input type="radio" name="notify-frequency" value="off" disabled /><span>Off</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" /><span>Daily</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" /><span>Every 3 days</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" /><span>Weekly</span></label>
+                <label class="account-radio"><input type="radio" name="notify-frequency" value="off" /><span>Off</span></label>
               </div>
             </div>
             <div class="account-field account-notify-options">
               <label class="account-label">Preferred Time</label>
               <div class="account-radio-group account-time-group">
-                <label class="account-radio"><input type="radio" name="notify-time" value="morning" disabled /><span>Morning</span></label>
-                <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" disabled /><span>Afternoon</span></label>
-                <label class="account-radio"><input type="radio" name="notify-time" value="evening" disabled /><span>Evening</span></label>
+                <label class="account-radio"><input type="radio" name="notify-time" value="morning" /><span>Morning</span></label>
+                <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" /><span>Afternoon</span></label>
+                <label class="account-radio"><input type="radio" name="notify-time" value="evening" /><span>Evening</span></label>
               </div>
             </div>
             <div class="account-field account-notify-options">
               <label class="account-label">Event Notifications</label>
               <div class="account-checkbox-group">
-                <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" disabled /><span>Sprout ready to harvest</span></label>
-                <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" disabled /><span>Shine available</span></label>
+                <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" /><span>Sprout ready to harvest</span></label>
+                <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" /><span>Shine available</span></label>
               </div>
             </div>
           </div>
@@ -244,12 +238,7 @@ function createAccountDialog(): HTMLDivElement {
                 <span class="sync-state"></span>
               </span>
             </div>
-            <p class="account-field-hint">Your data syncs automatically across devices. All activity is stored securely in the cloud.</p>
-          </div>
-          <div class="account-section-divider"></div>
-          <div class="account-data-actions">
-              <button type="button" class="action-btn action-btn-passive action-btn-neutral account-export-data-btn">Export Data</button>
-              <button type="button" class="action-btn action-btn-passive action-btn-neutral account-import-data-btn">Import Data</button>
+            <p class="account-field-hint">Syncs automatically and stored securely in the cloud.</p>
           </div>
           <div class="account-section-divider"></div>
           <div class="account-field">
