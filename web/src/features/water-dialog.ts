@@ -72,6 +72,20 @@ function selectDailySprouts(sprouts: ActiveSproutInfo[]): ActiveSproutInfo[] {
     .slice(0, 3)
 }
 
+function getLastWateredMeta(sprout: ActiveSproutInfo): string {
+  if (!sprout.waterEntries || sprout.waterEntries.length === 0) {
+    return 'Never watered'
+  }
+  const timestamps = sprout.waterEntries.map((e) => e.timestamp).sort()
+  const lastTimestamp = timestamps[timestamps.length - 1]
+  const diffMs = Date.now() - new Date(lastTimestamp).getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) return 'Earlier today'
+  if (diffDays === 1) return '1 day ago'
+  return `${diffDays} days ago`
+}
+
 export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks): WaterDialogApi {
   let releaseFocusTrap: (() => void) | null = null
 
@@ -108,6 +122,51 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
     body.innerHTML = '' // Clear previous content
 
     const soilGainText = `+${sharedConstants.soil.recoveryRates.waterUse.toFixed(2)} soil`
+
+    // Build suggestions section (multi-sprout mode only)
+    if (!targetSprout && sprouts.length > 0) {
+      const suggestionsDiv = document.createElement('div')
+      suggestionsDiv.className = 'water-dialog-suggestions'
+
+      for (const sprout of sprouts) {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'water-dialog-suggestion'
+        btn.dataset.sproutId = sprout.id
+
+        const name = document.createElement('span')
+        name.className = 'water-dialog-suggestion-name'
+        name.textContent = sprout.title
+
+        const meta = document.createElement('span')
+        meta.className = 'water-dialog-suggestion-meta'
+        meta.textContent = getLastWateredMeta(sprout)
+
+        btn.appendChild(name)
+        btn.appendChild(meta)
+
+        btn.addEventListener('click', () => {
+          const section = body.querySelector<HTMLElement>(
+            `.water-dialog-section[data-sprout-id="${sprout.id}"]`,
+          )
+          if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            section.classList.remove('is-highlighted')
+            void section.offsetWidth // force reflow to restart animation
+            section.classList.add('is-highlighted')
+            section.addEventListener(
+              'animationend',
+              () => section.classList.remove('is-highlighted'),
+              { once: true },
+            )
+          }
+        })
+
+        suggestionsDiv.appendChild(btn)
+      }
+
+      body.appendChild(suggestionsDiv)
+    }
 
     sprouts.forEach((sprout, i) => {
       const section = document.createElement('div')
@@ -154,6 +213,24 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
           pourBtn.disabled = true
           pourBtn.textContent = 'Watered'
           textarea.disabled = true
+
+          // Update corresponding suggestion
+          const suggestion = body.querySelector<HTMLElement>(
+            `.water-dialog-suggestion[data-sprout-id="${sprout.id}"]`,
+          )
+          if (suggestion) {
+            suggestion.classList.add('is-watered')
+            const meta = suggestion.querySelector('.water-dialog-suggestion-meta')
+            if (meta) meta.textContent = 'Watered'
+          }
+          // Hide suggestions if all are watered
+          const suggestionsDiv = body.querySelector('.water-dialog-suggestions')
+          if (suggestionsDiv) {
+            const remaining = suggestionsDiv.querySelectorAll(
+              '.water-dialog-suggestion:not(.is-watered)',
+            )
+            if (remaining.length === 0) suggestionsDiv.remove()
+          }
 
           callbacks.onWaterMeterChange()
           callbacks.onSoilMeterChange()
