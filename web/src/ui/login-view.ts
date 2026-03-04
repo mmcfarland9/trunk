@@ -20,7 +20,7 @@ export function createLoginView(): HTMLElement {
     <div class="login-card">
       <h1>Trunk</h1>
       <p class="login-subtitle">Reap what you sow</p>
-      <p class="login-description">Tend what matters. Watch it grow.</p>
+      <p class="login-description">Plant intentions, water them daily, and watch your garden grow.</p>
 
       <form class="login-form email-form">
         <label for="login-email">Email address</label>
