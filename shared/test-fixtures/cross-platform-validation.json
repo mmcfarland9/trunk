@@ -25,8 +25,8 @@
     ]
   },
 
-  "capacityRewardTests": {
-    "_description": "Capacity reward calculation with diminishing returns. Formula: baseReward × envMult × resultMult × (1 - capacity/120)^1.5",
+  "capacityGainedTests": {
+    "_description": "Capacity gained calculation with diminishing returns. Formula: baseReward × envMult × resultMult × (1 - capacity/120)^1.5",
     "cases": [
       {
         "description": "Edge case: capacity 0 (no diminishing)",

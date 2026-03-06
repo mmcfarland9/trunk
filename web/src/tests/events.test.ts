@@ -16,7 +16,7 @@ import {
   getCompletedSprouts,
   getSproutsForTwig,
   getLeavesForTwig,
-  wasSproutWateredThisWeek,
+  checkSproutWateredThisWeek,
 } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
@@ -544,7 +544,7 @@ describe('Sun Availability Derivation', () => {
 
 describe('Sprout Watered This Week', () => {
   it('should return false if never watered', () => {
-    const result = wasSproutWateredThisWeek([], 'sprout-1')
+    const result = checkSproutWateredThisWeek([], 'sprout-1')
     expect(result).toBe(false)
   })
 
@@ -560,7 +560,7 @@ describe('Sprout Watered This Week', () => {
       },
     ]
 
-    const result = wasSproutWateredThisWeek(events, 'sprout-1', now)
+    const result = checkSproutWateredThisWeek(events, 'sprout-1', now)
     expect(result).toBe(true)
   })
 
@@ -576,7 +576,7 @@ describe('Sprout Watered This Week', () => {
       },
     ]
 
-    const result = wasSproutWateredThisWeek(events, 'sprout-1', now)
+    const result = checkSproutWateredThisWeek(events, 'sprout-1', now)
     expect(result).toBe(false)
   })
 })

@@ -108,7 +108,7 @@ struct ShineView: View {
 
                         // Action button
                         Button {
-                            performShine(twig: twig)
+                            shineSun(twig: twig)
                         } label: {
                             HStack(spacing: 4) {
                                 Text("☀️")
@@ -177,7 +177,7 @@ struct ShineView: View {
         }
     }
 
-    private func performShine(twig: TwigContext) {
+    private func shineSun(twig: TwigContext) {
         isShining = true
         errorMessage = nil
         HapticManager.tap()

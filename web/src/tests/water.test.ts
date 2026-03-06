@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { getTodayResetTime, getNextWaterReset, getWaterCapacity, getWeekResetTime } from '../state'
-import { wasSproutWateredThisWeek } from '../events'
+import { checkSproutWateredThisWeek } from '../events/derive'
 import type { TrunkEvent } from '../events'
 
 describe('Water Reset Time', () => {
@@ -112,7 +112,7 @@ describe('Water Availability', () => {
   })
 })
 
-describe('wasSproutWateredThisWeek (events-based)', () => {
+describe('checkSproutWateredThisWeek (events-based)', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -123,7 +123,7 @@ describe('wasSproutWateredThisWeek (events-based)', () => {
 
   it('returns false when no water events exist', () => {
     const events: TrunkEvent[] = []
-    expect(wasSproutWateredThisWeek(events, 'sprout-1')).toBe(false)
+    expect(checkSproutWateredThisWeek(events, 'sprout-1')).toBe(false)
   })
 
   it('returns false when water event is for different sprout', () => {
@@ -139,7 +139,7 @@ describe('wasSproutWateredThisWeek (events-based)', () => {
       },
     ]
 
-    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(false)
+    expect(checkSproutWateredThisWeek(events, 'sprout-1', now)).toBe(false)
   })
 
   it('returns true when sprout has recent water event this week', () => {
@@ -158,7 +158,7 @@ describe('wasSproutWateredThisWeek (events-based)', () => {
       },
     ]
 
-    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(true)
+    expect(checkSproutWateredThisWeek(events, 'sprout-1', now)).toBe(true)
   })
 
   it('returns false when water event is from last week', () => {
@@ -175,7 +175,7 @@ describe('wasSproutWateredThisWeek (events-based)', () => {
       },
     ]
 
-    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(false)
+    expect(checkSproutWateredThisWeek(events, 'sprout-1', now)).toBe(false)
   })
 
   it('returns true when at least one water event is from this week', () => {
@@ -197,6 +197,6 @@ describe('wasSproutWateredThisWeek (events-based)', () => {
       },
     ]
 
-    expect(wasSproutWateredThisWeek(events, 'sprout-1', now)).toBe(true)
+    expect(checkSproutWateredThisWeek(events, 'sprout-1', now)).toBe(true)
   })
 })

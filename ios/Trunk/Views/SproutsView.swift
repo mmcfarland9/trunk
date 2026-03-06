@@ -9,7 +9,7 @@ import SwiftUI
 
 enum BrowseMode: String, CaseIterable {
     case sprouts = "Sprouts"
-    case leafs = "Leafs"
+    case leaves = "Leaves"
 }
 
 struct SproutsView: View {
@@ -46,7 +46,7 @@ struct SproutsView: View {
                             )
                         } else {
                             // Leaf list with summary
-                            LeafsListView(
+                            LeavesListView(
                                 leaves: viewModel.filteredLeaves(),
                                 totalCount: viewModel.leafCount,
                                 state: viewModel.cachedState ?? EventStore.shared.getState(),
@@ -62,7 +62,7 @@ struct SproutsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(selectedMode == .sprouts ? "SPROUTS" : "LEAFS")
+                Text(selectedMode == .sprouts ? "SPROUTS" : "LEAVES")
                     .font(.system(size: TrunkTheme.textBase, design: .monospaced))
                     .tracking(2)
                     .foregroundStyle(Color.wood)
@@ -82,7 +82,7 @@ struct SproutsView: View {
         switch selectedMode {
         case .sprouts:
             return viewModel.cachedSprouts.isEmpty
-        case .leafs:
+        case .leaves:
             return viewModel.cachedLeaves.isEmpty
         }
     }

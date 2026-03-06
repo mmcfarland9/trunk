@@ -1,5 +1,5 @@
 import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
-import { calculateCapacityReward, getSoilCapacity } from '../state'
+import { calculateCapacityGained, getSoilCapacity } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { getResultEmoji } from '../utils/sprout-labels'
 import { appendEvent } from '../events'
@@ -50,7 +50,7 @@ export function initHarvestDialog(
     // All harvests return full soil + some capacity (no "failed" state)
     if (currentHarvestSprout) {
       const currentCapacity = getSoilCapacity()
-      const capGain = calculateCapacityReward(
+      const capGain = calculateCapacityGained(
         currentHarvestSprout.season,
         currentHarvestSprout.environment,
         result,
@@ -135,7 +135,7 @@ export function initHarvestDialog(
 
     // Calculate capacity gained with diminishing returns
     const currentCapacity = getSoilCapacity()
-    const capacityGained = calculateCapacityReward(season, environment, result, currentCapacity)
+    const capacityGained = calculateCapacityGained(season, environment, result, currentCapacity)
 
     // Emit sprout_harvested event - this is the only source of truth
     appendEvent({

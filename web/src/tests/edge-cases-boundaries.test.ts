@@ -11,7 +11,7 @@ import {
   getActiveSprouts,
 } from '../events/derive'
 import { validateEvent } from '../events/store'
-import { calculateCapacityReward, getTodayResetTime, getWeekResetTime } from '../utils/calculations'
+import { calculateCapacityGained, getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 import type { TrunkEvent } from '../events/types'
 
 describe('Edge Cases — Boundaries', () => {
@@ -260,13 +260,13 @@ describe('Edge Cases — Boundaries', () => {
   })
 
   describe('soil capacity at maximum (120)', () => {
-    it('calculateCapacityReward returns 0 at exactly 120', () => {
-      const reward = calculateCapacityReward('2w', 'fertile', 5, 120)
+    it('calculateCapacityGained returns 0 at exactly 120', () => {
+      const reward = calculateCapacityGained('2w', 'fertile', 5, 120)
       expect(reward).toBe(0)
     })
 
-    it('calculateCapacityReward returns very small value near 120', () => {
-      const reward = calculateCapacityReward('2w', 'fertile', 5, 119)
+    it('calculateCapacityGained returns very small value near 120', () => {
+      const reward = calculateCapacityGained('2w', 'fertile', 5, 119)
       expect(reward).toBeGreaterThan(0)
       expect(reward).toBeLessThan(0.01) // Very small due to diminishing returns
     })
@@ -299,7 +299,7 @@ describe('Edge Cases — Boundaries', () => {
 
   describe('result values at boundaries', () => {
     it('result=1 uses 0.4 multiplier', () => {
-      const reward = calculateCapacityReward('2w', 'fertile', 1, 10)
+      const reward = calculateCapacityGained('2w', 'fertile', 1, 10)
       // base=0.26, env=1.1, result=0.4, diminishing=(1-10/120)^1.5
       const diminishing = Math.max(0, (1 - 10 / 120) ** 1.5)
       const expected = 0.26 * 1.1 * 0.4 * diminishing
@@ -307,28 +307,28 @@ describe('Edge Cases — Boundaries', () => {
     })
 
     it('result=5 uses 1.0 multiplier', () => {
-      const reward = calculateCapacityReward('2w', 'fertile', 5, 10)
+      const reward = calculateCapacityGained('2w', 'fertile', 5, 10)
       const diminishing = Math.max(0, (1 - 10 / 120) ** 1.5)
       const expected = 0.26 * 1.1 * 1.0 * diminishing
       expect(reward).toBeCloseTo(expected, 6)
     })
 
     it('result=5 reward is 2.5x result=1 reward (same season/env/capacity)', () => {
-      const reward1 = calculateCapacityReward('1m', 'firm', 1, 20)
-      const reward5 = calculateCapacityReward('1m', 'firm', 5, 20)
+      const reward1 = calculateCapacityGained('1m', 'firm', 1, 20)
+      const reward5 = calculateCapacityGained('1m', 'firm', 5, 20)
       // 1.0 / 0.4 = 2.5
       expect(reward5 / reward1).toBeCloseTo(2.5, 6)
     })
 
     it('result clamped to 1 when below range', () => {
-      const rewardZero = calculateCapacityReward('2w', 'fertile', 0, 10)
-      const rewardOne = calculateCapacityReward('2w', 'fertile', 1, 10)
+      const rewardZero = calculateCapacityGained('2w', 'fertile', 0, 10)
+      const rewardOne = calculateCapacityGained('2w', 'fertile', 1, 10)
       expect(rewardZero).toBeCloseTo(rewardOne, 6)
     })
 
     it('result clamped to 5 when above range', () => {
-      const rewardSix = calculateCapacityReward('2w', 'fertile', 6, 10)
-      const rewardFive = calculateCapacityReward('2w', 'fertile', 5, 10)
+      const rewardSix = calculateCapacityGained('2w', 'fertile', 6, 10)
+      const rewardFive = calculateCapacityGained('2w', 'fertile', 5, 10)
       expect(rewardSix).toBeCloseTo(rewardFive, 6)
     })
   })

@@ -1,5 +1,5 @@
 //
-//  LeafsListView.swift
+//  LeavesListView.swift
 //  Trunk
 //
 //  List rendering of filtered leaves with summary bar and search.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LeafsListView: View {
+struct LeavesListView: View {
     let leaves: [DerivedLeaf]
     let totalCount: Int
     let state: DerivedState

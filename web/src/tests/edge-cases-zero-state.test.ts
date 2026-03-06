@@ -15,9 +15,9 @@ import {
   getLeafById,
   getSproutsByLeaf,
   getAllWaterEntries,
-  wasShoneThisWeek,
-  wasSproutWateredThisWeek,
-  wasSproutWateredToday,
+  deriveShoneThisWeek,
+  checkSproutWateredThisWeek,
+  checkSproutWateredToday,
   deriveWateringStreak,
 } from '../events/derive'
 import {
@@ -130,16 +130,16 @@ describe('Edge Cases — Zero State', () => {
       expect(deriveSunAvailable([])).toBe(1)
     })
 
-    it('wasShoneThisWeek returns false', () => {
-      expect(wasShoneThisWeek([])).toBe(false)
+    it('deriveShoneThisWeek returns false', () => {
+      expect(deriveShoneThisWeek([])).toBe(false)
     })
 
-    it('wasSproutWateredThisWeek returns false for any sprout', () => {
-      expect(wasSproutWateredThisWeek([], 'sprout-1')).toBe(false)
+    it('checkSproutWateredThisWeek returns false for any sprout', () => {
+      expect(checkSproutWateredThisWeek([], 'sprout-1')).toBe(false)
     })
 
-    it('wasSproutWateredToday returns false for any sprout', () => {
-      expect(wasSproutWateredToday([], 'sprout-1')).toBe(false)
+    it('checkSproutWateredToday returns false for any sprout', () => {
+      expect(checkSproutWateredToday([], 'sprout-1')).toBe(false)
     })
 
     it('deriveWateringStreak returns zero streak', () => {

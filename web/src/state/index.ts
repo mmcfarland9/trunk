@@ -40,7 +40,7 @@ export {
 // Pure calculation functions (no state)
 export {
   calculateSoilCost,
-  calculateCapacityReward,
+  calculateCapacityGained,
   getTodayResetTime,
   getWeekResetTime,
   getNextWaterReset,

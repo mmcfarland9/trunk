@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { calculateSoilCost, calculateCapacityReward } from '../utils/calculations'
+import { calculateSoilCost, calculateCapacityGained } from '../utils/calculations'
 import { deriveState, deriveWaterAvailable, deriveSunAvailable } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 import fixture from '../../../shared/test-fixtures/cross-platform-validation.json'
@@ -22,12 +22,12 @@ describe('Cross-platform parity: soil costs', () => {
   })
 })
 
-describe('Cross-platform parity: capacity rewards', () => {
-  const { cases } = fixture.capacityRewardTests
+describe('Cross-platform parity: capacity gained', () => {
+  const { cases } = fixture.capacityGainedTests
 
   cases.forEach((testCase) => {
     it(testCase.description, () => {
-      const actual = calculateCapacityReward(
+      const actual = calculateCapacityGained(
         testCase.season,
         testCase.environment,
         testCase.result,

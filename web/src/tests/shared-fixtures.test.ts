@@ -5,11 +5,11 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { calculateCapacityReward } from '../utils/calculations'
+import { calculateCapacityGained } from '../utils/calculations'
 import { deriveState, getActiveSprouts, getCompletedSprouts } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 import type { SproutSeason, SproutEnvironment } from '../types'
-import capacityRewardFixture from '../../../shared/test-fixtures/capacity-reward.json'
+import capacityGainedFixture from '../../../shared/test-fixtures/capacity-reward.json'
 import eventDerivationFixture from '../../../shared/test-fixtures/event-derivation.json'
 
 // Helper to cast fixture events to TrunkEvent[]
@@ -17,11 +17,11 @@ function toTrunkEvents(events: readonly Record<string, unknown>[]): TrunkEvent[]
   return events as unknown as TrunkEvent[]
 }
 
-describe('Shared Fixtures: Capacity Reward', () => {
-  for (const testCase of capacityRewardFixture.cases) {
+describe('Shared Fixtures: Capacity Gained', () => {
+  for (const testCase of capacityGainedFixture.cases) {
     it(testCase.description, () => {
       const { season, environment, result, currentCapacity } = testCase.input
-      const reward = calculateCapacityReward(
+      const reward = calculateCapacityGained(
         season as SproutSeason,
         environment as SproutEnvironment,
         result,

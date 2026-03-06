@@ -172,10 +172,10 @@ describe('buildDialogs', () => {
       expect(journal.maxLength).toBe(2000)
     })
 
-    it('has a radiate button', () => {
+    it('has a shine button', () => {
       const btn = dialogs.sunLogDialog.querySelector('.sun-log-shine-btn')
       expect(btn).not.toBeNull()
-      expect(btn?.textContent).toBe('Radiate')
+      expect(btn?.textContent).toBe('Shine')
     })
   })
 

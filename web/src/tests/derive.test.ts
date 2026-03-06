@@ -15,7 +15,7 @@ import {
   toSprout,
   getLeafById,
   getSproutsByLeaf,
-  wasShoneThisWeek,
+  deriveShoneThisWeek,
   getAllWaterEntries,
 } from '../events/derive'
 import { deriveSoilLog, computeRawSoilHistory, bucketSoilData } from '../events/soil-charting'
@@ -521,7 +521,7 @@ describe('getSproutsByLeaf', () => {
   })
 })
 
-describe('wasShoneThisWeek', () => {
+describe('deriveShoneThisWeek', () => {
   it('returns true when sun was shone this week', () => {
     // Wednesday Jan 29, 2026 at 2pm
     const now = new Date('2026-01-29T14:00:00')
@@ -536,7 +536,7 @@ describe('wasShoneThisWeek', () => {
       },
     ]
 
-    expect(wasShoneThisWeek(events, now)).toBe(true)
+    expect(deriveShoneThisWeek(events, now)).toBe(true)
   })
 
   it('returns false when no sun was shone this week', () => {
@@ -553,12 +553,12 @@ describe('wasShoneThisWeek', () => {
       },
     ]
 
-    expect(wasShoneThisWeek(events, now)).toBe(false)
+    expect(deriveShoneThisWeek(events, now)).toBe(false)
   })
 
   it('returns false when no sun events exist', () => {
     const now = new Date('2026-01-29T14:00:00')
-    expect(wasShoneThisWeek([], now)).toBe(false)
+    expect(deriveShoneThisWeek([], now)).toBe(false)
   })
 })
 

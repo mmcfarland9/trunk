@@ -10,7 +10,7 @@ import { appendEvent, getState, getSproutsForTwig, getLeavesForTwig, toSprout } 
 import { escapeHtml } from '../../utils/escape-html'
 import { getSeasonLabel, getEnvironmentLabel } from '../../utils/sprout-labels'
 
-type HandlerCallbacks = {
+type EventHandlerCallbacks = {
   onSoilChange?: () => void
   onOpenLeaf?: (leafId: string, twigId: string, branchIndex: number) => void
   onWaterClick?: (sprout: { id: string; title: string }) => void
@@ -50,7 +50,7 @@ export async function handleDeleteAction(
   card: HTMLElement,
   state: FormState,
   confirmDialog: ConfirmDialog,
-  callbacks: HandlerCallbacks,
+  callbacks: EventHandlerCallbacks,
   renderSprouts: () => void,
 ): Promise<void> {
   const id = card.dataset.id
@@ -88,7 +88,7 @@ export function handleOpenLeafAction(
   el: HTMLElement,
   e: MouseEvent,
   state: FormState,
-  callbacks: HandlerCallbacks,
+  callbacks: EventHandlerCallbacks,
   close: () => void,
 ): void {
   const target = e.target as HTMLElement
@@ -109,7 +109,7 @@ export function handleOpenLeafAction(
 export function handleWaterAction(
   actionEl: HTMLElement,
   state: FormState,
-  callbacks: HandlerCallbacks,
+  callbacks: EventHandlerCallbacks,
 ): void {
   if (!callbacks.onWaterClick) return
   const card = actionEl.closest('.sprout-card') as HTMLElement
@@ -129,7 +129,7 @@ export function handleWaterAction(
 export function handleHarvestAction(
   actionEl: HTMLElement,
   state: FormState,
-  callbacks: HandlerCallbacks,
+  callbacks: EventHandlerCallbacks,
 ): void {
   const card = actionEl.closest('.sprout-card') as HTMLElement
   const id = card?.dataset.id

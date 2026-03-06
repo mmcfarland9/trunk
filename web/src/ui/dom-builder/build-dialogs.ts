@@ -119,7 +119,7 @@ function createSunLogDialog(): HTMLDivElement {
           </div>
           <textarea class="sun-log-shine-journal" placeholder="Reflect on this journey..." maxlength="2000"></textarea>
           <div class="sun-log-shine-actions">
-            <button type="button" class="action-btn action-btn-progress action-btn-sun sun-log-shine-btn">Radiate</button>
+            <button type="button" class="action-btn action-btn-progress action-btn-sun sun-log-shine-btn">Shine</button>
           </div>
         </div>
         <div class="sun-log-shine-shone">

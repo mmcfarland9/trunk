@@ -21,10 +21,10 @@ export function calculateSoilCost(season: SproutSeason, environment: SproutEnvir
 }
 
 /**
- * Calculate capacity reward with diminishing returns.
+ * Calculate capacity gained with diminishing returns.
  * As you approach MAX_SOIL_CAPACITY, growth slows toward zero.
  */
-export function calculateCapacityReward(
+export function calculateCapacityGained(
   season: SproutSeason,
   environment: SproutEnvironment,
   result: number,

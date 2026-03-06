@@ -129,7 +129,7 @@ function populateAccountDialog(elements: AccountElements): void {
 function showResetConfirmation(elements: AccountElements, closeDialog: () => void): void {
   // Build confirmation overlay inside the account dialog
   const overlay = document.createElement('div')
-  overlay.className = 'reset-confirm-overlay'
+  overlay.className = 'reset-confirm-dialog'
   overlay.innerHTML = `
     <div class="reset-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-desc">
       <h3 id="reset-confirm-title" class="reset-confirm-title">Delete All Data</h3>
