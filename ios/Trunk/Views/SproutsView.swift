@@ -23,49 +23,38 @@ struct SproutsView: View {
             Color.parchment
                 .ignoresSafeArea()
 
-            if isEmpty {
-                emptyState
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: TrunkTheme.space4) {
-                        // Mode toggle
-                        modeToggle
-                            .animatedCard(index: 0)
+            ScrollView {
+                VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                    if selectedMode == .sprouts {
+                        // Filter bar (search + filters + sort)
+                        SproutFilterBar(viewModel: viewModel)
 
-                        if selectedMode == .sprouts {
-                            // Filter bar (search + filters + sort)
-                            SproutFilterBar(viewModel: viewModel)
-
-                            // Sprout list with summary
-                            SproutsListView(
-                                sprouts: viewModel.filteredSprouts(),
-                                totalCount: viewModel.cachedSprouts.count,
-                                activeCount: viewModel.activeCount,
-                                completedCount: viewModel.completedCount,
-                                state: viewModel.cachedState ?? EventStore.shared.getState()
-                            )
-                        } else {
-                            // Leaf list with summary
-                            LeavesListView(
-                                leaves: viewModel.filteredLeaves(),
-                                totalCount: viewModel.leafCount,
-                                state: viewModel.cachedState ?? EventStore.shared.getState(),
-                                searchText: $viewModel.searchText
-                            )
-                        }
+                        // Sprout list with summary
+                        SproutsListView(
+                            sprouts: viewModel.filteredSprouts(),
+                            totalCount: viewModel.cachedSprouts.count,
+                            activeCount: viewModel.activeCount,
+                            completedCount: viewModel.completedCount,
+                            state: viewModel.cachedState ?? EventStore.shared.getState()
+                        )
+                    } else {
+                        // Leaf list with summary
+                        LeavesListView(
+                            leaves: viewModel.filteredLeaves(),
+                            totalCount: viewModel.leafCount,
+                            state: viewModel.cachedState ?? EventStore.shared.getState(),
+                            searchText: $viewModel.searchText
+                        )
                     }
-                    .padding(TrunkTheme.space4)
                 }
+                .padding(TrunkTheme.space4)
             }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(selectedMode == .sprouts ? "SPROUTS" : "LEAVES")
-                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                    .tracking(2)
-                    .foregroundStyle(Color.wood)
+                modeToggle
             }
         }
         .onAppear {
@@ -73,17 +62,6 @@ struct SproutsView: View {
         }
         .onChange(of: progression.version) {
             viewModel.refreshCachedState()
-        }
-    }
-
-    // MARK: - Empty Check
-
-    private var isEmpty: Bool {
-        switch selectedMode {
-        case .sprouts:
-            return viewModel.cachedSprouts.isEmpty
-        case .leaves:
-            return viewModel.cachedLeaves.isEmpty
         }
     }
 
@@ -96,8 +74,9 @@ struct SproutsView: View {
                     HapticManager.tap()
                     selectedMode = mode
                 } label: {
-                    Text(mode.rawValue)
+                    Text(mode.rawValue.uppercased())
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .tracking(1)
                         .foregroundStyle(selectedMode == mode ? Color.wood : Color.inkFaint)
                         .padding(.horizontal, TrunkTheme.space2)
                         .padding(.vertical, TrunkTheme.space1)
@@ -109,38 +88,9 @@ struct SproutsView: View {
                 }
                 .buttonStyle(.plain)
             }
-
-            Spacer()
         }
     }
 
-    // MARK: - Empty State
-
-    private var emptyState: some View {
-        VStack(spacing: TrunkTheme.space3) {
-            // Still show mode toggle so user can switch
-            modeToggle
-                .padding(.horizontal, TrunkTheme.space4)
-
-            Spacer()
-
-            Text(selectedMode == .sprouts ? "No sprouts yet" : "No leaves yet")
-                .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-
-            Text(selectedMode == .sprouts
-                 ? "Plant your first sprout from the Trunk tab to see it here."
-                 : "Leaves are created when you plant sprouts with a saga name.")
-                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                .foregroundStyle(Color.inkFaint)
-                .multilineTextAlignment(.center)
-
-            Spacer()
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, TrunkTheme.space6)
-        .padding(.horizontal, TrunkTheme.space4)
-    }
 }
 
 // MARK: - Previews

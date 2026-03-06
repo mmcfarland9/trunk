@@ -43,12 +43,6 @@ struct WaterSectionView: View {
             .buttonStyle(.plain)
             .disabled(!canWater)
 
-            if !canWater && !hasActiveSprouts {
-                Text("Plant your first sprout to start watering")
-                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint)
-                    .padding(.top, TrunkTheme.space1)
-            }
         }
     }
 }

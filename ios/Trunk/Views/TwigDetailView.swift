@@ -63,20 +63,6 @@ struct TwigDetailView: View {
                         }
                     }
 
-                    // Empty state
-                    if sprouts.isEmpty {
-                        VStack(spacing: TrunkTheme.space3) {
-                            Text("No sprouts yet")
-                                .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-
-                            Text("Tap + to plant your first sprout")
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, TrunkTheme.space6)
-                    }
                 }
                 .padding(TrunkTheme.space4)
             }

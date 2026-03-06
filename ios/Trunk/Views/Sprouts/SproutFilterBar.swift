@@ -93,8 +93,12 @@ struct SproutFilterBar: View {
                 }
 
                 Spacer()
+            }
 
-                // Sort control
+            // Sort control
+            HStack {
+                Spacer()
+
                 Menu {
                     ForEach(SproutSort.allCases, id: \.self) { sort in
                         Button {

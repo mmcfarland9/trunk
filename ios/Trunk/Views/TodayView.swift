@@ -66,13 +66,6 @@ struct TodayView: View {
                         if let nextSprout = cachedNextHarvestSprout {
                             NextHarvestView(sprout: nextSprout, onTap: { showUpcomingHarvests = true })
                                 .animatedCard(index: 3)
-                        } else {
-                            Text("Your first harvest will appear here")
-                                .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                .foregroundStyle(Color.inkFaint)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(TrunkTheme.space3)
-                                .animatedCard(index: 3)
                         }
 
                         // Soil capacity over time
