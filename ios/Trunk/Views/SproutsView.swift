@@ -25,6 +25,9 @@ struct SproutsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: TrunkTheme.space4) {
+                    // Sprouts / Leaves toggle
+                    modeToggle
+
                     if selectedMode == .sprouts {
                         // Filter bar (search + filters + sort)
                         SproutFilterBar(viewModel: viewModel)
@@ -54,7 +57,10 @@ struct SproutsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                modeToggle
+                Text("GARDEN")
+                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                    .tracking(2)
+                    .foregroundStyle(Color.wood)
             }
         }
         .onAppear {
@@ -74,9 +80,8 @@ struct SproutsView: View {
                     HapticManager.tap()
                     selectedMode = mode
                 } label: {
-                    Text(mode.rawValue.uppercased())
+                    Text(mode.rawValue)
                         .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                        .tracking(1)
                         .foregroundStyle(selectedMode == mode ? Color.wood : Color.inkFaint)
                         .padding(.horizontal, TrunkTheme.space2)
                         .padding(.vertical, TrunkTheme.space1)
@@ -88,6 +93,8 @@ struct SproutsView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            Spacer()
         }
     }
 
