@@ -14,8 +14,12 @@ struct SoilChartView: View {
     @Binding var selectedRange: SoilChartRange
     @State private var scrubIndex: Int? = nil
 
+    private var endDate: Date {
+        rawHistory.last?.date ?? Date()
+    }
+
     private var filteredSoilHistory: [SoilChartPoint] {
-        SoilHistoryService.bucketSoilHistory(rawHistory, range: selectedRange, now: Date())
+        SoilHistoryService.bucketSoilHistory(rawHistory, range: selectedRange, now: endDate)
     }
 
     var body: some View {
@@ -169,7 +173,7 @@ struct SoilChartView: View {
                     .foregroundStyle(Color.inkFaint)
             }
         }
-        .chartXScale(domain: (points.first?.date ?? Date()) ... Date())
+        .chartXScale(domain: (points.first?.date ?? endDate) ... endDate)
         .chartForegroundStyleScale([
             "Capacity": Color.twig,
             "Available": Color.trunkSuccess
@@ -246,9 +250,13 @@ struct SoilChartView: View {
     }
 
     private func isRangeAvailable(_ range: SoilChartRange) -> Bool {
+        // Need at least 2 raw snapshots (initial + one change) for any range
+        guard rawHistory.count >= 2 else { return false }
+
         guard let rangeStart = range.startDate,
               let earliest = rawHistory.first?.date else {
-            return true // ALL is always available; no data = nothing to disable
+            // ALL: available when we have data
+            return rawHistory.count >= 2
         }
         return earliest <= rangeStart
     }

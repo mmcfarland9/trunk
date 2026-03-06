@@ -314,8 +314,7 @@ func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
         }
     }
 
-    // Add current date as final soil history point
-    soilHistory.append(RawSoilSnapshot(date: now, capacity: soilCapacity, available: soilAvailable))
+    // No trailing "now" point — chart ends at last event to avoid per-second re-renders
 
     // Compute streak from collected timestamps
     let streak = computeStreakFromTimestamps(waterTimestamps, now: now)

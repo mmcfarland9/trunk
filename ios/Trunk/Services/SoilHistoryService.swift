@@ -133,9 +133,6 @@ struct SoilHistoryService {
             }
         }
 
-        // Add current date as final point
-        history.append(RawSoilSnapshot(date: Date(), capacity: capacity, available: available))
-
         return history
     }
 
