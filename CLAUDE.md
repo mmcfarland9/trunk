@@ -12,7 +12,7 @@ Trunk is a personal growth tracker built around gardening metaphors. Users plant
 web/     Vite + TypeScript (vanilla DOM, no framework)
 ios/     Swift 5.9+ / SwiftUI (iOS 17+)
 shared/  Constants, schemas, formulas, prompts
-docs/    Architecture, data model, interfaces, onboarding, runbook
+docs at root: ARCHITECTURE.md, RELEASE.md, CANVAS.md
 ```
 
 **Build (web)** — all commands from `web/`:
@@ -60,7 +60,7 @@ npm run generate       # Regenerate constants from shared/
 
 **Code style**: 2-space indent (web), strict TypeScript. Biome for formatting + linting. Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`, `perf:`.
 
-**Branching**: Two branches — `dev` (daily work) and `main` (production). All code changes happen on `dev`. Merge to `main` when ready for production. Never commit directly to `main`. See [docs/VERSIONING.md](docs/VERSIONING.md) for full release process.
+**Branching**: Two branches — `dev` (daily work) and `main` (production). All code changes happen on `dev`. Merge to `main` when ready for production. Never commit directly to `main`. See [RELEASE.md](RELEASE.md) for full release process.
 
 **Twig IDs**: Format `branch-{N}-twig-{twigId}` — e.g., `branch-3-twig-branch-3-twig-5`. Parsed by `parseTwigId()` in both platforms.
 
@@ -92,15 +92,11 @@ npm run generate       # Regenerate constants from shared/
 
 ---
 
-## Documentation Index
+## Documentation
 
 | Document | Covers |
 |----------|--------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, module graph, sync flow, callback patterns |
-| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Event schemas, DerivedState shape, storage keys, enums |
-| [docs/INTERFACES.md](docs/INTERFACES.md) | Module APIs for both platforms |
-| [docs/ONBOARDING.md](docs/ONBOARDING.md) | Quick start, common tasks, gotchas |
-| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deployment, troubleshooting |
-| [docs/VERSIONING.md](docs/VERSIONING.md) | Semver strategy, release process |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System design, data model, module graphs, sync, storage |
+| [RELEASE.md](RELEASE.md) | Branching (dev/main), versioning, release process |
+| [CANVAS.md](CANVAS.md) | Feature vision and research |
 | [shared/formulas.md](shared/formulas.md) | Soil economy: costs, rewards, diminishing returns |
-| [shared/sync-protocol.md](shared/sync-protocol.md) | Sync protocol specification |

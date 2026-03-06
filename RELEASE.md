@@ -140,11 +140,8 @@ Changes to `shared/` should be coordinated across platforms but don't have their
 
 ---
 
-## Related Documentation
+## Related
 
-- [CLAUDE.md](../CLAUDE.md) — Codebase guide (system prompt)
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — System diagrams, event sourcing, sync architecture
-- [ONBOARDING.md](./ONBOARDING.md) — Quick start, common tasks, contributing
-- [DATA_MODEL.md](./DATA_MODEL.md) — Entity relationships, event types, storage
-- [INTERFACES.md](./INTERFACES.md) — Module APIs, extension points
-- [RUNBOOK.md](./RUNBOOK.md) — Deployment, common issues
+- [CLAUDE.md](CLAUDE.md) — Codebase guide
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System design, data model, sync
+- [CANVAS.md](CANVAS.md) — Feature vision

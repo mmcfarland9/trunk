@@ -223,7 +223,7 @@ The iOS app implements the same event-sourced architecture as the web app:
 
 ## Related Documentation
 
-- [../CLAUDE.md](../CLAUDE.md) — Monorepo overview
-- [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — Event sourcing architecture
-- [../shared/sync-protocol.md](../shared/sync-protocol.md) — Sync protocol specification
+- [../CLAUDE.md](../CLAUDE.md) — Codebase guide
+- [../ARCHITECTURE.md](../ARCHITECTURE.md) — System design, data model, sync
+- [../RELEASE.md](../RELEASE.md) — Branching, versioning, release process
 - [../shared/formulas.md](../shared/formulas.md) — Progression formulas

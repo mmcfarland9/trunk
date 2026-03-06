@@ -61,7 +61,7 @@ This web app imports shared constants and schemas from `../shared/`:
 import constants from '@shared/constants.json'
 ```
 
-See [../shared/README.md](../shared/README.md) for details.
+See `../shared/constants.json` and `../shared/formulas.md` for details.
 
 ## Tech Stack
 
