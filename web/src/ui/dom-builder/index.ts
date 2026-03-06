@@ -92,15 +92,10 @@ function assembleElements(
     profileEmail: headerResult.profileEmail,
     syncButton: headerResult.syncButton,
     syncStatusIcon: headerResult.syncStatusIcon,
-    syncTimestamp: requireElement<HTMLSpanElement>(
+    syncStatus: requireElement<HTMLParagraphElement>(
       dialogsResult.accountDialog,
-      '.sync-timestamp',
-      'sync timestamp span',
-    ),
-    syncState: requireElement<HTMLSpanElement>(
-      dialogsResult.accountDialog,
-      '.sync-state',
-      'sync state span',
+      '.account-sync-status',
+      'sync status text',
     ),
     sproutsDialog: dialogsResult.sproutsDialog,
     sproutsDialogContent: requireElement<HTMLDivElement>(

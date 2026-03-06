@@ -196,36 +196,37 @@ function createAccountDialog(): HTMLDivElement {
             </div>
           </div>
           <div class="account-tab-panel hidden" data-tab="notifications">
-            <div class="account-notifications-section">
+            <div class="account-notifications-section is-disabled">
+              <p class="account-field-hint" style="margin-bottom: var(--space-3)">Email notifications are coming soon.</p>
               <div class="account-field">
                 <label class="account-label">Notify Me Via</label>
                 <div class="account-radio-group account-channel-group">
-                  <label class="account-radio"><input type="radio" name="notify-channel" value="email" /><span>Email</span></label>
-                  <label class="account-radio"><input type="radio" name="notify-channel" value="none" /><span>Off</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-channel" value="email" disabled /><span>Email</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-channel" value="none" checked disabled /><span>Off</span></label>
                 </div>
               </div>
               <div class="account-field account-notify-options">
                 <label class="account-label">Check-in Reminders</label>
                 <div class="account-radio-group account-frequency-group">
-                  <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" /><span>Daily</span></label>
-                  <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" /><span>Every 3 days</span></label>
-                  <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" /><span>Weekly</span></label>
-                  <label class="account-radio"><input type="radio" name="notify-frequency" value="off" /><span>Off</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="daily" disabled /><span>Daily</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="every3days" disabled /><span>Every 3 days</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="weekly" disabled /><span>Weekly</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-frequency" value="off" disabled /><span>Off</span></label>
                 </div>
               </div>
               <div class="account-field account-notify-options">
                 <label class="account-label">Preferred Time</label>
                 <div class="account-radio-group account-time-group">
-                  <label class="account-radio"><input type="radio" name="notify-time" value="morning" /><span>Morning</span></label>
-                  <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" /><span>Afternoon</span></label>
-                  <label class="account-radio"><input type="radio" name="notify-time" value="evening" /><span>Evening</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-time" value="morning" disabled /><span>Morning</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-time" value="afternoon" disabled /><span>Afternoon</span></label>
+                  <label class="account-radio"><input type="radio" name="notify-time" value="evening" disabled /><span>Evening</span></label>
                 </div>
               </div>
               <div class="account-field account-notify-options">
                 <label class="account-label">Event Notifications</label>
                 <div class="account-checkbox-group">
-                  <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" /><span>Sprout ready to harvest</span></label>
-                  <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" /><span>Shine available</span></label>
+                  <label class="account-checkbox"><input type="checkbox" class="account-notify-harvest" disabled /><span>Sprout ready to harvest</span></label>
+                  <label class="account-checkbox"><input type="checkbox" class="account-notify-shine" disabled /><span>Shine available</span></label>
                 </div>
               </div>
             </div>
@@ -233,18 +234,13 @@ function createAccountDialog(): HTMLDivElement {
           <div class="account-tab-panel hidden" data-tab="data">
             <div class="account-field">
               <label class="account-label">Cloud Sync</label>
-              <div class="account-sync-status">
-                <span class="sync-status-line">
-                  <span class="sync-timestamp"></span>
-                  <span class="sync-state"></span>
-                </span>
-              </div>
-              <p class="account-field-hint">Syncs automatically and stored securely in the cloud.</p>
+              <p class="account-sync-status"></p>
+              <p class="account-field-hint">Your data syncs automatically across devices and is stored securely in the cloud.</p>
             </div>
             <div class="account-section-divider"></div>
             <div class="account-field">
               <label class="account-label">Reset All Data</label>
-              <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity. This cannot be undone.</p>
+              <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity.</p>
               <button type="button" class="action-btn action-btn-passive action-btn-destructive account-reset-data-btn">Reset All Data</button>
             </div>
           </div>

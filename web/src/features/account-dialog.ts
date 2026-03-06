@@ -63,15 +63,6 @@ function formatTimezone(tz: string): string {
   }
 }
 
-function updateNotifyOptionsVisibility(elements: AccountElements, channel: string): void {
-  const notifyOptions = elements.accountDialog.querySelectorAll('.account-notify-options')
-  const isOff = channel === 'none'
-  notifyOptions.forEach((el) => {
-    ;(el as HTMLElement).style.opacity = isOff ? '0.4' : '1'
-    ;(el as HTMLElement).style.pointerEvents = isOff ? 'none' : 'auto'
-  })
-}
-
 function populateTimezoneSelect(select: HTMLSelectElement, currentTz: string): void {
   select.innerHTML = ''
 
@@ -100,22 +91,7 @@ function populateAccountDialog(elements: AccountElements): void {
     profile.timezone || 'America/New_York',
   )
 
-  // Notification preferences
-  const notif = profile.notifications!
-  elements.accountDialogChannelInputs.forEach((input) => {
-    input.checked = input.value === notif.channel
-  })
-  elements.accountDialogFrequencyInputs.forEach((input) => {
-    input.checked = input.value === notif.check_in_frequency
-  })
-  elements.accountDialogTimeInputs.forEach((input) => {
-    input.checked = input.value === notif.preferred_time
-  })
-  elements.accountDialogHarvestCheckbox.checked = notif.notify_harvest_ready
-  elements.accountDialogShineCheckbox.checked = notif.notify_shine_available
-
-  // Update visibility of notification options based on channel
-  updateNotifyOptionsVisibility(elements, notif.channel)
+  // Notification preferences — disabled until backend is wired
 
   // Theme preference
   const currentTheme = getTheme()
@@ -134,7 +110,7 @@ function showResetConfirmation(elements: AccountElements, closeDialog: () => voi
     <div class="reset-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-desc">
       <h3 id="reset-confirm-title" class="reset-confirm-title">Delete All Data</h3>
       <p id="reset-confirm-desc" class="reset-confirm-message">
-        This will permanently remove all your sprouts, leaves, journal entries, and activity history. This action cannot be undone.
+        This will permanently remove all your sprouts, leaves, journal entries, and activity history.
       </p>
       <label class="reset-confirm-label" for="reset-confirm-input">Type <strong>DELETE</strong> to confirm</label>
       <input id="reset-confirm-input" type="text" class="reset-confirm-input account-input" autocomplete="off" spellcheck="false" />
@@ -253,13 +229,6 @@ export function initAccountDialog(elements: AccountElements): {
     })
   })
 
-  // Update notify options visibility when channel changes
-  elements.accountDialogChannelInputs.forEach((input) => {
-    input.addEventListener('change', () => {
-      updateNotifyOptionsVisibility(elements, input.value)
-    })
-  })
-
   elements.accountDialogSignOut.addEventListener('click', async () => {
     closeDialog()
     await signOut()
@@ -271,31 +240,9 @@ export function initAccountDialog(elements: AccountElements): {
   })
 
   elements.accountDialogSave.addEventListener('click', async () => {
-    // Get selected radio values
-    const getSelectedRadio = (inputs: NodeListOf<HTMLInputElement>): string => {
-      for (const input of inputs) {
-        if (input.checked) return input.value
-      }
-      return ''
-    }
-
     const profile = {
       full_name: elements.accountDialogNameInput.value.trim(),
       timezone: elements.accountDialogTimezoneSelect.value,
-      notifications: {
-        channel: getSelectedRadio(elements.accountDialogChannelInputs) as 'email' | 'sms' | 'none',
-        check_in_frequency: getSelectedRadio(elements.accountDialogFrequencyInputs) as
-          | 'daily'
-          | 'every3days'
-          | 'weekly'
-          | 'off',
-        preferred_time: getSelectedRadio(elements.accountDialogTimeInputs) as
-          | 'morning'
-          | 'afternoon'
-          | 'evening',
-        notify_harvest_ready: elements.accountDialogHarvestCheckbox.checked,
-        notify_shine_available: elements.accountDialogShineCheckbox.checked,
-      },
     }
 
     elements.accountDialogSave.disabled = true

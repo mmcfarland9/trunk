@@ -229,29 +229,12 @@
   color: var(--warning-tone);
 }
 
-/* Sync status text indicator */
-.sync-status-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-}
-
-.sync-timestamp {
-  color: #e6b800;
-  font-variant-numeric: tabular-nums;
-}
-
-.sync-state {
-  white-space: nowrap;
-}
-
-.sync-state[data-status="synced"] { color: #22a522; }
-.sync-state[data-status="syncing"],
-.sync-state[data-status="loading"] { color: #e6b800; }
-.sync-state[data-status="pendingUpload"] { color: #d4880a; }
-.sync-state[data-status="offline"] { color: #d9534f; }
+/* Sync status text in account dialog */
+.account-sync-status[data-status="synced"] { color: var(--ink-faint); }
+.account-sync-status[data-status="syncing"],
+.account-sync-status[data-status="loading"] { color: #e6b800; }
+.account-sync-status[data-status="pendingUpload"] { color: #d4880a; }
+.account-sync-status[data-status="offline"] { color: #d9534f; }
 
 .app-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 

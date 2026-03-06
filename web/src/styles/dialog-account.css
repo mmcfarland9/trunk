@@ -141,6 +141,11 @@ select.account-input {
   gap: var(--space-3);
 }
 
+.account-notifications-section.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .account-radio-group {
   display: flex;
   flex-wrap: wrap;
@@ -246,6 +251,7 @@ select.account-input {
 }
 
 .account-tab-panel.hidden {
+  display: flex !important;
   visibility: hidden;
 }
 
@@ -259,5 +265,7 @@ select.account-input {
 
 /* Sync status in Data tab */
 .account-sync-status {
-  padding: var(--space-2) 0;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
 }

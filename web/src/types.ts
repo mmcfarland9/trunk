@@ -113,8 +113,7 @@ export type AppElements = {
   profileEmail: HTMLSpanElement
   syncButton: HTMLButtonElement
   syncStatusIcon: HTMLSpanElement
-  syncTimestamp: HTMLSpanElement
-  syncState: HTMLSpanElement
+  syncStatus: HTMLParagraphElement
   sproutsDialog: HTMLDivElement
   sproutsDialogContent: HTMLDivElement
   sproutsDialogClose: HTMLButtonElement

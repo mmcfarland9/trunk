@@ -2,32 +2,57 @@ import { subscribeSyncMetadata, forceFullSync } from '../services/sync'
 import type { DetailedSyncStatus } from '../services/sync/status'
 import type { AppElements } from '../types'
 
-/** Format ISO 8601 timestamp to UTC seconds precision: yyyy-MM-ddTHH:mm:ssZ */
-function formatTimestampUTC(ts: string): string {
-  return new Date(ts).toISOString().replace(/\.\d{3}Z$/, 'Z')
+/** Format timestamp to friendly relative text like "today at 2:30 PM" or "Mar 6 at 2:30 PM" */
+function formatFriendlyTime(ts: string): string {
+  const date = new Date(ts)
+  const now = new Date()
+  const time = date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+
+  if (isToday) return `today at ${time}`
+
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday =
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate()
+
+  if (isYesterday) return `yesterday at ${time}`
+
+  const day = date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+  return `${day} at ${time}`
 }
 
 export function initializeSync(elements: AppElements): void {
   // Subscribe to detailed sync metadata
   subscribeSyncMetadata((meta) => {
-    const tsEl = elements.syncTimestamp
-    const stateEl = elements.syncState
+    const el = elements.syncStatus
 
-    if (meta.lastConfirmedTimestamp) {
-      tsEl.textContent = formatTimestampUTC(meta.lastConfirmedTimestamp)
+    if (meta.status === 'synced') {
+      el.textContent = meta.lastConfirmedTimestamp
+        ? `Last synced ${formatFriendlyTime(meta.lastConfirmedTimestamp)}`
+        : 'Synced'
+    } else if (meta.status === 'syncing' || meta.status === 'loading') {
+      el.textContent = 'Syncing now\u2026'
+    } else if (meta.status === 'pendingUpload') {
+      el.textContent = 'Uploading changes\u2026'
+    } else if (meta.status === 'offline') {
+      el.textContent = 'Offline \u2014 changes saved locally'
     } else {
-      tsEl.textContent = ''
+      el.textContent = ''
     }
-
-    const stateMap: Record<string, string> = {
-      synced: '\u2713 Synced',
-      syncing: 'Syncing...',
-      loading: 'Syncing...',
-      pendingUpload: '\u2191 Pushing...',
-      offline: '\u2717 Offline',
-    }
-    stateEl.textContent = stateMap[meta.status] || ''
-    stateEl.dataset.status = meta.status
+    el.dataset.status = meta.status
 
     // Update header sync status icon
     updateSyncStatusIcon(elements.syncStatusIcon, meta.status)

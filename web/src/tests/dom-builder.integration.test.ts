@@ -109,8 +109,7 @@ describe('DOM Builder Integration', () => {
     })
 
     it('has sync indicators', () => {
-      expect(result.elements.syncTimestamp).toBeInstanceOf(HTMLSpanElement)
-      expect(result.elements.syncState).toBeInstanceOf(HTMLSpanElement)
+      expect(result.elements.syncStatus).toBeInstanceOf(HTMLParagraphElement)
     })
   })
 
