@@ -1,67 +1,104 @@
-# Trunk Versioning Guide
+# Trunk Release Management
 
-Trunk uses **independent semantic versioning** for each platform.
+## Branching
 
-## Version Lines
+| Branch | Purpose | Deploys to |
+|--------|---------|------------|
+| `main` | Production. Always stable. | Vercel (trunk.michaelpmcfarland.com) + iOS archives |
+| `dev` | Daily work. WIP, experiments, broken things are fine. | Vercel preview deploys |
 
-| Platform | Version Location | Tag Format |
-|----------|-----------------|------------|
-| Web | `web/package.json` | `web-v0.1.0` |
-| iOS | Xcode `MARKETING_VERSION` | `ios-v0.1.0` |
+No feature branches. No pull requests. Just `dev` for work, `main` for production.
+
+### Daily workflow
+
+```bash
+git checkout dev
+# work, commit, push freely
+git push
+```
+
+### Releasing to production
+
+```bash
+git checkout main
+git merge dev
+git push                # Vercel deploys web automatically
+# Archive in Xcode if releasing iOS
+```
+
+### Rules
+
+- **Never commit directly to `main`** — always merge from `dev`.
+- **Claude Code works on `dev`** — all code changes happen on `dev`, never on `main`.
+- **`main` is what users see** — web deploys instantly on push, iOS archives from `main`.
+
+---
+
+## Versioning
+
+Trunk uses **independent semantic versioning** for each platform. **Version bumps are manual and intentional** — commits do not trigger version changes. The maintainer decides when to bump and what the version means.
+
+| Platform | Version Location | Tag Format | Current |
+|----------|-----------------|------------|---------|
+| Web | `web/package.json` `version` | `web-vX.Y.Z` | 0.1.0 |
+| iOS | Xcode `MARKETING_VERSION` | `ios-vX.Y.Z` | 0.1.0 |
 
 Each platform evolves independently. Web might be at v1.2.0 while iOS is at v0.8.0.
 
-## Semantic Versioning
+### Pre-1.0 (current)
 
-### Pre-1.0 (Current)
-
-Both platforms are pre-1.0, meaning:
 - Breaking changes don't require major bumps
-- Focus on shipping and iterating
-- Version bumps are at maintainer discretion
+- Bump when it feels right — before a TestFlight build, after a milestone, etc.
+- No automation, no scripts, just manual control
 
-### Post-1.0 (Future)
-
-Once a platform reaches 1.0.0:
+### Post-1.0 (future)
 
 | Bump | When | Example |
 |------|------|---------|
-| **Patch** (+0.0.1) | Bug fixes, typos, small visual tweaks | `1.0.0` → `1.0.1` |
-| **Minor** (+0.1.0) | New features, UI changes, new sprout options | `1.0.1` → `1.1.0` |
-| **Major** (+1.0.0) | Data migrations, major redesigns, "new app feel" | `1.1.0` → `2.0.0` |
+| **Patch** (+0.0.1) | Bug fixes, small visual tweaks | `1.0.0` -> `1.0.1` |
+| **Minor** (+0.1.0) | New features, UI changes | `1.0.1` -> `1.1.0` |
+| **Major** (+1.0.0) | Data migrations, major redesigns | `1.1.0` -> `2.0.0` |
+
+---
 
 ## Release Process
 
 ### Web Release
 
-1. Update version in `web/package.json`
-2. Update `web/CHANGELOG.md` with changes
-3. Commit: `git commit -m "chore(web): bump version to X.Y.Z"`
-4. Tag: `git tag -a web-vX.Y.Z -m "Web app version X.Y.Z"`
-5. Push: `git push && git push --tags`
+1. Merge `dev` -> `main`, push (Vercel deploys automatically)
+2. When ready to mark a version:
+   - Update `version` in `web/package.json`
+   - Update `web/CHANGELOG.md` with patch notes
+   - Commit: `git commit -m "chore(web): release vX.Y.Z"`
+   - Tag: `git tag web-vX.Y.Z`
+   - Push: `git push && git push --tags`
 
 ### iOS Release
 
-1. Update `MARKETING_VERSION` in Xcode (both Debug and Release)
-2. Increment `CURRENT_PROJECT_VERSION` (build number: 1, 2, 3...)
-3. Update `ios/CHANGELOG.md` with changes
-4. Commit: `git commit -m "chore(ios): bump version to X.Y.Z"`
-5. Tag: `git tag -a ios-vX.Y.Z -m "iOS app version X.Y.Z"`
+1. Merge `dev` -> `main`
+2. In Xcode:
+   - Update `MARKETING_VERSION` (both Debug and Release configs)
+   - Increment `CURRENT_PROJECT_VERSION` (build number: 1, 2, 3...)
+3. Update `ios/CHANGELOG.md` with patch notes
+4. Commit: `git commit -m "chore(ios): release vX.Y.Z"`
+5. Tag: `git tag ios-vX.Y.Z`
 6. Push: `git push && git push --tags`
-7. Archive and upload to App Store Connect
+7. Product -> Archive -> Distribute to App Store Connect
+8. TestFlight build appears in ~10 minutes
 
-## iOS Build Numbers
+### iOS Build Numbers
 
 The build number (`CURRENT_PROJECT_VERSION`) is a simple incrementing integer:
-- Each App Store/TestFlight upload needs a higher build number
+- Each TestFlight/App Store upload needs a higher build number
 - Use: 1, 2, 3, 4... (no padding, no dates)
 - Build numbers are independent of version numbers
+- Example: Version 0.2.0 might have builds 5, 6, 7 during development
 
-Example: Version 0.2.0 might have builds 5, 6, 7 during development.
+---
 
 ## Changelogs
 
-Each platform maintains its own changelog:
+Each platform maintains its own changelog with maintainer-written patch notes:
 - `web/CHANGELOG.md`
 - `ios/CHANGELOG.md`
 
@@ -83,6 +120,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 - Removed features
 ```
 
+---
+
 ## Shared Directory
 
 The `shared/` directory contains platform-agnostic specifications:
@@ -92,6 +131,12 @@ The `shared/` directory contains platform-agnostic specifications:
 
 Changes to `shared/` should be coordinated across platforms but don't have their own version number.
 
+---
+
+## Rollback
+
+- **Web**: Revert the merge on `main` and push, or use Vercel's deploy history dashboard.
+- **iOS**: You can't recall a TestFlight build, but you can upload a new build with a higher build number.
 
 ---
 

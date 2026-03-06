@@ -60,6 +60,8 @@ npm run generate       # Regenerate constants from shared/
 
 **Code style**: 2-space indent (web), strict TypeScript. Biome for formatting + linting. Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`, `perf:`.
 
+**Branching**: Two branches — `dev` (daily work) and `main` (production). All code changes happen on `dev`. Merge to `main` when ready for production. Never commit directly to `main`. See [docs/VERSIONING.md](docs/VERSIONING.md) for full release process.
+
 **Twig IDs**: Format `branch-{N}-twig-{twigId}` — e.g., `branch-3-twig-branch-3-twig-5`. Parsed by `parseTwigId()` in both platforms.
 
 **Entity IDs**: `sprout-{uuid}`, `leaf-{uuid}` — lowercase prefix-UUID.

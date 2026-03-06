@@ -2,31 +2,29 @@
 
 ## Deployment
 
-### Web App (Static Hosting)
+### Branching
 
-This is a static single-page application. Deploy the `dist/` folder to any static host.
+- `dev` — daily work, Vercel preview deploys
+- `main` — production, auto-deploys to trunk.michaelpmcfarland.com
+
+All code changes go to `dev`. Merge `dev` -> `main` when ready. See [VERSIONING.md](./VERSIONING.md) for full release process.
+
+### Web App
+
+Vercel auto-deploys on push to `main`. Preview deploys generated for `dev` pushes.
 
 ```bash
 cd web
-npm run build    # Creates dist/ folder
+npm run build    # Local build: creates dist/ folder
 ```
-
-**Build output:**
-- `dist/index.html` - Entry point
-- `dist/assets/` - JS, CSS, images (hashed filenames)
-
-**Hosting options:**
-- Netlify (drag-and-drop dist/)
-- Vercel (`vercel --prod`)
-- GitHub Pages
-- Any static file server
 
 ### iOS App
 
-Build and distribute via Xcode:
-1. Open `ios/Trunk.xcodeproj`
-2. Archive (Product > Archive)
-3. Distribute via App Store Connect or TestFlight
+Archive and distribute from `main`:
+1. Merge `dev` -> `main`
+2. Open `ios/Trunk.xcodeproj`
+3. Product -> Archive
+4. Distribute to App Store Connect / TestFlight
 
 ---
 
