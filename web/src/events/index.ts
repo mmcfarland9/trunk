@@ -24,9 +24,6 @@ export {
   deriveState,
   deriveWaterAvailable,
   deriveSunAvailable,
-  wasSproutWateredThisWeek,
-  wasSproutWateredToday,
-  wasShoneThisWeek,
   getTodayResetTime,
   getWeekResetTime,
   getSproutsForTwig,
@@ -61,6 +58,8 @@ export {
   getWaterAvailable,
   getSunAvailable,
   checkSproutWateredToday,
+  checkSproutWateredThisWeek,
+  checkShoneThisWeek,
   replaceEvents,
   exportEvents,
   // Resource getters (derived from events)

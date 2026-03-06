@@ -1,0 +1,62 @@
+/* Sprouts dialog */
+.sprouts-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--dialog-z);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.sprouts-dialog.hidden {
+  display: none;
+}
+
+.sprouts-dialog-box {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  width: min(600px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sprouts-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sprouts-dialog-title {
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  margin: 0;
+  color: var(--ink);
+}
+
+.sprouts-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms ease;
+}
+
+.sprouts-dialog-close:hover {
+  color: var(--ink);
+}
+
+.sprouts-dialog-content {
+  padding: var(--space-4);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

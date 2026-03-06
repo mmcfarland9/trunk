@@ -8,6 +8,7 @@ import { getEvents, appendEvents } from '../../events/store'
 import type { TrunkEvent } from '../../events/types'
 import type { SyncEvent } from '../sync-types'
 import { syncToLocalEvent } from '../sync-types'
+import { buildDedupeIndex } from './dedup'
 import { createTimeoutSignal } from './timeout'
 
 export const LAST_SYNC_KEY = 'trunk-last-sync'
@@ -49,14 +50,11 @@ export async function pullEvents(): Promise<{
         .map(syncToLocalEvent)
         .filter((e): e is TrunkEvent => e !== null)
 
-      // C8: Merge with existing local events, dedup by client_id (primary) and timestamp+type (fallback)
-      const existingEvents = getEvents()
-      const existingClientIds = new Set(existingEvents.map((e) => e.client_id).filter(Boolean))
-      // DO-10: Use timestamp+type for fallback dedup to match server's unique constraint
-      const existingKeys = new Set(existingEvents.map((e) => `${e.timestamp}|${e.type}`))
+      // C8: Merge with existing local events, dedup by client_id + timestamp+type — O(1) via shared index
+      const { clientIds, keys } = buildDedupeIndex(getEvents())
       const uniqueNewEvents = newLocalEvents.filter((e) => {
-        if (e.client_id && existingClientIds.has(e.client_id)) return false
-        if (existingKeys.has(`${e.timestamp}|${e.type}`)) return false
+        if (e.client_id && clientIds.has(e.client_id)) return false
+        if (keys.has(`${e.timestamp}|${e.type}`)) return false
         return true
       })
 

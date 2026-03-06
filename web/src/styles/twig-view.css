@@ -32,53 +32,6 @@
   margin-bottom: var(--space-3);
 }
 
-.twig-nav-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  gap: var(--space-4);
-}
-
-.twig-back-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.7);
-  color: var(--ink-faint);
-  cursor: pointer;
-  padding: var(--space-1) var(--space-2);
-  transition: color 150ms ease, border-color 150ms ease;
-  white-space: nowrap;
-}
-
-.twig-back-btn:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-
-.twig-nav-arrows {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.twig-prev-btn,
-.twig-next-btn {
-  background: transparent;
-  border: none;
-  font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.65);
-  color: var(--ink-faint);
-  cursor: pointer;
-  padding: 0.2rem 0.4rem;
-  transition: color 150ms ease;
-}
-
-.twig-prev-btn:hover,
-.twig-next-btn:hover {
-  color: var(--ink);
-}
-
 .twig-title-section {
   flex: 1;
   display: flex;
@@ -543,36 +496,6 @@
   border-top: 1px solid var(--border);
 }
 
-.sprout-result-slider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.result-slider {
-  flex: 1;
-  height: 4px;
-  cursor: pointer;
-  appearance: none;
-  background: var(--border-strong);
-}
-
-.result-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 10px;
-  height: 10px;
-  background: var(--ink);
-  cursor: pointer;
-}
-
-.result-value {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  min-width: 2rem;
-  text-align: right;
-  color: var(--ink-light);
-}
-
 .bloom-hint-area {
   min-height: 1.4em;
 }
@@ -677,81 +600,6 @@
 /* History card states */
 .sprout-history-card.is-completed {
   border-left: 2px solid var(--twig);
-}
-
-/* === Stacked Leaf Cards === */
-/* When a leaf has multiple active sprouts, show them as stacked rows */
-
-.sprout-card-stacked {
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  background: transparent;
-}
-
-.sprout-card-stacked .leaf-header {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--ink-light);
-  margin: 0 0 var(--space-2) 0;
-  padding-bottom: var(--space-1);
-  border-bottom: 1px solid var(--border);
-}
-
-.stacked-sprouts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.stacked-sprout-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) 0;
-}
-
-.stacked-season {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
-
-.stacked-title {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stacked-progress {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
-
-.stacked-status {
-  font-family: var(--font-ascii);
-  font-size: var(--text-xs);
-  color: var(--twig);
-  font-style: italic;
-  flex-shrink: 0;
-}
-
-.stacked-status.is-ready {
-  color: var(--twig);
-}
-
-.stacked-water-btn {
-  flex-shrink: 0;
-  padding: 0.15rem 0.3rem;
-  font-size: var(--text-xs);
 }
 
 /* === Leaf Card Group === */

@@ -1,6 +1,6 @@
 import type { AppContext, SunEntry } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
-import { SUN_PROMPTS, RECENT_SHINE_LIMIT, GENERIC_WEIGHT } from '../generated/constants'
+import { RECENT_SHINE_LIMIT, GENERIC_WEIGHT } from '../generated/constants'
 import {
   canAffordSun,
   getSunAvailable,
@@ -8,7 +8,7 @@ import {
   getNextSunReset,
   formatResetTime,
 } from '../state'
-import { appendEvent, getEvents, wasShoneThisWeek as wasShoneThisWeekFromEvents } from '../events'
+import { appendEvent, checkShoneThisWeek } from '../events'
 
 type ShineCallbacks = {
   onSunMeterChange: () => void
@@ -16,7 +16,8 @@ type ShineCallbacks = {
   onShineComplete: () => void
 }
 
-const sunPrompts = SUN_PROMPTS
+// Lazy-loaded prompts — separate chunk, loaded before module consumers run
+const { SUN_PROMPTS: sunPrompts } = await import('../generated/prompts')
 
 // Track recently shown prompts globally to avoid quick repeats
 const recentPrompts: string[] = []
@@ -114,11 +115,11 @@ export function initShine(ctx: AppContext, callbacks: ShineCallbacks): ShineApi 
 
   function updateSunMeter() {
     const available = getSunAvailable()
-    const canShine = available > 0 && !wasShoneThisWeekFromEvents(getEvents())
+    const canShine = available > 0 && !checkShoneThisWeek()
     ctx.elements.sunCircle.classList.toggle('is-filled', canShine)
   }
 
-  function updateRadiateButtonState() {
+  function updateShineButtonState() {
     const { sunLogShineJournal, sunLogShineBtn } = ctx.elements
     const hasContent = sunLogShineJournal.value.trim().length > 0
     sunLogShineBtn.disabled = !hasContent
@@ -136,7 +137,7 @@ export function initShine(ctx: AppContext, callbacks: ShineCallbacks): ShineApi 
     } = ctx.elements
 
     // Check if already shone this week
-    if (wasShoneThisWeekFromEvents(getEvents())) {
+    if (checkShoneThisWeek()) {
       sunLogShineSection.classList.add('hidden')
       sunLogShineShone.classList.remove('hidden')
       sunLogShineShoneReset.textContent = formatResetTime(getNextSunReset())
@@ -216,7 +217,7 @@ export function initShine(ctx: AppContext, callbacks: ShineCallbacks): ShineApi 
   }
 
   // Wire up shine handlers
-  ctx.elements.sunLogShineJournal.addEventListener('input', updateRadiateButtonState)
+  ctx.elements.sunLogShineJournal.addEventListener('input', updateShineButtonState)
   ctx.elements.sunLogShineBtn.addEventListener('click', saveSunEntry)
 
   return {

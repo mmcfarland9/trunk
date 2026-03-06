@@ -187,114 +187,6 @@
   font-size: 0.65rem;
 }
 
-.sprout-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.15rem 0.4rem;
-  padding-left: 0.5rem;
-  background: transparent;
-  border-left: 2px solid var(--twig);
-  transition: background 150ms ease;
-}
-
-.sprout-item:hover {
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.sprout-item.is-completed {
-  border-left-color: #4a7;
-}
-
-.sprout-item-info {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  flex: 1;
-  min-width: 0;
-  font-size: 0.7rem;
-}
-
-.sprout-item-title {
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-}
-
-.sprout-item-title-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  transition: color 100ms ease, text-decoration-color 100ms ease;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sprout-item-title-link:hover {
-  text-decoration-color: var(--ink);
-}
-
-.sprout-item-meta {
-  color: var(--ink-faint);
-  white-space: nowrap;
-  transition: opacity 100ms ease;
-  margin-left: auto;
-  text-align: right;
-}
-
-.sprout-twig-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: var(--ink-faint);
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  transition: color 100ms ease, text-decoration-color 100ms ease;
-}
-
-.sprout-twig-link:hover {
-  color: var(--ink);
-  text-decoration-color: var(--ink);
-}
-
-/* Sidebar action buttons - hover reveal behavior */
-.sidebar-action-btn,
-.sidebar-action-btn:disabled {
-  position: absolute;
-  right: 0.4rem;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 100ms ease;
-  font-size: 0.6rem;
-  padding: 0.15rem 0.4rem;
-}
-
-.sprout-item:hover .sidebar-action-btn {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.sprout-item:hover .sidebar-action-btn:disabled {
-  opacity: 0.5;
-}
-
-.sprout-item:hover .sprout-item-meta {
-  opacity: 0;
-}
-
 /* === Sidebar Stacked Leaf Cards === */
 /* For leaves with multiple active sprouts in twig view */
 
@@ -400,8 +292,7 @@
 }
 
 /* Indentation for nested elements inside folders */
-.twig-folder .sidebar-stacked-card,
-.twig-folder .sprout-item {
+.twig-folder .sidebar-stacked-card {
   margin-left: 0.4rem;
 }
 
@@ -409,8 +300,7 @@
   margin-left: 0.4rem;
 }
 
-.branch-folder > .sidebar-stacked-card,
-.branch-folder > .sprout-item {
+.branch-folder > .sidebar-stacked-card {
   margin-left: 0.4rem;
 }
 

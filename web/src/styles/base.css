@@ -150,7 +150,7 @@ body::after { background: repeating-linear-gradient(45deg, transparent 0px, tran
 }
 
 /* === Shared === */
-.focus-meta, .editor-label {
+.focus-meta {
   font-size: var(--text-base);
   font-weight: 500;
   text-transform: uppercase;

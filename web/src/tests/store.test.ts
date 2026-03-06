@@ -25,6 +25,7 @@ import {
   replaceEvents,
   getEventCount,
   exportEvents,
+  flushSave,
 } from '../events/store'
 import type { TrunkEvent } from '../events/types'
 
@@ -179,6 +180,7 @@ describe('Event Store', () => {
       }
 
       appendEvent(event)
+      flushSave()
 
       const stored = localStorage.getItem('trunk-events-v1')
       expect(stored).toBeTruthy()

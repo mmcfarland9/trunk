@@ -4,6 +4,7 @@ import { getEvents, appendEvents } from '../../events/store'
 import type { TrunkEvent } from '../../events/types'
 import type { SyncEvent } from '../sync-types'
 import { syncToLocalEvent } from '../sync-types'
+import { buildDedupeIndex } from './dedup'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 // DO-14: Validate realtime payload shape before casting to SyncEvent
@@ -21,6 +22,48 @@ function isValidSyncEventShape(data: unknown): data is SyncEvent {
 // Track the current realtime subscription
 let realtimeChannel: RealtimeChannel | null = null
 let onRealtimeEvent: ((event: TrunkEvent) => void) | null = null
+
+// Microtask batching: collect rapid arrivals, process once
+let pendingPayloads: { syncEvent: SyncEvent; localEvent: TrunkEvent }[] = []
+let batchScheduled = false
+
+function flushRealtimeBatch(): void {
+  batchScheduled = false
+  const payloads = pendingPayloads
+  pendingPayloads = []
+  if (payloads.length === 0) return
+
+  // Build dedup index ONCE for the entire batch
+  const { clientIds, keys } = buildDedupeIndex(getEvents())
+  const newEvents: TrunkEvent[] = []
+
+  for (const { syncEvent, localEvent } of payloads) {
+    const alreadyExists =
+      (syncEvent.client_id && clientIds.has(syncEvent.client_id)) ||
+      keys.has(`${localEvent.timestamp}|${localEvent.type}`)
+
+    if (!alreadyExists) {
+      newEvents.push(localEvent)
+      // Update index so subsequent events in the batch dedup against this one
+      if (localEvent.client_id) clientIds.add(localEvent.client_id)
+      keys.add(`${localEvent.timestamp}|${localEvent.type}`)
+    }
+  }
+
+  if (newEvents.length > 0) {
+    appendEvents(newEvents) // single derivation invalidation
+    for (const event of newEvents) {
+      onRealtimeEvent?.(event)
+    }
+  }
+}
+
+/** Flush any pending batched realtime events (exposed for testing). */
+export function flushRealtimeQueue(): void {
+  if (batchScheduled) {
+    flushRealtimeBatch()
+  }
+}
 
 /**
  * Subscribe to realtime events from other devices
@@ -55,31 +98,23 @@ export function subscribeToRealtime(onEvent: (event: TrunkEvent) => void): void 
         const localEvent = syncToLocalEvent(syncEvent)
         if (!localEvent) return
 
-        // C9: Dedup by client_id (primary) and timestamp (fallback)
-        const existingEvents = getEvents()
-        const alreadyExists = existingEvents.some(
-          (e) =>
-            (syncEvent.client_id && e.client_id === syncEvent.client_id) ||
-            e.timestamp === localEvent.timestamp,
-        )
-
-        if (!alreadyExists) {
-          // New event from another device - apply it
-          appendEvents([localEvent])
-          onRealtimeEvent?.(localEvent)
+        // Queue for microtask batch — rapid arrivals = 1 dedup + 1 derivation
+        pendingPayloads.push({ syncEvent, localEvent })
+        if (!batchScheduled) {
+          batchScheduled = true
+          queueMicrotask(flushRealtimeBatch)
         }
       },
     )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-      }
-    })
+    .subscribe()
 }
 
 /**
  * Unsubscribe from realtime events
  */
 export function unsubscribeFromRealtime(): void {
+  // Flush any pending events before disconnecting
+  flushRealtimeQueue()
   if (realtimeChannel) {
     supabase?.removeChannel(realtimeChannel)
     realtimeChannel = null

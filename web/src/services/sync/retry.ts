@@ -8,6 +8,7 @@ import { getAuthState } from '../auth-service'
 import { getEvents } from '../../events/store'
 import { localToSyncPayload } from '../sync-types'
 import { getPendingCount, getPendingIds, removePendingId, savePendingIds } from './pending-uploads'
+import { buildDedupeIndex } from './dedup'
 import { notifyMetadataListeners } from './status'
 import { createTimeoutSignal } from './timeout'
 
@@ -42,12 +43,12 @@ export async function retryPendingUploads(): Promise<number> {
   }
   lastRetryTime = now
 
-  const events = getEvents()
+  const { byClientId } = buildDedupeIndex(getEvents())
   let pushed = 0
 
   for (const clientId of getPendingIds()) {
-    // Find the local event whose stored client_id matches
-    const event = events.find((e) => e.client_id === clientId)
+    // O(1) lookup via dedup index instead of O(n) .find()
+    const event = byClientId.get(clientId)
     if (!event) {
       // Event no longer in local store — remove stale pending ID
       removePendingId(clientId)

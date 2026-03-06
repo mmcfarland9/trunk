@@ -40,6 +40,7 @@ export function setupHoverBranch(
   ctx: AppContext,
   navCallbacks: NavigationCallbacks,
   cb: HoverBranchCallbacks,
+  signal?: AbortSignal,
 ): void {
   const { canvas } = ctx.elements
   let scrollAccumulator = 0
@@ -194,29 +195,37 @@ export function setupHoverBranch(
     }
   }
 
-  canvas.addEventListener('mousemove', handleMove)
-  canvas.addEventListener('mouseleave', clearHover)
-  canvas.addEventListener('click', handleClick)
-  canvas.addEventListener('wheel', handleWheel, { passive: false })
+  canvas.addEventListener('mousemove', handleMove, { signal })
+  canvas.addEventListener('mouseleave', clearHover, { signal })
+  canvas.addEventListener('click', handleClick, { signal })
+  canvas.addEventListener('wheel', handleWheel, { passive: false, signal })
 
   // Keyboard focus support: highlight branch when focused via Tab
   ctx.branchGroups.forEach((branchGroup, index) => {
-    branchGroup.branch.addEventListener('focusin', () => {
-      if (getViewMode() !== 'overview') return
-      if (index === getHoveredBranchIndex()) return
+    branchGroup.branch.addEventListener(
+      'focusin',
+      () => {
+        if (getViewMode() !== 'overview') return
+        if (index === getHoveredBranchIndex()) return
 
-      setHoveredBranchIndex(index)
-      scrollAccumulator = 0
-      cb.updateVisibility(ctx)
-      cb.updateFocus(branchGroup.branch, ctx)
-      cb.updateScopedProgress(ctx)
-      cb.updateSidebarSprouts(ctx)
-    })
+        setHoveredBranchIndex(index)
+        scrollAccumulator = 0
+        cb.updateVisibility(ctx)
+        cb.updateFocus(branchGroup.branch, ctx)
+        cb.updateScopedProgress(ctx)
+        cb.updateSidebarSprouts(ctx)
+      },
+      { signal },
+    )
 
-    branchGroup.branch.addEventListener('focusout', () => {
-      if (getViewMode() !== 'overview') return
-      clearHover()
-    })
+    branchGroup.branch.addEventListener(
+      'focusout',
+      () => {
+        if (getViewMode() !== 'overview') return
+        clearHover()
+      },
+      { signal },
+    )
   })
 }
 
@@ -276,7 +285,11 @@ function getBranchIndexFromPosition(
   return closestIndex
 }
 
-export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
+export function setupHoverTwig(
+  ctx: AppContext,
+  cb: HoverTwigCallbacks,
+  signal?: AbortSignal,
+): void {
   // Add hover and focus listeners to all twigs for branch view sidebar preview
   ctx.branchGroups.forEach((group) => {
     group.twigs.forEach((twig) => {
@@ -306,10 +319,10 @@ export function setupHoverTwig(ctx: AppContext, cb: HoverTwigCallbacks): void {
         cb.updateSidebarSprouts(ctx)
       }
 
-      twig.addEventListener('mouseenter', handleEnter)
-      twig.addEventListener('mouseleave', handleLeave)
-      twig.addEventListener('focusin', handleEnter)
-      twig.addEventListener('focusout', handleLeave)
+      twig.addEventListener('mouseenter', handleEnter, { signal })
+      twig.addEventListener('mouseleave', handleLeave, { signal })
+      twig.addEventListener('focusin', handleEnter, { signal })
+      twig.addEventListener('focusout', handleLeave, { signal })
     })
   })
 }

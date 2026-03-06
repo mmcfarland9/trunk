@@ -5,6 +5,15 @@
 @import './nodes.css';
 @import './sidebar.css';
 @import './dialogs.css';
+@import './dialog-confirm.css';
+@import './dialog-sprouts.css';
+@import './dialog-water.css';
+@import './dialog-harvest.css';
+@import './dialog-watercan.css';
+@import './dialog-sunlog.css';
+@import './dialog-soilbag.css';
+@import './dialog-account.css';
+@import './dialog-reset.css';
 @import './twig-view.css';
 @import './login.css';
 @import './soil-chart.css';

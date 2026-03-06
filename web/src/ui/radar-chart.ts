@@ -85,11 +85,11 @@ export function buildRadarChart(): {
     if (!b) return
     const pct = Math.round(b.score * 100)
     tooltipEl.textContent = `${b.branchName} \u2014 ${pct}%`
-    tooltipEl.classList.add('is-visible')
-    // Measure dimensions for viewport clamping (forces synchronous layout)
+    // Measure while still opacity:0 — element is in layout, no forced reflow after class change
     tooltipWidth = tooltipEl.offsetWidth
     tooltipHeight = tooltipEl.offsetHeight
     positionTooltip(index)
+    tooltipEl.classList.add('is-visible')
   }
 
   function hideTooltip(): void {

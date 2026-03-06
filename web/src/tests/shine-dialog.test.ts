@@ -27,10 +27,15 @@ vi.mock('../state', () => ({
 vi.mock('../events', () => ({
   appendEvent: vi.fn(),
   getEvents: vi.fn(() => []),
-  wasShoneThisWeek: vi.fn(() => false),
+  checkShoneThisWeek: vi.fn(() => false),
 }))
 
 vi.mock('../generated/constants', () => ({
+  RECENT_SHINE_LIMIT: 3,
+  GENERIC_WEIGHT: 0.75,
+}))
+
+vi.mock('../generated/prompts', () => ({
   SUN_PROMPTS: {
     generic: [
       'Generic prompt about {twig}?',
@@ -44,8 +49,6 @@ vi.mock('../generated/constants', () => ({
       ],
     },
   },
-  RECENT_SHINE_LIMIT: 3,
-  GENERIC_WEIGHT: 0.75,
 }))
 
 vi.mock('../constants', () => ({
@@ -100,7 +103,7 @@ describe('shine-dialog', () => {
   let formatResetTimeMock: ReturnType<typeof vi.fn>
   let appendEventMock: ReturnType<typeof vi.fn>
   let getEventsMock: ReturnType<typeof vi.fn>
-  let wasShoneThisWeekMock: ReturnType<typeof vi.fn>
+  let checkShoneThisWeekMock: ReturnType<typeof vi.fn>
 
   beforeEach(async () => {
     vi.useFakeTimers()
@@ -118,7 +121,7 @@ describe('shine-dialog', () => {
 
     appendEventMock = vi.mocked(events.appendEvent)
     getEventsMock = vi.mocked(events.getEvents)
-    wasShoneThisWeekMock = vi.mocked(events.wasShoneThisWeek)
+    checkShoneThisWeekMock = vi.mocked(events.checkShoneThisWeek)
 
     // Reset to defaults
     canAffordSunMock.mockReturnValue(true)
@@ -131,7 +134,7 @@ describe('shine-dialog', () => {
     formatResetTimeMock.mockReturnValue('Monday 6:00 AM')
     appendEventMock.mockImplementation(() => {})
     getEventsMock.mockReturnValue([])
-    wasShoneThisWeekMock.mockReturnValue(false)
+    checkShoneThisWeekMock.mockReturnValue(false)
 
     ctx = createMockCtx()
     callbacks = createMockCallbacks()
@@ -152,7 +155,7 @@ describe('shine-dialog', () => {
   describe('updateSunMeter', () => {
     it('adds is-filled class when sun is available and not yet shone', async () => {
       getSunAvailableMock.mockReturnValue(1)
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
 
       const { initShine } = await import('../features/shine-dialog')
       const api = initShine(ctx, callbacks)
@@ -164,7 +167,7 @@ describe('shine-dialog', () => {
 
     it('removes is-filled class when already shone this week', async () => {
       getSunAvailableMock.mockReturnValue(1)
-      wasShoneThisWeekMock.mockReturnValue(true)
+      checkShoneThisWeekMock.mockReturnValue(true)
 
       // Pre-fill the class to verify it gets removed
       ctx.elements.sunCircle.classList.add('is-filled')
@@ -179,7 +182,7 @@ describe('shine-dialog', () => {
 
     it('removes is-filled class when no sun available', async () => {
       getSunAvailableMock.mockReturnValue(0)
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
 
       ctx.elements.sunCircle.classList.add('is-filled')
 
@@ -198,7 +201,7 @@ describe('shine-dialog', () => {
 
   describe('populateSunLogShine - already shone this week', () => {
     it('hides shine section and shows shone state with reset time', async () => {
-      wasShoneThisWeekMock.mockReturnValue(true)
+      checkShoneThisWeekMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
       const api = initShine(ctx, callbacks)
@@ -217,7 +220,7 @@ describe('shine-dialog', () => {
 
   describe('populateSunLogShine - cannot afford sun', () => {
     it('hides shine section and shows shone state when sun not affordable', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(false)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -237,7 +240,7 @@ describe('shine-dialog', () => {
 
   describe('populateSunLogShine - sun available', () => {
     it('shows shine section with random twig, prompt placeholder, and disabled button', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -260,12 +263,12 @@ describe('shine-dialog', () => {
       expect(ctx.elements.sunLogShineJournal.placeholder).toBeTruthy()
       expect(ctx.elements.sunLogShineJournal.placeholder.length).toBeGreaterThan(0)
 
-      // Radiate button should be disabled (no content yet)
+      // Shine button should be disabled (no content yet)
       expect(ctx.elements.sunLogShineBtn.disabled).toBe(true)
     })
 
     it('replaces {twig} token in prompt placeholder with twig label', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -280,7 +283,7 @@ describe('shine-dialog', () => {
     })
 
     it('hides shine section when no twigs have labels', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
       // Return empty string for all twig labels so getAllTwigs() returns []
       getPresetLabelMock.mockReturnValue('')
@@ -296,7 +299,7 @@ describe('shine-dialog', () => {
     })
 
     it('focuses the journal after a brief delay', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const focusSpy = vi.spyOn(ctx.elements.sunLogShineJournal, 'focus')
@@ -315,12 +318,12 @@ describe('shine-dialog', () => {
   })
 
   // -------------------------------------------------------------------------
-  // Radiate button state (input handler)
+  // Shine button state (input handler)
   // -------------------------------------------------------------------------
 
-  describe('radiate button state', () => {
+  describe('shine button state', () => {
     it('disables button when journal is empty', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -337,7 +340,7 @@ describe('shine-dialog', () => {
     })
 
     it('enables button when journal has content', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -350,7 +353,7 @@ describe('shine-dialog', () => {
     })
 
     it('disables button when journal is only whitespace', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -369,7 +372,7 @@ describe('shine-dialog', () => {
 
   describe('saveSunEntry', () => {
     it('appends sun_shone event, calls callbacks, and refreshes UI', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
       vi.setSystemTime(new Date('2026-02-20T12:00:00Z'))
 
@@ -383,11 +386,11 @@ describe('shine-dialog', () => {
       ctx.elements.sunLogShineJournal.value = 'Deep reflection on movement'
       ctx.elements.sunLogShineJournal.dispatchEvent(new Event('input'))
 
-      // After first save, wasShoneThisWeek returns true (populateSunLogShine is called inside saveSunEntry)
+      // After first save, checkShoneThisWeek returns true (populateSunLogShine is called inside saveSunEntry)
       const savedPlaceholder = ctx.elements.sunLogShineJournal.placeholder
-      wasShoneThisWeekMock.mockReturnValue(true)
+      checkShoneThisWeekMock.mockReturnValue(true)
 
-      // Click the radiate button
+      // Click the shine button
       ctx.elements.sunLogShineBtn.click()
 
       // Should have appended a sun_shone event
@@ -406,7 +409,7 @@ describe('shine-dialog', () => {
     })
 
     it('does nothing when journal is empty', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -424,7 +427,7 @@ describe('shine-dialog', () => {
     })
 
     it('does nothing when journal is only whitespace', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -439,7 +442,7 @@ describe('shine-dialog', () => {
     })
 
     it('does nothing when cannot afford sun', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -462,7 +465,7 @@ describe('shine-dialog', () => {
     })
 
     it('does nothing when no currentContext is set (dialog not populated)', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       const { initShine } = await import('../features/shine-dialog')
@@ -482,7 +485,7 @@ describe('shine-dialog', () => {
 
   describe('prompt deduplication', () => {
     it('avoids recently shown prompts by cycling through available ones', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       // Use a counter to cycle through random values deterministically
@@ -512,7 +515,7 @@ describe('shine-dialog', () => {
     })
 
     it('clears recent prompts and recycles when all prompts have been shown', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
       vi.spyOn(Math, 'random').mockReturnValue(0)
 
@@ -554,7 +557,7 @@ describe('shine-dialog', () => {
       expect(addEventListenerSpy).toHaveBeenCalledWith('input', expect.any(Function))
     })
 
-    it('wires up click listener on radiate button', async () => {
+    it('wires up click listener on shine button', async () => {
       const addEventListenerSpy = vi.spyOn(ctx.elements.sunLogShineBtn, 'addEventListener')
 
       const { initShine } = await import('../features/shine-dialog')
@@ -570,17 +573,15 @@ describe('shine-dialog', () => {
 
   describe('getRandomPrompt edge cases', () => {
     it('falls back to default prompt when all prompt arrays are empty', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       // Override SUN_PROMPTS to have empty arrays
-      vi.doMock('../generated/constants', () => ({
+      vi.doMock('../generated/prompts', () => ({
         SUN_PROMPTS: {
           generic: [],
           specific: {},
         },
-        RECENT_SHINE_LIMIT: 3,
-        GENERIC_WEIGHT: 0.75,
       }))
 
       const { initShine } = await import('../features/shine-dialog')
@@ -592,19 +593,17 @@ describe('shine-dialog', () => {
     })
 
     it('uses specific prompts when only specific prompts exist for the twig', async () => {
-      wasShoneThisWeekMock.mockReturnValue(false)
+      checkShoneThisWeekMock.mockReturnValue(false)
       canAffordSunMock.mockReturnValue(true)
 
       // Override SUN_PROMPTS to have no generic, only specific for twig 0-0
-      vi.doMock('../generated/constants', () => ({
+      vi.doMock('../generated/prompts', () => ({
         SUN_PROMPTS: {
           generic: [],
           specific: {
             'branch-0-twig-0': ['Only specific prompt for {twig}?'],
           },
         },
-        RECENT_SHINE_LIMIT: 3,
-        GENERIC_WEIGHT: 0.75,
       }))
 
       // Math.random = 0 selects branch-0-twig-0

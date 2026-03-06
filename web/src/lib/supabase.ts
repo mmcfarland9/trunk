@@ -1,13 +1,16 @@
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Lazy-loaded Supabase client — dynamic import keeps the SDK (~184KB) out of the
+// initial bundle. The app renders from localStorage events while the SDK loads.
+export let supabase: SupabaseClient | null = null
 
-if (!supabaseUrl || !supabaseAnonKey) {
+export async function initSupabase(): Promise<void> {
+  const url = import.meta.env.VITE_SUPABASE_URL
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !key) return
+  const { createClient } = await import('@supabase/supabase-js')
+  supabase = createClient(url, key)
 }
-
-export const supabase =
-  supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 export function isSupabaseConfigured(): boolean {
   return supabase !== null

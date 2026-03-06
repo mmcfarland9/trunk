@@ -15,6 +15,7 @@ import {
   enterBranchView,
   enterTwigView,
 } from './features/navigation'
+import { initSupabase } from './lib/supabase'
 import { initializeAuth } from './bootstrap/auth'
 import { initializeSync } from './bootstrap/sync'
 import { initializeUI, updateSoilMeter, updateWaterMeter, updateWaterStreak } from './bootstrap/ui'
@@ -82,12 +83,16 @@ function refreshUI(): void {
   ctx.twigView?.refresh()
 }
 
-initializeAuth(app, ctx, {
-  onSyncComplete: refreshUI,
-  onAuthStateChange: (hasUser) => {
-    if (hasUser) updateFocus(null, ctx)
-  },
-})
+// Lazy-load Supabase SDK, then initialize auth. App renders from localStorage
+// events immediately — Supabase loads in the background.
+initSupabase().then(() =>
+  initializeAuth(app, ctx, {
+    onSyncComplete: refreshUI,
+    onAuthStateChange: (hasUser) => {
+      if (hasUser) updateFocus(null, ctx)
+    },
+  }),
+)
 
 initializeEvents(ctx, navCallbacks, dialogAPIs)
 setViewMode('overview', ctx, navCallbacks)

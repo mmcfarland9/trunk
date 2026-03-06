@@ -16,8 +16,9 @@ import {
   deriveWaterAvailable,
   deriveSunAvailable,
   deriveWateringStreak,
-  wasSproutWateredThisWeek,
-  wasSproutWateredToday,
+  deriveWateredTodaySet,
+  deriveWateredThisWeekSet,
+  deriveShoneThisWeek,
   getTodayResetTime,
   getWeekResetTime,
 } from './derive'
@@ -30,8 +31,6 @@ const STORAGE_KEY = sharedConstants.storage.keys.events
 let events: TrunkEvent[] = []
 
 // Cached derived state (invalidated on event append)
-// REVIEW: Dirty flag approach — marks state stale on append, re-derives on next read.
-// Alternative: full incremental derivation (SKIP-level complexity).
 let cachedState: DerivedState | null = null
 
 // Cached water/sun availability (invalidated on relevant events or reset boundary)
@@ -40,6 +39,12 @@ let cachedSunAvailable: number | null = null
 let cachedWaterAt: number | null = null
 let cachedSunAt: number | null = null
 let cachedStreak: WateringStreak | null = null
+let cachedWateredToday: Set<string> | null = null
+let cachedWateredTodayAt: number | null = null
+let cachedWateredThisWeek: Set<string> | null = null
+let cachedWateredThisWeekAt: number | null = null
+let cachedShoneThisWeek: boolean | null = null
+let cachedShoneThisWeekAt: number | null = null
 
 // Error callbacks
 let onQuotaError: (() => void) | null = null
@@ -61,7 +66,6 @@ function loadEvents(): TrunkEvent[] {
         for (const item of parsed) {
           if (validateEvent(item)) {
             valid.push(item)
-          } else {
           }
         }
         return valid
@@ -72,9 +76,19 @@ function loadEvents(): TrunkEvent[] {
 }
 
 /**
- * Save events to localStorage
+ * Save events to localStorage (debounced to avoid O(n) JSON.stringify on every append).
+ * Events are always in memory, so a brief delay before persisting is safe.
  */
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
 function saveEvents(): void {
+  if (saveTimer) return
+  saveTimer = setTimeout(flushSave, 500)
+}
+
+/** Immediately flush any pending debounced save. Useful in tests and before page unload. */
+export function flushSave(): void {
+  saveTimer = null
   const result = safeSetItem(STORAGE_KEY, JSON.stringify(events))
   if (!result.success) {
     if (result.isQuotaError) {
@@ -121,6 +135,12 @@ function invalidateCache(): void {
   cachedWaterAt = null
   cachedSunAt = null
   cachedStreak = null
+  cachedWateredToday = null
+  cachedWateredTodayAt = null
+  cachedWateredThisWeek = null
+  cachedWateredThisWeekAt = null
+  cachedShoneThisWeek = null
+  cachedShoneThisWeekAt = null
 }
 
 /**
@@ -134,9 +154,15 @@ function invalidateCacheForEvent(eventType: string): void {
     cachedWaterAvailable = null
     cachedWaterAt = null
     cachedStreak = null
+    cachedWateredToday = null
+    cachedWateredTodayAt = null
+    cachedWateredThisWeek = null
+    cachedWateredThisWeekAt = null
   } else if (eventType === 'sun_shone') {
     cachedSunAvailable = null
     cachedSunAt = null
+    cachedShoneThisWeek = null
+    cachedShoneThisWeekAt = null
   }
 }
 
@@ -221,17 +247,50 @@ export function getSunAvailable(now: Date = new Date()): number {
 }
 
 /**
- * Check if sprout was watered this week
+ * Check if sprout was watered this week (cached — O(1) per sprout after first call)
  */
 export function checkSproutWateredThisWeek(sproutId: string, now: Date = new Date()): boolean {
-  return wasSproutWateredThisWeek(events, sproutId, now)
+  const resetMs = getWeekResetTime(now).getTime()
+  if (
+    cachedWateredThisWeek &&
+    cachedWateredThisWeekAt !== null &&
+    cachedWateredThisWeekAt >= resetMs
+  ) {
+    return cachedWateredThisWeek.has(sproutId)
+  }
+  cachedWateredThisWeek = deriveWateredThisWeekSet(events, now)
+  cachedWateredThisWeekAt = now.getTime()
+  return cachedWateredThisWeek.has(sproutId)
 }
 
 /**
- * Check if sprout was watered today (since 6am reset)
+ * Check if sprout was watered today (cached — O(1) per sprout after first call)
  */
 export function checkSproutWateredToday(sproutId: string, now: Date = new Date()): boolean {
-  return wasSproutWateredToday(events, sproutId, now)
+  const resetMs = getTodayResetTime(now).getTime()
+  if (cachedWateredToday && cachedWateredTodayAt !== null && cachedWateredTodayAt >= resetMs) {
+    return cachedWateredToday.has(sproutId)
+  }
+  cachedWateredToday = deriveWateredTodaySet(events, now)
+  cachedWateredTodayAt = now.getTime()
+  return cachedWateredToday.has(sproutId)
+}
+
+/**
+ * Check if any sun was shone this week (cached, invalidates on weekly reset boundary)
+ */
+export function checkShoneThisWeek(now: Date = new Date()): boolean {
+  const resetMs = getWeekResetTime(now).getTime()
+  if (
+    cachedShoneThisWeek !== null &&
+    cachedShoneThisWeekAt !== null &&
+    cachedShoneThisWeekAt >= resetMs
+  ) {
+    return cachedShoneThisWeek
+  }
+  cachedShoneThisWeek = deriveShoneThisWeek(events, now)
+  cachedShoneThisWeekAt = now.getTime()
+  return cachedShoneThisWeek
 }
 
 // ============================================================================
@@ -294,6 +353,10 @@ export function getSunCapacity(): number {
 export function clearEvents(): void {
   events = []
   invalidateCache()
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
   try {
     localStorage.removeItem(STORAGE_KEY)
   } catch {
@@ -310,12 +373,16 @@ export function replaceEvents(newEvents: TrunkEvent[]): void {
   for (const event of newEvents) {
     if (validateEvent(event)) {
       valid.push(event)
-    } else {
     }
   }
   events = valid
   invalidateCache()
-  saveEvents()
+  // Flush immediately — replaceEvents is a destructive full-sync operation
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+  flushSave()
 }
 
 /**

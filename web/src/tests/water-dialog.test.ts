@@ -1,7 +1,7 @@
 /**
  * Tests for features/water-dialog.ts
  * Tests the water dialog lifecycle, sprout selection, prompt uniqueness,
- * and pour button behavior.
+ * and water button behavior.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -26,6 +26,10 @@ const MOCK_PROMPTS = [
 ]
 
 vi.mock('../generated/constants', () => ({
+  RECENT_WATER_LIMIT: 10,
+}))
+
+vi.mock('../generated/prompts', () => ({
   WATERING_PROMPTS: [
     'Prompt A',
     'Prompt B',
@@ -40,7 +44,6 @@ vi.mock('../generated/constants', () => ({
     'Prompt K',
     'Prompt L',
   ],
-  RECENT_WATER_LIMIT: 10,
 }))
 
 vi.mock('../state', () => ({
@@ -290,19 +293,19 @@ describe('water-dialog', () => {
   })
 
   // =========================================================================
-  // Pour button behavior
+  // Water button behavior
   // =========================================================================
 
-  describe('Pour button', () => {
+  describe('Water button', () => {
     it('is disabled initially (no textarea content)', () => {
       callbacks = createMockCallbacks([makeSprout('s1', 'Goal')])
       const api = initWaterDialog(ctx, callbacks)
 
       api.openWaterDialog()
 
-      const pourBtn =
-        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')
-      expect(pourBtn?.disabled).toBe(true)
+      const waterBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-water')
+      expect(waterBtn?.disabled).toBe(true)
     })
 
     it('is enabled when textarea has content and water is available', () => {
@@ -312,14 +315,14 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn =
-        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-water')!
 
       // Type something into the textarea
       textarea.value = 'Made progress today'
       textarea.dispatchEvent(new Event('input', { bubbles: true }))
 
-      expect(pourBtn.disabled).toBe(false)
+      expect(waterBtn.disabled).toBe(false)
     })
 
     it('watering a sprout: appends event, disables button, calls callbacks', () => {
@@ -329,16 +332,16 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn =
-        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-water')!
 
       // Enable button
       textarea.value = 'Journaling about progress'
       textarea.dispatchEvent(new Event('input', { bubbles: true }))
-      expect(pourBtn.disabled).toBe(false)
+      expect(waterBtn.disabled).toBe(false)
 
-      // Click pour
-      pourBtn.click()
+      // Click water
+      waterBtn.click()
 
       // Verify event was appended
       expect(appendEvent).toHaveBeenCalledOnce()
@@ -352,8 +355,8 @@ describe('water-dialog', () => {
       expect(eventArg).toHaveProperty('prompt')
 
       // Button should now be disabled and say "Watered"
-      expect(pourBtn.disabled).toBe(true)
-      expect(pourBtn.textContent).toBe('Watered')
+      expect(waterBtn.disabled).toBe(true)
+      expect(waterBtn.textContent).toBe('Watered')
 
       // Textarea should be disabled
       expect(textarea.disabled).toBe(true)
@@ -377,8 +380,8 @@ describe('water-dialog', () => {
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn =
-        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-water')!
 
       // Even with content, button should be disabled when no water
       textarea.value = 'Some text'
@@ -388,18 +391,18 @@ describe('water-dialog', () => {
       vi.mocked(canAffordWater).mockReturnValue(false)
       textarea.dispatchEvent(new Event('input', { bubbles: true }))
 
-      expect(pourBtn.disabled).toBe(true)
+      expect(waterBtn.disabled).toBe(true)
     })
 
-    it('does not pour when canAffordWater returns false at click time', () => {
+    it('does not water when canAffordWater returns false at click time', () => {
       callbacks = createMockCallbacks([makeSprout('s1', 'Goal')])
       const api = initWaterDialog(ctx, callbacks)
 
       api.openWaterDialog()
 
       const textarea = ctx.elements.waterDialogBody.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn =
-        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn =
+        ctx.elements.waterDialogBody.querySelector<HTMLButtonElement>('.water-dialog-water')!
 
       // Enable button first
       textarea.value = 'Text'
@@ -407,13 +410,13 @@ describe('water-dialog', () => {
 
       // Then remove water affordability for the click handler guard
       vi.mocked(canAffordWater).mockReturnValue(false)
-      pourBtn.disabled = false // Force button enabled to test the guard inside the click handler
-      pourBtn.click()
+      waterBtn.disabled = false // Force button enabled to test the guard inside the click handler
+      waterBtn.click()
 
       expect(appendEvent).not.toHaveBeenCalled()
     })
 
-    it('disables remaining pour buttons after watering consumes last water', () => {
+    it('disables remaining water buttons after watering consumes last water', () => {
       // Start with 1 water remaining
       vi.mocked(getWaterAvailable).mockReturnValue(1)
 
@@ -425,9 +428,9 @@ describe('water-dialog', () => {
 
       const sections = ctx.elements.waterDialogBody.querySelectorAll('.water-dialog-section')
       const textarea1 = sections[0].querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn1 = sections[0].querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn1 = sections[0].querySelector<HTMLButtonElement>('.water-dialog-water')!
       const textarea2 = sections[1].querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn2 = sections[1].querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn2 = sections[1].querySelector<HTMLButtonElement>('.water-dialog-water')!
 
       // Type in both textareas
       textarea1.value = 'Text 1'
@@ -437,10 +440,10 @@ describe('water-dialog', () => {
 
       // After watering s1, water drops to 0
       vi.mocked(getWaterAvailable).mockReturnValue(0)
-      pourBtn1.click()
+      waterBtn1.click()
 
       // Second button should now be disabled
-      expect(pourBtn2.disabled).toBe(true)
+      expect(waterBtn2.disabled).toBe(true)
     })
   })
 

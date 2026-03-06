@@ -165,7 +165,7 @@
 /* === Legacy Buttons === */
 
 /* Legacy aliases - use new button system */
-.action-button, .panel-button, .editor-clear, .editor-cancel, .editor-save {
+.action-button, .panel-button {
   border: none;
   background: transparent;
   color: var(--ink-faint);
@@ -203,9 +203,7 @@
 
 .action-button:hover, .action-button:focus-visible { color: var(--ink); border-color: var(--ink); outline: none; }
 
-.panel-button:hover:not(:disabled), .panel-button:focus-visible,
-.editor-clear:hover, .editor-clear:focus-visible,
-.editor-cancel:hover, .editor-cancel:focus-visible { color: var(--ink); outline: none; }
+.panel-button:hover:not(:disabled), .panel-button:focus-visible { color: var(--ink); outline: none; }
 
 .panel-button { width: 100%; padding: var(--space-2) 0; font-size: var(--text-sm); text-align: left; }
 .panel-button:disabled { cursor: default; opacity: 0.4; }

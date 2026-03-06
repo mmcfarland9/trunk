@@ -52,7 +52,11 @@ vi.mock('../services/sync-types', () => ({
 }))
 
 import * as supabaseMod from '../lib/supabase'
-import { subscribeToRealtime, unsubscribeFromRealtime } from '../services/sync/realtime'
+import {
+  subscribeToRealtime,
+  unsubscribeFromRealtime,
+  flushRealtimeQueue,
+} from '../services/sync/realtime'
 import { getAuthState } from '../services/auth-service'
 import { getEvents, appendEvents } from '../events/store'
 import { syncToLocalEvent } from '../services/sync-types'
@@ -204,10 +208,11 @@ describe('realtime subscription', () => {
         },
       })
 
+      flushRealtimeQueue()
       expect(appendEventsMock).not.toHaveBeenCalled()
     })
 
-    it('deduplicates by timestamp', () => {
+    it('deduplicates by timestamp+type', () => {
       const localEvent = {
         type: 'sprout_watered',
         timestamp: '2026-02-20T10:00:00Z',
@@ -217,16 +222,14 @@ describe('realtime subscription', () => {
 
       syncToLocalEventMock.mockReturnValue(localEvent as any)
 
+      // Same timestamp AND same type → duplicate
       getEventsMock.mockReturnValue([
         {
-          type: 'sprout_planted',
+          type: 'sprout_watered',
           timestamp: '2026-02-20T10:00:00Z',
           sproutId: 'sprout-1',
           twigId: 'branch-0-twig-0',
-          title: 'Test',
-          season: '1m',
-          environment: 'fertile',
-          soilCost: 3,
+          content: 'Worked on it',
           client_id: 'different-client',
         },
       ] as any)
@@ -245,6 +248,7 @@ describe('realtime subscription', () => {
         },
       })
 
+      flushRealtimeQueue()
       expect(appendEventsMock).not.toHaveBeenCalled()
     })
 
@@ -274,7 +278,7 @@ describe('realtime subscription', () => {
         },
       })
 
-      // appendEvents is called directly in the callback (not gated by onRealtimeEvent)
+      flushRealtimeQueue()
       expect(appendEventsMock).toHaveBeenCalledWith([localEvent])
     })
 
@@ -356,8 +360,11 @@ describe('realtime subscription', () => {
         },
       })
 
-      // syncToLocalEvent should have been called because shape is valid
+      // syncToLocalEvent is called synchronously because shape is valid
       expect(syncToLocalEventMock).toHaveBeenCalled()
+      // appendEvents is batched via microtask
+      flushRealtimeQueue()
+      expect(appendEventsMock).toHaveBeenCalledWith([localEvent])
     })
 
     it('rejects null payload', () => {

@@ -1,0 +1,198 @@
+/* === Water Journaling Dialog === */
+.water-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
+  animation: fade-in 150ms ease;
+}
+
+.water-dialog.hidden {
+  display: none;
+}
+
+.water-dialog-box {
+  width: min(480px, 90vw);
+  background: var(--dialog-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--dialog-shadow);
+  animation: scale-in 200ms ease;
+}
+
+.water-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(70, 130, 180, 0.05);
+}
+
+.water-dialog-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--water);
+}
+
+.water-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.water-dialog-close:hover {
+  color: var(--ink);
+}
+
+.water-dialog-body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Water dialog suggestions */
+.water-dialog-suggestions {
+  background: rgba(70, 130, 180, 0.06);
+  border: 1px solid rgba(70, 130, 180, 0.2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.water-dialog-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(70, 130, 180, 0.1);
+  padding: var(--space-2) 0;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 200ms ease;
+}
+
+.water-dialog-suggestion:first-child {
+  padding-top: 0;
+}
+
+.water-dialog-suggestion:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.water-dialog-suggestion-name {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  transition: color 150ms ease;
+}
+
+.water-dialog-suggestion:hover .water-dialog-suggestion-name {
+  color: var(--water);
+}
+
+.water-dialog-suggestion-meta {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.water-dialog-suggestion.is-watered {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.water-dialog-suggestion.is-watered .water-dialog-suggestion-name {
+  text-decoration: line-through;
+}
+
+/* Highlight animation for suggestion scroll-to */
+.water-dialog-section.is-highlighted {
+  animation: water-highlight 800ms ease;
+}
+
+@keyframes water-highlight {
+  0%, 100% { border-color: var(--border); }
+  30% { border-color: var(--water); }
+}
+
+/* Multi-sprout water sections */
+.water-dialog-section {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: opacity 200ms ease;
+}
+
+.water-dialog-section.is-watered {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.water-dialog-sprout-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.water-dialog-prompt {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.water-dialog-section .water-dialog-journal {
+  width: 100%;
+  min-height: 60px;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--ink);
+  resize: vertical;
+  transition: border-color 150ms ease;
+}
+
+.water-dialog-section .water-dialog-journal:focus {
+  outline: none;
+  border-color: var(--water);
+}
+
+.water-dialog-section .water-dialog-journal::placeholder {
+  color: var(--ink-faint);
+}
+
+.water-dialog-section-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.water-dialog-soil-gain {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--twig);
+}

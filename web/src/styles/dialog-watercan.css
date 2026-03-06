@@ -1,0 +1,180 @@
+/* === Water Can Dialog === */
+.water-can-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
+  animation: fade-in 150ms ease;
+}
+
+.water-can-dialog.hidden {
+  display: none;
+}
+
+.water-can-dialog-box {
+  width: min(560px, 90vw);
+  max-height: 80vh;
+  background: var(--dialog-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--dialog-shadow);
+  animation: scale-in 200ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.water-can-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(70, 130, 180, 0.08);
+}
+
+.water-can-dialog-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--water);
+}
+
+.water-can-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.water-can-dialog-close:hover {
+  color: var(--ink);
+}
+
+.water-can-dialog-body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Status box - mirrors Sun Ledge styling but with blue */
+.water-can-status-box {
+  background: rgba(70, 130, 180, 0.06);
+  border: 1px solid rgba(70, 130, 180, 0.2);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.water-can-status-text {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--water);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.water-can-status-reset {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.water-can-status-reset.hidden {
+  display: none;
+}
+
+.water-can-section-title {
+  margin: 0 0 var(--space-3) 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
+
+.water-can-empty-log {
+  margin: 0;
+  text-align: center;
+  color: var(--ink-faint);
+  font-style: italic;
+  padding: var(--space-3) 0;
+}
+
+/* Water log entries */
+.water-can-log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.water-can-log-entry {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-3);
+}
+
+.water-can-log-entry:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.water-can-log-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-1);
+}
+
+.water-can-log-entry-context {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--water);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.water-can-log-entry-timestamp {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.water-can-log-entry-prompt {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-bottom: var(--space-1);
+}
+
+.water-can-log-entry-content {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Make water meter clickable */
+.water-meter {
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+
+.water-meter:hover {
+  opacity: 0.8;
+}

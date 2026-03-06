@@ -1,0 +1,234 @@
+/* === Sun Log Dialog === */
+.sun-log-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dialog-overlay);
+  backdrop-filter: blur(var(--dialog-blur));
+  -webkit-backdrop-filter: blur(var(--dialog-blur));
+  z-index: var(--dialog-z);
+  animation: fade-in 150ms ease;
+}
+
+.sun-log-dialog.hidden {
+  display: none;
+}
+
+.sun-log-dialog-box {
+  width: min(560px, 90vw);
+  max-height: 80vh;
+  background: var(--dialog-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--dialog-shadow);
+  animation: scale-in 200ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sun-log-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255, 193, 7, 0.08);
+}
+
+.sun-log-dialog-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sun);
+}
+
+.sun-log-dialog-close {
+  background: transparent;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.sun-log-dialog-close:hover {
+  color: var(--ink);
+}
+
+.sun-log-dialog-body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Shine input section at top of sun log */
+.sun-log-shine-section {
+  background: rgba(255, 193, 7, 0.06);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.sun-log-shine-section.hidden {
+  display: none;
+}
+
+.sun-log-shine-target {
+  margin-bottom: var(--space-3);
+}
+
+.sun-log-shine-title {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sun-log-shine-meta {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.sun-log-shine-journal {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  resize: vertical;
+  background: white;
+}
+
+.sun-log-shine-journal:focus {
+  outline: none;
+  border-color: var(--sun);
+}
+
+.sun-log-shine-journal::placeholder {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.sun-log-shine-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-3);
+}
+
+/* "Shone this week" state */
+.sun-log-shine-shone {
+  background: rgba(255, 193, 7, 0.06);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+
+.sun-log-shine-shone.hidden {
+  display: none;
+}
+
+.sun-log-shine-shone-text {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--sun);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sun-log-shine-shone-reset {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.sun-log-section-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.sun-log-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--ink-faint);
+  font-style: italic;
+  padding: var(--space-6) 0;
+}
+
+.sun-log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.sun-log-entry {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-4);
+}
+
+.sun-log-entry:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sun-log-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+}
+
+.sun-log-entry-context {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--sun);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sun-log-entry-timestamp {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.sun-log-entry-prompt {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-bottom: var(--space-2);
+}
+
+.sun-log-entry-content {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Make sun meter clickable */
+.sun-meter {
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+
+.sun-meter:hover {
+  opacity: 0.8;
+}

@@ -1,10 +1,10 @@
 import type { AppContext } from '../types'
 import type { NavCallbacks, DialogAPIs } from './ui'
-import { positionNodes, startWind } from '../ui/layout'
+import { positionNodes, startWind, stopWind } from '../ui/layout'
 import { setupHoverBranch, setupHoverTwig } from '../features/hover-branch'
 import { getViewMode, getActiveBranchIndex } from '../state'
 import { showToast } from '../ui/toast'
-import { wasShoneThisWeek, getEvents } from '../events'
+import { checkShoneThisWeek } from '../events'
 import {
   returnToOverview,
   enterBranchView,
@@ -15,11 +15,18 @@ import {
 import { updateScopedProgress, updateSidebarSprouts } from '../features/progress'
 import { updateFocus } from '../ui/node-ui'
 
+// Cleanup handles — abort to tear down all listeners at once
+let hoverAbort: AbortController | null = null
+let activeResizeObserver: ResizeObserver | null = null
+
 export function initializeEvents(
   ctx: AppContext,
   navCallbacks: NavCallbacks,
   dialogAPIs: DialogAPIs,
 ): void {
+  // Disconnect previous observer if re-initializing
+  activeResizeObserver?.disconnect()
+
   // Resize handling
   let resizeId = 0
   const handleResize = () => {
@@ -28,26 +35,47 @@ export function initializeEvents(
     }
     resizeId = window.requestAnimationFrame(() => positionNodes(ctx))
   }
-  const resizeObserver = new ResizeObserver(handleResize)
-  resizeObserver.observe(ctx.elements.canvas)
+  activeResizeObserver = new ResizeObserver(handleResize)
+  activeResizeObserver.observe(ctx.elements.canvas)
   window.addEventListener('resize', handleResize)
 
-  // Start animations and hover
+  // Start animations and hover; pause when tab is hidden to save CPU/battery
   startWind(ctx)
-  setupHoverBranch(ctx, navCallbacks, {
-    enterBranchView,
-    enterTwigView,
-    returnToOverview,
-    returnToBranchView,
-    updateVisibility,
-    updateScopedProgress,
-    updateSidebarSprouts,
-    updateFocus,
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopWind()
+    } else {
+      startWind(ctx)
+    }
   })
-  setupHoverTwig(ctx, {
-    updateFocus,
-    updateSidebarSprouts,
-  })
+  // Abort previous hover listeners if re-initializing
+  hoverAbort?.abort()
+  hoverAbort = new AbortController()
+  const { signal } = hoverAbort
+
+  setupHoverBranch(
+    ctx,
+    navCallbacks,
+    {
+      enterBranchView,
+      enterTwigView,
+      returnToOverview,
+      returnToBranchView,
+      updateVisibility,
+      updateScopedProgress,
+      updateSidebarSprouts,
+      updateFocus,
+    },
+    signal,
+  )
+  setupHoverTwig(
+    ctx,
+    {
+      updateFocus,
+      updateSidebarSprouts,
+    },
+    signal,
+  )
 
   // Global keyboard navigation
   document.addEventListener('keydown', (e) => {
@@ -127,7 +155,7 @@ export function initializeEvents(
     }
     if (!anyDialogOpen && (e.key === 's' || e.key === 'S')) {
       e.preventDefault()
-      if (wasShoneThisWeek(getEvents())) {
+      if (checkShoneThisWeek()) {
         showToast('Already reflected this week')
       } else {
         dialogAPIs.sunLog.open()

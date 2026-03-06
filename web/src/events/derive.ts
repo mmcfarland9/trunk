@@ -156,7 +156,6 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
         // C2: Only recover soil if sprout exists and is active
         if (sprout && sprout.state === 'active') {
           soilAvailable = roundSoil(Math.min(soilAvailable + SOIL_RECOVERY_PER_WATER, soilCapacity))
-        } else if (!sprout) {
         }
         break
       }
@@ -174,7 +173,6 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
           // C14: Clamp capacity to MAX_SOIL_CAPACITY (no rounding — capacity retains full precision)
           soilCapacity = Math.min(soilCapacity + event.capacityGained, MAX_SOIL_CAPACITY)
           soilAvailable = roundSoil(Math.min(soilAvailable + returnedSoil, soilCapacity))
-        } else {
         }
         break
       }
@@ -311,9 +309,9 @@ export function deriveSunAvailable(events: readonly TrunkEvent[], now: Date = ne
 }
 
 /**
- * Check if a sprout was watered this week
+ * Check if a sprout was watered this week (raw — operates on an explicit events array)
  */
-export function wasSproutWateredThisWeek(
+export function checkSproutWateredThisWeek(
   events: readonly TrunkEvent[],
   sproutId: string,
   now: Date = new Date(),
@@ -329,9 +327,9 @@ export function wasSproutWateredThisWeek(
 }
 
 /**
- * Check if a sprout was watered today (since 6am reset)
+ * Check if a sprout was watered today (raw — operates on an explicit events array)
  */
-export function wasSproutWateredToday(
+export function checkSproutWateredToday(
   events: readonly TrunkEvent[],
   sproutId: string,
   now: Date = new Date(),
@@ -344,6 +342,42 @@ export function wasSproutWateredToday(
       e.sproutId === sproutId &&
       new Date(e.timestamp).getTime() >= resetMs,
   )
+}
+
+/**
+ * Derive the set of sprout IDs watered today (since 6am reset).
+ * Single O(n) pass — callers get O(1) lookups via Set.has().
+ */
+export function deriveWateredTodaySet(
+  events: readonly TrunkEvent[],
+  now: Date = new Date(),
+): Set<string> {
+  const resetMs = getTodayResetTime(now).getTime()
+  const result = new Set<string>()
+  for (const e of events) {
+    if (e.type === 'sprout_watered' && new Date(e.timestamp).getTime() >= resetMs) {
+      result.add(e.sproutId)
+    }
+  }
+  return result
+}
+
+/**
+ * Derive the set of sprout IDs watered this week (since Monday 6am reset).
+ * Single O(n) pass — callers get O(1) lookups via Set.has().
+ */
+export function deriveWateredThisWeekSet(
+  events: readonly TrunkEvent[],
+  now: Date = new Date(),
+): Set<string> {
+  const resetMs = getWeekResetTime(now).getTime()
+  const result = new Set<string>()
+  for (const e of events) {
+    if (e.type === 'sprout_watered' && new Date(e.timestamp).getTime() >= resetMs) {
+      result.add(e.sproutId)
+    }
+  }
+  return result
 }
 
 /**
@@ -433,9 +467,13 @@ export function getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSp
 }
 
 /**
- * Check if any sun was shone this week
+ * Check if any sun was shone this week (raw — operates on an explicit events array).
+ * Store layer wraps this as checkShoneThisWeek() with caching.
  */
-export function wasShoneThisWeek(events: readonly TrunkEvent[], now: Date = new Date()): boolean {
+export function deriveShoneThisWeek(
+  events: readonly TrunkEvent[],
+  now: Date = new Date(),
+): boolean {
   const resetMs = getWeekResetTime(now).getTime()
   return events.some((e) => e.type === 'sun_shone' && new Date(e.timestamp).getTime() >= resetMs)
 }

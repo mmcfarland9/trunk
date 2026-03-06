@@ -17,6 +17,7 @@ const constantsPath = path.join(__dirname, 'constants.json')
 const wateringPromptsPath = path.join(__dirname, 'assets/watering-prompts.txt')
 const sunPromptsPath = path.join(__dirname, 'assets/sun-prompts.json')
 const tsOutputPath = path.join(__dirname, '../web/src/generated/constants.ts')
+const tsPromptsPath = path.join(__dirname, '../web/src/generated/prompts.ts')
 const swiftOutputPath = path.join(__dirname, '../ios/Trunk/Generated/SharedConstants.swift')
 
 const constants = JSON.parse(fs.readFileSync(constantsPath, 'utf8'))
@@ -197,6 +198,21 @@ export const MAX_BLOOM_LENGTH = ${constants.validation.maxBloomLength}
 export const RECENT_WATER_LIMIT = ${constants.prompts.recentWaterLimit}
 export const RECENT_SHINE_LIMIT = ${constants.prompts.recentShineLimit}
 export const GENERIC_WEIGHT = ${constants.prompts.genericWeight}
+`
+}
+
+// =============================================================================
+// TypeScript Prompts Generation (separate chunk for lazy-loading)
+// =============================================================================
+
+function generatePrompts() {
+  return `//
+// prompts.ts
+// Generated from shared/assets/watering-prompts.txt and shared/assets/sun-prompts.json
+//
+// AUTO-GENERATED - DO NOT EDIT
+// Run 'npm run generate' from web/ or 'node shared/generate-constants.js' from repo root
+//
 
 // =============================================================================
 // Watering Prompts
@@ -507,11 +523,17 @@ function ensureDir(filePath) {
 }
 
 function main() {
-  // Generate TypeScript
+  // Generate TypeScript constants
   ensureDir(tsOutputPath)
   const tsContent = generateTypeScript()
   fs.writeFileSync(tsOutputPath, tsContent)
   console.log(`Generated ${tsOutputPath}`)
+
+  // Generate TypeScript prompts (separate file for lazy-loading)
+  ensureDir(tsPromptsPath)
+  const promptsContent = generatePrompts()
+  fs.writeFileSync(tsPromptsPath, promptsContent)
+  console.log(`Generated ${tsPromptsPath}`)
 
   // Generate Swift
   ensureDir(swiftOutputPath)

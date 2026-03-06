@@ -1,5 +1,5 @@
 import type { AppContext } from '../types'
-import { WATERING_PROMPTS, RECENT_WATER_LIMIT } from '../generated/constants'
+import { RECENT_WATER_LIMIT } from '../generated/constants'
 import { canAffordWater } from '../state'
 import { preventDoubleClick } from '../utils/debounce'
 import { appendEvent, getWaterAvailable, checkSproutWateredToday } from '../events'
@@ -26,13 +26,16 @@ type WaterDialogApi = {
   isOpen: () => boolean
 }
 
+// Lazy-loaded prompts — separate chunk, loaded before module consumers run
+const { WATERING_PROMPTS: wateringPrompts } = await import('../generated/prompts')
+const recentPromptLimit = Math.min(RECENT_WATER_LIMIT, Math.floor(wateringPrompts.length / 3))
+
 // Track recently shown prompts to avoid quick repeats
 const recentPrompts: string[] = []
-const RECENT_PROMPT_LIMIT = Math.min(RECENT_WATER_LIMIT, Math.floor(WATERING_PROMPTS.length / 3))
 
 function getUniquePrompts(count: number): string[] {
-  const available = WATERING_PROMPTS.filter((p) => !recentPrompts.includes(p))
-  const pool = available.length >= count ? available : [...WATERING_PROMPTS]
+  const available = wateringPrompts.filter((p) => !recentPrompts.includes(p))
+  const pool = available.length >= count ? available : [...wateringPrompts]
 
   // Shuffle and take the first `count`
   const shuffled = [...pool].sort(() => Math.random() - 0.5)
@@ -41,7 +44,7 @@ function getUniquePrompts(count: number): string[] {
   // Track as recent
   for (const prompt of selected) {
     recentPrompts.push(prompt)
-    if (recentPrompts.length > RECENT_PROMPT_LIMIT) {
+    if (recentPrompts.length > recentPromptLimit) {
       recentPrompts.shift()
     }
   }
@@ -95,17 +98,17 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
     ctx.elements.waterDialog.classList.add('hidden')
   }
 
-  function updateAllPourButtons(): void {
+  function updateAllWaterButtons(): void {
     const remaining = getWaterAvailable()
     const sections =
       ctx.elements.waterDialogBody.querySelectorAll<HTMLDivElement>('.water-dialog-section')
     sections.forEach((section) => {
       if (section.classList.contains('is-watered')) return
-      const pourBtn = section.querySelector<HTMLButtonElement>('.water-dialog-pour')
+      const waterBtn = section.querySelector<HTMLButtonElement>('.water-dialog-water')
       const textarea = section.querySelector<HTMLTextAreaElement>('textarea')
-      if (pourBtn) {
+      if (waterBtn) {
         const hasContent = textarea ? textarea.value.trim().length > 0 : false
-        pourBtn.disabled = remaining <= 0 || !hasContent
+        waterBtn.disabled = remaining <= 0 || !hasContent
       }
     })
   }
@@ -181,21 +184,21 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
         <textarea class="water-dialog-journal" placeholder="Write a brief note about your progress" maxlength="2000"></textarea>
         <div class="water-dialog-section-footer">
           <span class="water-dialog-soil-gain">${escapeHtml(soilGainText)}</span>
-          <button type="button" class="action-btn action-btn-progress action-btn-water water-dialog-pour" disabled>Pour</button>
+          <button type="button" class="action-btn action-btn-progress action-btn-water water-dialog-water" disabled>Water</button>
         </div>
       `
 
       const textarea = section.querySelector<HTMLTextAreaElement>('textarea')!
-      const pourBtn = section.querySelector<HTMLButtonElement>('.water-dialog-pour')!
+      const waterBtn = section.querySelector<HTMLButtonElement>('.water-dialog-water')!
 
-      // Enable pour button only when textarea has content and water is available
+      // Enable water button only when textarea has content and water is available
       textarea.addEventListener('input', () => {
         const hasContent = textarea.value.trim().length > 0
         const hasWater = canAffordWater()
-        pourBtn.disabled = !hasContent || !hasWater
+        waterBtn.disabled = !hasContent || !hasWater
       })
 
-      pourBtn.addEventListener(
+      waterBtn.addEventListener(
         'click',
         preventDoubleClick(() => {
           const content = textarea.value.trim()
@@ -210,8 +213,8 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
           })
 
           section.classList.add('is-watered')
-          pourBtn.disabled = true
-          pourBtn.textContent = 'Watered'
+          waterBtn.disabled = true
+          waterBtn.textContent = 'Watered'
           textarea.disabled = true
 
           // Update corresponding suggestion
@@ -236,16 +239,16 @@ export function initWaterDialog(ctx: AppContext, callbacks: WaterDialogCallbacks
           callbacks.onSoilMeterChange()
           callbacks.onWaterComplete()
 
-          // Disable remaining pour buttons if no water left
-          updateAllPourButtons()
+          // Disable remaining water buttons if no water left
+          updateAllWaterButtons()
         }),
       )
 
       body.appendChild(section)
     })
 
-    // Check initial water availability (disable pour buttons if 0 water)
-    updateAllPourButtons()
+    // Check initial water availability (disable water buttons if 0 water)
+    updateAllWaterButtons()
 
     ctx.elements.waterDialog.classList.remove('hidden')
 
