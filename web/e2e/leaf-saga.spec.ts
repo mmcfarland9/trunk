@@ -14,7 +14,7 @@
  * - Sprout cards with leaf: .sprout-card[data-action="open-leaf"]
  */
 
-import { test, expect, resetAppState } from './fixtures'
+import { test, expect, resetAppState, getPersistedEvents } from './fixtures'
 import type { Page } from '@playwright/test'
 
 /** Navigate from overview to branch-0, twig-0 */
@@ -71,13 +71,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
 
     // Plant
     await page.click('.sprout-set-btn')
-    await page.waitForTimeout(300)
-
-    // Verify events in localStorage
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Verify events in localStorage (wait for debounced save)
+    const events = await getPersistedEvents(page, 2)
 
     // leaf_created event exists with correct data
     const leafEvent = events.find((e: any) => e.type === 'leaf_created')
@@ -147,11 +142,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     // Wait for the first sprout to appear in Growing list
     await page.waitForSelector('.active-sprouts-list .sprout-card')
 
-    // Read the leafId from events
-    const firstEvents = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Read the leafId from events (wait for debounced save)
+    const firstEvents = await getPersistedEvents(page, 2)
     const leafId = firstEvents.find((e: any) => e.type === 'leaf_created').leafId
 
     // Close and reopen twig view so dropdown repopulates
@@ -170,13 +162,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     // Ensure preventDoubleClick lock (500ms) from first plant has expired
     await page.waitForTimeout(600)
     await page.click('.sprout-set-btn')
-    await page.waitForTimeout(300)
-
-    // Verify both sprout_planted events share the same leafId
-    const allEvents = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Verify both sprout_planted events share the same leafId (wait for debounced save)
+    const allEvents = await getPersistedEvents(page, 3)
 
     const plantEvents = allEvents.filter((e: any) => e.type === 'sprout_planted')
     expect(plantEvents).toHaveLength(2)

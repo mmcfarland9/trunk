@@ -2,8 +2,8 @@
  * Tests for import validation and sanitization utilities.
  */
 
-import { describe, it, expect } from 'vitest'
-import { validateSprout, validateLeaf, sanitizeSprout, sanitizeLeaf } from './validate-import'
+import { describe, expect, it } from 'vitest'
+import { sanitizeLeaf, sanitizeSprout, validateLeaf, validateSprout } from './validate-import'
 
 describe('Sprout Validation', () => {
   it('should validate a complete sprout', () => {

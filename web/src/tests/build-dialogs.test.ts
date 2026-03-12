@@ -3,9 +3,9 @@
  * Tests dialog creation (buildDialogs) and focus trap behavior (trapFocus).
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { buildDialogs, trapFocus } from '../ui/dom-builder/build-dialogs'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DialogElements } from '../ui/dom-builder/build-dialogs'
+import { buildDialogs, trapFocus } from '../ui/dom-builder/build-dialogs'
 
 const DIALOG_KEYS: (keyof DialogElements)[] = [
   'sproutsDialog',

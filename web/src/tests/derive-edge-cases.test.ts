@@ -4,7 +4,7 @@
  * invalid state transitions, and multiple same-day events.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { deriveState } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 

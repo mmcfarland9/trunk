@@ -1,4 +1,4 @@
-import type { SproutSeason, SproutEnvironment } from '../../types'
+import type { SproutEnvironment, SproutSeason } from '../../types'
 
 /**
  * Represents the mutable state of the sprout form.

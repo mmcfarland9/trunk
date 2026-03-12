@@ -3,8 +3,8 @@
  * Tests sidebar sprout grouping, progress display, and pure logic functions.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { DerivedState, DerivedSprout } from '../events/derive'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { DerivedSprout, DerivedState } from '../events/derive'
 import type { AppContext, BranchGroup } from '../types'
 
 // Mock events module
@@ -41,26 +41,25 @@ vi.mock('../constants', () => ({
 }))
 
 import {
-  updateStats,
-  updateScopedProgress,
-  initSidebarSprouts,
-  updateSidebarSprouts,
-} from '../features/progress'
-
-import {
-  getState,
-  toSprout,
+  checkSproutWateredToday,
   getActiveSprouts,
   getCompletedSprouts,
   getLeafById,
-  checkSproutWateredToday,
+  getState,
+  toSprout,
 } from '../events'
 import {
-  getViewMode,
+  initSidebarSprouts,
+  updateScopedProgress,
+  updateSidebarSprouts,
+  updateStats,
+} from '../features/progress'
+import {
   getActiveBranchIndex,
+  getActiveTwigId,
   getHoveredBranchIndex,
   getHoveredTwigId,
-  getActiveTwigId,
+  getViewMode,
 } from '../state'
 
 // Helper to create a DerivedSprout

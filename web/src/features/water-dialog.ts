@@ -1,11 +1,11 @@
-import type { AppContext } from '../types'
+import sharedConstants from '../../../shared/constants.json'
+import { appendEvent, checkSproutWateredToday, getWaterAvailable } from '../events'
 import { RECENT_WATER_LIMIT } from '../generated/constants'
 import { canAffordWater } from '../state'
-import { preventDoubleClick } from '../utils/debounce'
-import { appendEvent, getWaterAvailable, checkSproutWateredToday } from '../events'
-import { escapeHtml } from '../utils/escape-html'
-import sharedConstants from '../../../shared/constants.json'
+import type { AppContext } from '../types'
 import { trapFocus } from '../ui/dom-builder/build-dialogs'
+import { preventDoubleClick } from '../utils/debounce'
+import { escapeHtml } from '../utils/escape-html'
 
 type ActiveSproutInfo = {
   id: string

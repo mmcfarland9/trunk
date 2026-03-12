@@ -3,7 +3,7 @@
  * Tests the confirmation dialog, event creation, soil refund, and UI updates.
  */
 
-import { test, expect, resetAppState } from './fixtures'
+import { test, expect, resetAppState, getPersistedEvents } from './fixtures'
 
 /** Soil uproot refund rate from shared/constants.json */
 const SOIL_UPROOT_REFUND_RATE = 0.25
@@ -147,13 +147,8 @@ test.describe('Uproot Sprout', () => {
     await page.locator('.sprout-delete-btn').first().click()
     await page.waitForSelector('.confirm-dialog:not(.hidden)')
     await page.locator('.confirm-dialog-confirm').click()
-    await page.waitForTimeout(300)
-
-    // Verify sprout_uprooted event in localStorage
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Verify sprout_uprooted event in localStorage (wait for debounced save)
+    const events = await getPersistedEvents(page, 3)
 
     const uprootEvent = events.find(
       (e: any) => e.type === 'sprout_uprooted',
@@ -187,7 +182,8 @@ test.describe('Uproot Sprout', () => {
     await page.locator('.sprout-delete-btn').first().click()
     await page.waitForSelector('.confirm-dialog:not(.hidden)')
     await page.locator('.confirm-dialog-confirm').click()
-    await page.waitForTimeout(300)
+    // Wait for debounced save to flush before reading localStorage
+    await getPersistedEvents(page, 3)
 
     // Verify soil state via derived events
     const soilState = await page.evaluate(() => {
@@ -317,10 +313,7 @@ test.describe('Uproot Sprout', () => {
 
     // Confirm via data integrity: the sprout_uprooted event exists
     // and the sprout is 'uprooted' state (not 'completed')
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    const events = await getPersistedEvents(page, 3)
 
     const uprootEvent = events.find(
       (e: any) => e.type === 'sprout_uprooted',

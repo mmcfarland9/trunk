@@ -3,12 +3,12 @@
  * Covers derivation (sparse merge), validation, and sync round-trip.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { deriveState } from '../events/derive'
-import { validateEvent } from '../events/types'
-import { localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
-import type { SyncEvent } from '../services/sync-types'
 import type { TrunkEvent } from '../events/types'
+import { validateEvent } from '../events/types'
+import type { SyncEvent } from '../services/sync-types'
+import { localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
 
 const TEST_USER_ID = 'user-test-123'
 

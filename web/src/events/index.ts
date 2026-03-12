@@ -5,69 +5,67 @@
  * All state is derived by replaying events.
  */
 
-// Types
-export type {
-  TrunkEvent,
-  SproutPlantedEvent,
-  SproutWateredEvent,
-  SproutHarvestedEvent,
-  SproutUprootedEvent,
-  SproutEditedEvent,
-  SunShoneEvent,
-  LeafCreatedEvent,
-} from './types'
-export { EVENT_TYPES, validateEvent } from './types'
-
 // Derivation
-export type { DerivedState, DerivedSprout, DerivedLeaf, WateringStreak } from './derive'
+export type { DerivedLeaf, DerivedSprout, DerivedState, WateringStreak } from './derive'
 export {
   deriveState,
-  deriveWaterAvailable,
   deriveSunAvailable,
+  deriveWaterAvailable,
+  deriveWateringStreak,
+  generateLeafId,
+  generateSproutId,
+  getActiveSprouts,
+  getAllWaterEntries,
+  getCompletedSprouts,
+  getLeafById,
+  getLeavesForTwig,
+  getSproutsByLeaf,
+  getSproutsForTwig,
   getTodayResetTime,
   getWeekResetTime,
-  getSproutsForTwig,
-  getLeavesForTwig,
-  getActiveSprouts,
-  getCompletedSprouts,
   toSprout,
-  getLeafById,
-  getSproutsByLeaf,
-  generateSproutId,
-  generateLeafId,
-  getAllWaterEntries,
-  deriveWateringStreak,
 } from './derive'
-
 // Soil charting
-export type { SoilChartRange, SoilChartPoint } from './soil-charting'
+export type { SoilChartPoint, SoilChartRange } from './soil-charting'
 export {
-  deriveSoilLog,
-  computeRawSoilHistory,
   bucketSoilData,
+  computeRawSoilHistory,
+  deriveSoilLog,
 } from './soil-charting'
 // Store
 export {
-  initEventStore,
-  setEventStoreErrorCallbacks,
-  setEventSyncCallback,
   appendEvent,
   appendEvents,
-  getEvents,
-  getState,
-  getWaterAvailable,
-  getSunAvailable,
-  checkSproutWateredToday,
-  checkSproutWateredThisWeek,
+  canAffordSoil,
+  canAffordSun,
+  canAffordWater,
   checkShoneThisWeek,
-  replaceEvents,
+  checkSproutWateredThisWeek,
+  checkSproutWateredToday,
   exportEvents,
+  getEvents,
   // Resource getters (derived from events)
   getSoilAvailable,
   getSoilCapacity,
-  canAffordSoil,
-  canAffordWater,
-  canAffordSun,
+  getState,
+  getSunAvailable,
+  getWaterAvailable,
   getWaterCapacity,
   getWateringStreak,
+  initEventStore,
+  replaceEvents,
+  setEventStoreErrorCallbacks,
+  setEventSyncCallback,
 } from './store'
+// Types
+export type {
+  LeafCreatedEvent,
+  SproutEditedEvent,
+  SproutHarvestedEvent,
+  SproutPlantedEvent,
+  SproutUprootedEvent,
+  SproutWateredEvent,
+  SunShoneEvent,
+  TrunkEvent,
+} from './types'
+export { EVENT_TYPES, validateEvent } from './types'

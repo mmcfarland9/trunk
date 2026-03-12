@@ -4,10 +4,10 @@
  * for all 6 event types, plus invalid payloads.
  */
 
-import { describe, it, expect } from 'vitest'
-import { localToSyncPayload, syncToLocalEvent, generateClientId } from '../services/sync-types'
-import type { SyncEvent } from '../services/sync-types'
+import { describe, expect, it } from 'vitest'
 import type { TrunkEvent } from '../events/types'
+import type { SyncEvent } from '../services/sync-types'
+import { generateClientId, localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
 
 // Helper to build a SyncEvent from a payload
 function makeSyncEvent(

@@ -1,13 +1,13 @@
-import type { AppContext } from '../types'
 import {
-  getViewMode,
-  getHoveredBranchIndex,
-  setHoveredBranchIndex,
-  getHoveredTwigId,
-  setHoveredTwigId,
-  getFocusedNode,
   getActiveBranchIndex,
+  getFocusedNode,
+  getHoveredBranchIndex,
+  getHoveredTwigId,
+  getViewMode,
+  setHoveredBranchIndex,
+  setHoveredTwigId,
 } from '../state'
+import type { AppContext } from '../types'
 import type { NavigationCallbacks } from './navigation'
 
 export type HoverBranchCallbacks = {

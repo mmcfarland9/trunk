@@ -3,7 +3,7 @@
  * Verifies the full DOM tree is constructed with all expected elements.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock state functions used by dom-builder
 vi.mock('../state', () => ({
@@ -26,8 +26,8 @@ vi.mock('../../assets/tree_icon_transp.png', () => ({
   default: 'mock-image.png',
 }))
 
-import { buildApp } from '../ui/dom-builder'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
+import { buildApp } from '../ui/dom-builder'
 
 describe('DOM Builder Integration', () => {
   let appRoot: HTMLDivElement

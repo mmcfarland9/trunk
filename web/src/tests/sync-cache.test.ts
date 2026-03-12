@@ -3,14 +3,14 @@
  * Tests cache version management, validity checks, and sync failure invalidation.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  isCacheValid,
-  setCacheVersion,
-  clearCacheVersion,
-  invalidateOnSyncFailure,
   CACHE_VERSION,
   CACHE_VERSION_KEY,
+  clearCacheVersion,
+  invalidateOnSyncFailure,
+  isCacheValid,
+  setCacheVersion,
 } from '../services/sync/cache'
 
 describe('sync cache', () => {

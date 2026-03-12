@@ -4,11 +4,11 @@
  * removes on success or duplicate, leaves on failure.
  */
 
+import type { TrunkEvent } from '../../events/types'
 import { supabase } from '../../lib/supabase'
 import { getAuthState } from '../auth-service'
-import type { TrunkEvent } from '../../events/types'
-import { localToSyncPayload, generateClientId } from '../sync-types'
-import { hasPendingId, addPendingId, removePendingId, savePendingIds } from './pending-uploads'
+import { generateClientId, localToSyncPayload } from '../sync-types'
+import { addPendingId, hasPendingId, removePendingId, savePendingIds } from './pending-uploads'
 import { notifyMetadataListeners } from './status'
 import { createTimeoutSignal } from './timeout'
 
@@ -23,6 +23,20 @@ function debouncedSavePendingIds(): void {
     savePendingIds()
     saveDebounceTimer = null
   }, SAVE_DEBOUNCE_MS)
+}
+
+/** Flush any pending debounced save immediately. Prevents data loss on page unload. */
+export function flushPendingDebounce(): void {
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer)
+    saveDebounceTimer = null
+    savePendingIds()
+  }
+}
+
+// Flush pending IDs before page unload to prevent data loss
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushPendingDebounce)
 }
 
 export async function pushEvent(event: TrunkEvent): Promise<{ error: string | null }> {

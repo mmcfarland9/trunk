@@ -3,7 +3,7 @@
  * Tests detailed sync status derivation, failure tracking, and metadata subscriptions.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../services/sync/pending-uploads', () => ({
   getPendingCount: vi.fn(() => 0),

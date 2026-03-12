@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { generateSproutId, generateLeafId } from '../events'
+import { describe, expect, it } from 'vitest'
+import { generateLeafId, generateSproutId } from '../events'
 
 describe('ID Generation', () => {
   describe('generateSproutId', () => {

@@ -1,8 +1,9 @@
 import type { AppContext, ViewMode } from '../types'
 import type { NavigationCallbacks } from './navigation'
-import { returnToOverview, enterBranchView, enterTwigView } from './navigation'
+import { enterBranchView, enterTwigView, returnToOverview } from './navigation'
 
 let navigatingFromPopstate = false
+let historyController: AbortController | null = null
 
 function buildHash(mode: ViewMode, branchIndex?: number, twigId?: string, leafId?: string): string {
   if (mode === 'leaf' && branchIndex != null && twigId && leafId) {
@@ -88,15 +89,22 @@ export function initHistory(
   navCallbacks: NavigationCallbacks,
   deps: HistoryDeps,
 ): void {
-  window.addEventListener('popstate', () => {
-    navigatingFromPopstate = true
-    try {
-      const parsed = parseHash(window.location.hash)
-      navigateToState(parsed, ctx, navCallbacks, deps)
-    } finally {
-      navigatingFromPopstate = false
-    }
-  })
+  historyController?.abort()
+  historyController = new AbortController()
+
+  window.addEventListener(
+    'popstate',
+    () => {
+      navigatingFromPopstate = true
+      try {
+        const parsed = parseHash(window.location.hash)
+        navigateToState(parsed, ctx, navCallbacks, deps)
+      } finally {
+        navigatingFromPopstate = false
+      }
+    },
+    { signal: historyController.signal },
+  )
 
   // Set initial history entry from current hash (or default to overview)
   const initial = parseHash(window.location.hash)

@@ -4,7 +4,7 @@
  * and water button behavior.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ---------------------------------------------------------------------------
 // Mocks (module-level, before any imports of the module under test)
@@ -72,8 +72,8 @@ vi.mock('../../../shared/constants.json', () => ({
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
+import { appendEvent, checkSproutWateredToday, getWaterAvailable } from '../events'
 import { initWaterDialog } from '../features/water-dialog'
-import { appendEvent, getWaterAvailable, checkSproutWateredToday } from '../events'
 import { canAffordWater } from '../state'
 
 // ---------------------------------------------------------------------------

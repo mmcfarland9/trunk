@@ -3,22 +3,22 @@
  * Complements events.test.ts with edge cases and specific function tests.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  deriveState,
-  deriveWaterAvailable,
-  deriveSunAvailable,
-  getSproutsForTwig,
-  getLeavesForTwig,
-  getActiveSprouts,
-  getCompletedSprouts,
-  toSprout,
-  getLeafById,
-  getSproutsByLeaf,
   deriveShoneThisWeek,
+  deriveState,
+  deriveSunAvailable,
+  deriveWaterAvailable,
+  getActiveSprouts,
   getAllWaterEntries,
+  getCompletedSprouts,
+  getLeafById,
+  getLeavesForTwig,
+  getSproutsByLeaf,
+  getSproutsForTwig,
+  toSprout,
 } from '../events/derive'
-import { deriveSoilLog, computeRawSoilHistory, bucketSoilData } from '../events/soil-charting'
+import { bucketSoilData, computeRawSoilHistory, deriveSoilLog } from '../events/soil-charting'
 import type { TrunkEvent } from '../events/types'
 
 describe('Derive State - Soil Capacity', () => {

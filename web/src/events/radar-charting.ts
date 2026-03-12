@@ -11,11 +11,11 @@
  *   Harvest: soilCost × resultMultiplier (rewards quality outcomes)
  */
 
-import type { TrunkEvent } from './types'
 import { BRANCH_COUNT } from '../constants'
 import { RESULT_MULTIPLIERS } from '../generated/constants'
-import { parseTwigId } from '../utils/twig-id'
 import { getPresetLabel } from '../state'
+import { parseTwigId } from '../utils/twig-id'
+import type { TrunkEvent } from './types'
 
 // Flat per-event weights from soil recovery rates (constants.json)
 const W_WATER = 0.05

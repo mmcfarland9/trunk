@@ -2,7 +2,7 @@
  * E2E tests for data persistence.
  */
 
-import { test, expect, resetAppState } from './fixtures'
+import { test, expect, resetAppState, getPersistedEvents } from './fixtures'
 
 test.describe('Data Portability - Persistence', () => {
   test.beforeEach(async ({ page }) => {
@@ -77,7 +77,8 @@ test.describe('Data Portability - Persistence', () => {
     await page.click('.sprout-env-btn[data-env="fertile"]')
     await page.waitForTimeout(200)
     await page.click('.sprout-set-btn')
-    await page.waitForTimeout(300)
+    // Wait for debounced save to flush events to localStorage
+    await getPersistedEvents(page, 1)
 
     // Check localStorage keys - should have events
     const keys = await page.evaluate(() => Object.keys(localStorage))

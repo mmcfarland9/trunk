@@ -12,8 +12,8 @@
  */
 
 import { BRANCH_COUNT } from '../constants'
+import { type BranchEngagement, computeBranchEngagement } from '../events/radar-charting'
 import { getEvents } from '../events/store'
-import { computeBranchEngagement, type BranchEngagement } from '../events/radar-charting'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 

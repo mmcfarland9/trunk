@@ -69,3 +69,25 @@ export const test = base.extend({
   },
 })
 export { expect }
+
+/**
+ * Wait for events to be persisted to localStorage after the 500ms debounced save.
+ * Polls until trunk-events-v1 has at least `minCount` events, then returns them.
+ */
+export async function getPersistedEvents(
+  page: Page,
+  minCount: number = 1,
+  timeout: number = 2000,
+): Promise<any[]> {
+  const handle = await page.waitForFunction(
+    (min: number) => {
+      const raw = localStorage.getItem('trunk-events-v1')
+      if (!raw) return null
+      const events = JSON.parse(raw)
+      return events.length >= min ? events : null
+    },
+    minCount,
+    { timeout },
+  )
+  return handle.jsonValue() as Promise<any[]>
+}

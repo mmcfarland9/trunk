@@ -3,39 +3,39 @@
  * Verifies that all getters return safe defaults with no events.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  deriveState,
-  deriveWaterAvailable,
-  deriveSunAvailable,
-  getActiveSprouts,
-  getCompletedSprouts,
-  getSproutsForTwig,
-  getLeavesForTwig,
-  getLeafById,
-  getSproutsByLeaf,
-  getAllWaterEntries,
-  deriveShoneThisWeek,
   checkSproutWateredThisWeek,
   checkSproutWateredToday,
+  deriveShoneThisWeek,
+  deriveState,
+  deriveSunAvailable,
+  deriveWaterAvailable,
   deriveWateringStreak,
+  getActiveSprouts,
+  getAllWaterEntries,
+  getCompletedSprouts,
+  getLeafById,
+  getLeavesForTwig,
+  getSproutsByLeaf,
+  getSproutsForTwig,
 } from '../events/derive'
 import {
-  initEventStore,
-  getState,
+  canAffordSoil,
+  canAffordSun,
+  canAffordWater,
+  clearEvents,
+  exportEvents,
+  getEventCount,
   getEvents,
-  getWaterAvailable,
-  getSunAvailable,
   getSoilAvailable,
   getSoilCapacity,
-  canAffordSoil,
-  canAffordWater,
-  canAffordSun,
-  getWaterCapacity,
+  getState,
+  getSunAvailable,
   getSunCapacity,
-  getEventCount,
-  exportEvents,
-  clearEvents,
+  getWaterAvailable,
+  getWaterCapacity,
+  initEventStore,
 } from '../events/store'
 
 describe('Edge Cases — Zero State', () => {

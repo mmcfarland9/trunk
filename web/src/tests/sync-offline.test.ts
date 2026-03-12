@@ -4,7 +4,7 @@
  * and retry behavior with exponential backoff.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SproutPlantedEvent } from '../events/types'
 
 // Mock all dependencies before imports

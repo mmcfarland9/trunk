@@ -3,7 +3,7 @@
  * This proves what states actually exist vs what's in documentation.
  */
 
-import { test, expect, resetAppState } from './fixtures'
+import { test, expect, resetAppState, getPersistedEvents } from './fixtures'
 
 test.describe('Sprout Lifecycle - Actual Behavior', () => {
   test.beforeEach(async ({ page }) => {
@@ -62,10 +62,7 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await expect(activeCard).toContainText('Test Sprout')
 
     // Verify event-sourced state: a sprout_planted event should exist
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    const events = await getPersistedEvents(page, 2)
 
     const plantedEvent = events.find((e: any) => e.type === 'sprout_planted')
     expect(plantedEvent).toBeDefined()
@@ -162,11 +159,8 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     // Screenshot after harvest
     await page.screenshot({ path: 'e2e/screenshots/07-after-harvest-result-1.png' })
 
-    // Check the event-sourced state
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Check the event-sourced state (wait for debounced save)
+    const events = await getPersistedEvents(page, 3)
 
     const harvestEvent = events.find(
       (e: any) => e.type === 'sprout_harvested' && e.sproutId === 'test-sprout-1'
@@ -243,11 +237,8 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     await page.click('.harvest-dialog-save')
     await page.waitForTimeout(300)
 
-    // Check the event-sourced state
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Check the event-sourced state (wait for debounced save)
+    const events = await getPersistedEvents(page, 3)
 
     const harvestEvent = events.find(
       (e: any) => e.type === 'sprout_harvested' && e.sproutId === 'test-sprout-2'

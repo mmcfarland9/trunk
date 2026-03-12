@@ -137,10 +137,13 @@ test.describe('Resource Management', () => {
 
       // Fill in reflection and pour
       await page.fill('.water-dialog-journal', 'Made progress today')
-      await page.click('.water-dialog-pour')
-      await page.waitForTimeout(300)
+      await page.click('.water-dialog-water')
 
-      // Check water count decreased (2 filled circles now)
+      // Wait for water meter to update after pour
+      await page.waitForFunction(
+        () => document.querySelectorAll('.water-circle.is-filled').length === 2,
+        { timeout: 2000 },
+      )
       const filledAfter = await page.locator('.water-circle.is-filled').count()
       expect(filledAfter).toBe(2)
     }

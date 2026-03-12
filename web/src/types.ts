@@ -79,6 +79,7 @@ export type TwigViewApi = {
   close: () => void
   isOpen: () => boolean
   refresh: () => void
+  cleanup: () => void
 }
 
 export type LeafViewApi = {

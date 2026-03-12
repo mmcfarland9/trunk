@@ -1,27 +1,28 @@
 import './styles/index.css'
-import { applyTheme } from './utils/theme'
 import { initEventStore } from './events/store'
+import { applyTheme } from './utils/theme'
 
 // Apply theme immediately to avoid flash of wrong color scheme
 applyTheme()
-import type { AppContext } from './types'
-import { getViewMode, setViewModeState } from './state'
-import { buildApp } from './ui/dom-builder'
-import { positionNodes } from './ui/layout'
-import { updateStats } from './features/progress'
-import {
-  setViewMode,
-  returnToOverview,
-  enterBranchView,
-  enterTwigView,
-} from './features/navigation'
-import { initSupabase } from './lib/supabase'
+
 import { initializeAuth } from './bootstrap/auth'
+import { initializeEvents } from './bootstrap/events'
 import { initializeSync } from './bootstrap/sync'
 import { initializeUI, updateSoilMeter, updateWaterMeter, updateWaterStreak } from './bootstrap/ui'
-import { initializeEvents } from './bootstrap/events'
-import { updateFocus, syncNode } from './ui/node-ui'
 import { initHistory } from './features/history'
+import {
+  enterBranchView,
+  enterTwigView,
+  returnToOverview,
+  setViewMode,
+} from './features/navigation'
+import { updateStats } from './features/progress'
+import { initSupabase } from './lib/supabase'
+import { getViewMode, setViewModeState } from './state'
+import type { AppContext } from './types'
+import { buildApp } from './ui/dom-builder'
+import { positionNodes } from './ui/layout'
+import { syncNode, updateFocus } from './ui/node-ui'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) throw new Error('Root container "#app" not found.')

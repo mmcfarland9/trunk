@@ -1,6 +1,6 @@
 import type { AppContext } from '../types'
-import { buildSoilChart } from '../ui/soil-chart'
 import { buildRadarChart } from '../ui/radar-chart'
+import { buildSoilChart } from '../ui/soil-chart'
 
 export type ChartOps = {
   updateRadar: () => void

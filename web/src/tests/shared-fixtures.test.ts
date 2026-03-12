@@ -4,13 +4,13 @@
  * web (here) and iOS to ensure identical behavior across platforms.
  */
 
-import { describe, it, expect } from 'vitest'
-import { calculateCapacityGained } from '../utils/calculations'
-import { deriveState, getActiveSprouts, getCompletedSprouts } from '../events/derive'
-import type { TrunkEvent } from '../events/types'
-import type { SproutSeason, SproutEnvironment } from '../types'
+import { describe, expect, it } from 'vitest'
 import capacityGainedFixture from '../../../shared/test-fixtures/capacity-reward.json'
 import eventDerivationFixture from '../../../shared/test-fixtures/event-derivation.json'
+import { deriveState, getActiveSprouts, getCompletedSprouts } from '../events/derive'
+import type { TrunkEvent } from '../events/types'
+import type { SproutEnvironment, SproutSeason } from '../types'
+import { calculateCapacityGained } from '../utils/calculations'
 
 // Helper to cast fixture events to TrunkEvent[]
 function toTrunkEvents(events: readonly Record<string, unknown>[]): TrunkEvent[] {

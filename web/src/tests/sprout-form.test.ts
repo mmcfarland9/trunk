@@ -2,8 +2,8 @@
  * Tests for sprout form date helpers in twig-view/sprout-form.ts
  */
 
-import { describe, it, expect } from 'vitest'
-import { getEndDate, formatDate } from '../ui/twig-view/sprout-form'
+import { describe, expect, it } from 'vitest'
+import { formatDate, getEndDate } from '../ui/twig-view/sprout-form'
 
 describe('getEndDate', () => {
   it('sets end time to 9am local time, not UTC', () => {

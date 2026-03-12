@@ -2,13 +2,13 @@
  * Tests for reset time and formatting functions in calculations.ts
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
+  formatResetTime,
+  getNextSunReset,
+  getNextWaterReset,
   getTodayResetTime,
   getWeekResetTime,
-  getNextWaterReset,
-  getNextSunReset,
-  formatResetTime,
 } from '../utils/calculations'
 
 describe('getTodayResetTime', () => {

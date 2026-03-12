@@ -1,8 +1,8 @@
-import type { AppElements } from '../types'
-import { signOut, getAuthState, getUserProfile, updateProfile } from '../services/auth-service'
+import { getAuthState, getUserProfile, signOut, updateProfile } from '../services/auth-service'
 import { deleteAllEvents } from '../services/sync'
-import { getTheme, setTheme } from '../utils/theme'
+import type { AppElements } from '../types'
 import { trapFocus } from '../ui/dom-builder/build-dialogs'
+import { getTheme, setTheme } from '../utils/theme'
 
 // --- Account Dialog ---
 

@@ -3,9 +3,9 @@
  * Uses shared constants for all labels.
  */
 
-import type { SproutSeason, SproutEnvironment } from '../types'
 import sharedConstants from '../../../shared/constants.json'
 import { RESULTS } from '../generated/constants'
+import type { SproutEnvironment, SproutSeason } from '../types'
 
 export const SEASONS: SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']
 export const ENVIRONMENTS: SproutEnvironment[] = ['fertile', 'firm', 'barren']

@@ -8,12 +8,12 @@
  * Uses shared/test-fixtures/field-coverage.json as the canonical fixture.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
-import { localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
-import type { SyncEvent } from '../services/sync-types'
-import type { TrunkEvent } from '../events/types'
-import { deriveState } from '../events/derive'
+import { beforeEach, describe, expect, it } from 'vitest'
 import fixture from '../../../shared/test-fixtures/field-coverage.json'
+import { deriveState } from '../events/derive'
+import type { TrunkEvent } from '../events/types'
+import type { SyncEvent } from '../services/sync-types'
+import { localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
 
 const TEST_USER_ID = 'user-test-field-coverage'
 

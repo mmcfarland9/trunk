@@ -3,7 +3,7 @@
  * Covers consecutive days, missed days, 6am boundary, and empty events.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { deriveWateringStreak } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 

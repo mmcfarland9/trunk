@@ -2,30 +2,30 @@
  * Tests for event store
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  initEventStore,
-  setEventStoreErrorCallbacks,
-  setEventSyncCallback,
   appendEvent,
   appendEvents,
-  getEvents,
-  getState,
-  getWaterAvailable,
-  getSunAvailable,
-  checkSproutWateredThisWeek,
-  getSoilAvailable,
-  getSoilCapacity,
   canAffordSoil,
-  canAffordWater,
   canAffordSun,
-  getWaterCapacity,
-  getSunCapacity,
+  canAffordWater,
+  checkSproutWateredThisWeek,
   clearEvents,
-  replaceEvents,
-  getEventCount,
   exportEvents,
   flushSave,
+  getEventCount,
+  getEvents,
+  getSoilAvailable,
+  getSoilCapacity,
+  getState,
+  getSunAvailable,
+  getSunCapacity,
+  getWaterAvailable,
+  getWaterCapacity,
+  initEventStore,
+  replaceEvents,
+  setEventStoreErrorCallbacks,
+  setEventSyncCallback,
 } from '../events/store'
 import type { TrunkEvent } from '../events/types'
 

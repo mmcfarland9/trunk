@@ -1,19 +1,19 @@
-import type { AppContext } from '../types'
-import type { NavCallbacks, DialogAPIs } from './ui'
-import { positionNodes, startWind, stopWind } from '../ui/layout'
-import { setupHoverBranch, setupHoverTwig } from '../features/hover-branch'
-import { getViewMode, getActiveBranchIndex } from '../state'
-import { showToast } from '../ui/toast'
 import { checkShoneThisWeek } from '../events'
+import { setupHoverBranch, setupHoverTwig } from '../features/hover-branch'
 import {
-  returnToOverview,
   enterBranchView,
   enterTwigView,
   returnToBranchView,
+  returnToOverview,
   updateVisibility,
 } from '../features/navigation'
 import { updateScopedProgress, updateSidebarSprouts } from '../features/progress'
+import { getActiveBranchIndex, getViewMode } from '../state'
+import type { AppContext } from '../types'
+import { positionNodes, startWind, stopWind } from '../ui/layout'
 import { updateFocus } from '../ui/node-ui'
+import { showToast } from '../ui/toast'
+import type { DialogAPIs, NavCallbacks } from './ui'
 
 // Cleanup handles — abort to tear down all listeners at once
 let hoverAbort: AbortController | null = null

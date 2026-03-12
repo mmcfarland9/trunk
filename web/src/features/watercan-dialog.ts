@@ -1,15 +1,15 @@
-import type { AppElements } from '../types'
-import { escapeHtml } from '../utils/escape-html'
+import { getAllWaterEntries, getState } from '../events'
 import {
+  formatResetTime,
+  getNextWaterReset,
+  getPresetLabel,
   getWaterAvailable,
   getWaterCapacity,
-  getNextWaterReset,
-  formatResetTime,
-  getPresetLabel,
 } from '../state'
-import { getState, getAllWaterEntries } from '../events'
-import { formatDateWithYear } from '../utils/date-formatting'
+import type { AppElements } from '../types'
 import { trapFocus } from '../ui/dom-builder/build-dialogs'
+import { formatDateWithYear } from '../utils/date-formatting'
+import { escapeHtml } from '../utils/escape-html'
 
 type WaterCanElements = Pick<
   AppElements,

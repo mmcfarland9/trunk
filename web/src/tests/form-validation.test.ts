@@ -3,7 +3,7 @@
  * Tests the updateFormState function which validates the sprout planting form.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock state module
 vi.mock('../state', () => ({
@@ -12,9 +12,9 @@ vi.mock('../state', () => ({
   canAffordSoil: vi.fn(() => true),
 }))
 
+import { calculateSoilCost, canAffordSoil, getSoilAvailable } from '../state'
 import { updateFormState } from '../ui/twig-view/form-validation'
 import type { FormState } from '../ui/twig-view/sprout-form'
-import { calculateSoilCost, getSoilAvailable, canAffordSoil } from '../state'
 
 function createMockElements() {
   const leafSelect = document.createElement('select')

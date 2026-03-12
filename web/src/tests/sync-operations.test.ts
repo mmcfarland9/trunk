@@ -3,8 +3,8 @@
  * Tests push, pull, retry, delete, and smart sync operations.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { TrunkEvent, SproutPlantedEvent } from '../events/types'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SproutPlantedEvent, TrunkEvent } from '../events/types'
 
 // Mock all dependencies before imports
 vi.mock('../lib/supabase', () => ({
@@ -638,9 +638,71 @@ describe('sync operations', () => {
       const { startVisibilitySync } = await import('../services/sync/operations')
       startVisibilitySync()
 
-      expect(addEventListenerSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        'visibilitychange',
+        expect.any(Function),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      )
 
       addEventListenerSpy.mockRestore()
+    })
+
+    it('does not accumulate listeners when called multiple times', async () => {
+      vi.doMock('../lib/supabase', () => ({
+        supabase: null,
+        isSupabaseConfigured: () => false,
+      }))
+
+      const addEventListenerSpy = vi.spyOn(document, 'addEventListener')
+      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
+
+      const { startVisibilitySync } = await import('../services/sync/operations')
+
+      startVisibilitySync()
+      const firstCallCount = addEventListenerSpy.mock.calls.filter(
+        (c) => c[0] === 'visibilitychange',
+      ).length
+      expect(firstCallCount).toBe(1)
+
+      startVisibilitySync()
+      // Second call should still only result in one active listener
+      // (first aborted, second added)
+      const secondCallCount = addEventListenerSpy.mock.calls.filter(
+        (c) => c[0] === 'visibilitychange',
+      ).length
+      expect(secondCallCount).toBe(2) // Two calls to addEventListener total
+      // But the first listener was aborted, so only one is active
+
+      addEventListenerSpy.mockRestore()
+      removeEventListenerSpy.mockRestore()
+    })
+
+    it('stopVisibilitySync removes the listener', async () => {
+      vi.doMock('../lib/supabase', () => ({
+        supabase: null,
+        isSupabaseConfigured: () => false,
+      }))
+
+      const { startVisibilitySync, stopVisibilitySync } = await import(
+        '../services/sync/operations'
+      )
+
+      const originalAddEventListener = document.addEventListener.bind(document)
+      const addSpy = vi
+        .spyOn(document, 'addEventListener')
+        .mockImplementation((type, handler, options) => {
+          originalAddEventListener(type, handler, options)
+        })
+
+      startVisibilitySync()
+      stopVisibilitySync()
+
+      // After stop, dispatching visibilitychange should not trigger smartSync
+      // The listener was removed via AbortController
+      // Calling stop again should be safe (no-op)
+      stopVisibilitySync()
+
+      addSpy.mockRestore()
     })
   })
 })

@@ -2,8 +2,8 @@
  * Tests for sun system - weekly resource management.
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { getWeekResetTime, getNextSunReset, getSunCapacity, formatResetTime } from '../state'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { formatResetTime, getNextSunReset, getSunCapacity, getWeekResetTime } from '../state'
 
 describe('Sun Reset Time', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
-import type { AppContext } from '../types'
-import { setEventStoreErrorCallbacks, exportEvents } from '../events/store'
+import { exportEvents, setEventStoreErrorCallbacks } from '../events/store'
 import { STORAGE_KEYS } from '../generated/constants'
+import type { AppContext } from '../types'
 import { initCharts } from './charts'
 import { initDialogs } from './dialogs'
 
@@ -107,4 +107,4 @@ export function initializeUI(ctx: AppContext, navCallbacks: NavCallbacks): Dialo
   return initDialogs(ctx, navCallbacks, charts)
 }
 
-export { updateSoilMeter, updateWaterMeter, updateWaterStreak, celebrateMeter } from './meters'
+export { celebrateMeter, updateSoilMeter, updateWaterMeter, updateWaterStreak } from './meters'

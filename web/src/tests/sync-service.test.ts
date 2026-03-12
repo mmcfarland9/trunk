@@ -3,7 +3,7 @@
  * Focus: Array bounds safety, edge cases with empty/single-item arrays
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock dependencies before importing sync-service
 vi.mock('../lib/supabase', () => ({

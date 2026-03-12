@@ -1,18 +1,19 @@
-import { initAuth, subscribeToAuth, getUserProfile } from '../services/auth-service'
-import { createLoginView, destroyLoginView } from '../ui/login-view'
+import { setEventSyncCallback } from '../events/store'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { getUserProfile, initAuth, subscribeToAuth } from '../services/auth-service'
 import {
   pushEvent,
-  subscribeToRealtime,
-  unsubscribeFromRealtime,
+  recordSyncFailure,
   smartSync,
   startVisibilitySync,
-  recordSyncFailure,
+  stopVisibilitySync,
+  subscribeToRealtime,
+  unsubscribeFromRealtime,
 } from '../services/sync'
-import { showToast } from '../ui/toast'
-import { setEventSyncCallback } from '../events/store'
-import { syncNode } from '../ui/node-ui'
 import type { AppContext } from '../types'
+import { createLoginView, destroyLoginView } from '../ui/login-view'
+import { syncNode } from '../ui/node-ui'
+import { showToast } from '../ui/toast'
 
 export type AuthCallbacks = {
   onSyncComplete: () => void
@@ -134,6 +135,7 @@ export async function initializeAuth(
       if (!state.user) {
         setEventSyncCallback(null)
         unsubscribeFromRealtime()
+        stopVisibilitySync()
       }
 
       // Update profile badge and sync button based on auth state

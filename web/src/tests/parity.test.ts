@@ -5,19 +5,19 @@
  * iOS should have matching tests that verify the same expectations.
  */
 
-import { describe, it, expect } from 'vitest'
-import {
-  deriveState,
-  deriveWaterAvailable,
-  deriveSunAvailable,
-  getSproutsForTwig,
-  getLeavesForTwig,
-  getActiveSprouts,
-  getCompletedSprouts,
-} from '../events/derive'
-import type { TrunkEvent } from '../events/types'
+import { describe, expect, it } from 'vitest'
 import parityFixture from '../../../shared/test-fixtures/derivation-parity.json'
 import weekBoundaryFixture from '../../../shared/test-fixtures/week-boundary.json'
+import {
+  deriveState,
+  deriveSunAvailable,
+  deriveWaterAvailable,
+  getActiveSprouts,
+  getCompletedSprouts,
+  getLeavesForTwig,
+  getSproutsForTwig,
+} from '../events/derive'
+import type { TrunkEvent } from '../events/types'
 
 // Convert fixture events to TrunkEvent format
 function toTrunkEvents(events: typeof parityFixture.events): TrunkEvent[] {

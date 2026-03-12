@@ -3,8 +3,8 @@
  * Tests duplicate events, invalid references, unicode, and unexpected states.
  */
 
-import { describe, it, expect } from 'vitest'
-import { deriveState, getLeavesForTwig, getLeafById, getSproutsByLeaf } from '../events/derive'
+import { describe, expect, it } from 'vitest'
+import { deriveState, getLeafById, getLeavesForTwig, getSproutsByLeaf } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 
 // Helper to create a plant event

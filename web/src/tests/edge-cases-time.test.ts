@@ -3,16 +3,16 @@
  * Tests midnight, DST, far-past dates, duplicate timestamps, and large event counts.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   deriveState,
-  deriveWaterAvailable,
   deriveSunAvailable,
-  getActiveSprouts,
+  deriveWaterAvailable,
   deriveWateringStreak,
+  getActiveSprouts,
 } from '../events/derive'
-import { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 import type { TrunkEvent } from '../events/types'
+import { getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 
 describe('Edge Cases — Time', () => {
   beforeEach(() => {

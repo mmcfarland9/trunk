@@ -3,16 +3,16 @@
  * Tests exact boundary values for soil, water, sun, time resets, and validation.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   deriveState,
-  deriveWaterAvailable,
   deriveSunAvailable,
+  deriveWaterAvailable,
   getActiveSprouts,
 } from '../events/derive'
 import { validateEvent } from '../events/store'
-import { calculateCapacityGained, getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 import type { TrunkEvent } from '../events/types'
+import { calculateCapacityGained, getTodayResetTime, getWeekResetTime } from '../utils/calculations'
 
 describe('Edge Cases — Boundaries', () => {
   describe('single event — sprout_planted', () => {

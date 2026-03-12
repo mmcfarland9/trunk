@@ -3,8 +3,8 @@
  * No state mutation - just math based on shared constants.
  */
 
-import type { SproutSeason, SproutEnvironment } from '../types'
 import constants from '../../../shared/constants.json'
+import type { SproutEnvironment, SproutSeason } from '../types'
 
 // Constants
 const MAX_SOIL_CAPACITY = constants.soil.maxCapacity

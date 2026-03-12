@@ -1,15 +1,15 @@
-import type { AppContext, ViewMode } from '../types'
 import { ZOOM_TRANSITION_DURATION } from '../constants'
 import {
-  getViewMode,
-  setViewModeState,
   getActiveBranchIndex,
   getHoveredBranchIndex,
+  getViewMode,
   isBranchView,
   isTwigView,
+  setViewModeState,
 } from '../state'
-import { setNodeVisibility, setFocusedNode, updateFocus } from '../ui/node-ui'
+import type { AppContext, ViewMode } from '../types'
 import { animateGuideLines, startWind, stopWind } from '../ui/layout'
+import { setFocusedNode, setNodeVisibility, updateFocus } from '../ui/node-ui'
 import { pushView } from './history'
 
 let zoomTimeoutId = 0

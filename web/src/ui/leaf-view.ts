@@ -1,8 +1,8 @@
-import type { LeafViewApi, Sprout, SproutSeason, SproutEnvironment } from '../types'
-import { escapeHtml } from '../utils/escape-html'
-import { getSeasonLabel, getEnvironmentLabel, getResultEmoji } from '../utils/sprout-labels'
-import { getState, getSproutsByLeaf, toSprout } from '../events'
+import { getSproutsByLeaf, getState, toSprout } from '../events'
+import type { LeafViewApi, Sprout, SproutEnvironment, SproutSeason } from '../types'
 import { formatDateWithYear } from '../utils/date-formatting'
+import { escapeHtml } from '../utils/escape-html'
+import { getEnvironmentLabel, getResultEmoji, getSeasonLabel } from '../utils/sprout-labels'
 
 type LeafViewCallbacks = {
   onClose: () => void

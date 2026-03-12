@@ -1,5 +1,5 @@
-import type { FormState } from './sprout-form'
 import { trapFocus } from '../dom-builder/build-dialogs'
+import type { FormState } from './sprout-form'
 
 type ConfirmElements = {
   confirmDialog: HTMLDivElement

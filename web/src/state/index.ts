@@ -5,52 +5,49 @@
  * This file re-exports from the appropriate modules for convenience.
  */
 
-// View state (in-memory only, not persisted)
-export {
-  getViewMode,
-  setViewModeState,
-  getActiveTwigId,
-  getActiveBranchIndex,
-  getHoveredBranchIndex,
-  setHoveredBranchIndex,
-  getHoveredTwigId,
-  setHoveredTwigId,
-  getFocusedNode,
-  setFocusedNodeState,
-  getActiveNode,
-  setActiveNode,
-  isBranchView,
-  isTwigView,
-} from './view-state'
-
 // Resources - derived from events
 export {
+  canAffordSoil,
+  canAffordSun,
+  canAffordWater,
   getSoilAvailable,
   getSoilCapacity,
-  canAffordSoil,
+  getSunAvailable,
+  getSunCapacity,
   getWaterAvailable,
   getWaterCapacity,
   getWateringStreak,
-  canAffordWater,
-  getSunAvailable,
-  getSunCapacity,
-  canAffordSun,
 } from '../events/store'
-
 // Pure calculation functions (no state)
 export {
-  calculateSoilCost,
   calculateCapacityGained,
+  calculateSoilCost,
+  formatResetTime,
+  getNextSunReset,
+  getNextWaterReset,
+  getResetDayKey,
   getTodayResetTime,
   getWeekResetTime,
-  getNextWaterReset,
-  getNextSunReset,
-  getResetDayKey,
-  formatResetTime,
 } from '../utils/calculations'
-
 // Preset labels from shared constants
 export {
   getPresetLabel,
   getPresetNote,
 } from '../utils/presets'
+// View state (in-memory only, not persisted)
+export {
+  getActiveBranchIndex,
+  getActiveNode,
+  getActiveTwigId,
+  getFocusedNode,
+  getHoveredBranchIndex,
+  getHoveredTwigId,
+  getViewMode,
+  isBranchView,
+  isTwigView,
+  setActiveNode,
+  setFocusedNodeState,
+  setHoveredBranchIndex,
+  setHoveredTwigId,
+  setViewModeState,
+} from './view-state'

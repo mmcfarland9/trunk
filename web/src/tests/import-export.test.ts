@@ -2,9 +2,9 @@
  * Tests for import/export round-trip data integrity.
  */
 
-import { describe, it, expect } from 'vitest'
-import { sanitizeSprout, sanitizeLeaf } from './validate-import'
-import type { Sprout, Leaf, NodeData } from '../types'
+import { describe, expect, it } from 'vitest'
+import type { Leaf, NodeData, Sprout } from '../types'
+import { sanitizeLeaf, sanitizeSprout } from './validate-import'
 
 describe('Import/Export Round-Trip', () => {
   it('should preserve complete sprout data through sanitization', () => {

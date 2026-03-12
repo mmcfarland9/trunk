@@ -1,9 +1,9 @@
-import type { AppElements } from '../types'
-import { escapeHtml } from '../utils/escape-html'
-import { getPresetLabel } from '../state'
 import { getState } from '../events'
-import { formatDateShort } from '../utils/date-formatting'
+import { getPresetLabel } from '../state'
+import type { AppElements } from '../types'
 import { trapFocus } from '../ui/dom-builder/build-dialogs'
+import { formatDateShort } from '../utils/date-formatting'
+import { escapeHtml } from '../utils/escape-html'
 
 function getBranchLabelFromTwigId(twigId: string): string {
   const match = twigId.match(/^(branch-\d+)-twig-\d+$/)

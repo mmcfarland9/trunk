@@ -2,26 +2,29 @@
  * Sync orchestrator — coordinates pull, push, and retry modules.
  */
 
-import { supabase } from '../../lib/supabase'
-import { getAuthState } from '../auth-service'
 import { getEvents, replaceEvents } from '../../events/store'
 import type { TrunkEvent } from '../../events/types'
+import { supabase } from '../../lib/supabase'
+import { getAuthState } from '../auth-service'
 import type { SyncEvent } from '../sync-types'
 import { syncToLocalEvent } from '../sync-types'
-import { isCacheValid, setCacheVersion, clearCacheVersion, invalidateOnSyncFailure } from './cache'
+import { clearCacheVersion, invalidateOnSyncFailure, isCacheValid, setCacheVersion } from './cache'
 import { getPendingIds } from './pending-uploads'
+import { LAST_SYNC_KEY, pullEvents } from './pull'
+import { retryPendingUploads } from './retry'
 import {
   notifyMetadataListeners,
-  setStatusDependencies,
   recordSyncFailure,
   resetSyncFailures,
+  setStatusDependencies,
 } from './status'
 import { createTimeoutSignal } from './timeout'
-import { pullEvents, LAST_SYNC_KEY } from './pull'
-import { retryPendingUploads } from './retry'
 
 // Re-export pushEvent so existing imports from operations continue to work
 export { pushEvent } from './push'
+
+// Abort controller for visibility sync listener (prevents accumulation on re-login)
+let visibilityAbort: AbortController | null = null
 
 // C17: Guard against concurrent sync invocations
 let currentSyncPromise: Promise<SyncResult> | null = null
@@ -247,11 +250,31 @@ export async function smartSync(): Promise<SyncResult> {
 /**
  * Sync when tab becomes visible again.
  * Call after auth is confirmed and initial sync is complete.
+ * Safe to call multiple times — aborts previous listener first.
  */
 export function startVisibilitySync(): void {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      smartSync()
-    }
-  })
+  if (visibilityAbort) {
+    visibilityAbort.abort()
+  }
+  visibilityAbort = new AbortController()
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (document.visibilityState === 'visible') {
+        smartSync()
+      }
+    },
+    { signal: visibilityAbort.signal },
+  )
+}
+
+/**
+ * Remove the visibility sync listener.
+ * Call on logout to prevent listener accumulation.
+ */
+export function stopVisibilitySync(): void {
+  if (visibilityAbort) {
+    visibilityAbort.abort()
+    visibilityAbort = null
+  }
 }

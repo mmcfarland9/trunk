@@ -5,9 +5,9 @@
  * The "contract" is defined in shared/schemas/ and both platforms must honor it.
  */
 
-import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
 
 // Load shared fixtures
 const fixturesDir = join(__dirname, '../../../shared/test-fixtures')

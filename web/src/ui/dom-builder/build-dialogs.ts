@@ -235,12 +235,13 @@ function createAccountDialog(): HTMLDivElement {
             <div class="account-field">
               <label class="account-label">Cloud Sync</label>
               <p class="account-sync-status"></p>
-              <p class="account-field-hint">Your data syncs automatically across devices and is stored securely in the cloud.</p>
+              <p class="account-field-hint">Your data syncs automatically across devices, stored securely in the cloud.</p>
             </div>
             <div class="account-section-divider"></div>
             <div class="account-field">
               <label class="account-label">Reset All Data</label>
               <p class="account-field-hint">Permanently delete all your sprouts, leaves, and activity.</p>
+              <br>
               <button type="button" class="action-btn action-btn-passive action-btn-destructive account-reset-data-btn">Reset All Data</button>
             </div>
           </div>

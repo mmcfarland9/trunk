@@ -1,8 +1,8 @@
 import type { AppElements, BranchGroup } from '../../types'
 import { requireElement } from '../../utils/dom-helpers'
+import { buildDialogs, type DialogElements } from './build-dialogs'
 import { buildHeader, type HeaderElements } from './build-header'
 import { buildSidebar } from './build-sidebar'
-import { buildDialogs, type DialogElements } from './build-dialogs'
 import { buildTreeNodes, type TreeNodesElements } from './build-tree-nodes'
 
 type DomBuilderResult = {

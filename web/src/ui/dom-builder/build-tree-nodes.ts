@@ -1,7 +1,7 @@
-import type { BranchGroup } from '../../types'
-import { BRANCH_COUNT, TWIG_COUNT } from '../../constants'
-import { syncNode } from '../node-ui'
 import trunkLogo from '../../../assets/tree_icon_transp.png'
+import { BRANCH_COUNT, TWIG_COUNT } from '../../constants'
+import type { BranchGroup } from '../../types'
+import { syncNode } from '../node-ui'
 
 type NodeClickHandler = (element: HTMLButtonElement, nodeId: string) => void
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import fixture from '../../../shared/test-fixtures/timestamp-validation.json'
 
 describe('Timestamp validation', () => {

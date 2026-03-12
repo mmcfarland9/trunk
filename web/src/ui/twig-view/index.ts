@@ -1,31 +1,31 @@
-import type { TwigViewApi, Sprout, SproutSeason, SproutEnvironment } from '../../types'
-import { preventDoubleClick } from '../../utils/debounce'
-import { SEASONS, ENVIRONMENTS } from '../../utils/sprout-labels'
-import { calculateSoilCost, canAffordSoil, getPresetLabel } from '../../state'
 import {
   appendEvent,
-  getState,
-  getSproutsForTwig,
-  getLeavesForTwig,
-  toSprout,
-  generateSproutId,
-  generateLeafId,
   type DerivedLeaf,
+  generateLeafId,
+  generateSproutId,
+  getLeavesForTwig,
+  getSproutsForTwig,
+  getState,
+  toSprout,
 } from '../../events'
+import { calculateSoilCost, canAffordSoil, getPresetLabel } from '../../state'
+import type { Sprout, SproutEnvironment, SproutSeason, TwigViewApi } from '../../types'
+import { preventDoubleClick } from '../../utils/debounce'
+import { ENVIRONMENTS, SEASONS } from '../../utils/sprout-labels'
 import { buildPanel, getElements } from './build-panel'
-import { createFormState, getCurrentNodeId, getEndDate, formatDate } from './sprout-form'
-import { renderHistoryCard, renderActiveCard, renderLeafCard } from './sprout-cards'
-import { updateFormState } from './form-validation'
+import { setupConfirmDialog } from './confirm'
 import {
   handleDeleteAction,
+  handleEditAction,
+  handleHarvestAction,
   handleOpenLeafAction,
   handleWaterAction,
-  handleHarvestAction,
-  handleEditAction,
 } from './event-handlers'
-import { setupConfirmDialog } from './confirm'
+import { updateFormState } from './form-validation'
 import { setupKeyboard } from './keyboard'
 import { populateLeafSelect, setupLeafSelect } from './leaf-select'
+import { renderActiveCard, renderHistoryCard, renderLeafCard } from './sprout-cards'
+import { createFormState, formatDate, getCurrentNodeId, getEndDate } from './sprout-form'
 
 type TwigViewCallbacks = {
   onClose: () => void
@@ -313,7 +313,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     }),
   )
 
-  setupKeyboard(container, callbacks, open, close)
+  const cleanupKeyboard = setupKeyboard(container, callbacks, open, close)
 
   function doPopulateLeafSelect(): void {
     populateLeafSelect(elements.leafSelect, getLeaves)
@@ -355,5 +355,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     close,
     isOpen,
     refresh,
+    cleanup: cleanupKeyboard,
   }
 }

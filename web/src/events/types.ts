@@ -5,8 +5,8 @@
  * The event log is the single source of truth. All state is derived from events.
  */
 
-import type { SproutSeason, SproutEnvironment } from '../types'
 import { VALID_EVENT_TYPES } from '../generated/constants'
+import type { SproutEnvironment, SproutSeason } from '../types'
 
 /** Valid season values for runtime checks */
 export const VALID_SEASONS: readonly SproutSeason[] = ['2w', '1m', '3m', '6m', '1y']

@@ -2,12 +2,12 @@
  * Tests for sprout label and emoji utilities
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  getSeasonLabel,
-  getEnvironmentLabel,
   getEnvironmentFormHint,
+  getEnvironmentLabel,
   getResultEmoji,
+  getSeasonLabel,
 } from '../utils/sprout-labels'
 
 describe('getSeasonLabel', () => {

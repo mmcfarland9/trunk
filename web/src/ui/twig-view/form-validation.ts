@@ -1,6 +1,6 @@
+import { MAX_BLOOM_LENGTH, MAX_LEAF_NAME_LENGTH, MAX_TITLE_LENGTH } from '../../generated/constants'
+import { calculateSoilCost, canAffordSoil, getSoilAvailable } from '../../state'
 import type { FormState } from './sprout-form'
-import { MAX_TITLE_LENGTH, MAX_LEAF_NAME_LENGTH, MAX_BLOOM_LENGTH } from '../../generated/constants'
-import { calculateSoilCost, getSoilAvailable, canAffordSoil } from '../../state'
 
 type FormElements = {
   sproutTitleInput: HTMLInputElement

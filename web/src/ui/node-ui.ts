@@ -1,12 +1,12 @@
-import type { AppContext } from '../types'
+import { getState } from '../events'
 import {
   getFocusedNode,
-  setFocusedNodeState,
-  getViewMode,
   getPresetLabel,
   getPresetNote,
+  getViewMode,
+  setFocusedNodeState,
 } from '../state'
-import { getState } from '../events'
+import type { AppContext } from '../types'
 
 function setNodeLabel(element: HTMLButtonElement, label: string): void {
   const labelNode = element.querySelector<HTMLElement>('.node-label')

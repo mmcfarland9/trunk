@@ -4,10 +4,10 @@
  * and validateSyncPayload rejection of invalid payloads.
  */
 
-import { describe, it, expect } from 'vitest'
-import { localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
-import type { SyncEvent } from '../services/sync-types'
+import { describe, expect, it } from 'vitest'
 import type { TrunkEvent } from '../events/types'
+import type { SyncEvent } from '../services/sync-types'
+import { localToSyncPayload, syncToLocalEvent } from '../services/sync-types'
 
 const TEST_USER_ID = 'user-abc-123'
 

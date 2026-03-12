@@ -1,11 +1,11 @@
+import type { RealtimeChannel } from '@supabase/supabase-js'
+import { appendEvents, getEvents } from '../../events/store'
+import type { TrunkEvent } from '../../events/types'
 import { supabase } from '../../lib/supabase'
 import { getAuthState } from '../auth-service'
-import { getEvents, appendEvents } from '../../events/store'
-import type { TrunkEvent } from '../../events/types'
 import type { SyncEvent } from '../sync-types'
 import { syncToLocalEvent } from '../sync-types'
 import { buildDedupeIndex } from './dedup'
-import type { RealtimeChannel } from '@supabase/supabase-js'
 
 // DO-14: Validate realtime payload shape before casting to SyncEvent
 function isValidSyncEventShape(data: unknown): data is SyncEvent {
@@ -33,28 +33,32 @@ function flushRealtimeBatch(): void {
   pendingPayloads = []
   if (payloads.length === 0) return
 
-  // Build dedup index ONCE for the entire batch
-  const { clientIds, keys } = buildDedupeIndex(getEvents())
-  const newEvents: TrunkEvent[] = []
+  try {
+    // Build dedup index ONCE for the entire batch
+    const { clientIds, keys } = buildDedupeIndex(getEvents())
+    const newEvents: TrunkEvent[] = []
 
-  for (const { syncEvent, localEvent } of payloads) {
-    const alreadyExists =
-      (syncEvent.client_id && clientIds.has(syncEvent.client_id)) ||
-      keys.has(`${localEvent.timestamp}|${localEvent.type}`)
+    for (const { syncEvent, localEvent } of payloads) {
+      const alreadyExists =
+        (syncEvent.client_id && clientIds.has(syncEvent.client_id)) ||
+        keys.has(`${localEvent.timestamp}|${localEvent.type}`)
 
-    if (!alreadyExists) {
-      newEvents.push(localEvent)
-      // Update index so subsequent events in the batch dedup against this one
-      if (localEvent.client_id) clientIds.add(localEvent.client_id)
-      keys.add(`${localEvent.timestamp}|${localEvent.type}`)
+      if (!alreadyExists) {
+        newEvents.push(localEvent)
+        // Update index so subsequent events in the batch dedup against this one
+        if (localEvent.client_id) clientIds.add(localEvent.client_id)
+        keys.add(`${localEvent.timestamp}|${localEvent.type}`)
+      }
     }
-  }
 
-  if (newEvents.length > 0) {
-    appendEvents(newEvents) // single derivation invalidation
-    for (const event of newEvents) {
-      onRealtimeEvent?.(event)
+    if (newEvents.length > 0) {
+      appendEvents(newEvents) // single derivation invalidation
+      for (const event of newEvents) {
+        onRealtimeEvent?.(event)
+      }
     }
+  } catch (error) {
+    console.warn('[realtime] Failed to process batch:', error)
   }
 }
 

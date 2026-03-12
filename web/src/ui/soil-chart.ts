@@ -5,9 +5,9 @@
  * available values with hover scrubbing, range selection, and gradient fill.
  */
 
+import type { SoilChartPoint, SoilChartRange } from '../events/soil-charting'
+import { bucketSoilData, computeRawSoilHistory } from '../events/soil-charting'
 import { getEvents } from '../events/store'
-import { computeRawSoilHistory, bucketSoilData } from '../events/soil-charting'
-import type { SoilChartRange, SoilChartPoint } from '../events/soil-charting'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 const RANGES: SoilChartRange[] = ['1d', '1w', '1m', '3m', '6m', 'ytd', 'all']

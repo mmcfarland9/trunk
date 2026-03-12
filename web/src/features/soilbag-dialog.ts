@@ -1,8 +1,8 @@
+import { deriveSoilLog, getEvents } from '../events'
 import type { AppElements } from '../types'
-import { escapeHtml } from '../utils/escape-html'
-import { getEvents, deriveSoilLog } from '../events'
-import { formatDateShort } from '../utils/date-formatting'
 import { trapFocus } from '../ui/dom-builder/build-dialogs'
+import { formatDateShort } from '../utils/date-formatting'
+import { escapeHtml } from '../utils/escape-html'
 
 type SoilBagElements = Pick<
   AppElements,

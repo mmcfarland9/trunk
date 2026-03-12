@@ -2,7 +2,7 @@
  * Tests for HTML escaping utility.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { escapeHtml } from '../utils/escape-html'
 
 describe('escapeHtml', () => {

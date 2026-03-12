@@ -3,7 +3,7 @@
  * Tests formatDateShort and formatDateWithYear with various dates.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { formatDateShort, formatDateWithYear } from '../utils/date-formatting'
 
 /**

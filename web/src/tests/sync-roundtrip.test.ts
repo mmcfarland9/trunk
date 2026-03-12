@@ -3,21 +3,21 @@
  * Verifies: exportEvents → clearEvents → replaceEvents → deriveState produces identical results.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  initEventStore,
   appendEvent,
-  exportEvents,
   clearEvents,
-  replaceEvents,
-  getState,
+  exportEvents,
   getEvents,
+  getState,
+  initEventStore,
+  replaceEvents,
 } from '../events/store'
 import type {
-  TrunkEvent,
+  SproutHarvestedEvent,
   SproutPlantedEvent,
   SproutWateredEvent,
-  SproutHarvestedEvent,
+  TrunkEvent,
 } from '../events/types'
 
 // Helper factories

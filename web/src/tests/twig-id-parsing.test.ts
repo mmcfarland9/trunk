@@ -3,7 +3,7 @@
  * Tests parseTwigId with valid IDs, malformed IDs, and edge cases.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { parseTwigId } from '../utils/twig-id'
 
 describe('parseTwigId', () => {

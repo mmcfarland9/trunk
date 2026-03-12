@@ -1,5 +1,5 @@
+import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import type { User, Session } from '@supabase/supabase-js'
 
 type AuthState = {
   user: User | null

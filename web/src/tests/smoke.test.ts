@@ -3,8 +3,8 @@
  * These tests ensure the refactoring didn't break core functionality.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { JSDOM } from 'jsdom'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 describe('App Smoke Tests', () => {
   let dom: JSDOM

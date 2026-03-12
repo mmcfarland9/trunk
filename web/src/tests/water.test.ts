@@ -2,10 +2,10 @@
  * Tests for water system - daily resource management.
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { getTodayResetTime, getNextWaterReset, getWaterCapacity, getWeekResetTime } from '../state'
-import { checkSproutWateredThisWeek } from '../events/derive'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TrunkEvent } from '../events'
+import { checkSproutWateredThisWeek } from '../events/derive'
+import { getNextWaterReset, getTodayResetTime, getWaterCapacity, getWeekResetTime } from '../state'
 
 describe('Water Reset Time', () => {
   beforeEach(() => {

@@ -1,9 +1,9 @@
-import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
+import { appendEvent } from '../events'
 import { calculateCapacityGained, getSoilCapacity } from '../state'
+import type { AppContext, SproutEnvironment, SproutSeason } from '../types'
+import { trapFocus } from '../ui/dom-builder/build-dialogs'
 import { preventDoubleClick } from '../utils/debounce'
 import { getResultEmoji } from '../utils/sprout-labels'
-import { appendEvent } from '../events'
-import { trapFocus } from '../ui/dom-builder/build-dialogs'
 
 type HarvestDialogCallbacks = {
   onSoilMeterChange: () => void

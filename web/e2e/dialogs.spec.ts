@@ -3,7 +3,7 @@
  * Tests the journaling modals for daily water and weekly sun reflection.
  */
 
-import { test, expect, resetAppState } from './fixtures'
+import { test, expect, resetAppState, getPersistedEvents } from './fixtures'
 
 test.describe('Water Dialog', () => {
   test.beforeEach(async ({ page }) => {
@@ -171,7 +171,7 @@ test.describe('Water Dialog', () => {
     await page.waitForSelector('.water-dialog:not(.hidden)')
 
     // Pour button should be disabled initially
-    const pourBtn = page.locator('.water-dialog-pour').first()
+    const pourBtn = page.locator('.water-dialog-water').first()
     await expect(pourBtn).toBeDisabled()
 
     // Type some content
@@ -227,7 +227,7 @@ test.describe('Water Dialog', () => {
 
     // Fill journal and pour
     await page.fill('.water-dialog-journal', 'Made progress today')
-    await page.click('.water-dialog-pour')
+    await page.click('.water-dialog-water')
 
     // Verify section becomes watered
     const section = page.locator('.water-dialog-section')
@@ -399,14 +399,9 @@ test.describe('Water Dialog', () => {
 
     // Fill and pour
     await page.fill('.water-dialog-journal', 'My journal entry')
-    await page.click('.water-dialog-pour')
-    await page.waitForTimeout(300)
-
-    // Check event was created
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    await page.click('.water-dialog-water')
+    // Check event was created (wait for debounced save)
+    const events = await getPersistedEvents(page, 3)
 
     const waterEvent = events.find((e: any) => e.type === 'sprout_watered')
     expect(waterEvent).toBeDefined()
@@ -513,13 +508,8 @@ test.describe('Shine Dialog (Sun Log)', () => {
     // Fill and radiate
     await page.fill('.sun-log-shine-journal', 'Reflecting on progress')
     await page.click('.sun-log-shine-btn')
-    await page.waitForTimeout(300)
-
-    // Check event was created
-    const events = await page.evaluate(() => {
-      const raw = localStorage.getItem('trunk-events-v1')
-      return raw ? JSON.parse(raw) : []
-    })
+    // Check event was created (wait for debounced save)
+    const events = await getPersistedEvents(page, 1)
 
     const sunEvent = events.find((e: any) => e.type === 'sun_shone')
     expect(sunEvent).toBeDefined()

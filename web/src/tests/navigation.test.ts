@@ -2,7 +2,7 @@
  * Tests for navigation state management.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('Navigation State', () => {
   beforeEach(() => {

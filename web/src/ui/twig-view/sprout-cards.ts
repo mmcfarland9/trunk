@@ -1,9 +1,9 @@
+import sharedConstants from '../../../../shared/constants.json'
+import { checkSproutWateredToday, getLeafById, getState } from '../../events'
 import type { Sprout } from '../../types'
 import { escapeHtml } from '../../utils/escape-html'
-import { getSeasonLabel, getResultEmoji } from '../../utils/sprout-labels'
+import { getResultEmoji, getSeasonLabel } from '../../utils/sprout-labels'
 import { formatDate } from './sprout-form'
-import { getState, getLeafById, checkSproutWateredToday } from '../../events'
-import sharedConstants from '../../../../shared/constants.json'
 
 /**
  * Determines if a sprout is ready to harvest.

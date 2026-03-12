@@ -1,10 +1,11 @@
 export {
+  deleteAllEvents,
+  forceFullSync,
   pushEvent,
   smartSync,
-  forceFullSync,
-  deleteAllEvents,
   startVisibilitySync,
+  stopVisibilitySync,
 } from './operations'
 export { subscribeToRealtime, unsubscribeFromRealtime } from './realtime'
-export { getDetailedSyncStatus, subscribeSyncMetadata, recordSyncFailure } from './status'
 export type { SyncMetadata } from './status'
+export { getDetailedSyncStatus, recordSyncFailure, subscribeSyncMetadata } from './status'

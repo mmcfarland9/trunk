@@ -2,10 +2,10 @@
  * Pull events from Supabase since last sync.
  */
 
+import { appendEvents, getEvents } from '../../events/store'
+import type { TrunkEvent } from '../../events/types'
 import { supabase } from '../../lib/supabase'
 import { getAuthState } from '../auth-service'
-import { getEvents, appendEvents } from '../../events/store'
-import type { TrunkEvent } from '../../events/types'
 import type { SyncEvent } from '../sync-types'
 import { syncToLocalEvent } from '../sync-types'
 import { buildDedupeIndex } from './dedup'

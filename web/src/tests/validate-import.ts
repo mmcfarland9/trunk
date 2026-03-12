@@ -1,5 +1,6 @@
-import type { Sprout, Leaf, SproutSeason, SproutEnvironment, SproutState } from '../types'
-import { VALID_SEASONS, VALID_ENVIRONMENTS } from '../events/types'
+import { VALID_ENVIRONMENTS, VALID_SEASONS } from '../events/types'
+import type { Leaf, Sprout, SproutEnvironment, SproutSeason, SproutState } from '../types'
+
 // Accept legacy states for backwards compatibility during import
 // (converted to active/completed during sanitization)
 const LEGACY_STATES = ['draft', 'active', 'completed', 'failed', 'uprooted']

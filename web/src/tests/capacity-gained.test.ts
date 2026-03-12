@@ -2,10 +2,10 @@
  * Tests for capacity reward calculations - the core progression mechanic.
  */
 
-import { describe, it, expect } from 'vitest'
-import { calculateCapacityGained } from '../state'
-import type { SproutSeason, SproutEnvironment } from '../types'
+import { describe, expect, it } from 'vitest'
 import constants from '../../../shared/constants.json'
+import { calculateCapacityGained } from '../state'
+import type { SproutEnvironment, SproutSeason } from '../types'
 
 describe('Capacity Gained Calculation', () => {
   const MAX_CAPACITY = constants.soil.maxCapacity

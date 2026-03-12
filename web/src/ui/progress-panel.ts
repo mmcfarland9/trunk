@@ -4,10 +4,10 @@
  * Pure rendering — all data comes via parameters.
  */
 
-import type { Sprout } from '../types'
 import type { DerivedState } from '../events'
-import { getLeafById, checkSproutWateredToday } from '../events'
+import { checkSproutWateredToday, getLeafById } from '../events'
 import { getPresetLabel } from '../state'
+import type { Sprout } from '../types'
 
 // --- Types ---
 

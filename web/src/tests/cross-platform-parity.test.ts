@@ -5,11 +5,11 @@
  * These tests ensure web and iOS produce identical results for the same inputs.
  */
 
-import { describe, it, expect } from 'vitest'
-import { calculateSoilCost, calculateCapacityGained } from '../utils/calculations'
-import { deriveState, deriveWaterAvailable, deriveSunAvailable } from '../events/derive'
-import type { TrunkEvent } from '../events/types'
+import { describe, expect, it } from 'vitest'
 import fixture from '../../../shared/test-fixtures/cross-platform-validation.json'
+import { deriveState, deriveSunAvailable, deriveWaterAvailable } from '../events/derive'
+import type { TrunkEvent } from '../events/types'
+import { calculateCapacityGained, calculateSoilCost } from '../utils/calculations'
 
 describe('Cross-platform parity: soil costs', () => {
   const { cases } = fixture.soilCostTests

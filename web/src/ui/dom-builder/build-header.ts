@@ -1,10 +1,10 @@
+import trunkLogo from '../../../assets/tree_icon_transp.png'
 import {
   getSoilAvailable,
   getSoilCapacity,
   getWaterAvailable,
   getWateringStreak,
 } from '../../state'
-import trunkLogo from '../../../assets/tree_icon_transp.png'
 
 export type HeaderElements = {
   header: HTMLElement

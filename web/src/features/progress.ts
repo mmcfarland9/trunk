@@ -4,31 +4,31 @@
  * DOM construction delegated to ui/progress-panel.ts.
  */
 
-import type { AppContext } from '../types'
 import { TWIG_COUNT } from '../constants'
-import {
-  getHoveredBranchIndex,
-  getHoveredTwigId,
-  getActiveBranchIndex,
-  getActiveTwigId,
-  getViewMode,
-  getPresetLabel,
-} from '../state'
 import type { DerivedState } from '../events'
 import {
-  getState,
-  toSprout,
   getActiveSprouts as getActiveDerivedSprouts,
   getCompletedSprouts,
+  getState,
+  toSprout,
 } from '../events'
+import {
+  getActiveBranchIndex,
+  getActiveTwigId,
+  getHoveredBranchIndex,
+  getHoveredTwigId,
+  getPresetLabel,
+  getViewMode,
+} from '../state'
+import type { AppContext } from '../types'
+import type { SidebarHarvestCallback, SproutWithLocation } from '../ui/progress-panel'
 import {
   createBranchFolder,
   createTwigFolder,
-  renderLeafGroupedSprouts,
-  getTwigLabel,
   getBranchLabel,
+  getTwigLabel,
+  renderLeafGroupedSprouts,
 } from '../ui/progress-panel'
-import type { SproutWithLocation, SidebarHarvestCallback } from '../ui/progress-panel'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility

@@ -12,7 +12,9 @@ export function setupKeyboard(
   callbacks: KeyboardCallbacks,
   open: (twigNode: HTMLButtonElement) => void,
   close: () => void,
-): void {
+): () => void {
+  const controller = new AbortController()
+
   function handleKeydown(e: KeyboardEvent): void {
     if (container.classList.contains('hidden')) return
 
@@ -42,5 +44,7 @@ export function setupKeyboard(
       return
     }
   }
-  document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('keydown', handleKeydown, { signal: controller.signal })
+
+  return () => controller.abort()
 }

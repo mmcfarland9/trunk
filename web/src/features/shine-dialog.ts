@@ -1,14 +1,14 @@
-import type { AppContext, SunEntry } from '../types'
 import { BRANCH_COUNT, TWIG_COUNT } from '../constants'
-import { RECENT_SHINE_LIMIT, GENERIC_WEIGHT } from '../generated/constants'
+import { appendEvent, checkShoneThisWeek } from '../events'
+import { GENERIC_WEIGHT, RECENT_SHINE_LIMIT } from '../generated/constants'
 import {
   canAffordSun,
-  getSunAvailable,
-  getPresetLabel,
-  getNextSunReset,
   formatResetTime,
+  getNextSunReset,
+  getPresetLabel,
+  getSunAvailable,
 } from '../state'
-import { appendEvent, checkShoneThisWeek } from '../events'
+import type { AppContext, SunEntry } from '../types'
 
 type ShineCallbacks = {
   onSunMeterChange: () => void

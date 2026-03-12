@@ -8,9 +8,9 @@
  * state derivation loop, so we keep them separate.
  */
 
-import type { TrunkEvent } from './types'
 import constants from '../../../shared/constants.json'
 import { sortEventsByTimestamp } from './sort-events'
+import type { TrunkEvent } from './types'
 
 // Constants from shared config
 const STARTING_CAPACITY = constants.soil.startingCapacity

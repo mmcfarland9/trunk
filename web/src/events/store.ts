@@ -9,21 +9,23 @@
 
 import type { TrunkEvent } from './types'
 import { validateEvent } from './types'
+
 export { validateEvent } from './types'
+
+import sharedConstants from '../../../shared/constants.json'
+import { safeSetItem } from '../utils/safe-storage'
 import type { DerivedState, WateringStreak } from './derive'
 import {
-  deriveState,
-  deriveWaterAvailable,
-  deriveSunAvailable,
-  deriveWateringStreak,
-  deriveWateredTodaySet,
-  deriveWateredThisWeekSet,
   deriveShoneThisWeek,
+  deriveState,
+  deriveSunAvailable,
+  deriveWaterAvailable,
+  deriveWateredThisWeekSet,
+  deriveWateredTodaySet,
+  deriveWateringStreak,
   getTodayResetTime,
   getWeekResetTime,
 } from './derive'
-import { safeSetItem } from '../utils/safe-storage'
-import sharedConstants from '../../../shared/constants.json'
 
 const STORAGE_KEY = sharedConstants.storage.keys.events
 
@@ -71,7 +73,9 @@ function loadEvents(): TrunkEvent[] {
         return valid
       }
     }
-  } catch (_error) {}
+  } catch (error) {
+    console.warn('[store] Failed to load events from localStorage:', error)
+  }
   return []
 }
 
@@ -397,4 +401,16 @@ export function getEventCount(): number {
  */
 export function exportEvents(): TrunkEvent[] {
   return [...events]
+}
+
+// Flush pending event save before page unload to prevent data loss.
+// Only flush when a debounced save is actually pending (saveTimer !== null).
+// Unconditional writes would re-persist stale in-memory events after a reset.
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer)
+      flushSave()
+    }
+  })
 }

@@ -2,9 +2,9 @@
  * Tests for utility functions.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { escapeHtml } from '../utils/escape-html'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { debounce, preventDoubleClick } from '../utils/debounce'
+import { escapeHtml } from '../utils/escape-html'
 
 describe('escapeHtml', () => {
   it('escapes < character', () => {

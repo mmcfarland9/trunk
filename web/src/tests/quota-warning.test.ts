@@ -2,7 +2,7 @@
  * Tests for quota warning banner (A4).
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { showQuotaWarning } from '../bootstrap/ui'
 
 describe('showQuotaWarning', () => {

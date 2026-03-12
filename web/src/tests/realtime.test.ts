@@ -3,7 +3,7 @@
  * Tests realtime subscription, deduplication, payload validation, and cleanup.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Capture the realtime callback so we can invoke it in tests
 let realtimeCallback: any
@@ -51,14 +51,14 @@ vi.mock('../services/sync-types', () => ({
   syncToLocalEvent: vi.fn(() => null),
 }))
 
+import { appendEvents, getEvents } from '../events/store'
 import * as supabaseMod from '../lib/supabase'
+import { getAuthState } from '../services/auth-service'
 import {
+  flushRealtimeQueue,
   subscribeToRealtime,
   unsubscribeFromRealtime,
-  flushRealtimeQueue,
 } from '../services/sync/realtime'
-import { getAuthState } from '../services/auth-service'
-import { getEvents, appendEvents } from '../events/store'
 import { syncToLocalEvent } from '../services/sync-types'
 
 const getAuthStateMock = vi.mocked(getAuthState)

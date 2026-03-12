@@ -1,5 +1,5 @@
-import type { AppElements } from '../types'
 import { getSoilAvailable, getSoilCapacity, getWaterAvailable, getWateringStreak } from '../state'
+import type { AppElements } from '../types'
 
 // Soil meter update function
 export function updateSoilMeter(elements: AppElements): void {

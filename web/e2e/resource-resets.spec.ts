@@ -4,7 +4,7 @@
  * using Playwright's clock API for deterministic time control.
  */
 
-import { test, expect, resetAppState } from './fixtures'
+import { test, expect, resetAppState, getPersistedEvents } from './fixtures'
 
 /** Navigate from overview to branch-0 twig-0 */
 async function navigateToTwig(page: import('@playwright/test').Page): Promise<void> {
@@ -302,7 +302,7 @@ test.describe('Resource Time Resets', () => {
     await card2.locator('.sprout-water-btn').click()
     await page.waitForSelector('.water-dialog:not(.hidden)')
     await page.fill('.water-dialog-journal', 'Afternoon entry')
-    await page.click('.water-dialog-pour')
+    await page.click('.water-dialog-water')
     await page.waitForTimeout(300)
 
     // Close the water dialog
@@ -316,8 +316,8 @@ test.describe('Resource Time Resets', () => {
     await expect(card2After.locator('.is-watered-badge')).toBeVisible()
     await expect(card2After.locator('.sprout-water-btn')).toHaveCount(0)
 
-    // DATA INTEGRITY: 2 water events total, one per sprout
-    const events = await getStoredEvents(page)
+    // DATA INTEGRITY: 2 water events total, one per sprout (wait for debounced save)
+    const events = await getPersistedEvents(page, 6)
     const waterEvents = events.filter((e: any) => e.type === 'sprout_watered')
     expect(waterEvents).toHaveLength(2)
     expect(waterEvents.map((e: any) => e.sproutId).sort()).toEqual(['s1', 's2'])

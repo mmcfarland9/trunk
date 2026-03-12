@@ -3,12 +3,12 @@
  * DR-5: Uses exponential backoff between retry attempts.
  */
 
+import { getEvents } from '../../events/store'
 import { supabase } from '../../lib/supabase'
 import { getAuthState } from '../auth-service'
-import { getEvents } from '../../events/store'
 import { localToSyncPayload } from '../sync-types'
-import { getPendingCount, getPendingIds, removePendingId, savePendingIds } from './pending-uploads'
 import { buildDedupeIndex } from './dedup'
+import { getPendingCount, getPendingIds, removePendingId, savePendingIds } from './pending-uploads'
 import { notifyMetadataListeners } from './status'
 import { createTimeoutSignal } from './timeout'
 

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import * as generated from '../generated/constants'
+import { describe, expect, it } from 'vitest'
 import sharedConstants from '../../../shared/constants.json'
+import * as generated from '../generated/constants'
 
 describe('generated constants', () => {
   it('matches shared constants soil values', () => {

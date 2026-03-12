@@ -1,8 +1,8 @@
 import {
-  SEASONS,
   ENVIRONMENTS,
-  getEnvironmentLabel,
   getEnvironmentFormHint,
+  getEnvironmentLabel,
+  SEASONS,
 } from '../../utils/sprout-labels'
 
 /**

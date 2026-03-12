@@ -5,18 +5,18 @@
  * This is critical for cross-platform sync between web and iOS.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
+  checkSproutWateredThisWeek,
   deriveState,
-  deriveWaterAvailable,
   deriveSunAvailable,
-  getTodayResetTime,
-  getWeekResetTime,
+  deriveWaterAvailable,
   getActiveSprouts,
   getCompletedSprouts,
-  getSproutsForTwig,
   getLeavesForTwig,
-  checkSproutWateredThisWeek,
+  getSproutsForTwig,
+  getTodayResetTime,
+  getWeekResetTime,
 } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
 

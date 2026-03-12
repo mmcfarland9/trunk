@@ -1,20 +1,20 @@
-import type { AppContext } from '../types'
 import { BRANCH_COUNT, GUIDE_ANIMATION_DURATION } from '../constants'
-import { getViewMode, getActiveBranchIndex, getHoveredBranchIndex } from '../state'
+import { getActiveBranchIndex, getHoveredBranchIndex, getViewMode } from '../state'
+import type { AppContext } from '../types'
 import {
+  branchWindOffset,
+  clamp,
+  lerp,
+  seeded,
   WIND_BRANCH_AMP,
-  WIND_TWIG_AMP,
-  WIND_PULSE,
-  WIND_MIN,
-  WIND_MAX,
+  WIND_FLUTTER_SCALE,
   WIND_FOCUS_BRANCH_SCALE,
   WIND_FOCUS_TWIG_SCALE,
+  WIND_MAX,
+  WIND_MIN,
+  WIND_PULSE,
+  WIND_TWIG_AMP,
   WIND_Y_DAMPING,
-  WIND_FLUTTER_SCALE,
-  seeded,
-  lerp,
-  clamp,
-  branchWindOffset,
 } from '../utils/wind'
 
 // Layout constants

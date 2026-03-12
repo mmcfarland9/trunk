@@ -2,16 +2,16 @@
  * Functional tests for state management and calculations.
  */
 
-import { describe, it, expect } from 'vitest'
-import { calculateSoilCost } from '../state'
+import { describe, expect, it } from 'vitest'
+import type { TrunkEvent } from '../events'
 import {
-  generateSproutId,
+  deriveState,
   generateLeafId,
+  generateSproutId,
   getActiveSprouts,
   getCompletedSprouts,
-  deriveState,
 } from '../events'
-import type { TrunkEvent } from '../events'
+import { calculateSoilCost } from '../state'
 
 describe('Soil Cost Calculation', () => {
   it('should calculate correct cost for fertile environment', () => {

@@ -4,10 +4,10 @@
  * plus score normalization.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { BRANCH_COUNT } from '../constants'
 import { computeBranchEngagement } from '../events/radar-charting'
 import type { TrunkEvent } from '../events/types'
-import { BRANCH_COUNT } from '../constants'
 
 // ---------------------------------------------------------------------------
 // Helpers

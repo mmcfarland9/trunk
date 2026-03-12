@@ -7,10 +7,10 @@
  * This test locks in the single-implementation invariant.
  */
 
-import { describe, it, expect } from 'vitest'
-import { getWeekResetTime, getNextSunReset } from '../utils/calculations'
+import { describe, expect, it } from 'vitest'
 import { deriveSunAvailable } from '../events/derive'
 import type { TrunkEvent } from '../events/types'
+import { getNextSunReset, getWeekResetTime } from '../utils/calculations'
 
 /** Helper: create a sun_shone event at a given timestamp */
 function sunEvent(timestamp: string): TrunkEvent {

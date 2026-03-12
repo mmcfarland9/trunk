@@ -5,8 +5,8 @@
  * for all 7 bucket ranges and soil log derivation.
  */
 
-import { describe, it, expect } from 'vitest'
-import { computeRawSoilHistory, bucketSoilData, deriveSoilLog } from '../events/soil-charting'
+import { describe, expect, it } from 'vitest'
+import { bucketSoilData, computeRawSoilHistory, deriveSoilLog } from '../events/soil-charting'
 import type { TrunkEvent } from '../events/types'
 
 // ---------------------------------------------------------------------------

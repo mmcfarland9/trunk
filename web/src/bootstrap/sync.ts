@@ -1,4 +1,4 @@
-import { subscribeSyncMetadata, forceFullSync } from '../services/sync'
+import { forceFullSync, subscribeSyncMetadata } from '../services/sync'
 import type { DetailedSyncStatus } from '../services/sync/status'
 import type { AppElements } from '../types'
 

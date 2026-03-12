@@ -2,7 +2,7 @@
  * Tests for preset labels and notes utility
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { getPresetLabel, getPresetNote } from '../utils/presets'
 
 describe('getPresetLabel', () => {
