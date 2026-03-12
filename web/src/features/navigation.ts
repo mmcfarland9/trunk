@@ -8,7 +8,7 @@ import {
   setViewModeState,
 } from '../state'
 import type { AppContext, ViewMode } from '../types'
-import { animateGuideLines, startWind, stopWind } from '../ui/layout'
+import { animateGuideLines, startWind, stopWind } from '../ui/layout-wind'
 import { setFocusedNode, setNodeVisibility, updateFocus } from '../ui/node-ui'
 import { pushView } from './history'
 
