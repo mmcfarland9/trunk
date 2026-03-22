@@ -275,7 +275,7 @@ export function updateSidebarSprouts(ctx: AppContext): void {
     hint.className = 'sprouts-empty-hint'
     hint.textContent = 'Plant your first sprout by clicking any twig on the tree.'
     activeSproutsList.append(hint)
-    return
+    // Don't return — seedlings section still needs to render below
   }
 
   // Determine display mode: twig view (or hovering twig), branch view (or hovering branch), or overview
