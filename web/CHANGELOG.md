@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Seedlings: pre-sprout backlog system for capturing ideas on twigs before committing soil. Create, edit, delete, and plant seedlings from the twig view. "Set" pre-fills the sprout planting form with the seedling title, deleting the seedling only after the sprout is successfully planted. Seedlings section in sidebar shows all ideas across twigs with branch/twig filtering. Three new event types (seedling_created, seedling_edited, seedling_deleted) flow through existing event-sourced sync — zero new tables, zero new infrastructure. Validation enforces 60-char title limit at both UI and event boundary.
 - Water dialog suggestions: up to 3 least-recently-watered sprouts shown as quick-access shortcuts at the top of the water dialog — clicking a suggestion scrolls to and highlights that sprout's section; suggestions dim when watered; hidden when all active sprouts are already watered today
 - Watering streak indicator on the water meter in the header — shows "Xd streak" when the user has watered on consecutive days (6am-to-6am boundaries); hidden when streak is 0; updates on water actions and full UI refresh
 - Export reminder toast: nudges users to back up their data when no export has been recorded in 7 days (configurable via `EXPORT_REMINDER_DAYS`) — fires once per session on app load, only when events exist
