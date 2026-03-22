@@ -4,6 +4,7 @@ import {
   generateLeafId,
   generateSproutId,
   getLeavesForTwig,
+  getSeedlingsForTwig,
   getSproutsForTwig,
   getState,
   toSprout,
@@ -24,6 +25,13 @@ import {
 import { updateFormState } from './form-validation'
 import { setupKeyboard } from './keyboard'
 import { populateLeafSelect, setupLeafSelect } from './leaf-select'
+import {
+  createSeedling,
+  deleteSeedling,
+  editSeedling,
+  getSeedlingById,
+  renderSeedlings,
+} from './seedlings'
 import { renderActiveCard, renderHistoryCard, renderLeafCard } from './sprout-cards'
 import { createFormState, formatDate, getCurrentNodeId, getEndDate } from './sprout-form'
 
@@ -139,11 +147,82 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       historyHtml += unassignedHistory.map((s) => renderHistoryCard(s)).join('')
     }
     elements.historyList.innerHTML = historyHtml || '<p class="empty-message">No history</p>'
+
+    renderSeedlingsList()
+  }
+
+  function renderSeedlingsList(): void {
+    const nodeId = getCurrentNodeId(state)
+    if (!nodeId) return
+    const stateObj = getState()
+    const seedlings = getSeedlingsForTwig(stateObj, nodeId)
+    elements.seedlingsCount.textContent = `(${seedlings.length})`
+    elements.seedlingsList.innerHTML = renderSeedlings(nodeId)
   }
 
   // Delegated click handler
   container.addEventListener('click', (e: MouseEvent) => {
     const target = e.target as HTMLElement
+
+    // Seedling actions
+    const seedlingActionEl = target.closest<HTMLElement>('[data-seedling-action]')
+    if (seedlingActionEl) {
+      const seedlingCard = seedlingActionEl.closest<HTMLElement>('.seedling-card')
+      const seedlingId = seedlingCard?.dataset.seedlingId
+      if (!seedlingId) return
+      const seedlingAction = seedlingActionEl.dataset.seedlingAction
+
+      switch (seedlingAction) {
+        case 'delete': {
+          deleteSeedling(seedlingId)
+          renderSeedlingsList()
+          break
+        }
+        case 'plant': {
+          const seedling = getSeedlingById(seedlingId)
+          if (seedling) {
+            deleteSeedling(seedlingId)
+            elements.sproutTitleInput.value = seedling.title
+            elements.sproutTitleInput.focus()
+            updateForm()
+            renderSeedlingsList()
+          }
+          break
+        }
+        case 'edit': {
+          const seedling = getSeedlingById(seedlingId)
+          if (!seedling || !seedlingCard) break
+          const titleEl = seedlingCard.querySelector('.seedling-title')
+          if (!titleEl) break
+          const input = document.createElement('input')
+          input.type = 'text'
+          input.className = 'seedling-edit-input'
+          input.value = seedling.title
+          input.maxLength = 60
+          titleEl.replaceWith(input)
+          input.focus()
+          input.select()
+          const commit = () => {
+            const newTitle = input.value.trim()
+            if (newTitle && newTitle !== seedling.title) {
+              editSeedling(seedlingId, newTitle)
+            }
+            renderSeedlingsList()
+          }
+          input.addEventListener('blur', commit)
+          input.addEventListener('keydown', (ke) => {
+            if (ke.key === 'Enter') {
+              ke.preventDefault()
+              commit()
+            }
+            if (ke.key === 'Escape') renderSeedlingsList()
+          })
+          break
+        }
+      }
+      return
+    }
+
     const actionEl = target.closest<HTMLElement>('[data-action]')
     if (!actionEl) return
 
@@ -252,6 +331,29 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   elements.witherInput.addEventListener('input', updateForm)
   elements.buddingInput.addEventListener('input', updateForm)
   elements.flourishInput.addEventListener('input', updateForm)
+
+  // Seedling add input
+  elements.seedlingsAddInput.addEventListener('input', () => {
+    elements.seedlingsAddBtn.disabled = !elements.seedlingsAddInput.value.trim()
+  })
+
+  elements.seedlingsAddBtn.addEventListener('click', () => {
+    const title = elements.seedlingsAddInput.value.trim()
+    if (!title) return
+    const nodeId = getCurrentNodeId(state)
+    if (!nodeId) return
+    createSeedling(nodeId, title)
+    elements.seedlingsAddInput.value = ''
+    elements.seedlingsAddBtn.disabled = true
+    renderSeedlingsList()
+  })
+
+  elements.seedlingsAddInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      elements.seedlingsAddBtn.click()
+    }
+  })
 
   // Set button - create sprout
   elements.setBtn.addEventListener(

@@ -10,6 +10,7 @@ import SwiftUI
 struct CreateSproutView: View {
     let nodeId: String
     @Bindable var progression: ProgressionViewModel
+    var initialTitle: String?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -304,6 +305,9 @@ struct CreateSproutView: View {
         }
         .onAppear {
             twigLeaves = getLeavesForTwig(from: EventStore.shared.getState(), twigId: nodeId)
+            if let initialTitle, title.isEmpty {
+                title = initialTitle
+            }
         }
         .onChange(of: progression.version) {
             twigLeaves = getLeavesForTwig(from: EventStore.shared.getState(), twigId: nodeId)

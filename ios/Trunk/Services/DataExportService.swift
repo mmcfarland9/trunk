@@ -33,6 +33,8 @@ struct TrunkEvent: Codable {
     var soilReturned: Double?
     var twigLabel: String?
     var name: String?
+    var seedlingId: String?
+    var notes: String?
 
     // MARK: - Factory methods for creating specific event types
 
@@ -166,7 +168,9 @@ struct DataExportService {
             capacityGained: getDouble(payload, "capacityGained"),
             soilReturned: getDouble(payload, "soilReturned"),
             twigLabel: getString(payload, "twigLabel"),
-            name: getString(payload, "name")
+            name: getString(payload, "name"),
+            seedlingId: getString(payload, "seedlingId"),
+            notes: getString(payload, "notes")
         )
     }
 

@@ -15,6 +15,7 @@ class SproutsViewModel {
 
     var cachedSprouts: [DerivedSprout] = []
     var cachedLeaves: [DerivedLeaf] = []
+    var cachedSeedlings: [DerivedSeedling] = []
     var cachedState: DerivedState? = nil
 
     func refreshCachedState() {
@@ -22,6 +23,8 @@ class SproutsViewModel {
         cachedState = state
         cachedSprouts = Array(state.sprouts.values)
         cachedLeaves = Array(state.leaves.values)
+        cachedSeedlings = Array(state.seedlings.values)
+            .sorted { $0.createdAt < $1.createdAt }
         // Pre-compute counts to avoid repeated array scans in view bodies
         activeCount = cachedSprouts.filter { $0.state == .active }.count
         completedCount = cachedSprouts.filter { $0.state == .completed }.count

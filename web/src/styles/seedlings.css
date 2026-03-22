@@ -1,0 +1,141 @@
+/* Seedlings — pre-sprout idea stubs */
+
+.seedlings-section {
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+
+.seedlings-title {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin: 0 0 var(--space-2) 0;
+  font-weight: 500;
+}
+
+.seedlings-count {
+  font-weight: 400;
+}
+
+.seedling-empty {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  font-style: italic;
+  margin: var(--space-1) 0;
+}
+
+.seedling-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 4px;
+  margin-bottom: var(--space-1);
+  background: var(--surface-subtle, transparent);
+}
+
+.seedling-card:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.03));
+}
+
+.seedling-title {
+  flex: 1;
+  font-size: var(--text-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seedling-notes {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seedling-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.seedling-card:hover .seedling-actions {
+  opacity: 1;
+}
+
+.seedling-action {
+  font-size: var(--text-xs);
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-faint);
+}
+
+.seedling-action:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.05));
+  color: var(--ink);
+}
+
+.seedling-action-delete:hover {
+  color: var(--error, #c0392b);
+  border-color: var(--error, #c0392b);
+}
+
+.seedling-edit-input {
+  flex: 1;
+  font-size: var(--text-sm);
+  padding: 1px 4px;
+  border: 1px solid var(--twig);
+  border-radius: 3px;
+  outline: none;
+}
+
+.seedlings-add {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.seedlings-add-input {
+  flex: 1;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.seedlings-add-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.seedlings-add-btn {
+  font-size: var(--text-base);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-faint);
+  line-height: 1;
+}
+
+.seedlings-add-btn:hover:not(:disabled) {
+  background: var(--twig);
+  color: white;
+  border-color: var(--twig);
+}
+
+.seedlings-add-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

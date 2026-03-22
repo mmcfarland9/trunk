@@ -16,6 +16,7 @@ struct TwigDetailView: View {
 
     @State private var showingCreateSprout = false
     @State private var selectedSprout: DerivedSprout?
+    @State private var plantFromSeedling: String?
 
     private var nodeId: String {
         "branch-\(branchIndex)-twig-\(twigIndex)"
@@ -42,6 +43,10 @@ struct TwigDetailView: View {
         sprouts.filter { $0.state == .completed }
     }
 
+    private var twigSeedlings: [DerivedSeedling] {
+        getSeedlingsForTwig(from: state, twigId: nodeId)
+    }
+
     var body: some View {
         ZStack {
             Color.parchment
@@ -55,6 +60,29 @@ struct TwigDetailView: View {
                             selectedSprout = sprout
                         }
                     }
+
+                    // Seedlings section
+                    SeedlingsSection(
+                        twigId: nodeId,
+                        seedlings: twigSeedlings,
+                        onPlant: { seedling in
+                            Task {
+                                do {
+                                    try await SyncService.shared.pushEvent(
+                                        type: "seedling_deleted",
+                                        payload: ["seedlingId": .string(seedling.id)]
+                                    )
+                                } catch {
+                                    print("[TwigDetail] Failed to delete seedling: \(error)")
+                                }
+                            }
+                            plantFromSeedling = seedling.title
+                            showingCreateSprout = true
+                        },
+                        onRefresh: {
+                            progression.refresh()
+                        }
+                    )
 
                     // Harvested section
                     if !completedSprouts.isEmpty {
@@ -93,11 +121,14 @@ struct TwigDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingCreateSprout) {
+        .sheet(isPresented: $showingCreateSprout, onDismiss: {
+            plantFromSeedling = nil
+        }) {
             NavigationStack {
                 CreateSproutView(
                     nodeId: nodeId,
-                    progression: progression
+                    progression: progression,
+                    initialTitle: plantFromSeedling
                 )
             }
         }

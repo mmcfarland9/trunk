@@ -53,6 +53,14 @@ export function buildPanel(mapPanel: HTMLElement): HTMLDivElement {
             <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
           </div>
         </div>
+        <div class="seedlings-section">
+          <h4 class="seedlings-title">Seedlings <span class="seedlings-count">(0)</span></h4>
+          <div class="seedlings-list"></div>
+          <div class="seedlings-add">
+            <input type="text" class="seedlings-add-input" placeholder="Add a seedling idea..." maxlength="60" />
+            <button type="button" class="seedlings-add-btn" disabled>+</button>
+          </div>
+        </div>
       </div>
       <div class="sprout-column sprout-active">
         <h3 class="column-title">Growing <span class="active-count">(0)</span></h3>
@@ -106,5 +114,9 @@ export function getElements(container: HTMLDivElement) {
     confirmMessage: container.querySelector<HTMLParagraphElement>('.confirm-dialog-message')!,
     confirmCancelBtn: container.querySelector<HTMLButtonElement>('.confirm-dialog-cancel')!,
     confirmConfirmBtn: container.querySelector<HTMLButtonElement>('.confirm-dialog-confirm')!,
+    seedlingsCount: container.querySelector<HTMLSpanElement>('.seedlings-count')!,
+    seedlingsList: container.querySelector<HTMLDivElement>('.seedlings-list')!,
+    seedlingsAddInput: container.querySelector<HTMLInputElement>('.seedlings-add-input')!,
+    seedlingsAddBtn: container.querySelector<HTMLButtonElement>('.seedlings-add-btn')!,
   }
 }

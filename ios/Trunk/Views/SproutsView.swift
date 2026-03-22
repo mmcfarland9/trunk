@@ -9,6 +9,7 @@ import SwiftUI
 
 enum BrowseMode: String, CaseIterable {
     case sprouts = "Sprouts"
+    case seedlings = "Seedlings"
     case leaves = "Leaves"
 }
 
@@ -28,7 +29,8 @@ struct SproutsView: View {
                     // Sprouts / Leaves toggle
                     modeToggle
 
-                    if selectedMode == .sprouts {
+                    switch selectedMode {
+                    case .sprouts:
                         // Filter bar (search + filters + sort)
                         SproutFilterBar(viewModel: viewModel)
 
@@ -40,7 +42,12 @@ struct SproutsView: View {
                             completedCount: viewModel.completedCount,
                             state: viewModel.cachedState ?? EventStore.shared.getState()
                         )
-                    } else {
+                    case .seedlings:
+                        SeedlingsListView(
+                            seedlings: viewModel.cachedSeedlings,
+                            state: viewModel.cachedState ?? EventStore.shared.getState()
+                        )
+                    case .leaves:
                         // Leaf list with summary
                         LeavesListView(
                             leaves: viewModel.filteredLeaves(),
@@ -98,6 +105,62 @@ struct SproutsView: View {
         }
     }
 
+}
+
+// MARK: - Seedlings List View
+
+struct SeedlingsListView: View {
+    let seedlings: [DerivedSeedling]
+    let state: DerivedState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("\(seedlings.count) seedling\(seedlings.count == 1 ? "" : "s")")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            if seedlings.isEmpty {
+                Text("No seedlings yet. Add ideas from a twig detail view.")
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+                    .padding(.vertical, TrunkTheme.space4)
+            } else {
+                VStack(spacing: 1) {
+                    ForEach(seedlings) { seedling in
+                        HStack(spacing: TrunkTheme.space3) {
+                            VStack(alignment: .leading, spacing: TrunkTheme.space1) {
+                                Text(seedling.title)
+                                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                                    .foregroundStyle(Color.ink)
+                                    .lineLimit(1)
+
+                                if let notes = seedling.notes {
+                                    Text(notes)
+                                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                        .foregroundStyle(Color.inkFaint)
+                                        .lineLimit(1)
+                                }
+
+                                Text(twigLocationLabel(for: seedling.twigId))
+                                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                                    .foregroundStyle(Color.wood)
+                            }
+
+                            Spacer()
+                        }
+                        .padding(.vertical, TrunkTheme.space2)
+                        .padding(.horizontal, TrunkTheme.space3)
+                        .frame(minHeight: 44)
+                        .background(Color.paper)
+                    }
+                }
+                .background(Color.paper)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.border, lineWidth: 1)
+                )
+            }
+        }
+    }
 }
 
 // MARK: - Previews
