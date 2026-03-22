@@ -87,16 +87,20 @@ describe('getPresetNote', () => {
   })
 
   describe('branch nodes', () => {
-    it('returns branch description for branch-0', () => {
-      expect(getPresetNote('branch-0')).toBe('fitness & vitality')
+    it('returns branch description + motto for branch-0', () => {
+      expect(getPresetNote('branch-0')).toBe("fitness & vitality\nthat which energizes one's body")
     })
 
-    it('returns branch description for branch-1', () => {
-      expect(getPresetNote('branch-1')).toBe('knowledge & curiosity')
+    it('returns branch description + motto for branch-1', () => {
+      expect(getPresetNote('branch-1')).toBe(
+        'knowledge & curiosity\nthat by which one draws understanding',
+      )
     })
 
-    it('returns branch description for branch-7', () => {
-      expect(getPresetNote('branch-7')).toBe('stability & direction')
+    it('returns branch description + motto for branch-7', () => {
+      expect(getPresetNote('branch-7')).toBe(
+        'stability & direction\nthat by which one advances through time',
+      )
     })
 
     it('returns empty string for invalid branch index', () => {
@@ -105,8 +109,8 @@ describe('getPresetNote', () => {
   })
 
   describe('twig and invalid nodes', () => {
-    it('returns empty string for twig nodes', () => {
-      expect(getPresetNote('branch-0-twig-0')).toBe('')
+    it('returns twig description for twig nodes', () => {
+      expect(getPresetNote('branch-0-twig-0')).toBe('locomotion; ambulation; cardio')
     })
 
     it('returns empty string for empty string', () => {

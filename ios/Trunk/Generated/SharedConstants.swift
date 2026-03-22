@@ -169,6 +169,17 @@ enum SharedConstants {
             "stability & direction"
         ]
 
+        static let branchMottos: [String] = [
+            "that which energizes one's body",
+            "that by which one draws understanding",
+            "that which gives one's ideas a form",
+            "that by which one shapes the material world",
+            "that which gives one protection and shelter",
+            "that which balances one's psyche",
+            "that which binds one to society",
+            "that by which one advances through time"
+        ]
+
         /// Twig labels indexed by [branchIndex][twigIndex]
         static let twigLabels: [[String]] = [
             ["movement", "strength", "sport", "technique", "maintenance", "nutrition", "sleep", "appearance"],
@@ -179,6 +190,18 @@ enum SharedConstants {
             ["observation", "nature", "flow", "repose", "idleness", "exposure", "abstinence", "reflection"],
             ["connection", "support", "gathering", "membership", "stewardship", "advocacy", "service", "culture"],
             ["work", "development", "positioning", "ventures", "finance", "operations", "planning", "administration"]
+        ]
+
+        /// Twig descriptions indexed by [branchIndex][twigIndex]
+        static let twigDescriptions: [[String]] = [
+            ["locomotion; ambulation; cardio", "force; power; might", "athleticism, coordination; agility", "discipline; mechanics; posture", "mobility, rehab; durability", "sustenance; nourishment; fuel", "rest; cycle; rhythm", "grooming, presentation; styling"],
+            ["study; absorption; decoding", "articulation; dispersion; encoding", "solving, inference; logic", "attention; concentration; calculation", "retention; consolidation; recall", "judgment; evaluation; appraisal", "exchange; conversation; discourse", "wonder; inquiry; discovery"],
+            ["rehearsal; repetition; rudiments", "authorship; genesis; origination", "reimagination, synthesis; adaptation", "improvisation; execution; delivery", "engagement; immersion; audience", "taste; selection; compilation", "editing; finalization; polish", "distribution; exhibition; broadcast"],
+            ["configuration; layout; invention", "construction; forging; manufacturing", "installation; joining; integration", "troubleshooting; mending; servicing", "finishing, modification, calibration", "equipment; instruments; machinery", "cultivation; caretaking; growth", "arrangement; staging; setting"],
+            ["errands, chores, comfort", "thoughtfulness; consideration; nurturing", "availability; attendance; accessibility", "vulnerability; trust; bond", "transparency; candor; reciprocity", "celebration; routine; habit", "spontaneity; novelty; wanderlust", "playfulness; delight; gaiety"],
+            ["noticing; perception; recognition", "reverence, grace; mystery", "breathwork; cadence; circulation", "pause; intermission; reprieve", "stillness, silence, solitude", "elements, challenge; conditioning", "restraint, temperance; withholding", "contemplation, acceptance, gratitude"],
+            ["outreach; contact; initiation", "reliability; dependability; constancy", "hosting; assembly; forum", "camaraderie; participation; commitment", "preservation; custodianship; guardianship", "morality, citizenship; justice", "contribution, mentorship; charity", "heritage, tradition; legacy"],
+            ["livelihood; trade; vocation", "training; advancement; maturation", "network; alignment; trajectory", "enterprise; initiative; undertaking", "budgeting, resources; capital", "logistics, orchestration; scheduling", "provision, security; forecasting", "governance; compliance; management"]
         ]
 
         /// Get twig label for a given branch and twig index

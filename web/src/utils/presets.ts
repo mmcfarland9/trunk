@@ -30,7 +30,7 @@ export function getPresetLabel(nodeId: string): string {
   if (twigMatch) {
     const branchIndex = parseInt(twigMatch[1], 10)
     const twigIndex = parseInt(twigMatch[2], 10)
-    return branches[branchIndex]?.twigs[twigIndex] || ''
+    return branches[branchIndex]?.twigs[twigIndex]?.label || ''
   }
 
   return nodeId || 'Untitled'
@@ -48,7 +48,17 @@ export function getPresetNote(nodeId: string): string {
   const branchMatch = nodeId.match(BRANCH_PATTERN)
   if (branchMatch) {
     const index = parseInt(branchMatch[1], 10)
-    return branches[index]?.description || ''
+    const branch = branches[index]
+    if (!branch) return ''
+    return branch.motto ? `${branch.description}\n${branch.motto}` : branch.description || ''
+  }
+
+  // Twig: "branch-N-twig-M"
+  const twigMatch = nodeId.match(TWIG_PATTERN)
+  if (twigMatch) {
+    const branchIndex = parseInt(twigMatch[1], 10)
+    const twigIndex = parseInt(twigMatch[2], 10)
+    return branches[branchIndex]?.twigs[twigIndex]?.description || ''
   }
 
   return ''

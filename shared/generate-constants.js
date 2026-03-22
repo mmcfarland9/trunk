@@ -72,10 +72,11 @@ function generateTypeScript() {
     })
     .join(',\n')
 
+  const esc = (s) => s.replace(/'/g, "\\'")
   const branchesArray = constants.tree.branches
     .map((b) => {
-      const twigsArray = b.twigs.map((t) => `'${t}'`).join(', ')
-      return `  {\n    name: '${b.name}',\n    description: '${b.description}',\n    twigs: [${twigsArray}]\n  }`
+      const twigsArray = b.twigs.map((t) => `{ label: '${esc(t.label)}', description: '${esc(t.description)}' }`).join(',\n      ')
+      return `  {\n    name: '${esc(b.name)}',\n    description: '${esc(b.description)}',\n    motto: '${esc(b.motto)}',\n    twigs: [\n      ${twigsArray}\n    ]\n  }`
     })
     .join(',\n')
 
@@ -388,10 +389,21 @@ ${constants.tree.branches.map((b) => `            "${b.name}"`).join(',\n')}
 ${constants.tree.branches.map((b) => `            "${b.description}"`).join(',\n')}
         ]
 
+        static let branchMottos: [String] = [
+${constants.tree.branches.map((b) => `            "${b.motto}"`).join(',\n')}
+        ]
+
         /// Twig labels indexed by [branchIndex][twigIndex]
         static let twigLabels: [[String]] = [
 ${constants.tree.branches
-  .map((b) => `            [${b.twigs.map((t) => `"${t}"`).join(', ')}]`)
+  .map((b) => `            [${b.twigs.map((t) => `"${t.label}"`).join(', ')}]`)
+  .join(',\n')}
+        ]
+
+        /// Twig descriptions indexed by [branchIndex][twigIndex]
+        static let twigDescriptions: [[String]] = [
+${constants.tree.branches
+  .map((b) => `            [${b.twigs.map((t) => `"${t.description}"`).join(', ')}]`)
   .join(',\n')}
         ]
 
