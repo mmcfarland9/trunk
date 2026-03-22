@@ -58,6 +58,7 @@ function flushRealtimeBatch(): void {
       }
     }
   } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: intentional error logging for diagnostics
     console.warn('[realtime] Failed to process batch:', error)
   }
 }

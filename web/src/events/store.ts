@@ -74,6 +74,7 @@ function loadEvents(): TrunkEvent[] {
       }
     }
   } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: intentional error logging for diagnostics
     console.warn('[store] Failed to load events from localStorage:', error)
   }
   return []

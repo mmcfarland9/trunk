@@ -6,19 +6,27 @@
  */
 
 // Derivation
-export type { DerivedLeaf, DerivedSprout, DerivedState, WateringStreak } from './derive'
+export type {
+  DerivedLeaf,
+  DerivedSeedling,
+  DerivedSprout,
+  DerivedState,
+  WateringStreak,
+} from './derive'
 export {
   deriveState,
   deriveSunAvailable,
   deriveWaterAvailable,
   deriveWateringStreak,
   generateLeafId,
+  generateSeedlingId,
   generateSproutId,
   getActiveSprouts,
   getAllWaterEntries,
   getCompletedSprouts,
   getLeafById,
   getLeavesForTwig,
+  getSeedlingsForTwig,
   getSproutsByLeaf,
   getSproutsForTwig,
   getTodayResetTime,

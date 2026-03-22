@@ -66,6 +66,17 @@ export interface DerivedSprout {
 }
 
 /**
+ * Derived seedling state — a lightweight idea stub on a twig
+ */
+export interface DerivedSeedling {
+  id: string
+  twigId: string
+  title: string
+  notes?: string
+  createdAt: string
+}
+
+/**
  * Derived leaf state
  */
 export interface DerivedLeaf {
@@ -87,6 +98,9 @@ export interface DerivedState {
   leaves: Map<string, DerivedLeaf>
   // Logs (for display)
   sunEntries: SunEntry[]
+  // Seedlings (pre-sprout idea stubs)
+  seedlings: Map<string, DerivedSeedling>
+  seedlingsByTwig: Map<string, DerivedSeedling[]>
   // Indexes for O(1) lookups
   activeSproutsByTwig: Map<string, DerivedSprout[]>
   sproutsByTwig: Map<string, DerivedSprout[]>
@@ -104,6 +118,7 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
 
   const sprouts = new Map<string, DerivedSprout>()
   const leaves = new Map<string, DerivedLeaf>()
+  const seedlings = new Map<string, DerivedSeedling>()
   const sunEntries: SunEntry[] = []
 
   // Sort events by timestamp to ensure correct ordering
@@ -225,6 +240,31 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
         break
       }
 
+      case EVENT_TYPES.SEEDLING_CREATED: {
+        seedlings.set(event.seedlingId, {
+          id: event.seedlingId,
+          twigId: event.twigId,
+          title: event.title,
+          notes: event.notes,
+          createdAt: event.timestamp,
+        })
+        break
+      }
+
+      case EVENT_TYPES.SEEDLING_EDITED: {
+        const seedling = seedlings.get(event.seedlingId)
+        if (seedling) {
+          if (event.title !== undefined) seedling.title = event.title
+          if (event.notes !== undefined) seedling.notes = event.notes
+        }
+        break
+      }
+
+      case EVENT_TYPES.SEEDLING_DELETED: {
+        seedlings.delete(event.seedlingId)
+        break
+      }
+
       default: {
         break
       }
@@ -262,11 +302,20 @@ export function deriveState(events: readonly TrunkEvent[]): DerivedState {
     leavesByTwig.set(leaf.twigId, twigList)
   }
 
+  const seedlingsByTwig = new Map<string, DerivedSeedling[]>()
+  for (const seedling of seedlings.values()) {
+    const twigList = seedlingsByTwig.get(seedling.twigId) || []
+    twigList.push(seedling)
+    seedlingsByTwig.set(seedling.twigId, twigList)
+  }
+
   return {
     soilCapacity,
     soilAvailable,
     sprouts,
     leaves,
+    seedlings,
+    seedlingsByTwig,
     sunEntries,
     activeSproutsByTwig,
     sproutsByTwig,
@@ -465,6 +514,20 @@ export function getLeafById(state: DerivedState, leafId: string): DerivedLeaf | 
  */
 export function getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSprout[] {
   return state.sproutsByLeaf.get(leafId) || []
+}
+
+/**
+ * Get all seedlings for a specific twig
+ */
+export function getSeedlingsForTwig(state: DerivedState, twigId: string): DerivedSeedling[] {
+  return state.seedlingsByTwig.get(twigId) || []
+}
+
+/**
+ * Generate a unique seedling ID
+ */
+export function generateSeedlingId(): string {
+  return `seedling-${crypto.randomUUID()}`
 }
 
 /**

@@ -131,6 +131,8 @@ struct DerivedState {
     var wateringStreak: WateringStreak
     var soilHistory: [RawSoilSnapshot]
     var radarScores: [Double]
+    var seedlings: [String: DerivedSeedling]
+    var seedlingsByTwig: [String: [DerivedSeedling]]
 }
 
 // MARK: - Soil Rounding
@@ -149,6 +151,7 @@ func roundSoil(_ value: Double) -> Double {
 private func getEventDedupeKey(_ event: SyncEvent) -> String {
     if !event.clientId.isEmpty { return event.clientId }
     let entityId = getString(event.payload, "sproutId")
+        ?? getString(event.payload, "seedlingId")
         ?? getString(event.payload, "leafId")
         ?? getString(event.payload, "twigId")
         ?? ""
@@ -167,6 +170,7 @@ func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
     var sprouts: [String: DerivedSprout] = [:]
     var leaves: [String: DerivedLeaf] = [:]
     var sunEntries: [DerivedSunEntry] = []
+    var seedlings: [String: DerivedSeedling] = [:]
 
     // Single-pass accumulators for water/sun/streak
     let waterResetTime = getTodayResetTime(now: now)
@@ -309,6 +313,17 @@ func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
         case "leaf_created":
             processLeafCreated(event: event, timestamp: eventTimestamp, leaves: &leaves)
 
+        case "seedling_created":
+            processSeedlingCreated(event: event, timestamp: eventTimestamp, seedlings: &seedlings)
+
+        case "seedling_edited":
+            processSeedlingEdited(event: event, seedlings: &seedlings)
+
+        case "seedling_deleted":
+            if let seedlingId = getString(event.payload, "seedlingId") {
+                seedlings.removeValue(forKey: seedlingId)
+            }
+
         default:
             break
         }
@@ -322,6 +337,12 @@ func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
     // Normalize radar scores
     let radarScores = radarWeighted.map { min(1.0, $0 / radarCeiling) }
 
+    // Build seedlingsByTwig index
+    var seedlingsByTwig: [String: [DerivedSeedling]] = [:]
+    for seedling in seedlings.values {
+        seedlingsByTwig[seedling.twigId, default: []].append(seedling)
+    }
+
     return DerivedState(
         soilCapacity: soilCapacity,
         soilAvailable: soilAvailable,
@@ -332,7 +353,9 @@ func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
         sunAvailable: max(0, SharedConstants.Sun.weeklyCapacity - sunCountSinceReset),
         wateringStreak: streak,
         soilHistory: soilHistory,
-        radarScores: radarScores
+        radarScores: radarScores,
+        seedlings: seedlings,
+        seedlingsByTwig: seedlingsByTwig
     )
 }
 
@@ -586,6 +609,45 @@ private func processLeafCreated(event: SyncEvent, timestamp: Date?, leaves: inou
     leaves[leafId] = leaf
 }
 
+private func processSeedlingCreated(event: SyncEvent, timestamp: Date?, seedlings: inout [String: DerivedSeedling]) {
+    let payload = event.payload
+
+    guard let seedlingId = getString(payload, "seedlingId"),
+          let twigId = getString(payload, "twigId"),
+          let title = getString(payload, "title"),
+          let ts = timestamp else {
+        return
+    }
+
+    let seedling = DerivedSeedling(
+        id: seedlingId,
+        twigId: twigId,
+        title: title,
+        notes: getString(payload, "notes"),
+        createdAt: ts
+    )
+
+    seedlings[seedlingId] = seedling
+}
+
+private func processSeedlingEdited(event: SyncEvent, seedlings: inout [String: DerivedSeedling]) {
+    let payload = event.payload
+
+    guard let seedlingId = getString(payload, "seedlingId"),
+          var seedling = seedlings[seedlingId] else {
+        return
+    }
+
+    if let title = getString(payload, "title") {
+        seedling.title = title
+    }
+    if let notes = getString(payload, "notes") {
+        seedling.notes = notes
+    }
+
+    seedlings[seedlingId] = seedling
+}
+
 // MARK: - Water/Sun Availability Derivation
 
 /// Format a Date as "YYYY-MM-DD" using local calendar components.
@@ -706,6 +768,11 @@ func getSproutsForTwig(from state: DerivedState, twigId: String) -> [DerivedSpro
 /// Get all leaves for a specific twig
 func getLeavesForTwig(from state: DerivedState, twigId: String) -> [DerivedLeaf] {
     return state.leaves.values.filter { $0.twigId == twigId }
+}
+
+/// Get all seedlings for a specific twig
+func getSeedlingsForTwig(from state: DerivedState, twigId: String) -> [DerivedSeedling] {
+    return state.seedlingsByTwig[twigId] ?? []
 }
 
 /// Check if a sprout's duration has elapsed and it's ready to harvest
