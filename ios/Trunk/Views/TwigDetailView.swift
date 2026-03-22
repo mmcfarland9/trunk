@@ -16,7 +16,7 @@ struct TwigDetailView: View {
 
     @State private var showingCreateSprout = false
     @State private var selectedSprout: DerivedSprout?
-    @State private var plantFromSeedling: String?
+    @State private var plantFromSeedling: (title: String, seedlingId: String)?
 
     private var nodeId: String {
         "branch-\(branchIndex)-twig-\(twigIndex)"
@@ -66,17 +66,7 @@ struct TwigDetailView: View {
                         twigId: nodeId,
                         seedlings: twigSeedlings,
                         onPlant: { seedling in
-                            Task {
-                                do {
-                                    try await SyncService.shared.pushEvent(
-                                        type: "seedling_deleted",
-                                        payload: ["seedlingId": .string(seedling.id)]
-                                    )
-                                } catch {
-                                    print("[TwigDetail] Failed to delete seedling: \(error)")
-                                }
-                            }
-                            plantFromSeedling = seedling.title
+                            plantFromSeedling = (title: seedling.title, seedlingId: seedling.id)
                             showingCreateSprout = true
                         },
                         onRefresh: {
@@ -128,7 +118,8 @@ struct TwigDetailView: View {
                 CreateSproutView(
                     nodeId: nodeId,
                     progression: progression,
-                    initialTitle: plantFromSeedling
+                    initialTitle: plantFromSeedling?.title,
+                    plantingSeedlingId: plantFromSeedling?.seedlingId
                 )
             }
         }

@@ -11,6 +11,7 @@ struct CreateSproutView: View {
     let nodeId: String
     @Bindable var progression: ProgressionViewModel
     var initialTitle: String?
+    var plantingSeedlingId: String?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -370,6 +371,14 @@ struct CreateSproutView: View {
                     plantPayload["bloomFlourish"] = .string(bloomFlourish)
                 }
                 try await SyncService.shared.pushEvent(type: "sprout_planted", payload: plantPayload)
+
+                // Delete the seedling only after the sprout is successfully planted
+                if let seedlingId = plantingSeedlingId {
+                    try await SyncService.shared.pushEvent(
+                        type: "seedling_deleted",
+                        payload: ["seedlingId": .string(seedlingId)]
+                    )
+                }
             } catch {
                 // Push failed — event stays in local store, queued for retry on next sync
                 print("Plant push failed, queued for retry: \(error)")
