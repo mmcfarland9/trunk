@@ -3,6 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
+import { validateEvent } from '../events/types'
 import type { Leaf, NodeData, Sprout } from '../types'
 import { sanitizeLeaf, sanitizeSprout } from './validate-import'
 
@@ -218,6 +219,75 @@ describe('Import/Export Round-Trip', () => {
       const sanitized = sanitizeSprout(sprout)
       expect(sanitized?.environment).toBe(environment)
     })
+  })
+
+  it('should round-trip seedling_created event (title only)', () => {
+    const original = {
+      type: 'seedling_created',
+      timestamp: '2026-03-22T10:00:00Z',
+      seedlingId: 'seedling-rt-1',
+      twigId: 'branch-0-twig-branch-0-twig-0',
+      title: 'Learn piano',
+    }
+
+    const json = JSON.stringify(original)
+    const parsed = JSON.parse(json)
+
+    expect(validateEvent(parsed)).toBe(true)
+    expect(parsed.type).toBe(original.type)
+    expect(parsed.seedlingId).toBe(original.seedlingId)
+    expect(parsed.twigId).toBe(original.twigId)
+    expect(parsed.title).toBe(original.title)
+    expect(parsed.timestamp).toBe(original.timestamp)
+  })
+
+  it('should round-trip seedling_created event with notes', () => {
+    const original = {
+      type: 'seedling_created',
+      timestamp: '2026-03-22T10:00:00Z',
+      seedlingId: 'seedling-rt-2',
+      twigId: 'branch-1-twig-branch-1-twig-0',
+      title: 'Read more books',
+      notes: 'Start with fiction',
+    }
+
+    const json = JSON.stringify(original)
+    const parsed = JSON.parse(json)
+
+    expect(validateEvent(parsed)).toBe(true)
+    expect(parsed.title).toBe(original.title)
+    expect(parsed.notes).toBe(original.notes)
+  })
+
+  it('should round-trip seedling_edited event', () => {
+    const original = {
+      type: 'seedling_edited',
+      timestamp: '2026-03-22T11:00:00Z',
+      seedlingId: 'seedling-rt-1',
+      title: 'Learn guitar',
+    }
+
+    const json = JSON.stringify(original)
+    const parsed = JSON.parse(json)
+
+    expect(validateEvent(parsed)).toBe(true)
+    expect(parsed.seedlingId).toBe(original.seedlingId)
+    expect(parsed.title).toBe(original.title)
+  })
+
+  it('should round-trip seedling_deleted event', () => {
+    const original = {
+      type: 'seedling_deleted',
+      timestamp: '2026-03-22T12:00:00Z',
+      seedlingId: 'seedling-rt-1',
+    }
+
+    const json = JSON.stringify(original)
+    const parsed = JSON.parse(json)
+
+    expect(validateEvent(parsed)).toBe(true)
+    expect(parsed.seedlingId).toBe(original.seedlingId)
+    expect(parsed.timestamp).toBe(original.timestamp)
   })
 
   it('should convert legacy states during import', () => {
