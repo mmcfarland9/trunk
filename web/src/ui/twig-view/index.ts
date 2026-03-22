@@ -181,11 +181,10 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         case 'plant': {
           const seedling = getSeedlingById(seedlingId)
           if (seedling) {
-            deleteSeedling(seedlingId)
+            state.plantingSeedlingId = seedlingId
             elements.sproutTitleInput.value = seedling.title
             elements.sproutTitleInput.focus()
             updateForm()
-            renderSeedlingsList()
           }
           break
         }
@@ -264,6 +263,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   function resetForm(): void {
     state.selectedSeason = null
     state.selectedEnvironment = null
+    state.plantingSeedlingId = null
     elements.sproutTitleInput.value = ''
     elements.witherInput.value = ''
     elements.buddingInput.value = ''
@@ -408,6 +408,10 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         bloomBudding,
         bloomFlourish,
       })
+
+      if (state.plantingSeedlingId) {
+        deleteSeedling(state.plantingSeedlingId)
+      }
 
       resetForm()
       renderSprouts()

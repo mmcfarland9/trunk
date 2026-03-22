@@ -8,6 +8,7 @@ export type FormState = {
   selectedEnvironment: SproutEnvironment | null
   currentTwigNode: HTMLButtonElement | null
   confirmResolve: ((value: boolean) => void) | null
+  plantingSeedlingId: string | null
 }
 
 /**
@@ -19,6 +20,7 @@ export function createFormState(): FormState {
     selectedEnvironment: null,
     currentTwigNode: null,
     confirmResolve: null,
+    plantingSeedlingId: null,
   }
 }
 
