@@ -174,8 +174,23 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
       switch (seedlingAction) {
         case 'delete': {
-          deleteSeedling(seedlingId)
-          renderSeedlingsList()
+          // Two-step delete: first click shows "Sure?", second click confirms
+          if (seedlingActionEl.dataset.confirmDelete === 'true') {
+            deleteSeedling(seedlingId)
+            renderSeedlingsList()
+          } else {
+            seedlingActionEl.dataset.confirmDelete = 'true'
+            seedlingActionEl.textContent = 'Sure?'
+            seedlingActionEl.classList.add('is-confirming')
+            // Reset after 2 seconds if not confirmed
+            setTimeout(() => {
+              if (seedlingActionEl.dataset.confirmDelete === 'true') {
+                seedlingActionEl.dataset.confirmDelete = ''
+                seedlingActionEl.textContent = '\u00d7'
+                seedlingActionEl.classList.remove('is-confirming')
+              }
+            }, 2000)
+          }
           break
         }
         case 'plant': {

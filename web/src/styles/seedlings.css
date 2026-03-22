@@ -65,8 +65,14 @@
   transition: opacity 0.15s;
 }
 
-.seedling-card:hover .seedling-actions {
+.seedling-card:hover .seedling-actions,
+.seedling-card:focus-within .seedling-actions {
   opacity: 1;
+}
+
+.seedling-action:focus-visible {
+  outline: 2px solid var(--twig);
+  outline-offset: 1px;
 }
 
 .seedling-action {
@@ -87,6 +93,13 @@
 .seedling-action-delete:hover {
   color: var(--error, #c0392b);
   border-color: var(--error, #c0392b);
+}
+
+.seedling-action-delete.is-confirming {
+  color: white;
+  background: var(--error, #c0392b);
+  border-color: var(--error, #c0392b);
+  padding: 1px 8px;
 }
 
 .seedling-edit-input {
