@@ -35,6 +35,7 @@ function getEventDedupeKey(event: TrunkEvent): string {
   if (event.client_id) return event.client_id
   let entityId = ''
   if ('sproutId' in event) entityId = event.sproutId
+  else if ('seedlingId' in event) entityId = event.seedlingId
   else if ('leafId' in event) entityId = event.leafId
   else if ('twigId' in event) entityId = event.twigId
   return `${event.type}|${entityId}|${event.timestamp}`

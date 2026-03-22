@@ -60,6 +60,9 @@ export {
 // Types
 export type {
   LeafCreatedEvent,
+  SeedlingCreatedEvent,
+  SeedlingDeletedEvent,
+  SeedlingEditedEvent,
   SproutEditedEvent,
   SproutHarvestedEvent,
   SproutPlantedEvent,

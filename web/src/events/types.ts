@@ -32,6 +32,9 @@ export const EVENT_TYPES = {
   SPROUT_EDITED: 'sprout_edited',
   SUN_SHONE: 'sun_shone',
   LEAF_CREATED: 'leaf_created',
+  SEEDLING_CREATED: 'seedling_created',
+  SEEDLING_EDITED: 'seedling_edited',
+  SEEDLING_DELETED: 'seedling_deleted',
 } as const
 
 /**
@@ -120,6 +123,35 @@ export interface SproutEditedEvent extends BaseEvent {
 }
 
 /**
+ * Seedling created - lightweight idea stub on a twig (no soil cost)
+ */
+export interface SeedlingCreatedEvent extends BaseEvent {
+  type: 'seedling_created'
+  seedlingId: string
+  twigId: string
+  title: string
+  notes?: string
+}
+
+/**
+ * Seedling edited - update title or notes (sparse merge)
+ */
+export interface SeedlingEditedEvent extends BaseEvent {
+  type: 'seedling_edited'
+  seedlingId: string
+  title?: string
+  notes?: string
+}
+
+/**
+ * Seedling deleted - remove from garden
+ */
+export interface SeedlingDeletedEvent extends BaseEvent {
+  type: 'seedling_deleted'
+  seedlingId: string
+}
+
+/**
  * Union of all event types
  */
 export type TrunkEvent =
@@ -130,6 +162,9 @@ export type TrunkEvent =
   | SunShoneEvent
   | LeafCreatedEvent
   | SproutEditedEvent
+  | SeedlingCreatedEvent
+  | SeedlingEditedEvent
+  | SeedlingDeletedEvent
 
 /**
  * Validate that a value has the required shape of a TrunkEvent.
@@ -187,6 +222,16 @@ export function validateEvent(event: unknown): event is TrunkEvent {
       )
     case 'sprout_edited':
       return typeof e.sproutId === 'string'
+    case 'seedling_created':
+      return (
+        typeof e.seedlingId === 'string' &&
+        typeof e.twigId === 'string' &&
+        typeof e.title === 'string'
+      )
+    case 'seedling_edited':
+      return typeof e.seedlingId === 'string'
+    case 'seedling_deleted':
+      return typeof e.seedlingId === 'string'
     default:
       return false
   }
