@@ -82,6 +82,18 @@ struct TrunkEvent: Codable {
     static func sunShone(timestamp: String, twigId: String, twigLabel: String, content: String, prompt: String?) -> TrunkEvent {
         TrunkEvent(type: .sunShone, timestamp: timestamp, twigId: twigId, content: content, prompt: prompt, twigLabel: twigLabel)
     }
+
+    static func seedlingCreated(timestamp: String, seedlingId: String, twigId: String, title: String, notes: String? = nil) -> TrunkEvent {
+        TrunkEvent(type: .seedlingCreated, timestamp: timestamp, twigId: twigId, title: title, seedlingId: seedlingId, notes: notes)
+    }
+
+    static func seedlingEdited(timestamp: String, seedlingId: String, title: String? = nil, notes: String? = nil) -> TrunkEvent {
+        TrunkEvent(type: .seedlingEdited, timestamp: timestamp, title: title, seedlingId: seedlingId, notes: notes)
+    }
+
+    static func seedlingDeleted(timestamp: String, seedlingId: String) -> TrunkEvent {
+        TrunkEvent(type: .seedlingDeleted, timestamp: timestamp, seedlingId: seedlingId)
+    }
 }
 
 struct CircleData: Codable {
