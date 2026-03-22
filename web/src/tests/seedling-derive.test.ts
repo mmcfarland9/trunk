@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { deriveState, generateSeedlingId, getSeedlingsForTwig } from '../events/derive'
+import { appendEvent, clearEvents, getState, initEventStore } from '../events/store'
 import type { TrunkEvent } from '../events/types'
 import { validateEvent } from '../events/types'
 
@@ -200,5 +201,96 @@ describe('Seedling derivation', () => {
   it('generateSeedlingId produces correct format', () => {
     const id = generateSeedlingId()
     expect(id).toMatch(/^seedling-[0-9a-f-]{36}$/)
+  })
+})
+
+describe('Seedling store integration', () => {
+  beforeEach(() => {
+    clearEvents()
+    initEventStore()
+  })
+
+  afterEach(() => {
+    clearEvents()
+  })
+
+  it('round-trips seedling through store', () => {
+    appendEvent({
+      type: 'seedling_created',
+      timestamp: new Date().toISOString(),
+      seedlingId: 'seedling-store-1',
+      twigId: 'branch-0-twig-branch-0-twig-0',
+      title: 'Test idea',
+    })
+
+    const state = getState()
+    expect(state.seedlings.size).toBe(1)
+    expect(state.seedlings.get('seedling-store-1')!.title).toBe('Test idea')
+  })
+
+  it('seedling creation does not affect soil', () => {
+    const beforeSoil = getState().soilAvailable
+
+    appendEvent({
+      type: 'seedling_created',
+      timestamp: new Date().toISOString(),
+      seedlingId: 'seedling-store-2',
+      twigId: 'branch-0-twig-branch-0-twig-0',
+      title: 'Free idea',
+    })
+
+    expect(getState().soilAvailable).toBe(beforeSoil)
+  })
+
+  it('seedling lifecycle: create → edit → delete', () => {
+    appendEvent({
+      type: 'seedling_created',
+      timestamp: '2026-03-22T10:00:00Z',
+      seedlingId: 'seedling-lifecycle',
+      twigId: 'branch-0-twig-branch-0-twig-0',
+      title: 'Original',
+    })
+    expect(getState().seedlings.get('seedling-lifecycle')!.title).toBe('Original')
+
+    appendEvent({
+      type: 'seedling_edited',
+      timestamp: '2026-03-22T11:00:00Z',
+      seedlingId: 'seedling-lifecycle',
+      title: 'Edited',
+    })
+    expect(getState().seedlings.get('seedling-lifecycle')!.title).toBe('Edited')
+
+    appendEvent({
+      type: 'seedling_deleted',
+      timestamp: '2026-03-22T12:00:00Z',
+      seedlingId: 'seedling-lifecycle',
+    })
+    expect(getState().seedlings.size).toBe(0)
+  })
+
+  it('coexists with sprouts without interference', () => {
+    appendEvent({
+      type: 'seedling_created',
+      timestamp: '2026-03-22T10:00:00Z',
+      seedlingId: 'seedling-coexist',
+      twigId: 'branch-0-twig-branch-0-twig-0',
+      title: 'Idea',
+    })
+    appendEvent({
+      type: 'sprout_planted',
+      timestamp: '2026-03-22T10:01:00Z',
+      sproutId: 'sprout-coexist',
+      twigId: 'branch-0-twig-branch-0-twig-0',
+      title: 'Real sprout',
+      season: '2w',
+      environment: 'fertile',
+      soilCost: 2,
+      leafId: 'leaf-1',
+    })
+
+    const state = getState()
+    expect(state.seedlings.size).toBe(1)
+    expect(state.sprouts.size).toBe(1)
+    expect(state.soilAvailable).toBe(8) // Only sprout costs soil
   })
 })

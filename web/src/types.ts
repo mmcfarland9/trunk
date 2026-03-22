@@ -110,6 +110,8 @@ export type AppElements = {
   activeSproutsList: HTMLDivElement
   cultivatedSproutsToggle: HTMLButtonElement
   cultivatedSproutsList: HTMLDivElement
+  seedlingsToggle: HTMLButtonElement
+  seedlingsList: HTMLDivElement
   profileBadge: HTMLDivElement
   profileEmail: HTMLSpanElement
   syncButton: HTMLButtonElement

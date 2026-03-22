@@ -101,6 +101,8 @@ function makeDerivedState(overrides?: Partial<DerivedState>): DerivedState {
     soilAvailable: 10,
     sprouts: new Map(),
     leaves: new Map(),
+    seedlings: new Map(),
+    seedlingsByTwig: new Map(),
     sunEntries: [],
     activeSproutsByTwig: new Map(),
     sproutsByTwig: new Map(),
@@ -137,6 +139,8 @@ function createMockAppContext(): AppContext {
     activeSproutsList: document.createElement('div'),
     cultivatedSproutsToggle: document.createElement('button'),
     cultivatedSproutsList: document.createElement('div'),
+    seedlingsToggle: document.createElement('button'),
+    seedlingsList: document.createElement('div'),
     // Minimal mock of other elements (not used by progress.ts)
     shell: document.createElement('div'),
     header: document.createElement('header'),

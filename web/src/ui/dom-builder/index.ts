@@ -88,6 +88,16 @@ function assembleElements(
       '.sprouts-list[data-section="cultivated"]',
       'cultivated sprouts list',
     ),
+    seedlingsToggle: requireElement<HTMLButtonElement>(
+      sidePanel,
+      '.sprouts-toggle[data-section="seedlings"]',
+      'seedlings toggle',
+    ),
+    seedlingsList: requireElement<HTMLDivElement>(
+      sidePanel,
+      '.sprouts-list[data-section="seedlings"]',
+      'seedlings list',
+    ),
     profileBadge: headerResult.profileBadge,
     profileEmail: headerResult.profileEmail,
     syncButton: headerResult.syncButton,

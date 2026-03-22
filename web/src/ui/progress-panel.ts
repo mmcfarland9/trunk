@@ -4,7 +4,7 @@
  * Pure rendering — all data comes via parameters.
  */
 
-import type { DerivedState } from '../events'
+import type { DerivedSeedling, DerivedState } from '../events'
 import { checkSproutWateredToday, getLeafById } from '../events'
 import { getPresetLabel } from '../state'
 import type { Sprout } from '../types'
@@ -232,4 +232,25 @@ export function renderLeafGroupedSprouts(
 
   // Standalone sprouts (no leafId) are structurally impossible per the data model —
   // all sprouts require a leafId at creation. Silently skip if any appear.
+}
+
+/**
+ * Render a seedling row for the sidebar.
+ */
+export function renderSeedlingRow(
+  seedling: DerivedSeedling & { twigLabel: string },
+): HTMLDivElement {
+  const row = document.createElement('div')
+  row.className = 'sidebar-stacked-row'
+
+  const title = document.createElement('span')
+  title.className = 'sidebar-stacked-title'
+  title.textContent = seedling.title
+
+  const meta = document.createElement('span')
+  meta.className = 'sidebar-stacked-meta'
+  meta.textContent = seedling.twigLabel
+
+  row.append(title, meta)
+  return row
 }

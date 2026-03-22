@@ -5,7 +5,7 @@
  */
 
 import { TWIG_COUNT } from '../constants'
-import type { DerivedState } from '../events'
+import type { DerivedSeedling, DerivedState } from '../events'
 import {
   getActiveSprouts as getActiveDerivedSprouts,
   getCompletedSprouts,
@@ -28,6 +28,7 @@ import {
   getBranchLabel,
   getTwigLabel,
   renderLeafGroupedSprouts,
+  renderSeedlingRow,
 } from '../ui/progress-panel'
 
 export function updateStats(ctx: AppContext): void {
@@ -103,6 +104,18 @@ function parseBranchIndex(twigId: string): number {
   return match ? parseInt(match[1], 10) : -1
 }
 
+type SeedlingWithLocation = DerivedSeedling & { twigLabel: string; branchIndex: number }
+
+function getAllSeedlingsFromState(state: DerivedState): SeedlingWithLocation[] {
+  const result: SeedlingWithLocation[] = []
+  for (const seedling of state.seedlings.values()) {
+    const twigLabel = getPresetLabel(seedling.twigId) || seedling.twigId
+    const branchIndex = parseBranchIndex(seedling.twigId)
+    result.push({ ...seedling, twigLabel, branchIndex })
+  }
+  return result
+}
+
 function getAllSproutsFromState(state: DerivedState): {
   active: SproutWithLocation[]
   cultivated: SproutWithLocation[]
@@ -154,18 +167,26 @@ export function initSidebarSprouts(
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onHarvestClick?: SidebarHarvestCallback,
 ): void {
-  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } =
-    ctx.elements
+  const {
+    activeSproutsToggle,
+    cultivatedSproutsToggle,
+    activeSproutsList,
+    cultivatedSproutsList,
+    seedlingsToggle,
+    seedlingsList,
+  } = ctx.elements
 
   // Store callbacks for future updates
   storedWaterClick = onWaterClick
   storedHarvestClick = onHarvestClick
 
-  // Set default states: active expanded, cultivated collapsed
+  // Set default states: active expanded, cultivated collapsed, seedlings collapsed
   activeSproutsToggle.classList.add('is-expanded')
   activeSproutsList.classList.remove('is-collapsed')
   cultivatedSproutsToggle.classList.remove('is-expanded')
   cultivatedSproutsList.classList.add('is-collapsed')
+  seedlingsToggle.classList.remove('is-expanded')
+  seedlingsList.classList.add('is-collapsed')
 
   // Set up collapsible toggles
   activeSproutsToggle.addEventListener('click', () => {
@@ -178,13 +199,24 @@ export function initSidebarSprouts(
     cultivatedSproutsList.classList.toggle('is-collapsed', !isExpanded)
   })
 
+  seedlingsToggle.addEventListener('click', () => {
+    const isExpanded = seedlingsToggle.classList.toggle('is-expanded')
+    seedlingsList.classList.toggle('is-collapsed', !isExpanded)
+  })
+
   // Initial render
   updateSidebarSprouts(ctx)
 }
 
 export function updateSidebarSprouts(ctx: AppContext): void {
-  const { activeSproutsToggle, cultivatedSproutsToggle, activeSproutsList, cultivatedSproutsList } =
-    ctx.elements
+  const {
+    activeSproutsToggle,
+    cultivatedSproutsToggle,
+    activeSproutsList,
+    cultivatedSproutsList,
+    seedlingsToggle,
+    seedlingsList,
+  } = ctx.elements
   const { branchGroups } = ctx
   const state = getState()
   const { active, cultivated } = getAllSproutsFromState(state)
@@ -318,5 +350,31 @@ export function updateSidebarSprouts(ctx: AppContext): void {
 
       cultivatedSproutsList.append(branchFolder)
     })
+  }
+
+  // --- Seedlings section ---
+  const allSeedlings = getAllSeedlingsFromState(state)
+  let filteredSeedlings = allSeedlings
+
+  if (effectiveTwigId) {
+    filteredSeedlings = allSeedlings.filter((s) => s.twigId === effectiveTwigId)
+  } else if (effectiveBranchIndex !== null) {
+    filteredSeedlings = allSeedlings.filter((s) => s.branchIndex === effectiveBranchIndex)
+  }
+
+  const seedlingsCount = seedlingsToggle.querySelector('.sprouts-toggle-count')
+  if (seedlingsCount) seedlingsCount.textContent = `(${filteredSeedlings.length})`
+
+  seedlingsList.replaceChildren()
+
+  if (filteredSeedlings.length === 0) {
+    const hint = document.createElement('p')
+    hint.className = 'sprouts-empty-hint'
+    hint.textContent = 'No seedlings yet.'
+    seedlingsList.append(hint)
+  } else {
+    for (const seedling of filteredSeedlings) {
+      seedlingsList.append(renderSeedlingRow(seedling))
+    }
   }
 }
