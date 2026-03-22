@@ -25,6 +25,11 @@ struct SeedlingCardView: View {
                     .onSubmit {
                         commitEdit()
                     }
+                    .onChange(of: editTitle) { _, newValue in
+                        if newValue.count > SharedConstants.Validation.maxSeedlingTitleLength {
+                            editTitle = String(newValue.prefix(SharedConstants.Validation.maxSeedlingTitleLength))
+                        }
+                    }
                 Button("Done") {
                     commitEdit()
                 }
@@ -79,7 +84,8 @@ struct SeedlingCardView: View {
     }
 
     private func commitEdit() {
-        let trimmed = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = String(editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            .prefix(SharedConstants.Validation.maxSeedlingTitleLength))
         if !trimmed.isEmpty, trimmed != seedling.title {
             onEdit(trimmed)
         }

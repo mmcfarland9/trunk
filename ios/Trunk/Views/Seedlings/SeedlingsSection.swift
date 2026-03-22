@@ -41,6 +41,11 @@ struct SeedlingsSection: View {
                         .font(.system(size: TrunkTheme.textSm, design: .monospaced))
                         .textFieldStyle(.plain)
                         .onSubmit { addSeedling() }
+                        .onChange(of: newSeedlingTitle) { _, newValue in
+                            if newValue.count > SharedConstants.Validation.maxSeedlingTitleLength {
+                                newSeedlingTitle = String(newValue.prefix(SharedConstants.Validation.maxSeedlingTitleLength))
+                            }
+                        }
 
                     Button {
                         addSeedling()
@@ -62,7 +67,8 @@ struct SeedlingsSection: View {
     }
 
     private func addSeedling() {
-        let title = newSeedlingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = String(newSeedlingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            .prefix(SharedConstants.Validation.maxSeedlingTitleLength))
         guard !title.isEmpty else { return }
         let seedlingId = "seedling-\(UUID().uuidString.lowercased())"
         Task {
@@ -85,13 +91,14 @@ struct SeedlingsSection: View {
     }
 
     private func editSeedling(_ seedlingId: String, title: String) {
+        let clampedTitle = String(title.prefix(SharedConstants.Validation.maxSeedlingTitleLength))
         Task {
             do {
                 try await SyncService.shared.pushEvent(
                     type: "seedling_edited",
                     payload: [
                         "seedlingId": .string(seedlingId),
-                        "title": .string(title),
+                        "title": .string(clampedTitle),
                     ]
                 )
             } catch {
