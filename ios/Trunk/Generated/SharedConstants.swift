@@ -866,7 +866,10 @@ enum SharedConstants {
             "sprout_uprooted",
             "sprout_edited",
             "sun_shone",
-            "leaf_created"
+            "leaf_created",
+            "seedling_created",
+            "seedling_edited",
+            "seedling_deleted"
         ]
     }
 
@@ -876,5 +879,7 @@ enum SharedConstants {
         static let maxTitleLength: Int = 60
         static let maxLeafNameLength: Int = 40
         static let maxBloomLength: Int = 60
+        static let maxSeedlingTitleLength: Int = 60
+        static let maxSeedlingNotesLength: Int = 200
     }
 }

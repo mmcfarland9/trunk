@@ -190,6 +190,8 @@ export const VALID_EVENT_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES)
 export const MAX_TITLE_LENGTH = ${constants.validation.maxTitleLength}
 export const MAX_LEAF_NAME_LENGTH = ${constants.validation.maxLeafNameLength}
 export const MAX_BLOOM_LENGTH = ${constants.validation.maxBloomLength}
+export const MAX_SEEDLING_TITLE_LENGTH = ${constants.validation.maxSeedlingTitleLength}
+export const MAX_SEEDLING_NOTES_LENGTH = ${constants.validation.maxSeedlingNotesLength}
 
 // =============================================================================
 // Prompt Config
@@ -506,6 +508,8 @@ ${constants.eventTypes.map((t) => `            "${t}"`).join(',\n')}
         static let maxTitleLength: Int = ${constants.validation.maxTitleLength}
         static let maxLeafNameLength: Int = ${constants.validation.maxLeafNameLength}
         static let maxBloomLength: Int = ${constants.validation.maxBloomLength}
+        static let maxSeedlingTitleLength: Int = ${constants.validation.maxSeedlingTitleLength}
+        static let maxSeedlingNotesLength: Int = ${constants.validation.maxSeedlingNotesLength}
     }
 }
 `

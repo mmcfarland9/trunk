@@ -126,12 +126,17 @@
     "sprout_uprooted",
     "sprout_edited",
     "sun_shone",
-    "leaf_created"
+    "leaf_created",
+    "seedling_created",
+    "seedling_edited",
+    "seedling_deleted"
   ],
   "validation": {
     "maxTitleLength": 60,
     "maxLeafNameLength": 40,
-    "maxBloomLength": 60
+    "maxBloomLength": 60,
+    "maxSeedlingTitleLength": 60,
+    "maxSeedlingNotesLength": 200
   },
   "storage": {
     "keys": {
