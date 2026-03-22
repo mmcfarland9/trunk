@@ -69,6 +69,52 @@ describe('Seedling event validation', () => {
       }),
     ).toBe(false)
   })
+
+  it('rejects seedling_created with title longer than 60 chars', () => {
+    expect(
+      validateEvent({
+        type: 'seedling_created',
+        timestamp: '2026-03-22T10:00:00Z',
+        seedlingId: 'seedling-abc',
+        twigId: 'branch-0-twig-branch-0-twig-0',
+        title: 'a'.repeat(61),
+      }),
+    ).toBe(false)
+  })
+
+  it('accepts seedling_created with title exactly 60 chars', () => {
+    expect(
+      validateEvent({
+        type: 'seedling_created',
+        timestamp: '2026-03-22T10:00:00Z',
+        seedlingId: 'seedling-abc',
+        twigId: 'branch-0-twig-branch-0-twig-0',
+        title: 'a'.repeat(60),
+      }),
+    ).toBe(true)
+  })
+
+  it('rejects seedling_edited with title longer than 60 chars', () => {
+    expect(
+      validateEvent({
+        type: 'seedling_edited',
+        timestamp: '2026-03-22T10:00:00Z',
+        seedlingId: 'seedling-abc',
+        title: 'a'.repeat(61),
+      }),
+    ).toBe(false)
+  })
+
+  it('rejects seedling_edited with notes longer than 200 chars', () => {
+    expect(
+      validateEvent({
+        type: 'seedling_edited',
+        timestamp: '2026-03-22T10:00:00Z',
+        seedlingId: 'seedling-abc',
+        notes: 'a'.repeat(201),
+      }),
+    ).toBe(false)
+  })
 })
 
 describe('Seedling derivation', () => {

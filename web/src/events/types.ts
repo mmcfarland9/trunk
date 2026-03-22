@@ -226,10 +226,17 @@ export function validateEvent(event: unknown): event is TrunkEvent {
       return (
         typeof e.seedlingId === 'string' &&
         typeof e.twigId === 'string' &&
-        typeof e.title === 'string'
+        typeof e.title === 'string' &&
+        (e.title as string).length <= 60
       )
     case 'seedling_edited':
-      return typeof e.seedlingId === 'string'
+      return (
+        typeof e.seedlingId === 'string' &&
+        (e.title === undefined ||
+          (typeof e.title === 'string' && (e.title as string).length <= 60)) &&
+        (e.notes === undefined ||
+          (typeof e.notes === 'string' && (e.notes as string).length <= 200))
+      )
     case 'seedling_deleted':
       return typeof e.seedlingId === 'string'
     default:
