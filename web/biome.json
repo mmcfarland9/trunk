@@ -8,7 +8,7 @@
     "root": ".."
   },
   "files": {
-    "includes": ["src/**/*.ts", "!src/generated-constants.ts"]
+    "includes": ["src/**/*.ts", "!src/generated/**"]
   },
   "linter": {
     "enabled": true,
