@@ -17,10 +17,10 @@ The single most important theme: **the business logic isn't shared — it's hand
 
 | ID | Finding | Theme | Severity | Effort |
 |----|---------|-------|----------|--------|
-| **SC-1** | Verify Row-Level Security on the `events` table (anon key is public; RLS is the *only* thing isolating users' data) | Security | **P0** | S |
+| **SC-1** | 🟡 RLS **confirmed enabled** on `events` (dashboard, 2026-06-03). Remaining: confirm policies scope to `auth.uid() = user_id` with no permissive `anon` policy | Security | ~~P0~~→P2 | S |
 | **SC-2** | Backend (DB schema, RLS, edge functions) is **not in the repo** — can't review, version, or roll back | Security / Maint | **P0** | M |
 | **TC-1** | **No iOS CI** → 🟡 workflow drafted (`ios-ci.yml`); **131 tests green locally**, pending first GitHub run | Testing | **P1** | M |
-| **PM-1** | Expand parity fixtures to cover the **full** `DerivedState` (radar, soil history, water/sun/streak) — exactly the divergent code | Parity | **P1** | M |
+| **PM-1** | 🟡 Expand parity fixtures to cover the divergent code — **radar + streak done** (web verified, iOS pending CI); soil-history found to **diverge by construction** (see §1) → feeds PM-2 | Parity | **P1** | M |
 | **CL-1** | iOS streak: consolidate the duplicate routine + add the missing streak test (the other "dead" `derive*` fns are parity-test entry points — keep them) | Cleanup / Test | **P3** | M |
 | **PM-2** | Decide & document the derivation-architecture stance (converge vs. deliberately diverge) | Parity | **P2** | S (decision) |
 | **CL-2** | Fix stale Biome ignore path (generated files are currently being linted/formatted) — ✅ **done 2026-06-01** | Cleanup | **P2** | S |
@@ -55,6 +55,11 @@ The two engines compute different shapes:
 Both produce correct results today, but **the only thing keeping them in sync is the parity fixtures in `shared/test-fixtures/`** — and those primarily assert the *core entity* state. The radar and soil-history computations — the parts most likely to drift, because they live in totally different places on each platform — are the least covered cross-platform.
 
 **Recommendation:** Extend `derivation-parity.json` / `cross-platform-validation.json` so each fixture asserts the **complete** derived surface: `soilAvailable`, `soilCapacity`, `waterAvailable`, `sunAvailable`, `wateringStreak`, **`radarScores`**, and bucketed **soil-history** values. Then a soil-formula or radar-weight change can't pass on one platform and silently break the other. Pair this with **TC-1** (run it on iOS CI) and the #1 systemic risk is essentially neutralized — without rewriting any working code.
+
+**Progress (2026-06-03):**
+- ✅ **Radar scores** + **watering streak** added to `derivation-parity.json` `expectedState`, with assertions in **both** `web/src/tests/parity.test.ts` (verified — full web suite green, 1413 tests) and `ios/TrunkTests/ParityTests.swift` (added; pending first Xcode/CI run). The radar weight constants and harvest formula were checked by hand and are **identical** across platforms (`W_WATER=0.05`, `W_SUN=0.35`, ceiling `100`, harvest `= soilCost × resultMultiplier`), so these should pass on iOS — the new test simply *guarantees* it going forward.
+- ⚠️ **Soil-history is a confirmed structural divergence — do NOT just assert it.** The raw series is built differently on each platform: web's `computeRawSoilHistory` (`soil-charting.ts:52`) pushes exactly **one snapshot per soil-changing event** and **no initial point**; iOS (`EventDerivation.swift:215-219, 259-263`) **seeds an initial snapshot** from the first event *and* only appends on `sprout_watered` when the sprout is still active. So the two raw series have different lengths/contents by construction. This is likely benign at the *chart* level (bucketing smooths it), but it means there's no single "soil history" to assert. **Action:** before adding a soil-history fixture, decide whether to (a) converge the two raw builders, or (b) assert only the *bucketed* output both platforms actually render. This is the concrete instance that should drive the PM-2 decision below.
+- Remaining for full PM-1: water/sun *already* covered; add bucketed soil-history once (a)/(b) above is decided; widen to `cross-platform-validation.json` (the larger narrative fixture).
 
 ### PM-2 — Pick a stance on the architectural divergence *(P2, decision only)*
 
@@ -147,22 +152,27 @@ The one real issue is **streak**:
 
 ## 4. Security & Correctness *(flagged regardless of focus)*
 
-### SC-1 — Verify RLS on `events` *(P0, S)*
+### SC-1 — RLS on `events` — core confirmed *(was P0 → now P2, S)*
 
-The web client ships the Supabase **anon key** (correct — `lib/supabase.ts` is clean, key from env, lazy-loaded). That means **Row-Level Security is the only thing preventing one authenticated user from reading or writing another's events.** I could not verify it live (the Supabase MCP returned `Unauthorized` in this environment). **Action:** run `get_advisors({type:"security"})` with a valid `SUPABASE_ACCESS_TOKEN`, or check the dashboard, and confirm:
-- RLS is **enabled** on `events`,
+The web client ships the Supabase **anon key** (correct — `lib/supabase.ts` is clean, key from env, lazy-loaded). That means **Row-Level Security is the only thing preventing one authenticated user from reading or writing another's events.**
+
+**Update 2026-06-03:** maintainer confirmed via the dashboard that **RLS is enabled** on the `events` table. That closes the critical data-isolation concern. (Could not verify via MCP — the Supabase server returns `Unauthorized` in this environment because `SUPABASE_ACCESS_TOKEN` isn't resolving from `.mcp.json`'s env interpolation.)
+
+**Remaining (P2, verification only — no known hole):** confirm the policy *shape*, not just that RLS is on —
 - `SELECT/INSERT` policies restrict rows to `auth.uid() = user_id`,
-- there's no permissive `anon` policy.
+- there's no permissive `anon` policy that bypasses the above.
 
-If any of that is missing, it's a data-isolation breach and jumps to the top of the list.
+Easiest path is SC-2 below: once the policies live in `supabase/migrations/` as SQL, this is reviewable in the repo instead of behind the dashboard.
 
 ### SC-2 — Version the backend *(P0→ongoing, M)*
 
 There is **no `supabase/` directory** — no migrations, no RLS policy SQL, no edge-function source in the repo. The `events` table, the `UNIQUE(client_id)` constraint that the whole dedup story depends on, and the `e2e-login` edge function (`verify_jwt: false`, per CLAUDE.md) all live only in the hosted project. That means they can't be code-reviewed, can't be rolled back, and aren't reproducible. **Action:** `supabase db pull` into `supabase/migrations/`, download edge functions into `supabase/functions/`, and commit them. This also makes SC-1 reviewable as code, and lets you confirm `e2e-login` can *only* mint a session for the allowlisted test email (a `verify_jwt:false` function is a backdoor if its allowlist is wrong).
 
-### SC-3 — XSS discipline is good; do one sweep to be sure *(P2, S)*
+### SC-3 — XSS discipline is good — ✅ swept, clean *(P2, S)*
 
-The `innerHTML` template in `event-handlers.ts:190-196` escapes **every** interpolation via `escapeHtml()` — exactly right. Since the app uses `innerHTML` with user content (sprout titles, water/sun reflections) as a deliberate pattern, do a quick repo-wide grep for `innerHTML` / template literals and confirm the same discipline holds everywhere (defense in depth). Nothing looked wrong; this is verification, not a known hole.
+The `innerHTML` template in `event-handlers.ts:190-196` escapes **every** interpolation via `escapeHtml()` — exactly right.
+
+**Update 2026-06-03:** ran the full repo-wide sweep (`grep` for `innerHTML`/`outerHTML`/`insertAdjacentHTML`, cross-referenced against `escapeHtml` call sites). Result: **every sink that touches user content is escaped** — sprout titles, reflections, bloom fields, water/sun content + prompts, leaf names, seedling notes (`leaf-view.ts`, `sprout-cards.ts`, `seedlings.ts`, `event-handlers.ts`, `soilbag-/sunlog-/watercan-/water-dialog.ts`). The one hand-rolled case, `node-ui.ts:265`, escapes `&`/`<`/`>` inline before converting `\n`→`<br>` (safe in a text context). All remaining `innerHTML` writes are static template strings or numeric `toFixed`/count interpolation — no user data. **No hole found; item closed.**
 
 ---
 
@@ -205,7 +215,7 @@ Tier-2 perf (watered-set caching, tooltip layout, realtime microtask batching) a
 
 ### Suggested sequencing
 
-1. **SC-1** (verify RLS) — one command, potentially critical. Do today.
+1. **SC-1** (verify RLS) — ✅ RLS confirmed enabled (2026-06-03). Only the policy-shape check remains, which SC-2 makes trivial.
 2. **CL-2** — fix the Biome ignore path. ✅ *Done & verified 2026-06-01.*
 3. **TC-1 + PM-1** — the keystone: iOS CI running full-surface parity fixtures. This is what makes everything else safe to change.
 4. **SC-2** — commit the backend.

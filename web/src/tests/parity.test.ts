@@ -12,11 +12,13 @@ import {
   deriveState,
   deriveSunAvailable,
   deriveWaterAvailable,
+  deriveWateringStreak,
   getActiveSprouts,
   getCompletedSprouts,
   getLeavesForTwig,
   getSproutsForTwig,
 } from '../events/derive'
+import { computeBranchEngagement } from '../events/radar-charting'
 import type { TrunkEvent } from '../events/types'
 
 // Convert fixture events to TrunkEvent format
@@ -107,6 +109,24 @@ describe('Cross-Platform Parity Tests', () => {
         const leaves = getLeavesForTwig(state, twigId)
         expect(leaves.length).toBe(expectedCount)
       }
+    })
+
+    // PM-1: cover the structurally-divergent code (radar + streak).
+    // iOS folds these inline into deriveState(); web computes them in
+    // separate modules. Both must produce these same values.
+    it('derives correct radar engagement scores (per branch)', () => {
+      const engagement = computeBranchEngagement(events)
+      const scores = engagement.map((b) => b.score)
+      expect(scores.length).toBe(expected.radarScores.values.length)
+      scores.forEach((score, i) => {
+        expect(score).toBeCloseTo(expected.radarScores.values[i], 4)
+      })
+    })
+
+    it('derives correct watering streak (current + longest)', () => {
+      const streak = deriveWateringStreak(events, testDate)
+      expect(streak.current).toBe(expected.wateringStreak.current)
+      expect(streak.longest).toBe(expected.wateringStreak.longest)
     })
   })
 

@@ -133,6 +133,17 @@
     "leavesForTwig": {
       "branch-0-twig-0": 1,
       "branch-1-twig-0": 0
+    },
+
+    "radarScores": {
+      "_note": "Per-branch engagement scores (0-1), branch index 0-7. Weighted total / ceiling(100). Web computeBranchEngagement / iOS DerivedState.radarScores must match. Branch 0: plant(2)+plant(5)+harvest(2*0.85)+2 water(0.05) = 8.8/100. Branch 1: plant(10)+1 water(0.05)+1 sun(0.35) = 10.4... see rawTotals.",
+      "values": [0.0915, 0.1005, 0, 0, 0, 0, 0, 0]
+    },
+
+    "wateringStreak": {
+      "_note": "Day-bucketed (6am boundary) watering streak as of testDate. current=0 (no water on Jan 29 or Jan 28-after-reset run reaching today), longest=2 consecutive days.",
+      "current": 0,
+      "longest": 2
     }
   },
 
