@@ -58,6 +58,7 @@ describe('App Smoke Tests', () => {
         'sidebar.css',
         'nodes.css',
         'twig-view.css',
+        'leaf-view.css',
         'index.css',
       ]
 

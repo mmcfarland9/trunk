@@ -1,0 +1,184 @@
+/* ===== Leaf View ===== */
+
+.leaf-view {
+  position: absolute;
+  inset: -4.5rem 0 -2rem 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  /* Fade in */
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.leaf-view.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.leaf-view-box {
+  position: relative;
+  width: min(520px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: scale-in 200ms ease;
+}
+
+.leaf-close-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: transparent;
+  border: none;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  transition: color 150ms ease;
+  z-index: 1;
+}
+
+.leaf-close-btn:hover {
+  color: var(--ink);
+}
+
+.leaf-view-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5);
+  padding-top: var(--space-6); /* Room for close button */
+}
+
+.leaf-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.log-empty {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+/* Log Entries */
+
+.log-entry {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.log-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.log-entry-type {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.log-entry-time {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.log-entry-title {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  margin: 0;
+}
+
+.log-entry-meta {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  margin: var(--space-1) 0 0 0;
+}
+
+.log-entry-bloom {
+  margin: var(--space-2) 0 0 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+
+.log-entry-bloom .bloom-item {
+  display: block;
+  color: var(--ink-light);
+}
+
+.log-entry-result {
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  margin: var(--space-1) 0 0 0;
+}
+
+.log-entry-reflection {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-style: italic;
+  margin: var(--space-2) 0 0 0;
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--border);
+}
+
+.log-entry-prompt {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  font-style: italic;
+  margin: 0 0 var(--space-1) 0;
+}
+
+.log-entry-content {
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+/* Entry type variations */
+
+.log-entry-start {
+  border-left: 2px solid var(--twig);
+}
+
+.log-entry-water {
+  border-left: 2px solid steelblue;
+}
+
+.log-entry-completion.is-success {
+  border-left: 2px solid var(--twig);
+}
+
+.log-entry-completion.is-failed {
+  border-left: 2px solid #a54;
+}

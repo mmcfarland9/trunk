@@ -28,7 +28,7 @@ The single most important theme: **the business logic isn't shared — it's hand
 | **PF-1** | Self-host / subset the 3 render-blocking Google Font families | Perf | **P2** | S |
 | **PM-3** | Generate the iOS event-type enum (kill 19 hand-typed string literals) | Parity | **P2** | S |
 | **PF-2** | Give iOS `DerivedState` the same O(1) indexes web has | Perf / Parity | **P3** | S |
-| **CL-4** | Split `twig-view.css` (886 lines) | Cleanup | **P3** | S |
+| **CL-4** | Split `twig-view.css` (886 lines) — ✅ **done 2026-06-03**: extracted Leaf View → `leaf-view.css` (twig-view now 701 lines, under the 800 cap) | Cleanup | **P3** | S |
 | **TC-2** | Extract iOS form-view logic into ViewModels for testability (carried from Mar-2026 audit) | Testing | **P3** | M |
 
 **Severity:** P0 = correctness/security risk · P1 = high leverage · P2 = worthwhile · P3 = polish
@@ -140,9 +140,9 @@ The one real issue is **streak**:
 
 `toSprout()` (`derive.ts:468-491`) converts `DerivedSprout` → a pre-event-sourcing `Sprout` type, and it's called in 5+ UI sites (`leaf-view.ts:63`, `twig-view/event-handlers.ts:43`, `twig-view/index.ts:72`, `features/progress.ts:128,135`). The UI is still coupled to the old shape. Migrating those consumers to read `DerivedSprout` directly removes the adapter, the legacy type, and a class of "which sprout type is this?" confusion. Do it incrementally, one consumer at a time, behind the existing tests.
 
-### CL-4 — Split `twig-view.css` *(P3, S)*
+### CL-4 — Split `twig-view.css` — ✅ done *(P3, S)*
 
-886 lines — the one stylesheet over your informal 800 limit (everything else is well-split, 60–354 lines). Break out the edit-form / card / panel sections.
+Was 886 lines — the one stylesheet over your informal 800 limit (everything else is well-split, 60–354 lines). **Done 2026-06-03:** the file actually contained two distinct views; extracted the self-contained **Leaf View** section (modal + log entries, ~184 lines) into a new `leaf-view.css`, `@import`ed right after `twig-view.css` in `index.css` to preserve cascade order. `twig-view.css` is now 701 lines. Verified: production build byte-identical CSS output (73.18 kB), smoke test green.
 
 ### CL-5 — Housekeeping *(P3, trivial)*
 
