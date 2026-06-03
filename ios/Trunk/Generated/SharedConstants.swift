@@ -63,6 +63,14 @@ enum SharedConstants {
         static let resetHour: Int = 6
     }
 
+    // MARK: - Radar Chart
+
+    enum RadarChart {
+        /// A branch reaching this weighted-activity total renders at 100% engagement.
+        /// Radar per-event weights reuse Soil.waterRecovery / Soil.sunRecovery.
+        static let engagementCeiling: Double = 100
+    }
+
     // MARK: - Seasons
 
     enum Seasons {

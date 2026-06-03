@@ -187,9 +187,10 @@ func deriveState(from events: [SyncEvent], now: Date = Date()) -> DerivedState {
     let branchCount = SharedConstants.Tree.branchCount
     var radarWeighted = Array(repeating: 0.0, count: branchCount)
     var radarSproutInfo: [String: (twigId: String, soilCost: Double)] = [:]
-    let radarWWater = 0.05
-    let radarWSun = 0.35
-    let radarCeiling = 100.0
+    // Per-event weights = soil recovery rates (single source of truth in constants.json).
+    let radarWWater = SharedConstants.Soil.waterRecovery
+    let radarWSun = SharedConstants.Soil.sunRecovery
+    let radarCeiling = SharedConstants.RadarChart.engagementCeiling
 
     // Timestamp cache: avoid re-parsing the same ISO8601 string multiple times
     var timestampCache: [String: Date] = [:]

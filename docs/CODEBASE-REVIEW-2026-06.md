@@ -75,9 +75,11 @@ Whatever you choose, write one paragraph in `ARCHITECTURE.md` stating it. The da
 
 iOS has **19 hand-typed event-type string literals** (`case "sprout_planted":` …) vs web's single `EVENT_TYPES` constant. A typo or a new event type is a silent drift surface. `shared/generate-constants.js` already emits `SharedConstants.swift` — extend it to emit an `EventType` enum (and ideally the dedup-key field list), so the strings have one source of truth.
 
-### PM-4 — De-duplicate the magic weights *(P3, S)*
+### PM-4 — De-duplicate the magic weights — ✅ done *(P3, S)*
 
-Radar weights are triple-defined: a comment "from constants.json" plus hardcoded literals in **both** `radar-charting.ts:21-26` (`W_WATER = 0.05`, `W_SUN = 0.35`, `ENGAGEMENT_CEILING = 100`) **and** `EventDerivation.swift:190-192`. They happen to match the soil recovery rates but aren't read from them. Promote to `constants.json` and generate, or read the existing recovery-rate constants directly.
+Radar weights were triple-defined: a comment "from constants.json" plus hardcoded literals in **both** `radar-charting.ts:21-26` (`W_WATER = 0.05`, `W_SUN = 0.35`, `ENGAGEMENT_CEILING = 100`) **and** `EventDerivation.swift:190-192`. They happened to match the soil recovery rates but weren't read from them.
+
+**Done 2026-06-03:** the recovery rates were *already* generated (`SOIL_WATER_RECOVERY`/`SOIL_SUN_RECOVERY` on web, `Soil.waterRecovery`/`Soil.sunRecovery` on iOS) — the radar code just ignored them. Added the one missing constant (`radarChart.engagementCeiling`) to the generator (→ `RADAR_ENGAGEMENT_CEILING` / `SharedConstants.RadarChart.engagementCeiling`), then pointed both radar implementations at the generated values. `constants.json` is now the single source of truth. Behavior-preserving: the radar **parity test** (PM-1) still yields identical scores on web (verified, 1414 tests green); iOS change mirrors the existing `SharedConstants.Tree.branchCount` usage in the same function and is exercised by iOS CI.
 
 ### PM-5 — Radar uses different twig-parsing on each platform *(P3, note)*
 

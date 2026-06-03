@@ -17,34 +17,34 @@ export const PLANTING_COSTS = {
   '2w': {
     fertile: 2,
     firm: 3,
-    barren: 4,
+    barren: 4
   },
   '1m': {
     fertile: 3,
     firm: 5,
-    barren: 6,
+    barren: 6
   },
   '3m': {
     fertile: 5,
     firm: 8,
-    barren: 10,
+    barren: 10
   },
   '6m': {
     fertile: 8,
     firm: 12,
-    barren: 16,
+    barren: 16
   },
   '1y': {
     fertile: 12,
     firm: 18,
-    barren: 24,
-  },
+    barren: 24
+  }
 } as const
 
 export const ENVIRONMENT_MULTIPLIERS = {
   fertile: 1.1,
   firm: 1.75,
-  barren: 2.4,
+  barren: 2.4
 } as const
 
 export const RESULT_MULTIPLIERS = {
@@ -52,12 +52,20 @@ export const RESULT_MULTIPLIERS = {
   2: 0.55,
   3: 0.7,
   4: 0.85,
-  5: 1,
+  5: 1
 } as const
 
 export const SOIL_WATER_RECOVERY = 0.05
 export const SOIL_SUN_RECOVERY = 0.35
 export const SOIL_UPROOT_REFUND_RATE = 0.25
+
+// =============================================================================
+// Radar Chart
+// =============================================================================
+
+// A branch reaching this weighted-activity total renders at 100% engagement.
+// Radar per-event weights reuse the soil recovery rates above.
+export const RADAR_ENGAGEMENT_CEILING = 100
 
 // =============================================================================
 // Water Constants
@@ -81,28 +89,28 @@ export const SEASONS = {
   '2w': {
     label: '2 weeks',
     durationMs: 1209600000,
-    baseReward: 0.26,
+    baseReward: 0.26
   },
   '1m': {
     label: '1 month',
     durationMs: 2592000000,
-    baseReward: 0.56,
+    baseReward: 0.56
   },
   '3m': {
     label: '3 months',
     durationMs: 7776000000,
-    baseReward: 1.95,
+    baseReward: 1.95
   },
   '6m': {
     label: '6 months',
     durationMs: 15552000000,
-    baseReward: 4.16,
+    baseReward: 4.16
   },
   '1y': {
     label: '1 year',
     durationMs: 31536000000,
-    baseReward: 8.84,
-  },
+    baseReward: 8.84
+  }
 } as const
 
 // =============================================================================
@@ -113,18 +121,18 @@ export const ENVIRONMENTS = {
   fertile: {
     label: 'Fertile',
     description: 'Easy to achieve',
-    formHint: '[Comfortable terrain · no soil bonus]',
+    formHint: '[Comfortable terrain · no soil bonus]'
   },
   firm: {
     label: 'Firm',
     description: 'Challenging stretch',
-    formHint: '[New obstacles · +1 soil capacity]',
+    formHint: '[New obstacles · +1 soil capacity]'
   },
   barren: {
     label: 'Barren',
     description: 'Very difficult',
-    formHint: '[Hostile conditions · +2 soil capacity]',
-  },
+    formHint: '[Hostile conditions · +2 soil capacity]'
+  }
 } as const
 
 // =============================================================================
@@ -135,28 +143,28 @@ export const RESULTS = {
   1: {
     label: 'Minimal',
     description: 'Showed up but little progress',
-    emoji: '🥀',
+    emoji: '🥀'
   },
   2: {
     label: 'Partial',
     description: 'Made some progress',
-    emoji: '🌱',
+    emoji: '🌱'
   },
   3: {
     label: 'Good',
     description: 'Met most expectations',
-    emoji: '🌿',
+    emoji: '🌿'
   },
   4: {
     label: 'Strong',
     description: 'Exceeded expectations',
-    emoji: '🌳',
+    emoji: '🌳'
   },
   5: {
     label: 'Exceptional',
     description: 'Fully achieved and then some',
-    emoji: '🌲',
-  },
+    emoji: '🌲'
+  }
 } as const
 
 // =============================================================================
@@ -170,7 +178,7 @@ export const BRANCHES = [
   {
     name: 'CORE',
     description: 'fitness & vitality',
-    motto: "that which energizes one's body",
+    motto: 'that which energizes one\'s body',
     twigs: [
       { label: 'movement', description: 'locomotion; ambulation; cardio' },
       { label: 'strength', description: 'force; power; might' },
@@ -179,8 +187,8 @@ export const BRANCHES = [
       { label: 'maintenance', description: 'mobility, rehab; durability' },
       { label: 'nutrition', description: 'sustenance; nourishment; fuel' },
       { label: 'sleep', description: 'rest; cycle; rhythm' },
-      { label: 'appearance', description: 'grooming, presentation; styling' },
-    ],
+      { label: 'appearance', description: 'grooming, presentation; styling' }
+    ]
   },
   {
     name: 'BRAIN',
@@ -194,13 +202,13 @@ export const BRANCHES = [
       { label: 'memory', description: 'retention; consolidation; recall' },
       { label: 'analysis', description: 'judgment; evaluation; appraisal' },
       { label: 'dialogue', description: 'exchange; conversation; discourse' },
-      { label: 'exploration', description: 'wonder; inquiry; discovery' },
-    ],
+      { label: 'exploration', description: 'wonder; inquiry; discovery' }
+    ]
   },
   {
     name: 'VOICE',
     description: 'expression & creativity',
-    motto: "that which gives one's ideas a form",
+    motto: 'that which gives one\'s ideas a form',
     twigs: [
       { label: 'practice', description: 'rehearsal; repetition; rudiments' },
       { label: 'composition', description: 'authorship; genesis; origination' },
@@ -209,8 +217,8 @@ export const BRANCHES = [
       { label: 'consumption', description: 'engagement; immersion; audience' },
       { label: 'curation', description: 'taste; selection; compilation' },
       { label: 'completion', description: 'editing; finalization; polish' },
-      { label: 'publication', description: 'distribution; exhibition; broadcast' },
-    ],
+      { label: 'publication', description: 'distribution; exhibition; broadcast' }
+    ]
   },
   {
     name: 'HANDS',
@@ -224,8 +232,8 @@ export const BRANCHES = [
       { label: 'refinement', description: 'finishing, modification, calibration' },
       { label: 'tooling', description: 'equipment; instruments; machinery' },
       { label: 'tending', description: 'cultivation; caretaking; growth' },
-      { label: 'preparation', description: 'arrangement; staging; setting' },
-    ],
+      { label: 'preparation', description: 'arrangement; staging; setting' }
+    ]
   },
   {
     name: 'HEART',
@@ -239,13 +247,13 @@ export const BRANCHES = [
       { label: 'communication', description: 'transparency; candor; reciprocity' },
       { label: 'ritual', description: 'celebration; routine; habit' },
       { label: 'adventure', description: 'spontaneity; novelty; wanderlust' },
-      { label: 'joy', description: 'playfulness; delight; gaiety' },
-    ],
+      { label: 'joy', description: 'playfulness; delight; gaiety' }
+    ]
   },
   {
     name: 'BREATH',
     description: 'regulation & renewal',
-    motto: "that which balances one's psyche",
+    motto: 'that which balances one\'s psyche',
     twigs: [
       { label: 'observation', description: 'noticing; perception; recognition' },
       { label: 'nature', description: 'reverence, grace; mystery' },
@@ -254,8 +262,8 @@ export const BRANCHES = [
       { label: 'idleness', description: 'stillness, silence, solitude' },
       { label: 'exposure', description: 'elements, challenge; conditioning' },
       { label: 'abstinence', description: 'restraint, temperance; withholding' },
-      { label: 'reflection', description: 'contemplation, acceptance, gratitude' },
-    ],
+      { label: 'reflection', description: 'contemplation, acceptance, gratitude' }
+    ]
   },
   {
     name: 'BACK',
@@ -269,8 +277,8 @@ export const BRANCHES = [
       { label: 'stewardship', description: 'preservation; custodianship; guardianship' },
       { label: 'advocacy', description: 'morality, citizenship; justice' },
       { label: 'service', description: 'contribution, mentorship; charity' },
-      { label: 'culture', description: 'heritage, tradition; legacy' },
-    ],
+      { label: 'culture', description: 'heritage, tradition; legacy' }
+    ]
   },
   {
     name: 'FEET',
@@ -284,9 +292,9 @@ export const BRANCHES = [
       { label: 'finance', description: 'budgeting, resources; capital' },
       { label: 'operations', description: 'logistics, orchestration; scheduling' },
       { label: 'planning', description: 'provision, security; forecasting' },
-      { label: 'administration', description: 'governance; compliance; management' },
-    ],
-  },
+      { label: 'administration', description: 'governance; compliance; management' }
+    ]
+  }
 ] as const
 
 // =============================================================================
@@ -299,7 +307,7 @@ export const STORAGE_KEYS = {
   notifications: 'trunk-notifications-v1',
   settings: 'trunk-settings-v1',
   events: 'trunk-events-v1',
-  lastExport: 'trunk-last-export',
+  lastExport: 'trunk-last-export'
 } as const
 
 export const EXPORT_REMINDER_DAYS = 7
@@ -318,7 +326,7 @@ export const EVENT_TYPES = [
   'leaf_created',
   'seedling_created',
   'seedling_edited',
-  'seedling_deleted',
+  'seedling_deleted'
 ] as const
 
 export const VALID_EVENT_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES)

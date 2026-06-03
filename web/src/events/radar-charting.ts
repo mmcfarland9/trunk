@@ -12,18 +12,23 @@
  */
 
 import { BRANCH_COUNT } from '../constants'
-import { RESULT_MULTIPLIERS } from '../generated/constants'
+import {
+  RADAR_ENGAGEMENT_CEILING,
+  RESULT_MULTIPLIERS,
+  SOIL_SUN_RECOVERY,
+  SOIL_WATER_RECOVERY,
+} from '../generated/constants'
 import { getPresetLabel } from '../state'
 import { parseTwigId } from '../utils/twig-id'
 import type { TrunkEvent } from './types'
 
-// Flat per-event weights from soil recovery rates (constants.json)
-const W_WATER = 0.05
-const W_SUN = 0.35
+// Flat per-event weights = soil recovery rates (single source of truth in constants.json).
+const W_WATER = SOIL_WATER_RECOVERY
+const W_SUN = SOIL_SUN_RECOVERY
 
 // Absolute ceiling: a branch at this weighted total = 100%.
 // Multiple branches can reach 100% independently.
-const ENGAGEMENT_CEILING = 100
+const ENGAGEMENT_CEILING = RADAR_ENGAGEMENT_CEILING
 
 export type BranchEngagement = {
   branchIndex: number

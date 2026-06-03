@@ -116,6 +116,14 @@ export const SOIL_SUN_RECOVERY = ${constants.soil.recoveryRates.sunUse}
 export const SOIL_UPROOT_REFUND_RATE = ${constants.soil.uprootRefundRate}
 
 // =============================================================================
+// Radar Chart
+// =============================================================================
+
+// A branch reaching this weighted-activity total renders at 100% engagement.
+// Radar per-event weights reuse the soil recovery rates above.
+export const RADAR_ENGAGEMENT_CEILING = ${constants.radarChart.engagementCeiling}
+
+// =============================================================================
 // Water Constants
 // =============================================================================
 
@@ -307,6 +315,14 @@ ${Object.entries(constants.soil.resultMultipliers)
     enum Sun {
         static let weeklyCapacity: Int = ${constants.sun.weeklyCapacity}
         static let resetHour: Int = ${constants.sun.resetHour}
+    }
+
+    // MARK: - Radar Chart
+
+    enum RadarChart {
+        /// A branch reaching this weighted-activity total renders at 100% engagement.
+        /// Radar per-event weights reuse Soil.waterRecovery / Soil.sunRecovery.
+        static let engagementCeiling: Double = ${constants.radarChart.engagementCeiling}
     }
 
     // MARK: - Seasons
