@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "REFERENCE DOC, NOT THE RUNTIME GATE. Event validation is enforced by the hand-written validateEvent() in web/src/events/types.ts (mirrored in iOS), which is the source of truth and may intentionally diverge from this schema (e.g. the optional `prompt` field). Keep this schema in sync by hand, or generate validateEvent() from it — do not assume it is authoritative.",
   "title": "TrunkEvent",
   "description": "Immutable event log - the single source of truth for all state",
   "oneOf": [

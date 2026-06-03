@@ -85,9 +85,11 @@ Radar weights were triple-defined: a comment "from constants.json" plus hardcode
 
 Web derives the branch via `parseTwigId(...).branchIndex` (`radar-charting.ts:59`); iOS uses prefix matching `twigId.hasPrefix("branch-\(i)")` (`EventDerivation.swift:363-370`). Same result for well-formed IDs, but two parsers for one concept. The memory of known radar misalignments (amplitude 3 pt web vs 6 pt iOS; min-score 0 vs 0.08) lives in the *presentation* layer, which is fine to differ — but the *scoring* should share one parsing rule (covered if PM-1 lands).
 
-### PM-6 — JSON schemas aren't the source of truth *(P3, note)*
+### PM-6 — JSON schemas aren't the source of truth — ✅ labeled *(P3, note)*
 
-`shared/schemas/*.schema.json` exist but aren't enforced at runtime; the hand-written `validateEvent()` (`types.ts:176`) is the real gate, and it already intentionally diverges from the schema (the `prompt` field, `types.ts:200`). So the schemas are documentation that can rot. Either (a) generate `validateEvent` from the schema, or (b) demote the schemas to clearly-labeled docs. Don't leave two "truths."
+`shared/schemas/*.schema.json` exist but aren't enforced at runtime; the hand-written `validateEvent()` (`types.ts:176`) is the real gate, and it already intentionally diverges from the schema (the `prompt` field, `types.ts:200`). So the schemas are documentation that can rot. Either (a) generate `validateEvent` from the schema, or (b) demote the schemas to clearly-labeled docs.
+
+**Done 2026-06-03 (option b):** added a `$comment` annotation to all four schemas (`events`, `leaf`, `node-data`, `sprout`) stating they are **reference docs, not the runtime gate**, naming `validateEvent()` / `derive.ts` as authoritative and noting the intentional `prompt`-field divergence. This removes the "two silent truths" trap without foreclosing option (a) later. (`$comment` is a no-op JSON-Schema annotation; all four still parse.)
 
 ---
 

@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "REFERENCE DOC, NOT RUNTIME-ENFORCED. No code loads this schema at runtime; the live shape is DerivedSprout in web/src/events/derive.ts (and the legacy Sprout type in web/src/types.ts). Treat as documentation that may lag the code.",
   "title": "Sprout",
   "description": "A goal being cultivated on the tree",
   "type": "object",
