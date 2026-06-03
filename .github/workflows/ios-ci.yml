@@ -53,6 +53,7 @@ jobs:
         # placeholders as "not configured", so the build compiles and unit tests
         # run fully offline (Supabase is optional — see CLAUDE.md).
         run: |
+          mkdir -p ios/Trunk/Config
           cat > ios/Trunk/Config/Secrets.swift <<'EOF'
           // Auto-generated in CI — real values live in the gitignored Secrets.swift.
           enum Secrets {

@@ -141,8 +141,8 @@
     },
 
     "wateringStreak": {
-      "_note": "Day-bucketed (6am boundary) watering streak as of testDate. current=0 (no water on Jan 29 or Jan 28-after-reset run reaching today), longest=2 consecutive days.",
-      "current": 0,
+      "_note": "Day-bucketed (6am-local boundary) watering streak as of testDate, computed in UTC (both CI runners + the pinned test TZ use UTC). Water days = {Jan 27, Jan 28}. testDate Jan 29 is not watered, so the current streak is the run ending yesterday: Jan 28 + Jan 27 = 2. longest = 2. NOTE: streak is timezone-sensitive by design (6am LOCAL reset) — this fixture is only valid under a pinned UTC timezone.",
+      "current": 2,
       "longest": 2
     }
   },
