@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-04
+
 ### Added
 - Seedlings: pre-sprout backlog system for capturing ideas on twigs before committing soil. Add seedlings from twig detail view with inline title input. Edit via context menu or tap, delete via swipe or context menu. "Set" opens the sprout planting form pre-filled with the seedling title — seedling is only deleted after the sprout is successfully planted (no data loss on cancel). Browse all seedlings in the Garden tab's new Seedlings mode with twig location labels. Three new event types (seedling_created, seedling_edited, seedling_deleted) flow through existing event-sourced sync. Validation enforces 60-char title limit via SharedConstants.
 - Watering streak indicator in Water section on Today tab — shows "Xd streak" inline when the user has watered on consecutive days (6am-to-6am boundaries); hidden when streak is 0; re-wired `wateringStreak` property in `ProgressionViewModel` from `EventStore.shared.getWateringStreak()`
