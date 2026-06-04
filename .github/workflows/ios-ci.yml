@@ -1,0 +1,102 @@
+# iOS CI — builds the app and runs the unit + cross-platform parity tests.
+#
+# Why this exists: Trunk's derivation logic is hand-mirrored in TypeScript
+# (web/src/events/derive.ts) and Swift (ios/Trunk/Services/EventDerivation.swift).
+# The web side is guarded by CI (ci.yml); the iOS side was not, so cross-platform
+# drift could ship undetected. This job runs ios/TrunkTests (ParityTests,
+# EventDerivationTests, ProgressionServiceTests, DataExportServiceTests, …) on
+# every change to ios/ or shared/.
+#
+# Monorepo: web app in ./web/, iOS app in ./ios/, shared constants/fixtures in ./shared/.
+
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', 'shared/**', '.github/workflows/ios-ci.yml']
+  pull_request:
+    branches: [main]
+    paths: ['ios/**', 'shared/**', '.github/workflows/ios-ci.yml']
+  workflow_dispatch: # allow manual runs (e.g. to validate from the dev branch)
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & test (parity + derivation)
+    # NOTE: local dev uses Xcode 26.2. macos-15 + latest-stable is the safe default;
+    # if the build fails on a Swift/SDK version mismatch, switch to a macOS image that
+    # ships Xcode 26 (e.g. macos-26) and/or pin `xcode-version: '26.2'` below.
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Generate placeholder Secrets.swift
+        # ios/Trunk/Config/Secrets.swift is gitignored (holds real Supabase keys),
+        # so it's absent in a fresh checkout. The app reads Secrets.supabaseURL /
+        # Secrets.supabaseAnonKey; SupabaseClient.swift treats the "xxxxx" / "..."
+        # placeholders as "not configured", so the build compiles and unit tests
+        # run fully offline (Supabase is optional — see CLAUDE.md).
+        run: |
+          mkdir -p ios/Trunk/Config
+          cat > ios/Trunk/Config/Secrets.swift <<'EOF'
+          // Auto-generated in CI — real values live in the gitignored Secrets.swift.
+          enum Secrets {
+              static let supabaseURL = "https://xxxxx.supabase.co"
+              static let supabaseAnonKey = "ci-placeholder-anon-key-..."
+          }
+          EOF
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project ios/Trunk.xcodeproj \
+            -scheme Trunk
+
+      - name: Select a simulator
+        # Pick any available iPhone simulator by UDID so this works regardless of
+        # which device names the runner's Xcode ships (Xcode 16 → "iPhone 16",
+        # Xcode 26 → "iPhone 17", …). Avoids brittle hardcoded device names.
+        run: |
+          xcrun simctl list devices available | grep -E "iPhone" || true
+          UDID=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices[][] | select(.name | test("iPhone")) | .udid] | first')
+          if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+            echo "::error::No iPhone simulator available on this runner"; exit 1
+          fi
+          echo "Selected simulator UDID: $UDID"
+          echo "SIMULATOR_ID=$UDID" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ios/Trunk.xcodeproj \
+            -scheme Trunk \
+            -testPlan Trunk \
+            -destination "id=$SIMULATOR_ID" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: TestResults.xcresult
+          if-no-files-found: ignore

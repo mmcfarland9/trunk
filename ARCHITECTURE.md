@@ -121,6 +121,45 @@ Services/
 
 ---
 
+## Cross-Platform Derivation Parity
+
+`web/src/events/derive.ts` and `ios/Trunk/Services/EventDerivation.swift` are two
+hand-maintained implementations of the same event-replay rules. **They diverge
+structurally on purpose, and that divergence is locked by tests — not left to chance.**
+
+| Concern | Web | iOS |
+|---------|-----|-----|
+| Core entities | `deriveState()` | `deriveState()` |
+| Water / sun / streak | separate functions, cached in `store.ts` | folded inline into `deriveState()` (single pass) |
+| Radar scores | `radar-charting.ts` (`computeBranchEngagement`) | folded inline into `deriveState()` |
+| Soil history | `soil-charting.ts` (`computeRawSoilHistory`) | folded inline into `deriveState()` |
+| Lookup indexes | O(1) maps (`activeSproutsByTwig`, …) | `.values.filter` per lookup |
+
+**Why diverge:** iOS optimizes for a single replay pass + SwiftUI's free re-evaluation
+of `body`; web optimizes for modular, independently-testable, cached helpers. Converging
+the two structures (or extracting a single shared core) is deliberately **not** done — it
+would trade a well-understood duplication for either a risky refactor of working code or a
+novel cross-language build pipeline (YAGNI for a solo-maintained app).
+
+**How the divergence is kept safe:** the **only** thing keeping the two engines in sync is
+the shared fixtures in `shared/test-fixtures/` (notably `derivation-parity.json`), asserted
+by `web/src/tests/parity.test.ts` **and** `ios/TrunkTests/ParityTests.swift`. A change to a
+soil formula or radar weight that breaks parity fails the fixture on whichever platform
+drifts. Coverage currently includes: soil capacity/available, sprout/leaf/sun counts,
+per-sprout state, water/sun availability (6am/Monday boundaries), **radar engagement scores**,
+and **watering streak**. Extend the fixtures whenever you add derived surface — never let a
+derived value go cross-platform-untested.
+
+**Known intentional divergence — soil history:** the *raw* soil-history series is built
+differently on each platform (iOS seeds an initial snapshot from the first event and only
+appends on `sprout_watered` while the sprout is active; web emits one snapshot per
+soil-changing event with no initial point). This is acceptable because both feed into the
+same *bucketing* step before rendering, and only the bucketed output is user-visible. If you
+ever need to assert soil history cross-platform, assert the **bucketed** output, not the raw
+series.
+
+---
+
 ## Sync
 
 Local-first, optimistic push to Supabase `events` table.

@@ -44,6 +44,10 @@ describe('generated constants', () => {
     expect(generated.SOIL_SUN_RECOVERY).toBe(0.35)
   })
 
+  it('exports radar engagement ceiling', () => {
+    expect(generated.RADAR_ENGAGEMENT_CEILING).toBe(sharedConstants.radarChart.engagementCeiling)
+  })
+
   it('exports environments data', () => {
     expect(generated.ENVIRONMENTS.fertile.label).toBe('Fertile')
     expect(generated.ENVIRONMENTS.barren.description).toBe('Very difficult')

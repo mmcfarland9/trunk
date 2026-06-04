@@ -32,6 +32,8 @@ struct ParityFixture: Decodable {
         let sproutDetails: [String: SproutDetail]
         let sproutsForTwig: [String: Int]
         let leavesForTwig: [String: Int]
+        let radarScores: RadarScores
+        let wateringStreak: WateringStreakExpected
     }
 
     struct WaterAvailable: Decodable {
@@ -40,6 +42,15 @@ struct ParityFixture: Decodable {
 
     struct SunAvailable: Decodable {
         let value: Int
+    }
+
+    struct RadarScores: Decodable {
+        let values: [Double]
+    }
+
+    struct WateringStreakExpected: Decodable {
+        let current: Int
+        let longest: Int
     }
 
     struct SproutDetail: Decodable {
@@ -289,6 +300,41 @@ struct DerivationParityTests {
         let available = deriveSunAvailable(from: events, now: testDate)
 
         #expect(available == fixture.expectedState.sunAvailable.value)
+    }
+
+    // PM-1: cover the structurally-divergent code (radar + streak).
+    // Web computes these in separate modules; iOS folds them inline into
+    // deriveState(). Both must produce these same values.
+    @Test("derives correct radar engagement scores (per branch)")
+    func radarScores() throws {
+        guard let fixture = loadParityFixture() else {
+            Issue.record("Could not load parity fixture")
+            return
+        }
+
+        let events = convertToSyncEvents(fixture.events)
+        let state = deriveState(from: events)
+        let expected = fixture.expectedState.radarScores.values
+
+        #expect(state.radarScores.count == expected.count)
+        for (i, score) in state.radarScores.enumerated() where i < expected.count {
+            #expect(abs(score - expected[i]) < 0.0001, "radar branch \(i): \(score) vs \(expected[i])")
+        }
+    }
+
+    @Test("derives correct watering streak (current + longest)")
+    func wateringStreak() throws {
+        guard let fixture = loadParityFixture() else {
+            Issue.record("Could not load parity fixture")
+            return
+        }
+
+        let events = convertToSyncEvents(fixture.events)
+        let testDate = ISO8601DateFormatter().date(from: fixture._testDate)!
+        let streak = deriveWateringStreak(from: events, now: testDate)
+
+        #expect(streak.current == fixture.expectedState.wateringStreak.current)
+        #expect(streak.longest == fixture.expectedState.wateringStreak.longest)
     }
 
     @Test("derives correct sprout states")

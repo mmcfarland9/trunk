@@ -133,6 +133,17 @@
     "leavesForTwig": {
       "branch-0-twig-0": 1,
       "branch-1-twig-0": 0
+    },
+
+    "radarScores": {
+      "_note": "Per-branch engagement scores (0-1), branch index 0-7. Weighted total / ceiling(100). Web computeBranchEngagement / iOS DerivedState.radarScores must match. Branch 0: plant(2)+plant(5)+harvest(2*0.85)+2 water(0.05) = 8.8/100. Branch 1: plant(10)+1 water(0.05)+1 sun(0.35) = 10.4... see rawTotals.",
+      "values": [0.0915, 0.1005, 0, 0, 0, 0, 0, 0]
+    },
+
+    "wateringStreak": {
+      "_note": "Day-bucketed (6am-local boundary) watering streak as of testDate, computed in UTC (both CI runners + the pinned test TZ use UTC). Water days = {Jan 27, Jan 28}. testDate Jan 29 is not watered, so the current streak is the run ending yesterday: Jan 28 + Jan 27 = 2. longest = 2. NOTE: streak is timezone-sensitive by design (6am LOCAL reset) — this fixture is only valid under a pinned UTC timezone.",
+      "current": 2,
+      "longest": 2
     }
   },
 
