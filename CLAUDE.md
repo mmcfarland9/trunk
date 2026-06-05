@@ -26,7 +26,7 @@ npm run generate       # Regenerate constants from shared/
 
 **Build (iOS)** — open `ios/Trunk.xcodeproj` in Xcode. Maestro E2E: `ios/.maestro/run-all.sh`.
 
-**Before committing**: `cd web && npx biome format --write src/` — Lefthook pre-commit runs Biome check + `tsc --noEmit`.
+**Before committing**: `cd web && npx biome format --write src/` to keep CI green. No local git hooks run (commits/pushes are unguarded); GitHub CI enforces Biome check + `tsc --noEmit` + tests server-side.
 
 ---
 

@@ -1,5 +1,41 @@
 # Trunk Release Management
 
+## Quick Reference — updating web & iOS
+
+**Shipping code** (same for both platforms):
+
+```bash
+# 1. Work on dev — commit and push freely (Vercel makes preview deploys)
+git checkout dev
+git commit -am "feat: whatever" && git push
+
+# 2. Release to production — merge dev → main
+git checkout main && git merge dev && git push
+git checkout dev
+```
+
+The moment `main` is pushed:
+
+- **Web ships automatically** via Vercel — that's the entire web release, nothing else to do.
+- **iOS does NOT ship from the merge** — `main` is only *ready to archive*. iOS reaches TestFlight/App Store only after the Xcode step below.
+
+**Cutting a version** (manual, independent per platform — see [Versioning](#versioning)):
+
+- **Web**: bump `version` in `web/package.json`, update `web/CHANGELOG.md`, tag `web-vX.Y.Z`.
+- **iOS**: bump `MARKETING_VERSION` (all 4 spots) **and always** increment `CURRENT_PROJECT_VERSION` (build number — TestFlight rejects reused numbers) in `ios/Trunk.xcodeproj/project.pbxproj`, promote `ios/CHANGELOG.md` `[Unreleased]`, tag `ios-vX.Y.Z`.
+
+**iOS archive & upload** (Xcode, required every iOS release — Apple needs a signed build):
+
+1. `git checkout main && git pull`
+2. `open ios/Trunk.xcodeproj`
+3. Destination bar → **"Any iOS Device (arm64)"** (Archive is greyed out on a simulator)
+4. **Product → Archive** → Organizer → **Distribute App** → **TestFlight & App Store** → **Upload**
+5. Build appears in App Store Connect → TestFlight in ~5–15 min.
+
+> No local git hooks run on commit or push — pushes to `main` are instant. Formatting/type/test checks run in **GitHub CI** server-side; run `cd web && npx biome format --write src/` yourself before committing to keep CI green.
+
+---
+
 ## Branching
 
 | Branch | Purpose | Deploys to |
