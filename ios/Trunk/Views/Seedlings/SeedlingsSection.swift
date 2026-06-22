@@ -25,8 +25,8 @@ struct SeedlingsSection: View {
                     SeedlingCardView(
                         seedling: seedling,
                         onPlant: { onPlant(seedling) },
-                        onEdit: { newTitle in
-                            editSeedling(seedling.id, title: newTitle)
+                        onEdit: { newTitle, newNotes in
+                            editSeedling(seedling.id, title: newTitle, notes: newNotes)
                         },
                         onDelete: {
                             deleteSeedling(seedling.id)
@@ -90,17 +90,16 @@ struct SeedlingsSection: View {
         }
     }
 
-    private func editSeedling(_ seedlingId: String, title: String) {
+    private func editSeedling(_ seedlingId: String, title: String, notes: String?) {
         let clampedTitle = String(title.prefix(SharedConstants.Validation.maxSeedlingTitleLength))
         Task {
             do {
-                try await SyncService.shared.pushEvent(
-                    type: "seedling_edited",
-                    payload: [
-                        "seedlingId": .string(seedlingId),
-                        "title": .string(clampedTitle),
-                    ]
-                )
+                var payload: [String: JSONValue] = [
+                    "seedlingId": .string(seedlingId),
+                    "title": .string(clampedTitle),
+                ]
+                if let notes { payload["notes"] = .string(notes) }
+                try await SyncService.shared.pushEvent(type: "seedling_edited", payload: payload)
             } catch {
                 print("[SeedlingsSection] Failed to edit seedling: \(error)")
             }

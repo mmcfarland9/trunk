@@ -10,26 +10,40 @@ import SwiftUI
 struct SeedlingCardView: View {
     let seedling: DerivedSeedling
     let onPlant: () -> Void
-    let onEdit: (String) -> Void
+    let onEdit: (String, String?) -> Void
     let onDelete: () -> Void
 
     @State private var isEditing = false
     @State private var editTitle: String = ""
+    @State private var editNotes: String = ""
 
     var body: some View {
         HStack(spacing: 8) {
             if isEditing {
-                TextField("Title", text: $editTitle)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.subheadline)
-                    .onSubmit {
-                        commitEdit()
-                    }
-                    .onChange(of: editTitle) { _, newValue in
-                        if newValue.count > SharedConstants.Validation.maxSeedlingTitleLength {
-                            editTitle = String(newValue.prefix(SharedConstants.Validation.maxSeedlingTitleLength))
+                VStack(spacing: 4) {
+                    TextField("Title", text: $editTitle)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.subheadline)
+                        .onSubmit {
+                            commitEdit()
                         }
-                    }
+                        .onChange(of: editTitle) { _, newValue in
+                            if newValue.count > SharedConstants.Validation.maxSeedlingTitleLength {
+                                editTitle = String(newValue.prefix(SharedConstants.Validation.maxSeedlingTitleLength))
+                            }
+                        }
+                    TextField("Notes (optional)", text: $editNotes)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                        .onSubmit {
+                            commitEdit()
+                        }
+                        .onChange(of: editNotes) { _, newValue in
+                            if newValue.count > SharedConstants.Validation.maxSeedlingNotesLength {
+                                editNotes = String(newValue.prefix(SharedConstants.Validation.maxSeedlingNotesLength))
+                            }
+                        }
+                }
                 Button("Done") {
                     commitEdit()
                 }
@@ -61,6 +75,7 @@ struct SeedlingCardView: View {
         .contextMenu {
             Button {
                 editTitle = seedling.title
+                editNotes = seedling.notes ?? ""
                 isEditing = true
             } label: {
                 Label("Edit", systemImage: "pencil")
@@ -84,10 +99,12 @@ struct SeedlingCardView: View {
     }
 
     private func commitEdit() {
-        let trimmed = String(editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedTitle = String(editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
             .prefix(SharedConstants.Validation.maxSeedlingTitleLength))
-        if !trimmed.isEmpty, trimmed != seedling.title {
-            onEdit(trimmed)
+        let trimmedNotes = String(editNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+            .prefix(SharedConstants.Validation.maxSeedlingNotesLength))
+        if !trimmedTitle.isEmpty {
+            onEdit(trimmedTitle, trimmedNotes.isEmpty ? "" : trimmedNotes)
         }
         isEditing = false
     }
