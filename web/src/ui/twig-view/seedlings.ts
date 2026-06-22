@@ -99,7 +99,10 @@ export function startInlineSeedlingEdit(
   titleEl.replaceWith(input)
   input.focus()
   input.select()
+  let finished = false
   const commit = () => {
+    if (finished) return
+    finished = true
     const newTitle = input.value.trim()
     if (newTitle && newTitle !== seedling.title) editSeedling(seedlingId, newTitle)
     onDone()
@@ -110,7 +113,11 @@ export function startInlineSeedlingEdit(
       ke.preventDefault()
       commit()
     }
-    if (ke.key === 'Escape') onDone()
+    if (ke.key === 'Escape') {
+      if (finished) return
+      finished = true
+      onDone()
+    }
   })
 }
 
