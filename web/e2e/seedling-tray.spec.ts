@@ -28,7 +28,6 @@ test('plant a seedling from the sidebar tray pre-fills the title input', async (
 
   await page.reload()
   await page.waitForSelector('.canvas')
-  await page.waitForTimeout(500)
 
   // Expand the Seedlings section in the sidebar (starts collapsed)
   const seedlingsToggle = page.locator('.sprouts-toggle[data-section="seedlings"]')
@@ -45,7 +44,7 @@ test('plant a seedling from the sidebar tray pre-fills the title input', async (
   const isCollapsed = await branchFolder.evaluate((el) => el.classList.contains('is-collapsed'))
   if (isCollapsed) {
     await branchFolder.locator('.branch-folder-header').click()
-    await page.waitForTimeout(100)
+    await expect(branchFolder).not.toHaveClass(/is-collapsed/)
   }
 
   // Find the seedling card and read its title
