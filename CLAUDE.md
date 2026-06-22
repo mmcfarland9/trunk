@@ -47,7 +47,7 @@ npm run generate       # Regenerate constants from shared/
 | `seedling_edited` | seedlingId, then title?/notes? (sparse merge) |
 | `seedling_deleted` | seedlingId |
 
-**Seedlings**: pre-sprout idea stubs on a twig — no soil cost. "Setting" a seedling pre-fills the plant form, deleting the seedling only after the sprout is planted. Title capped at 60 chars (`MAX_SEEDLING_TITLE_LENGTH`).
+**Seedlings**: pre-sprout idea stubs on a twig — no soil cost. "Setting" a seedling pre-fills the plant form, deleting the seedling only after the sprout is planted. Title capped at 60 chars (`MAX_SEEDLING_TITLE_LENGTH`). All seedlings are browsable in a branch-grouped tray (iOS Garden → Seedlings; web sidebar) where they can be planted, edited (title + notes), or deleted in place.
 
 **Derivation**: `web/src/events/derive.ts` / `ios/Trunk/Services/EventDerivation.swift` — sorts events, deduplicates by `client_id`, replays into `DerivedState` (soil, sprouts, leaves, seedlings, indexed lookups). Both platforms must produce identical results.
 
