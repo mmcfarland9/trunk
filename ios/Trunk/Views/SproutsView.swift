@@ -45,7 +45,7 @@ struct SproutsView: View {
                     case .seedlings:
                         SeedlingsListView(
                             seedlings: viewModel.cachedSeedlings,
-                            groups: SproutsViewModel.seedlingsGroupedByBranch(viewModel.cachedSeedlings),
+                            groups: viewModel.cachedGroups,
                             progression: progression,
                             onChanged: { viewModel.refreshCachedState() }
                         )
