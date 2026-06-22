@@ -79,3 +79,62 @@ export function editSeedling(seedlingId: string, title?: string, notes?: string)
 export function getSeedlingById(seedlingId: string): DerivedSeedling | undefined {
   return getState().seedlings.get(seedlingId)
 }
+
+/**
+ * Inline-edit a seedling's title within its card. Mirrors the twig-view editor.
+ */
+export function startInlineSeedlingEdit(
+  card: HTMLElement,
+  seedlingId: string,
+  onDone: () => void,
+): void {
+  const seedling = getSeedlingById(seedlingId)
+  const titleEl = card.querySelector('.seedling-title')
+  if (!seedling || !titleEl) return
+  const input = document.createElement('input')
+  input.type = 'text'
+  input.className = 'seedling-edit-input'
+  input.value = seedling.title
+  input.maxLength = 60
+  titleEl.replaceWith(input)
+  input.focus()
+  input.select()
+  const commit = () => {
+    const newTitle = input.value.trim()
+    if (newTitle && newTitle !== seedling.title) editSeedling(seedlingId, newTitle)
+    onDone()
+  }
+  input.addEventListener('blur', commit)
+  input.addEventListener('keydown', (ke) => {
+    if (ke.key === 'Enter') {
+      ke.preventDefault()
+      commit()
+    }
+    if (ke.key === 'Escape') onDone()
+  })
+}
+
+/**
+ * Two-step delete: first click arms ("Sure?"), second click within 2s confirms.
+ */
+export function handleSeedlingDeleteClick(
+  actionEl: HTMLElement,
+  seedlingId: string,
+  onConfirm: () => void,
+): void {
+  if (actionEl.dataset.confirmDelete === 'true') {
+    deleteSeedling(seedlingId)
+    onConfirm()
+    return
+  }
+  actionEl.dataset.confirmDelete = 'true'
+  actionEl.textContent = 'Sure?'
+  actionEl.classList.add('is-confirming')
+  setTimeout(() => {
+    if (actionEl.dataset.confirmDelete === 'true') {
+      actionEl.dataset.confirmDelete = ''
+      actionEl.textContent = '×'
+      actionEl.classList.remove('is-confirming')
+    }
+  }, 2000)
+}
