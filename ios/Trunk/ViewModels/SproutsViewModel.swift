@@ -102,3 +102,29 @@ class SproutsViewModel {
         return leaves
     }
 }
+
+// MARK: - Seedling Grouping
+
+struct SeedlingBranchGroup: Identifiable {
+    let branchIndex: Int
+    let branchName: String
+    let seedlings: [DerivedSeedling]
+    var id: Int { branchIndex }
+}
+
+extension SproutsViewModel {
+    static func seedlingsGroupedByBranch(_ seedlings: [DerivedSeedling]) -> [SeedlingBranchGroup] {
+        var buckets: [Int: [DerivedSeedling]] = [:]
+        for seedling in seedlings {
+            guard let parsed = parseTwigId(seedling.twigId) else { continue }
+            buckets[parsed.branchIndex, default: []].append(seedling)
+        }
+        return buckets.keys.sorted().map { index in
+            SeedlingBranchGroup(
+                branchIndex: index,
+                branchName: SharedConstants.Tree.branchName(index),
+                seedlings: buckets[index] ?? []
+            )
+        }
+    }
+}
