@@ -10,7 +10,10 @@
     { "$ref": "#/definitions/SproutUprootedEvent" },
     { "$ref": "#/definitions/SunShoneEvent" },
     { "$ref": "#/definitions/LeafCreatedEvent" },
-    { "$ref": "#/definitions/SproutEditedEvent" }
+    { "$ref": "#/definitions/SproutEditedEvent" },
+    { "$ref": "#/definitions/SeedlingCreatedEvent" },
+    { "$ref": "#/definitions/SeedlingEditedEvent" },
+    { "$ref": "#/definitions/SeedlingDeletedEvent" }
   ],
   "definitions": {
     "Timestamp": {
@@ -114,6 +117,41 @@
         "leafId": { "type": "string" }
       },
       "required": ["type", "timestamp", "sproutId"]
+    },
+    "SeedlingCreatedEvent": {
+      "type": "object",
+      "description": "Seedling created - lightweight idea stub on a twig (no soil cost)",
+      "properties": {
+        "type": { "const": "seedling_created" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
+        "seedlingId": { "type": "string" },
+        "twigId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 60 },
+        "notes": { "type": "string", "maxLength": 200 }
+      },
+      "required": ["type", "timestamp", "seedlingId", "twigId", "title"]
+    },
+    "SeedlingEditedEvent": {
+      "type": "object",
+      "description": "Seedling edited - update title or notes (sparse merge)",
+      "properties": {
+        "type": { "const": "seedling_edited" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
+        "seedlingId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 60 },
+        "notes": { "type": "string", "maxLength": 200 }
+      },
+      "required": ["type", "timestamp", "seedlingId"]
+    },
+    "SeedlingDeletedEvent": {
+      "type": "object",
+      "description": "Seedling deleted - remove from garden",
+      "properties": {
+        "type": { "const": "seedling_deleted" },
+        "timestamp": { "$ref": "#/definitions/Timestamp" },
+        "seedlingId": { "type": "string" }
+      },
+      "required": ["type", "timestamp", "seedlingId"]
     }
   }
 }

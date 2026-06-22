@@ -19,6 +19,9 @@ Event Log (immutable) -> deriveState() -> DerivedState (ephemeral)
 | `sprout_edited` | sproutId, then any mutable field (sparse merge) |
 | `sun_shone` | twigId, twigLabel, content, prompt? |
 | `leaf_created` | leafId, twigId, name |
+| `seedling_created` | seedlingId, twigId, title, notes? |
+| `seedling_edited` | seedlingId, then title?/notes? (sparse merge) |
+| `seedling_deleted` | seedlingId |
 
 ### Derived State
 
@@ -30,12 +33,14 @@ DerivedState {
   sprouts: Map<string, DerivedSprout>
   leaves: Map<string, DerivedLeaf>
   sunEntries: SunEntry[]
+  seedlings: Map<string, DerivedSeedling>   // pre-sprout idea stubs (no soil cost)
 
   // Indexes (built during derivation)
   activeSproutsByTwig: Map<string, DerivedSprout[]>
   sproutsByTwig: Map<string, DerivedSprout[]>
   sproutsByLeaf: Map<string, DerivedSprout[]>
   leavesByTwig: Map<string, DerivedLeaf[]>
+  seedlingsByTwig: Map<string, DerivedSeedling[]>
 }
 ```
 
@@ -48,6 +53,18 @@ DerivedSprout {
   state: 'active' | 'completed' | 'uprooted'
   plantedAt, harvestedAt?, result?, reflection?, uprootedAt?
   waterEntries: WaterEntry[]
+}
+```
+
+### DerivedSeedling
+
+Lightweight idea stub on a twig — no soil cost, not yet a goal. "Setting" a
+seedling pre-fills the plant form and removes the seedling once a sprout is planted.
+
+```typescript
+DerivedSeedling {
+  id, twigId, title, notes?
+  createdAt
 }
 ```
 
@@ -83,12 +100,12 @@ bootstrap/          App initialization
   ui.ts             DOM construction & feature setup
 
 ui/dom-builder/     DOM construction -> elements{} + branchGroups[]
-ui/twig-view/       Sprout CRUD panel (6 modules)
+ui/twig-view/       Sprout + seedling CRUD panel (10 modules)
 ui/                 layout, node-ui, progress-panel, radar-chart, soil-chart, login-view, leaf-view
 
 features/           Business logic (navigation, progress, dialogs, hover)
 events/             Event sourcing (store, derive, soil-charting, radar-charting)
-services/           Auth + sync (sync/ has 7 modules incl dedup)
+services/           Auth + sync (sync/ has 11 modules incl dedup)
 utils/              Pure functions (zero dependencies)
 state/              In-memory view state
 ```

@@ -39,13 +39,18 @@ web/
 ├── src/
 │   ├── main.ts              # Entry point
 │   ├── constants.ts         # Web-specific constants
-│   ├── state.ts             # Legacy state management
 │   ├── types.ts             # TypeScript types
-│   ├── events/              # Event-sourced state (new architecture)
-│   ├── features/            # Feature modules
-│   ├── ui/                  # UI components
-│   ├── utils/               # Utility functions
-│   └── tests/               # Test files
+│   ├── bootstrap/           # App initialization (auth, events, sync, ui)
+│   ├── events/              # Event sourcing: store, derive, charting (source of truth)
+│   ├── features/            # Business logic (navigation, progress, dialogs, hover)
+│   ├── ui/                  # DOM rendering (twig-view/, dom-builder/, charts, …)
+│   ├── services/            # Auth + sync (sync/ split into modules)
+│   ├── state/               # In-memory view state
+│   ├── styles/              # CSS
+│   ├── generated/           # Constants generated from shared/ (checked in)
+│   ├── lib/                 # Lazy-loaded Supabase client
+│   ├── utils/               # Pure functions (zero deps)
+│   └── tests/               # Vitest test files
 ├── e2e/                     # Playwright E2E tests
 ├── index.html               # HTML entry point
 ├── package.json             # Dependencies
@@ -55,13 +60,18 @@ web/
 
 ## Shared Dependencies
 
-This web app imports shared constants and schemas from `../shared/`:
+Constants live in `../shared/constants.json` and are compiled to typed TypeScript
+at `src/generated/constants.ts` (checked in). Regenerate after editing the source:
 
-```typescript
-import constants from '@shared/constants.json'
+```bash
+npm run generate        # node ../shared/generate-constants.js
 ```
 
-See `../shared/constants.json` and `../shared/formulas.md` for details.
+```typescript
+import { VALID_EVENT_TYPES } from './generated/constants'
+```
+
+See `../shared/constants.json` and `../shared/formulas.md` for the source of truth.
 
 ## Tech Stack
 

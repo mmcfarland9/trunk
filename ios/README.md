@@ -13,21 +13,26 @@ ios/
 ├── Trunk.xcodeproj/            # Xcode project
 ├── Trunk/                      # App source code
 │   ├── TrunkApp.swift          # App entry point
+│   ├── ContentView.swift       # Root view (auth gate)
 │   │
 │   ├── Models/                 # (Inline in types)
 │   │
 │   ├── Views/                  # SwiftUI views
-│   │   ├── ContentView.swift
 │   │   ├── LoginView.swift
 │   │   ├── MainTabView.swift
 │   │   ├── OverviewView.swift
 │   │   ├── BranchView.swift
 │   │   ├── TwigDetailView.swift
 │   │   ├── TreeCanvasView.swift
+│   │   ├── RadarChartView.swift
 │   │   ├── TodayView.swift
 │   │   ├── SproutsView.swift
 │   │   │
 │   │   ├── SettingsView.swift
+│   │   │
+│   │   ├── Seedlings/          # Seedling (pre-sprout) views
+│   │   │   ├── SeedlingsSection.swift
+│   │   │   └── SeedlingCardView.swift
 │   │   │
 │   │   ├── Dialogs/            # Modal views
 │   │   │   ├── CreateSproutView.swift
@@ -215,8 +220,12 @@ The iOS app implements the same event-sourced architecture as the web app:
 | Offline mode | ✅ | ✅ | Complete |
 | Tree navigation | ✅ | ✅ | Complete |
 | Sprout CRUD | ✅ | ✅ | Complete |
+| Edit sprout | ✅ | ✅ | Complete |
+| Seedlings (idea backlog) | ✅ | ✅ | Complete |
 | Water/Sun/Harvest | ✅ | ✅ | Complete |
 | Soil charting | ✅ | ✅ | Complete |
+| Radar chart | ✅ | ✅ | Complete |
+| Export / Import | ✅ | ✅ | Complete |
 | Authentication | ✅ | ✅ | Complete |
 
 ---
