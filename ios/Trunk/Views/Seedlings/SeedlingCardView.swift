@@ -103,7 +103,8 @@ struct SeedlingCardView: View {
             .prefix(SharedConstants.Validation.maxSeedlingTitleLength))
         let trimmedNotes = String(editNotes.trimmingCharacters(in: .whitespacesAndNewlines)
             .prefix(SharedConstants.Validation.maxSeedlingNotesLength))
-        if !trimmedTitle.isEmpty {
+        let notesChanged = trimmedNotes != (seedling.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
+        if !trimmedTitle.isEmpty, trimmedTitle != seedling.title || notesChanged {
             onEdit(trimmedTitle, trimmedNotes.isEmpty ? "" : trimmedNotes)
         }
         isEditing = false
