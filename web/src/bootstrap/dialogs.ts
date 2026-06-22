@@ -3,7 +3,7 @@ import { getState } from '../events/store'
 import { initAccountDialog } from '../features/account-dialog'
 import { initHarvestDialog } from '../features/harvest-dialog'
 import { pushView, replaceView } from '../features/history'
-import { returnToBranchView, returnToOverview } from '../features/navigation'
+import { enterTwigView, returnToBranchView, returnToOverview } from '../features/navigation'
 import { initSidebarSprouts, updateStats } from '../features/progress'
 import { initShine } from '../features/shine-dialog'
 import { initSoilBagDialog } from '../features/soilbag-dialog'
@@ -180,6 +180,12 @@ export function initDialogs(
         bloomBudding: sprout.bloomBudding,
         bloomFlourish: sprout.bloomFlourish,
       })
+    },
+    (seedling) => {
+      const twig = ctx.nodeLookup.get(seedling.twigId)
+      if (!twig || seedling.branchIndex < 0) return
+      enterTwigView(twig, seedling.branchIndex, ctx, navCallbacks)
+      ctx.twigView?.prefillPlantFromSeedling(seedling.id)
     },
   )
 
