@@ -16,6 +16,7 @@ class SproutsViewModel {
     var cachedSprouts: [DerivedSprout] = []
     var cachedLeaves: [DerivedLeaf] = []
     var cachedSeedlings: [DerivedSeedling] = []
+    var cachedGroups: [SeedlingBranchGroup] = []
     var cachedState: DerivedState? = nil
 
     func refreshCachedState() {
@@ -25,6 +26,7 @@ class SproutsViewModel {
         cachedLeaves = Array(state.leaves.values)
         cachedSeedlings = Array(state.seedlings.values)
             .sorted { $0.createdAt < $1.createdAt }
+        cachedGroups = SproutsViewModel.seedlingsGroupedByBranch(cachedSeedlings)
         // Pre-compute counts to avoid repeated array scans in view bodies
         activeCount = cachedSprouts.filter { $0.state == .active }.count
         completedCount = cachedSprouts.filter { $0.state == .completed }.count
@@ -100,5 +102,31 @@ class SproutsViewModel {
         leaves.sort { $0.createdAt > $1.createdAt }
 
         return leaves
+    }
+}
+
+// MARK: - Seedling Grouping
+
+struct SeedlingBranchGroup: Identifiable {
+    let branchIndex: Int
+    let branchName: String
+    let seedlings: [DerivedSeedling]
+    var id: Int { branchIndex }
+}
+
+extension SproutsViewModel {
+    static func seedlingsGroupedByBranch(_ seedlings: [DerivedSeedling]) -> [SeedlingBranchGroup] {
+        var buckets: [Int: [DerivedSeedling]] = [:]
+        for seedling in seedlings {
+            guard let parsed = parseTwigId(seedling.twigId) else { continue }
+            buckets[parsed.branchIndex, default: []].append(seedling)
+        }
+        return buckets.keys.sorted().map { index in
+            SeedlingBranchGroup(
+                branchIndex: index,
+                branchName: SharedConstants.Tree.branchName(index),
+                seedlings: buckets[index] ?? []
+            )
+        }
     }
 }

@@ -45,7 +45,9 @@ struct SproutsView: View {
                     case .seedlings:
                         SeedlingsListView(
                             seedlings: viewModel.cachedSeedlings,
-                            state: viewModel.cachedState ?? EventStore.shared.getState()
+                            groups: viewModel.cachedGroups,
+                            progression: progression,
+                            onChanged: { viewModel.refreshCachedState() }
                         )
                     case .leaves:
                         // Leaf list with summary
@@ -111,7 +113,14 @@ struct SproutsView: View {
 
 struct SeedlingsListView: View {
     let seedlings: [DerivedSeedling]
-    let state: DerivedState
+    let groups: [SeedlingBranchGroup]
+    @Bindable var progression: ProgressionViewModel
+    let onChanged: () -> Void
+
+    @State private var expanded: Set<Int> = []
+    @State private var didInitExpansion = false
+    @State private var plantFrom: (title: String, twigId: String, seedlingId: String)?
+    @State private var showingPlant = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -124,41 +133,98 @@ struct SeedlingsListView: View {
                     .foregroundStyle(Color.inkFaint)
                     .padding(.vertical, TrunkTheme.space4)
             } else {
+                ForEach(groups) { group in
+                    branchSection(group)
+                }
+            }
+        }
+        .onAppear {
+            if !didInitExpansion {
+                expanded = Set(groups.map { $0.branchIndex })
+                didInitExpansion = true
+            }
+        }
+        .sheet(isPresented: $showingPlant, onDismiss: { plantFrom = nil; onChanged() }) {
+            if let plantFrom {
+                NavigationStack {
+                    CreateSproutView(
+                        nodeId: plantFrom.twigId,
+                        progression: progression,
+                        initialTitle: plantFrom.title,
+                        plantingSeedlingId: plantFrom.seedlingId
+                    )
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func branchSection(_ group: SeedlingBranchGroup) -> some View {
+        let isOpen = expanded.contains(group.branchIndex)
+        VStack(alignment: .leading, spacing: 1) {
+            Button {
+                if isOpen { expanded.remove(group.branchIndex) } else { expanded.insert(group.branchIndex) }
+            } label: {
+                HStack {
+                    Text(group.branchName)
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.wood)
+                    Text("(\(group.seedlings.count))")
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint)
+                    Spacer()
+                    Text(isOpen ? "▼" : "▶")
+                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint)
+                }
+                .padding(.vertical, TrunkTheme.space2)
+            }
+            .buttonStyle(.plain)
+
+            if isOpen {
                 VStack(spacing: 1) {
-                    ForEach(seedlings) { seedling in
-                        HStack(spacing: TrunkTheme.space3) {
-                            VStack(alignment: .leading, spacing: TrunkTheme.space1) {
-                                Text(seedling.title)
-                                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                                    .foregroundStyle(Color.ink)
-                                    .lineLimit(1)
-
-                                if let notes = seedling.notes {
-                                    Text(notes)
-                                        .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                        .foregroundStyle(Color.inkFaint)
-                                        .lineLimit(1)
-                                }
-
-                                Text(twigLocationLabel(for: seedling.twigId))
-                                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
-                                    .foregroundStyle(Color.wood)
-                            }
-
-                            Spacer()
-                        }
-                        .padding(.vertical, TrunkTheme.space2)
+                    ForEach(group.seedlings) { seedling in
+                        SeedlingCardView(
+                            seedling: seedling,
+                            onPlant: {
+                                plantFrom = (seedling.title, seedling.twigId, seedling.id)
+                                showingPlant = true
+                            },
+                            onEdit: { title, notes in editSeedling(seedling.id, title: title, notes: notes) },
+                            onDelete: { deleteSeedling(seedling.id) }
+                        )
                         .padding(.horizontal, TrunkTheme.space3)
-                        .frame(minHeight: 44)
-                        .background(Color.paper)
                     }
                 }
                 .background(Color.paper)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.border, lineWidth: 1)
-                )
+                .overlay(Rectangle().stroke(Color.border, lineWidth: 1))
             }
+        }
+    }
+
+    private func editSeedling(_ id: String, title: String, notes: String?) {
+        Task {
+            do {
+                var payload: [String: JSONValue] = [
+                    "seedlingId": .string(id),
+                    "title": .string(String(title.prefix(SharedConstants.Validation.maxSeedlingTitleLength))),
+                ]
+                if let notes { payload["notes"] = .string(notes) }
+                try await SyncService.shared.pushEvent(type: "seedling_edited", payload: payload)
+            } catch { print("[SeedlingsListView] edit failed: \(error)") }
+            onChanged()
+        }
+    }
+
+    private func deleteSeedling(_ id: String) {
+        Task {
+            do {
+                try await SyncService.shared.pushEvent(
+                    type: "seedling_deleted",
+                    payload: ["seedlingId": .string(id)]
+                )
+            } catch { print("[SeedlingsListView] delete failed: \(error)") }
+            onChanged()
         }
     }
 }

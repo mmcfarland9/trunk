@@ -80,6 +80,7 @@ export type TwigViewApi = {
   isOpen: () => boolean
   refresh: () => void
   cleanup: () => void
+  prefillPlantFromSeedling: (seedlingId: string) => void
 }
 
 export type LeafViewApi = {

@@ -28,9 +28,10 @@ import { populateLeafSelect, setupLeafSelect } from './leaf-select'
 import {
   createSeedling,
   deleteSeedling,
-  editSeedling,
   getSeedlingById,
+  handleSeedlingDeleteClick,
   renderSeedlings,
+  startInlineSeedlingEdit,
 } from './seedlings'
 import { renderActiveCard, renderHistoryCard, renderLeafCard } from './sprout-cards'
 import { createFormState, formatDate, getCurrentNodeId, getEndDate } from './sprout-form'
@@ -160,6 +161,15 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.seedlingsList.innerHTML = renderSeedlings(nodeId)
   }
 
+  function prefillPlantFromSeedling(seedlingId: string): void {
+    const seedling = getSeedlingById(seedlingId)
+    if (!seedling) return
+    state.plantingSeedlingId = seedlingId
+    elements.sproutTitleInput.value = seedling.title
+    elements.sproutTitleInput.focus()
+    updateForm()
+  }
+
   // Delegated click handler
   container.addEventListener('click', (e: MouseEvent) => {
     const target = e.target as HTMLElement
@@ -173,66 +183,15 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
       const seedlingAction = seedlingActionEl.dataset.seedlingAction
 
       switch (seedlingAction) {
-        case 'delete': {
-          // Two-step delete: first click shows "Sure?", second click confirms
-          if (seedlingActionEl.dataset.confirmDelete === 'true') {
-            deleteSeedling(seedlingId)
-            renderSeedlingsList()
-          } else {
-            seedlingActionEl.dataset.confirmDelete = 'true'
-            seedlingActionEl.textContent = 'Sure?'
-            seedlingActionEl.classList.add('is-confirming')
-            // Reset after 2 seconds if not confirmed
-            setTimeout(() => {
-              if (seedlingActionEl.dataset.confirmDelete === 'true') {
-                seedlingActionEl.dataset.confirmDelete = ''
-                seedlingActionEl.textContent = '\u00d7'
-                seedlingActionEl.classList.remove('is-confirming')
-              }
-            }, 2000)
-          }
+        case 'delete':
+          handleSeedlingDeleteClick(seedlingActionEl, seedlingId, renderSeedlingsList)
           break
-        }
-        case 'plant': {
-          const seedling = getSeedlingById(seedlingId)
-          if (seedling) {
-            state.plantingSeedlingId = seedlingId
-            elements.sproutTitleInput.value = seedling.title
-            elements.sproutTitleInput.focus()
-            updateForm()
-          }
+        case 'plant':
+          prefillPlantFromSeedling(seedlingId)
           break
-        }
-        case 'edit': {
-          const seedling = getSeedlingById(seedlingId)
-          if (!seedling || !seedlingCard) break
-          const titleEl = seedlingCard.querySelector('.seedling-title')
-          if (!titleEl) break
-          const input = document.createElement('input')
-          input.type = 'text'
-          input.className = 'seedling-edit-input'
-          input.value = seedling.title
-          input.maxLength = 60
-          titleEl.replaceWith(input)
-          input.focus()
-          input.select()
-          const commit = () => {
-            const newTitle = input.value.trim()
-            if (newTitle && newTitle !== seedling.title) {
-              editSeedling(seedlingId, newTitle)
-            }
-            renderSeedlingsList()
-          }
-          input.addEventListener('blur', commit)
-          input.addEventListener('keydown', (ke) => {
-            if (ke.key === 'Enter') {
-              ke.preventDefault()
-              commit()
-            }
-            if (ke.key === 'Escape') renderSeedlingsList()
-          })
+        case 'edit':
+          if (seedlingCard) startInlineSeedlingEdit(seedlingCard, seedlingId, renderSeedlingsList)
           break
-        }
       }
       return
     }
@@ -477,5 +436,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     isOpen,
     refresh,
     cleanup: cleanupKeyboard,
+    prefillPlantFromSeedling,
   }
 }

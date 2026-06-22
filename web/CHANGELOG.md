@@ -11,13 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Seedlings: pre-sprout backlog system for capturing ideas on twigs before committing soil. Create, edit, delete, and plant seedlings from the twig view. "Set" pre-fills the sprout planting form with the seedling title, deleting the seedling only after the sprout is successfully planted. Seedlings section in sidebar shows all ideas across twigs with branch/twig filtering. Three new event types (seedling_created, seedling_edited, seedling_deleted) flow through existing event-sourced sync — zero new tables, zero new infrastructure. Validation enforces 60-char title limit at both UI and event boundary.
 - Water dialog suggestions: up to 3 least-recently-watered sprouts shown as quick-access shortcuts at the top of the water dialog — clicking a suggestion scrolls to and highlights that sprout's section; suggestions dim when watered; hidden when all active sprouts are already watered today
 - Watering streak indicator on the water meter in the header — shows "Xd streak" when the user has watered on consecutive days (6am-to-6am boundaries); hidden when streak is 0; updates on water actions and full UI refresh
+- Watering streak counter: displays current and longest-ever consecutive watering days near the water meter
 - Export reminder toast: nudges users to back up their data when no export has been recorded in 7 days (configurable via `EXPORT_REMINDER_DAYS`) — fires once per session on app load, only when events exist
 - Open Graph meta tags: og:title, og:description, og:type, and og:image for professional link sharing
 - Sync status indicator icon in header: persistent icon between profile badge and sync button — checkmark when synced, CSS spinner when syncing/uploading, warning when offline — with tooltip showing full status text
 - Browser history navigation: `history.pushState()` on every view transition (overview ↔ branch ↔ twig ↔ leaf) with `popstate` listener — back button drills out one level, forward button re-enters; twig arrow-key cycling uses `replaceState` to avoid history bloat; deep linking via hash fragments (`#/branch/3/twig/branch-3-twig-5`)
 - Toast notification system (`ui/toast.ts`): reusable auto-dismiss toast (2.5s) for lightweight feedback — wired into W/S/H keyboard shortcuts: "All sprouts watered today", "Already reflected this week", "No sprouts ready to harvest"
+- Keyboard shortcuts for daily actions: W opens water dialog, S opens sun/shine dialog, H opens harvest for the first ready sprout
 - New-user onboarding cues: login page description explaining what Trunk is, empty-state sidebar hint ("Plant your first sprout by clicking any twig on the tree"), title-attribute tooltips on Soil/Water/Sun meters explaining each resource in one sentence
 - Export/Import data buttons in Account > Data tab: Export downloads all events as timestamped JSON; Import reads a JSON file, confirms before replacing, then reloads — uses existing `exportEvents()` and `replaceEvents()` from the event store
+- Edit sprout: active sprout cards now show an "edit" button that opens an inline form to update title, bloom descriptions (wither/budding/flourish), and leaf assignment — season, environment, and soil cost remain read-only (economic commitments)
+- New `sprout_edited` event type: sparse merge of mutable fields, added to shared schema, constants, derivation, validation, and sync
+- Soil capacity chart: SVG chart in sidebar showing capacity and available soil over time with range picker and hover scrub
+- Life balance radar chart: 8-axis spider chart overlaid on the tree map showing engagement per branch (planted, watered, sun, harvest)
+- Radar chart: faint dashed axis guide lines from center to each vertex — gives spider web structure visible at rest
+- iOS radar chart: tap-interactive vertices with haptic feedback, auto-dismissing popover label, axis highlighting on tap
+- Post-action celebration feedback: brief pulse animation on resource meters after watering, harvesting, or shining
+- Quota warning banner: persistent "Storage full" banner with Export Data button when localStorage is full — dismissible but reappears on next failed save
+- CSS custom properties for dialog tokens (`--dialog-bg`, `--dialog-overlay`, `--dialog-shadow`, `--dialog-blur`, `--dialog-z`) — replaces 42 hardcoded values across 7 dialog styles
+- Cross-platform field coverage test fixture (`shared/test-fixtures/field-coverage.json`) with maximal events (all optional and required fields populated) for verifying no fields are lost during sync round-trip or state derivation
+- Field coverage tests (`field-coverage.test.ts`, 32 tests) verifying sync round-trip (`localToSyncPayload` → `syncToLocalEvent`) and `deriveState()` field preservation for all 6 event types including bloom fields, reflection, prompt, and fractional soil values
+- Week reset verification test: confirms `getWeekResetTime`, `getNextSunReset`, and `deriveSunAvailable` all agree on Monday 6am boundary (closes A3 investigation)
 - Beta readiness report (`BETA_READINESS.md`) — full codebase audit identifying 6 launch blockers, 5 week-one essentials, 8 accepted risks, and 8 deferred features across web and iOS
 
 ### Changed
@@ -38,29 +52,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Radar chart: immediate vertex hover interaction — dot scales to r=5, color shifts to --wood, drop-shadow glow, no delay
 - Radar chart: axis highlighting on hover — hovered axis line brightens and turns solid while others dim to near-invisible
 - Radar chart: HTML tooltip replaces native SVG `<title>` — shows branch name + engagement percentage (e.g. "Health — 73%"), viewport-clamped positioning, tracks wind animation
-
-### Added
-- Radar chart: faint dashed axis guide lines from center to each vertex — gives spider web structure visible at rest
-- iOS radar chart: tap-interactive vertices with haptic feedback, auto-dismissing popover label, axis highlighting on tap
-
-### Fixed
-- Focus trap: wired `trapFocus()` into all 7 dialogs (water, harvest, account, sun log, soil bag, water can, confirm/uproot) and the reset-confirmation alertdialog — previously the function existed but was never called, allowing Tab to escape modal dialogs
-- Sync push errors now surface a toast notification ("Sync failed — changes saved locally and will retry") and record the failure in sync status tracking — previously errors were silently swallowed
-- Double uproot soil refund: `deriveState` now only returns soil when uprooting an active, existing sprout — fixes duplicate uproot inflation (bug #1) and phantom sprout soil injection (bug #7)
-- Soil chart capacity cap: `computeRawSoilHistory` now caps capacity at `MAX_SOIL_CAPACITY` (120) on harvest events, matching `deriveState` behavior (bug #6)
-- `validateEvent()` now enforces required schema fields: `leafId` on sprout_planted, `content` on sprout_watered, `soilReturned` on sprout_uprooted, `twigLabel`+`content` on sun_shone, `twigId` on leaf_created — `prompt` intentionally excluded for backward compatibility (bug #4)
-- Test fixtures: added missing `prompt` field to water events and `leafId` to plant events in `event-derivation.json` and test files (bug #13)
-
-### Refactored
-- Decomposed `bootstrap/ui.ts` (383 → ~105 lines) into three focused modules: `bootstrap/meters.ts` (meter update + celebration animation), `bootstrap/charts.ts` (soil chart + radar chart init), `bootstrap/dialogs.ts` (dialog init, view wiring, sidebar sprouts) — zero behavior change
-- Decomposed `twig-view/index.ts` (417 → 350 lines) into three focused modules: `twig-view/confirm.ts` (confirm dialog Promise pattern), `twig-view/keyboard.ts` (document keydown handler), `twig-view/leaf-select.ts` (leaf dropdown management) — zero behavior change
-
-### Added
-- Edit sprout: active sprout cards now show an "edit" button that opens an inline form to update title, bloom descriptions (wither/budding/flourish), and leaf assignment — season, environment, and soil cost remain read-only (economic commitments)
-- New `sprout_edited` event type: sparse merge of mutable fields, added to shared schema, constants, derivation, validation, and sync
-- Dark mode: OS-level auto-detection via `prefers-color-scheme`, manual Light/Dark/Auto toggle in Account > Preferences tab, saved to localStorage
-- Cross-platform field coverage test fixture (`shared/test-fixtures/field-coverage.json`) with maximal events (all optional and required fields populated) for verifying no fields are lost during sync round-trip or state derivation
-- Field coverage tests (`field-coverage.test.ts`, 32 tests) verifying sync round-trip (`localToSyncPayload` → `syncToLocalEvent`) and `deriveState()` field preservation for all 6 event types including bloom fields, reflection, prompt, and fractional soil values
+- Radar chart vertices now derive from animated branch positions instead of independent polar math, ensuring the polygon tracks the tree's elliptical geometry and wind sway exactly
+- Layout caches (`positionCache`, `twigRadiusCache`) switched from Map to WeakMap for automatic GC of removed DOM elements
+- `getActiveSprouts()` replaced `Array.flat()` with direct push loop to avoid intermediate array allocations
+- Event filter functions (`deriveWaterAvailable`, `deriveSunAvailable`, `wasSproutWateredThisWeek`, `wasSproutWateredToday`, `wasShoneThisWeek`) pre-compute reset time as numeric ms instead of creating Date objects per comparison
+- `drawGuideLines()` now caches `getBoundingClientRect()` calls per frame to avoid layout thrashing at 60Hz
+- Extracted shared `sortEventsByTimestamp()` utility — `deriveState()` and `computeRawSoilHistory()` no longer duplicate sorting logic
+- Extracted sync modules: `sync/pull.ts`, `sync/push.ts`, `sync/retry.ts`, `sync/timeout.ts` from monolithic `operations.ts` (473 → ~170 lines)
 
 ### Performance
 - Event sort pre-check: O(n) linear scan detects already-sorted events (common case), skipping O(n log n) sort on every derivation
@@ -71,16 +69,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sidebar sprout list dirty check — skips full DOM rebuild when derived state and view context haven't changed
 - Canvas `getBoundingClientRect()` cached with 100ms TTL in mousemove handler — avoids forced layout on every mouse event
 
-### Changed
-- Radar chart vertices now derive from animated branch positions instead of independent polar math, ensuring the polygon tracks the tree's elliptical geometry and wind sway exactly
-- Layout caches (`positionCache`, `twigRadiusCache`) switched from Map to WeakMap for automatic GC of removed DOM elements
-- `getActiveSprouts()` replaced `Array.flat()` with direct push loop to avoid intermediate array allocations
-- Event filter functions (`deriveWaterAvailable`, `deriveSunAvailable`, `wasSproutWateredThisWeek`, `wasSproutWateredToday`, `wasShoneThisWeek`) pre-compute reset time as numeric ms instead of creating Date objects per comparison
-- `drawGuideLines()` now caches `getBoundingClientRect()` calls per frame to avoid layout thrashing at 60Hz
-- Extracted shared `sortEventsByTimestamp()` utility — `deriveState()` and `computeRawSoilHistory()` no longer duplicate sorting logic
-- Extracted sync modules: `sync/pull.ts`, `sync/push.ts`, `sync/retry.ts`, `sync/timeout.ts` from monolithic `operations.ts` (473 → ~170 lines)
+### Refactored
+- Decomposed `bootstrap/ui.ts` (383 → ~105 lines) into three focused modules: `bootstrap/meters.ts` (meter update + celebration animation), `bootstrap/charts.ts` (soil chart + radar chart init), `bootstrap/dialogs.ts` (dialog init, view wiring, sidebar sprouts) — zero behavior change
+- Decomposed `twig-view/index.ts` (417 → 350 lines) into three focused modules: `twig-view/confirm.ts` (confirm dialog Promise pattern), `twig-view/keyboard.ts` (document keydown handler), `twig-view/leaf-select.ts` (leaf dropdown management) — zero behavior change
 
 ### Fixed
+- Focus trap: wired `trapFocus()` into all 7 dialogs (water, harvest, account, sun log, soil bag, water can, confirm/uproot) and the reset-confirmation alertdialog — previously the function existed but was never called, allowing Tab to escape modal dialogs
+- Sync push errors now surface a toast notification ("Sync failed — changes saved locally and will retry") and record the failure in sync status tracking — previously errors were silently swallowed
+- Double uproot soil refund: `deriveState` now only returns soil when uprooting an active, existing sprout — fixes duplicate uproot inflation (bug #1) and phantom sprout soil injection (bug #7)
+- Soil chart capacity cap: `computeRawSoilHistory` now caps capacity at `MAX_SOIL_CAPACITY` (120) on harvest events, matching `deriveState` behavior (bug #6)
+- `validateEvent()` now enforces required schema fields: `leafId` on sprout_planted, `content` on sprout_watered, `soilReturned` on sprout_uprooted, `twigLabel`+`content` on sun_shone, `twigId` on leaf_created — `prompt` intentionally excluded for backward compatibility (bug #4)
+- Test fixtures: added missing `prompt` field to water events and `leafId` to plant events in `event-derivation.json` and test files (bug #13)
 - Harvest date preview now uses local time (`setHours(9)`) instead of hardcoded UTC offset (`setUTCHours(15)`), fixing incorrect "Ends on..." dates for users outside Central Time
 - Profile save errors now show "Error — try again" feedback instead of being silently swallowed
 - Keyboard shortcut Cmd+Arrow no longer triggers twig navigation when editing text in input/textarea fields
@@ -102,16 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `shared/docs/validation-rules.md` — stale spec diverged from actual implementation
 - `shared/docs/event-derivation-algorithm.md` — out-of-sync pseudocode spec (platform implementations are source of truth)
 - `WATER_RESET_INTERVAL_MS` and `SUN_RESET_INTERVAL_MS` constants — unused in both `constants.json` and generated code
-
-### Added
-- Quota warning banner: persistent "Storage full" banner with Export Data button when localStorage is full — dismissible but reappears on next failed save
-- Week reset verification test: confirms `getWeekResetTime`, `getNextSunReset`, and `deriveSunAvailable` all agree on Monday 6am boundary (closes A3 investigation)
-- Post-action celebration feedback: brief pulse animation on resource meters after watering, harvesting, or shining
-- Watering streak counter: displays current and longest-ever consecutive watering days near the water meter
-- Keyboard shortcuts for daily actions: W opens water dialog, S opens sun/shine dialog, H opens harvest for the first ready sprout
-- Soil capacity chart: SVG chart in sidebar showing capacity and available soil over time with range picker and hover scrub
-- Life balance radar chart: 8-axis spider chart overlaid on the tree map showing engagement per branch (planted, watered, sun, harvest)
-- CSS custom properties for dialog tokens (`--dialog-bg`, `--dialog-overlay`, `--dialog-shadow`, `--dialog-blur`, `--dialog-z`) — replaces 42 hardcoded values across 7 dialog styles
 
 ## [0.1.0] - 2026-01-29
 

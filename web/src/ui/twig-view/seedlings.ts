@@ -3,6 +3,24 @@ import { appendEvent, generateSeedlingId, getSeedlingsForTwig, getState } from '
 import { escapeHtml } from '../../utils/escape-html'
 
 /**
+ * Render a single seedling card. `locationLabel` (used by the sidebar tray) adds
+ * a twig-location line; the twig view omits it.
+ */
+export function renderSeedlingCard(s: DerivedSeedling, opts?: { locationLabel?: string }): string {
+  return `
+    <div class="seedling-card" data-seedling-id="${escapeHtml(s.id)}">
+      <span class="seedling-title">${escapeHtml(s.title)}</span>
+      ${s.notes ? `<span class="seedling-notes">${escapeHtml(s.notes)}</span>` : ''}
+      ${opts?.locationLabel ? `<span class="seedling-location">${escapeHtml(opts.locationLabel)}</span>` : ''}
+      <div class="seedling-actions">
+        <button type="button" class="seedling-action" data-seedling-action="plant" title="Plant as sprout">Set</button>
+        <button type="button" class="seedling-action" data-seedling-action="edit" title="Edit">Edit</button>
+        <button type="button" class="seedling-action seedling-action-delete" data-seedling-action="delete" title="Delete">&times;</button>
+      </div>
+    </div>`
+}
+
+/**
  * Render seedling cards for a twig.
  */
 export function renderSeedlings(twigId: string): string {
@@ -13,20 +31,7 @@ export function renderSeedlings(twigId: string): string {
     return '<p class="seedling-empty">Jot down ideas for this twig</p>'
   }
 
-  return seedlings
-    .map(
-      (s) => `
-    <div class="seedling-card" data-seedling-id="${escapeHtml(s.id)}">
-      <span class="seedling-title">${escapeHtml(s.title)}</span>
-      ${s.notes ? `<span class="seedling-notes">${escapeHtml(s.notes)}</span>` : ''}
-      <div class="seedling-actions">
-        <button type="button" class="seedling-action" data-seedling-action="plant" title="Plant as sprout">Set</button>
-        <button type="button" class="seedling-action" data-seedling-action="edit" title="Edit">Edit</button>
-        <button type="button" class="seedling-action seedling-action-delete" data-seedling-action="delete" title="Delete">&times;</button>
-      </div>
-    </div>`,
-    )
-    .join('')
+  return seedlings.map((s) => renderSeedlingCard(s)).join('')
 }
 
 /**
@@ -73,4 +78,70 @@ export function editSeedling(seedlingId: string, title?: string, notes?: string)
  */
 export function getSeedlingById(seedlingId: string): DerivedSeedling | undefined {
   return getState().seedlings.get(seedlingId)
+}
+
+/**
+ * Inline-edit a seedling's title within its card. Mirrors the twig-view editor.
+ */
+export function startInlineSeedlingEdit(
+  card: HTMLElement,
+  seedlingId: string,
+  onDone: () => void,
+): void {
+  const seedling = getSeedlingById(seedlingId)
+  const titleEl = card.querySelector('.seedling-title')
+  if (!seedling || !titleEl) return
+  const input = document.createElement('input')
+  input.type = 'text'
+  input.className = 'seedling-edit-input'
+  input.value = seedling.title
+  input.maxLength = 60
+  titleEl.replaceWith(input)
+  input.focus()
+  input.select()
+  let finished = false
+  const commit = () => {
+    if (finished) return
+    finished = true
+    const newTitle = input.value.trim()
+    if (newTitle && newTitle !== seedling.title) editSeedling(seedlingId, newTitle)
+    onDone()
+  }
+  input.addEventListener('blur', commit)
+  input.addEventListener('keydown', (ke) => {
+    if (ke.key === 'Enter') {
+      ke.preventDefault()
+      commit()
+    }
+    if (ke.key === 'Escape') {
+      if (finished) return
+      finished = true
+      onDone()
+    }
+  })
+}
+
+/**
+ * Two-step delete: first click arms ("Sure?"), second click within 2s confirms.
+ */
+export function handleSeedlingDeleteClick(
+  actionEl: HTMLElement,
+  seedlingId: string,
+  onConfirm: () => void,
+): void {
+  if (actionEl.dataset.confirmDelete === 'true') {
+    deleteSeedling(seedlingId)
+    onConfirm()
+    return
+  }
+  actionEl.dataset.confirmDelete = 'true'
+  actionEl.textContent = 'Sure?'
+  actionEl.classList.add('is-confirming')
+  setTimeout(() => {
+    if (actionEl.dataset.confirmDelete === 'true') {
+      actionEl.dataset.confirmDelete = ''
+      actionEl.textContent = '×'
+      actionEl.classList.remove('is-confirming')
+    }
+  }, 2000)
 }

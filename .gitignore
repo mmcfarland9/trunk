@@ -66,3 +66,6 @@ web/reports/
 # iOS Secrets (contains Supabase keys)
 ios/Trunk/Config/Secrets.swift
 
+
+# Superpowers SDD scratch (briefs, reports, review packages, ledger)
+.superpowers/
