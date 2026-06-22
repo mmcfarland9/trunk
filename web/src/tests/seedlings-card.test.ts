@@ -33,4 +33,16 @@ describe('renderSeedlingCard', () => {
     expect(html).not.toContain('<img>')
     expect(html).toContain('&lt;img&gt;')
   })
+
+  it('escapes HTML in locationLabel', () => {
+    const html = renderSeedlingCard(seedling, { locationLabel: '<b>bold</b>' })
+    expect(html).not.toContain('<b>')
+    expect(html).toContain('&lt;b&gt;')
+  })
+
+  it('escapes HTML in notes', () => {
+    const html = renderSeedlingCard({ ...seedling, notes: '<b>x</b>' })
+    expect(html).not.toContain('<b>')
+    expect(html).toContain('&lt;b&gt;')
+  })
 })
