@@ -3,6 +3,24 @@ import { appendEvent, generateSeedlingId, getSeedlingsForTwig, getState } from '
 import { escapeHtml } from '../../utils/escape-html'
 
 /**
+ * Render a single seedling card. `locationLabel` (used by the sidebar tray) adds
+ * a twig-location line; the twig view omits it.
+ */
+export function renderSeedlingCard(s: DerivedSeedling, opts?: { locationLabel?: string }): string {
+  return `
+    <div class="seedling-card" data-seedling-id="${escapeHtml(s.id)}">
+      <span class="seedling-title">${escapeHtml(s.title)}</span>
+      ${s.notes ? `<span class="seedling-notes">${escapeHtml(s.notes)}</span>` : ''}
+      ${opts?.locationLabel ? `<span class="seedling-location">${escapeHtml(opts.locationLabel)}</span>` : ''}
+      <div class="seedling-actions">
+        <button type="button" class="seedling-action" data-seedling-action="plant" title="Plant as sprout">Set</button>
+        <button type="button" class="seedling-action" data-seedling-action="edit" title="Edit">Edit</button>
+        <button type="button" class="seedling-action seedling-action-delete" data-seedling-action="delete" title="Delete">&times;</button>
+      </div>
+    </div>`
+}
+
+/**
  * Render seedling cards for a twig.
  */
 export function renderSeedlings(twigId: string): string {
@@ -13,20 +31,7 @@ export function renderSeedlings(twigId: string): string {
     return '<p class="seedling-empty">Jot down ideas for this twig</p>'
   }
 
-  return seedlings
-    .map(
-      (s) => `
-    <div class="seedling-card" data-seedling-id="${escapeHtml(s.id)}">
-      <span class="seedling-title">${escapeHtml(s.title)}</span>
-      ${s.notes ? `<span class="seedling-notes">${escapeHtml(s.notes)}</span>` : ''}
-      <div class="seedling-actions">
-        <button type="button" class="seedling-action" data-seedling-action="plant" title="Plant as sprout">Set</button>
-        <button type="button" class="seedling-action" data-seedling-action="edit" title="Edit">Edit</button>
-        <button type="button" class="seedling-action seedling-action-delete" data-seedling-action="delete" title="Delete">&times;</button>
-      </div>
-    </div>`,
-    )
-    .join('')
+  return seedlings.map((s) => renderSeedlingCard(s)).join('')
 }
 
 /**
