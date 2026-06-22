@@ -21,4 +21,18 @@ describe('groupSeedlingsByBranch', () => {
   it('returns an empty map for empty input', () => {
     expect(groupSeedlingsByBranch([]).size).toBe(0)
   })
+
+  it('preserves order within a branch across interleaving', () => {
+    const grouped = groupSeedlingsByBranch([
+      { branchIndex: 1, id: 'p' },
+      { branchIndex: 2, id: 'r' },
+      { branchIndex: 1, id: 'q' },
+    ])
+    expect(grouped.get(1)?.map((i) => i.id)).toEqual(['p', 'q'])
+  })
+
+  it('treats branchIndex 0 as valid (not negative)', () => {
+    const grouped = groupSeedlingsByBranch([{ branchIndex: 0, id: 'z' }])
+    expect(grouped.get(0)?.map((i) => i.id)).toEqual(['z'])
+  })
 })

@@ -9,7 +9,7 @@ export function groupSeedlingsByBranch<T extends { branchIndex: number }>(
   const grouped = new Map<number, T[]>()
   for (const item of items) {
     if (item.branchIndex < 0) continue
-    const list = grouped.get(item.branchIndex) || []
+    const list = grouped.get(item.branchIndex) ?? []
     list.push(item)
     grouped.set(item.branchIndex, list)
   }
