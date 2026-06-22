@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { renderSeedlingCard } from '../ui/twig-view/seedlings'
 import type { DerivedSeedling } from '../events'
+import { renderSeedlingCard } from '../ui/twig-view/seedlings'
 
 const seedling: DerivedSeedling = {
   id: 'seedling-abc',

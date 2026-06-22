@@ -29,13 +29,13 @@ import {
   getTwigLabel,
   renderLeafGroupedSprouts,
 } from '../ui/progress-panel'
-import { groupSeedlingsByBranch } from './seedling-grouping'
 import {
   getSeedlingById,
   handleSeedlingDeleteClick,
   renderSeedlingCard,
   startInlineSeedlingEdit,
 } from '../ui/twig-view/seedlings'
+import { groupSeedlingsByBranch } from './seedling-grouping'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
