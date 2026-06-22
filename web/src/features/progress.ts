@@ -28,8 +28,14 @@ import {
   getBranchLabel,
   getTwigLabel,
   renderLeafGroupedSprouts,
-  renderSeedlingRow,
 } from '../ui/progress-panel'
+import { groupSeedlingsByBranch } from './seedling-grouping'
+import {
+  getSeedlingById,
+  handleSeedlingDeleteClick,
+  renderSeedlingCard,
+  startInlineSeedlingEdit,
+} from '../ui/twig-view/seedlings'
 
 export function updateStats(ctx: AppContext): void {
   updateScopedProgress(ctx) // Also handles back-to-trunk button visibility
@@ -93,6 +99,7 @@ export function updateScopedProgress(ctx: AppContext): void {
 // Store callbacks so they persist across updateSidebarSprouts calls
 let storedWaterClick: ((sprout: SproutWithLocation) => void) | undefined
 let storedHarvestClick: SidebarHarvestCallback | undefined
+let storedPlantSeedling: ((seedling: SeedlingWithLocation) => void) | undefined
 
 // Dirty check: skip DOM rebuild when inputs haven't changed
 let lastState: DerivedState | null = null
@@ -166,6 +173,7 @@ export function initSidebarSprouts(
   ctx: AppContext,
   onWaterClick?: (sprout: SproutWithLocation) => void,
   onHarvestClick?: SidebarHarvestCallback,
+  onPlantSeedling?: (seedling: SeedlingWithLocation) => void,
 ): void {
   const {
     activeSproutsToggle,
@@ -179,6 +187,7 @@ export function initSidebarSprouts(
   // Store callbacks for future updates
   storedWaterClick = onWaterClick
   storedHarvestClick = onHarvestClick
+  storedPlantSeedling = onPlantSeedling
 
   // Set default states: active expanded, cultivated collapsed, seedlings collapsed
   activeSproutsToggle.classList.add('is-expanded')
@@ -202,6 +211,33 @@ export function initSidebarSprouts(
   seedlingsToggle.addEventListener('click', () => {
     const isExpanded = seedlingsToggle.classList.toggle('is-expanded')
     seedlingsList.classList.toggle('is-collapsed', !isExpanded)
+  })
+
+  seedlingsList.addEventListener('click', (e) => {
+    const actionEl = (e.target as HTMLElement).closest<HTMLElement>('[data-seedling-action]')
+    if (!actionEl) return
+    const card = actionEl.closest<HTMLElement>('.seedling-card')
+    const seedlingId = card?.dataset.seedlingId
+    if (!seedlingId || !card) return
+    switch (actionEl.dataset.seedlingAction) {
+      case 'delete':
+        handleSeedlingDeleteClick(actionEl, seedlingId, () => updateSidebarSprouts(ctx))
+        break
+      case 'edit':
+        startInlineSeedlingEdit(card, seedlingId, () => updateSidebarSprouts(ctx))
+        break
+      case 'plant': {
+        const seedling = getSeedlingById(seedlingId)
+        if (seedling && storedPlantSeedling) {
+          storedPlantSeedling({
+            ...seedling,
+            twigLabel: getPresetLabel(seedling.twigId) || seedling.twigId,
+            branchIndex: parseBranchIndex(seedling.twigId),
+          })
+        }
+        break
+      }
+    }
   })
 
   // Initial render
@@ -366,15 +402,25 @@ export function updateSidebarSprouts(ctx: AppContext): void {
   if (seedlingsCount) seedlingsCount.textContent = `(${filteredSeedlings.length})`
 
   seedlingsList.replaceChildren()
-
   if (filteredSeedlings.length === 0) {
     const hint = document.createElement('p')
     hint.className = 'sprouts-empty-hint'
     hint.textContent = 'No seedlings yet.'
     seedlingsList.append(hint)
   } else {
-    for (const seedling of filteredSeedlings) {
-      seedlingsList.append(renderSeedlingRow(seedling))
+    const byBranch = groupSeedlingsByBranch(filteredSeedlings)
+    const branchIndices = [...byBranch.keys()].sort((a, b) => a - b)
+    for (const branchIndex of branchIndices) {
+      const branchSeedlings = byBranch.get(branchIndex) ?? []
+      const branchLabel = getBranchLabel(branchGroups[branchIndex]?.branch, branchIndex)
+      const folder = createBranchFolder(branchIndex, branchLabel, branchSeedlings.length)
+      const wrap = document.createElement('div')
+      wrap.className = 'seedling-cards'
+      wrap.innerHTML = branchSeedlings
+        .map((s) => renderSeedlingCard(s, { locationLabel: s.twigLabel }))
+        .join('')
+      folder.append(wrap)
+      seedlingsList.append(folder)
     }
   }
 }
