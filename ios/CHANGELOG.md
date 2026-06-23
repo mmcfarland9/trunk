@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-23
+
+### Added
+- Twig subtitles: the twig detail header now shows each twig's ornamental synonyms (e.g. "movement" → "locomotion; ambulation; cardio") faint under the title. The data already existed in the shared constants and was shown on web; this surfaces it on iOS for parity. No data or schema changes.
+
 ## [0.4.0] - 2026-06-22
 
 ### Added

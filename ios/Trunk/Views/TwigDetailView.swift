@@ -26,6 +26,15 @@ struct TwigDetailView: View {
         SharedConstants.Tree.twigLabel(branchIndex: branchIndex, twigIndex: twigIndex)
     }
 
+    /// Ornamental subtitle (synonyms) for this twig, e.g. "locomotion; ambulation; cardio".
+    /// Mirrors how BranchView surfaces branchDescriptions. Bounds-safe; "" if out of range.
+    private var twigSubtitle: String {
+        let descriptions = SharedConstants.Tree.twigDescriptions
+        guard branchIndex >= 0, branchIndex < descriptions.count,
+              twigIndex >= 0, twigIndex < descriptions[branchIndex].count else { return "" }
+        return descriptions[branchIndex][twigIndex]
+    }
+
     // Derived state from EventStore
     private var state: DerivedState {
         EventStore.shared.getState()
@@ -96,10 +105,20 @@ struct TwigDetailView: View {
                 .foregroundStyle(Color.inkFaint)
             }
             ToolbarItem(placement: .principal) {
-                Text(twigLabel.uppercased())
-                    .font(.system(size: TrunkTheme.textBase, design: .monospaced))
-                    .tracking(2)
-                    .foregroundStyle(Color.wood)
+                VStack(spacing: 1) {
+                    Text(twigLabel.uppercased())
+                        .font(.system(size: TrunkTheme.textBase, design: .monospaced))
+                        .tracking(2)
+                        .foregroundStyle(Color.wood)
+
+                    if !twigSubtitle.isEmpty {
+                        Text(twigSubtitle)
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                }
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
