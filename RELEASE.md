@@ -17,20 +17,14 @@ git checkout dev
 The moment `main` is pushed:
 
 - **Web ships automatically** via Vercel — that's the entire web release, nothing else to do.
-- **iOS does NOT ship from the merge** — `main` is only *ready to archive*. iOS reaches TestFlight/App Store only after the Xcode step below.
+- **iOS ships automatically too** — Xcode Cloud builds `main`, archives, cloud-signs, and uploads to **TestFlight (internal)**. No Xcode, no manual archive. (Promoting to the public App Store is still Apple-gated: App Review + the Release button.)
 
 **Cutting a version** (manual, independent per platform — see [Versioning](#versioning)):
 
 - **Web**: bump `version` in `web/package.json`, update `web/CHANGELOG.md`, tag `web-vX.Y.Z`.
-- **iOS**: bump `MARKETING_VERSION` (all 4 spots) **and always** increment `CURRENT_PROJECT_VERSION` (build number — TestFlight rejects reused numbers) in `ios/Trunk.xcodeproj/project.pbxproj`, promote `ios/CHANGELOG.md` `[Unreleased]`, tag `ios-vX.Y.Z`.
+- **iOS**: bump `MARKETING_VERSION` (all 4 spots) in `ios/Trunk.xcodeproj/project.pbxproj`, promote `ios/CHANGELOG.md` `[Unreleased]`, tag `ios-vX.Y.Z`. **Don't touch `CURRENT_PROJECT_VERSION`** — Xcode Cloud sets the build number. Bump the marketing version each release so the build-number train stays collision-free.
 
-**iOS archive & upload** (Xcode, required every iOS release — Apple needs a signed build):
-
-1. `git checkout main && git pull`
-2. `open ios/Trunk.xcodeproj`
-3. Destination bar → **"Any iOS Device (arm64)"** (Archive is greyed out on a simulator)
-4. **Product → Archive** → Organizer → **Distribute App** → **TestFlight & App Store** → **Upload**
-5. Build appears in App Store Connect → TestFlight in ~5–15 min.
+**iOS archive & upload** — **automatic**. Xcode Cloud's "Default" workflow (triggers on a `main` push) archives → cloud-signs → uploads to TestFlight (internal) in ~10–15 min. To ship without a `main` merge (e.g. a build off `dev`), run `scripts/ship-ios.sh [branch]` — it triggers and watches the build via the App Store Connect API.
 
 > No local git hooks run on commit or push — pushes to `main` are instant. Formatting/type/test checks run in **GitHub CI** server-side; run `cd web && npx biome format --write src/` yourself before committing to keep CI green.
 
@@ -111,24 +105,14 @@ Each platform evolves independently. Web might be at v1.2.0 while iOS is at v0.8
 
 ### iOS Release
 
-1. Merge `dev` -> `main`
-2. In Xcode:
-   - Update `MARKETING_VERSION` (both Debug and Release configs)
-   - Increment `CURRENT_PROJECT_VERSION` (build number: 1, 2, 3...)
-3. Update `ios/CHANGELOG.md` with patch notes
-4. Commit: `git commit -m "chore(ios): release vX.Y.Z"`
-5. Tag: `git tag ios-vX.Y.Z`
-6. Push: `git push && git push --tags`
-7. Product -> Archive -> Distribute to App Store Connect
-8. TestFlight build appears in ~10 minutes
+1. (For a versioned release) bump `MARKETING_VERSION` (all 4 spots in `ios/Trunk.xcodeproj/project.pbxproj`), update `ios/CHANGELOG.md`, commit, tag `ios-vX.Y.Z`. Leave `CURRENT_PROJECT_VERSION` alone — Xcode Cloud sets the build number.
+2. Merge `dev` -> `main` and push → Xcode Cloud automatically archives → cloud-signs → uploads to **TestFlight (internal)** (~10–15 min).
+   - Or, without merging: `scripts/ship-ios.sh [branch]` triggers a build of any branch via the ASC API.
+3. Promoting to the public App Store is a separate, Apple-gated step (App Review + Release) done in App Store Connect.
 
 ### iOS Build Numbers
 
-The build number (`CURRENT_PROJECT_VERSION`) is a simple incrementing integer:
-- Each TestFlight/App Store upload needs a higher build number
-- Use: 1, 2, 3, 4... (no padding, no dates)
-- Build numbers are independent of version numbers
-- Example: Version 0.2.0 might have builds 5, 6, 7 during development
+**Xcode Cloud manages the build number** (its own incrementing run counter) — you don't set `CURRENT_PROJECT_VERSION`. Because that counter is global across runs and can sit below older manually-uploaded builds, **bump `MARKETING_VERSION` each release** so every release is a fresh, collision-free build-number train. (Setup details: `~/.config/trunk-asc/`, `scripts/ship-ios.sh`, `scripts/asc-jwt.py`.)
 
 ---
 

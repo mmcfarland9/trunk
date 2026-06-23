@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-22
+
+### Added
+- Seedling tray: the Garden → Seedlings view is now grouped by branch in collapsible sections. Each seedling can be planted, edited, or deleted right from the tray — previously it was a read-only list and you had to go back into each twig. "Set" still pre-fills the plant form and only removes the seedling after a successful plant.
+
+### Changed
+- Editing a seedling now covers both its title and its notes (was title-only).
+
 ## [0.3.0] - 2026-06-04
 
 ### Added
