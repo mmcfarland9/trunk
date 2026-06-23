@@ -119,8 +119,18 @@ struct SeedlingsListView: View {
 
     @State private var expanded: Set<Int> = []
     @State private var didInitExpansion = false
-    @State private var plantFrom: (title: String, twigId: String, seedlingId: String)?
-    @State private var showingPlant = false
+    @State private var plantContext: PlantContext?
+
+    // Identifiable so the plant sheet uses `.sheet(item:)` — it presents only
+    // when set and receives the value directly, avoiding the blank-sheet race
+    // that `.sheet(isPresented:)` + `if let` hits when the state isn't yet
+    // applied on the first render.
+    private struct PlantContext: Identifiable {
+        let id = UUID()
+        let title: String
+        let twigId: String
+        let seedlingId: String
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: TrunkTheme.space2) {
@@ -144,16 +154,14 @@ struct SeedlingsListView: View {
                 didInitExpansion = true
             }
         }
-        .sheet(isPresented: $showingPlant, onDismiss: { plantFrom = nil; onChanged() }) {
-            if let plantFrom {
-                NavigationStack {
-                    CreateSproutView(
-                        nodeId: plantFrom.twigId,
-                        progression: progression,
-                        initialTitle: plantFrom.title,
-                        plantingSeedlingId: plantFrom.seedlingId
-                    )
-                }
+        .sheet(item: $plantContext, onDismiss: { onChanged() }) { ctx in
+            NavigationStack {
+                CreateSproutView(
+                    nodeId: ctx.twigId,
+                    progression: progression,
+                    initialTitle: ctx.title,
+                    plantingSeedlingId: ctx.seedlingId
+                )
             }
         }
     }
@@ -187,8 +195,11 @@ struct SeedlingsListView: View {
                         SeedlingCardView(
                             seedling: seedling,
                             onPlant: {
-                                plantFrom = (seedling.title, seedling.twigId, seedling.id)
-                                showingPlant = true
+                                plantContext = PlantContext(
+                                    title: seedling.title,
+                                    twigId: seedling.twigId,
+                                    seedlingId: seedling.id
+                                )
                             },
                             onEdit: { title, notes in editSeedling(seedling.id, title: title, notes: notes) },
                             onDelete: { deleteSeedling(seedling.id) }
