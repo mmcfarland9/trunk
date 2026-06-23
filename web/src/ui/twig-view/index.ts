@@ -9,7 +9,7 @@ import {
   getState,
   toSprout,
 } from '../../events'
-import { calculateSoilCost, canAffordSoil, getPresetLabel } from '../../state'
+import { calculateSoilCost, canAffordSoil, getPresetLabel, getPresetNote } from '../../state'
 import type { Sprout, SproutEnvironment, SproutSeason, TwigViewApi } from '../../types'
 import { preventDoubleClick } from '../../utils/debounce'
 import { ENVIRONMENTS, SEASONS } from '../../utils/sprout-labels'
@@ -406,12 +406,17 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
 
     const label = getPresetLabel(nodeId) || twigNode.dataset.defaultLabel || ''
     elements.titleInput.value = label
-    elements.noteInput.value = ''
+    elements.noteInput.value = getPresetNote(nodeId) || ''
 
     resetForm()
     doPopulateLeafSelect()
     renderSprouts()
     container.classList.remove('hidden')
+
+    // Auto-size the readonly subtitle now that the panel is visible, so a
+    // wrapped note never clips (measuring while hidden returns scrollHeight 0).
+    elements.noteInput.style.height = 'auto'
+    elements.noteInput.style.height = `${elements.noteInput.scrollHeight}px`
   }
 
   function close(): void {
