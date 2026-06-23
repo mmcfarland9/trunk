@@ -15,6 +15,14 @@ set -eu
 ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(cd "$(dirname "$0")/../.." && pwd)}"
 SECRETS="$ROOT/ios/Trunk/Config/Secrets.swift"
 
+# Secrets.swift is committed (the anon key is a public RLS-protected client key),
+# so in a normal build it's already here — don't overwrite it. The generation
+# below is only a fallback for checkouts where it's absent.
+if [ -f "$SECRETS" ]; then
+  echo "ci_post_clone: Secrets.swift already present — using committed config."
+  exit 0
+fi
+
 URL="${SUPABASE_URL:-https://xxxxx.supabase.co}"
 ANON="${SUPABASE_ANON_KEY:-ci-placeholder-anon-key-...}"
 

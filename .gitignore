@@ -63,8 +63,9 @@ web/reports/
 # MCP config (contains tokens)
 .mcp.json
 
-# iOS Secrets (contains Supabase keys)
-ios/Trunk/Config/Secrets.swift
+# Note: ios/Trunk/Config/Secrets.swift IS committed on purpose — the Supabase
+# anon key is a public, RLS-protected client key (see the file header) and is
+# required by Xcode Cloud builds. Do not re-ignore it.
 
 
 # Superpowers SDD scratch (briefs, reports, review packages, ledger)
