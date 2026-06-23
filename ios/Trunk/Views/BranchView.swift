@@ -142,17 +142,20 @@ struct BranchView: View {
                 let windOffset = Wind.twigOffset(branchIndex: branchIndex, twigIndex: twigIndex, time: time)
                 let activeCount = twigActive[twigIndex]
 
-                Button {
-                    HapticManager.tap()
-                    selectedTwig = TwigSelection(id: twigIndex)
-                } label: {
-                    TwigNode(
-                        label: labelForTwig(twigIndex),
-                        activeSproutCount: activeCount
-                    )
-                    .equatable()
-                }
-                .buttonStyle(.plain)
+                // Tap handled INSIDE TwigNode (like InteractiveBranchNode in
+                // TreeCanvasView): the gesture lives in the .equatable() subview
+                // so it stays stable across wind TimelineView frames. A Button or
+                // an outer .onTapGesture here was rebuilt every frame and dropped
+                // the tap under XCUITest/Maestro.
+                TwigNode(
+                    label: labelForTwig(twigIndex),
+                    activeSproutCount: activeCount,
+                    onTap: {
+                        HapticManager.tap()
+                        selectedTwig = TwigSelection(id: twigIndex)
+                    }
+                )
+                .equatable()
                 .position(
                     x: position.x + windOffset.x,
                     y: position.y + windOffset.y
@@ -227,11 +230,13 @@ struct BranchCenterNode: View, Equatable {
 struct TwigNode: View, Equatable {
     let label: String
     let activeSproutCount: Int
+    let onTap: () -> Void
 
     @State private var isPressed = false
 
-    // Compare data properties only — skip @State.
-    // Allows SwiftUI to skip body re-evaluation inside TimelineView.
+    // Compare data properties only — skip @State and the onTap closure.
+    // Allows SwiftUI to skip body re-evaluation (and keep the tap gesture
+    // stable) inside the wind TimelineView.
     static func == (lhs: TwigNode, rhs: TwigNode) -> Bool {
         lhs.label == rhs.label && lhs.activeSproutCount == rhs.activeSproutCount
     }
@@ -268,9 +273,14 @@ struct TwigNode: View, Equatable {
         .frame(minWidth: 44, minHeight: 44)
         .scaleEffect(isPressed ? 0.92 : 1.0)
         .animation(.trunkQuick, value: isPressed)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
         .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
         .accessibilityIdentifier("twig-\(label)")
     }

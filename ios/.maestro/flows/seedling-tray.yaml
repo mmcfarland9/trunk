@@ -14,14 +14,8 @@ name: Seedling Tray - Branch-Grouped Tray and Plant Flow
     timeout: 15000
 
 # --- Step 1: Navigate to a twig and create a seedling idea ---
-# NOTE: TwigNode buttons in BranchView use .position() inside a TimelineView
-# (wind animation). Maestro's isScreenStatic check times out against animated
-# views; element-based taps take ~13s waiting for settle and do not trigger the
-# Button action. This step is the known blocked point on this device/setup.
-# The twig accessibility ID is "twig-movement"; the seedling input placeholder
-# is "Add a seedling idea...". When the BranchView tap issue is resolved (e.g.
-# by adding .contentShape(Rectangle()) to TwigNode, or via Maestro update),
-# this block will work unmodified.
+# Twig nodes use .contentShape(Rectangle()) + .onTapGesture (matching the
+# working branch nodes), so taps land reliably on the wind-animated screen.
 
 - tapOn: "Trunk"
 - extendedWaitUntil:
@@ -60,15 +54,17 @@ name: Seedling Tray - Branch-Grouped Tray and Plant Flow
     timeout: 8000
 
 # --- Step 3: Assert branch-grouped tray structure ---
-# Branch header shows: "<BranchName>  (N)"
-- assertVisible:
-    text: "(1)"
+# The seedling appears under its branch header (CORE). Count-agnostic so it
+# survives re-runs (clearState:false leaves prior "Maestro idea" seedlings).
+- assertVisible: "CORE"
 - assertVisible: "Maestro idea"
 
-# --- Step 4: Tap "Set" to open the plant form ---
+# --- Step 4: Tap "Set" → the plant form opens, pre-filled with the seedling ---
+# (The "PLANT" button is at the bottom of a long scrollable form; assert the
+# form title + the pre-filled title instead — both visible without scrolling.)
 
 - tapOn: "Set"
 - extendedWaitUntil:
-    visible: "PLANT"
+    visible: "NEW SPROUT"
     timeout: 8000
-- assertVisible: "PLANT"
+- assertVisible: "Maestro idea"
