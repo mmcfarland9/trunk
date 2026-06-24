@@ -63,8 +63,12 @@ while :; do
   [ "$exec" = "COMPLETE" ] && break
 done
 
-if [ "$comp" = "SUCCEEDED" ]; then
-  echo "✅ Build SUCCEEDED — the new build should appear in TestFlight (internal) shortly."
-else
+if [ "$comp" != "SUCCEEDED" ]; then
   echo "❌ Build finished with: $comp" >&2; exit 1
 fi
+
+echo "✅ Build SUCCEEDED — waiting for processing, then distributing to internal TestFlight…"
+# Builds can stall at READY_FOR_BETA_TESTING; attach to the internal group so
+# they actually reach IN_BETA_TESTING (installable). Idempotent.
+python3 "$HERE/testflight-distribute.py"
+echo "🚀 Live in TestFlight (internal). Pull-to-refresh in the TestFlight app."
