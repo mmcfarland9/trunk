@@ -18,13 +18,14 @@ The moment `main` is pushed:
 
 - **Web ships automatically** via Vercel — that's the entire web release, nothing else to do.
 - **iOS ships automatically too** — Xcode Cloud builds `main`, archives, cloud-signs, and uploads to **TestFlight (internal)**. No Xcode, no manual archive. (Promoting to the public App Store is still Apple-gated: App Review + the Release button.)
+  - **Then run `scripts/testflight-distribute.py`.** Uploaded builds can stall at `READY_FOR_BETA_TESTING` and never reach internal testers (happened on 0.4.0 *and* 0.4.1). This idempotent script waits for the build to finish processing, then attaches it to the internal beta group so it flips to `IN_BETA_TESTING` (installable). `ship-ios.sh` runs it automatically; on the `main`-push path, run it once the cloud build completes.
 
 **Cutting a version** (manual, independent per platform — see [Versioning](#versioning)):
 
 - **Web**: bump `version` in `web/package.json`, update `web/CHANGELOG.md`, tag `web-vX.Y.Z`.
 - **iOS**: bump `MARKETING_VERSION` (all 4 spots) in `ios/Trunk.xcodeproj/project.pbxproj`, promote `ios/CHANGELOG.md` `[Unreleased]`, tag `ios-vX.Y.Z`. **Don't touch `CURRENT_PROJECT_VERSION`** — Xcode Cloud sets the build number. Bump the marketing version each release so the build-number train stays collision-free.
 
-**iOS archive & upload** — **automatic**. Xcode Cloud's "Default" workflow (triggers on a `main` push) archives → cloud-signs → uploads to TestFlight (internal) in ~10–15 min. To ship without a `main` merge (e.g. a build off `dev`), run `scripts/ship-ios.sh [branch]` — it triggers and watches the build via the App Store Connect API.
+**iOS archive & upload** — **automatic**. Xcode Cloud's "Default" workflow (triggers on a `main` push) archives → cloud-signs → uploads to TestFlight (internal) in ~10–15 min, then `scripts/testflight-distribute.py` attaches it to the internal group (see above). To ship without a `main` merge (e.g. a build off `dev`), run `scripts/ship-ios.sh [branch]` — it triggers, watches the build, **and runs the distribute step itself** via the App Store Connect API.
 
 > No local git hooks run on commit or push — pushes to `main` are instant. Formatting/type/test checks run in **GitHub CI** server-side; run `cd web && npx biome format --write src/` yourself before committing to keep CI green.
 

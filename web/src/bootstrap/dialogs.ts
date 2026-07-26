@@ -1,5 +1,5 @@
 import constants from '../../../shared/constants.json'
-import { getState } from '../events/store'
+import { checkSproutWateredToday, getSoilAvailable, getSoilCapacity, getState } from '../events'
 import { initAccountDialog } from '../features/account-dialog'
 import { initHarvestDialog } from '../features/harvest-dialog'
 import { pushView, replaceView } from '../features/history'
@@ -11,7 +11,7 @@ import { initSunLogDialog } from '../features/sunlog-dialog'
 import { initWaterDialog } from '../features/water-dialog'
 import { initWaterCanDialog } from '../features/watercan-dialog'
 import { getActiveBranchIndex, getActiveTwigId, getPresetLabel, setViewModeState } from '../state'
-import type { AppContext } from '../types'
+import type { AppContext, SproutSeason } from '../types'
 import { buildLeafView } from '../ui/leaf-view'
 import { setFocusedNode, updateFocus } from '../ui/node-ui'
 import { buildTwigView } from '../ui/twig-view'
@@ -76,8 +76,83 @@ export function initDialogs(
   })
   sunLogPopulate = sunLogApi.populate
 
-  const soilBagApi = initSoilBagDialog(ctx.elements)
-  const waterCanApi = initWaterCanDialog(ctx.elements)
+  const getActiveSprouts = () =>
+    [...getState().sprouts.values()].filter((s) => s.state === 'active')
+
+  const isReadyToHarvest = (sprout: { season: SproutSeason; plantedAt: string }) =>
+    new Date(sprout.plantedAt).getTime() + constants.seasons[sprout.season].durationMs <= Date.now()
+
+  const soilBagApi = initSoilBagDialog(ctx.elements, {
+    getSoilStatus: () => {
+      const active = getActiveSprouts()
+      return {
+        available: getSoilAvailable(),
+        capacity: getSoilCapacity(),
+        committed: active.reduce((sum, s) => sum + s.soilCost, 0),
+        growing: active.length,
+      }
+    },
+    getHarvestableSprouts: () =>
+      getActiveSprouts()
+        .filter(isReadyToHarvest)
+        .sort((a, b) => (a.plantedAt < b.plantedAt ? -1 : a.plantedAt > b.plantedAt ? 1 : 0))
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          twigLabel: getPresetLabel(s.twigId) || '',
+          soilCost: s.soilCost,
+        })),
+    onHarvestSprout: (sproutId) => {
+      const sprout = getState().sprouts.get(sproutId)
+      if (!sprout) return
+      harvestDialogApi.openHarvestDialog({
+        id: sprout.id,
+        title: sprout.title,
+        twigId: sprout.twigId,
+        twigLabel: getPresetLabel(sprout.twigId) || '',
+        season: sprout.season,
+        environment: sprout.environment,
+        soilCost: sprout.soilCost,
+        bloomWither: sprout.bloomWither,
+        bloomBudding: sprout.bloomBudding,
+        bloomFlourish: sprout.bloomFlourish,
+      })
+    },
+  })
+
+  const waterCanApi = initWaterCanDialog(ctx.elements, {
+    hasActiveSprouts: () => getActiveSprouts().length > 0,
+    // Same selection rule as the water dialog and iOS's daily sheet: unwatered
+    // active sprouts, thirstiest (least recently watered) first, capped at 3.
+    getReadySprouts: () =>
+      getActiveSprouts()
+        .filter((s) => !checkSproutWateredToday(s.id))
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          twigLabel: getPresetLabel(s.twigId) || '',
+          lastWateredAt:
+            s.waterEntries
+              ?.map((e) => e.timestamp)
+              .sort()
+              .pop() ?? null,
+        }))
+        .sort((a, b) => (a.lastWateredAt ?? '').localeCompare(b.lastWateredAt ?? ''))
+        .slice(0, 3),
+    onWaterSprout: (sproutId) => {
+      const sprout = getState().sprouts.get(sproutId)
+      if (!sprout) return
+      waterDialogApi.openWaterDialog({
+        id: sprout.id,
+        title: sprout.title,
+        waterEntries: sprout.waterEntries,
+      })
+    },
+    onWaterAll: () => {
+      waterDialogApi.openWaterDialog()
+    },
+  })
+
   const accountApi = initAccountDialog(ctx.elements)
 
   // Build views

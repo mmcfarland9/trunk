@@ -65,6 +65,108 @@
   padding: var(--space-5);
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Status box — mirrors the Watering Can, in soil brown */
+.soil-bag-status-box {
+  background: rgba(139, 90, 43, 0.06);
+  border: 1px solid rgba(139, 90, 43, 0.2);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.soil-bag-status-text {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--soil);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.soil-bag-status-track {
+  height: 6px;
+  margin: var(--space-3) 0 var(--space-2);
+  background: rgba(139, 90, 43, 0.15);
+  border: 1px solid rgba(139, 90, 43, 0.3);
+}
+
+.soil-bag-status-fill {
+  height: 100%;
+  background: var(--soil);
+  transition: width 200ms ease;
+}
+
+.soil-bag-status-meta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.soil-bag-section-title {
+  margin: 0 0 var(--space-3) 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
+
+/* Ready to Harvest — reclaiming soil, reachable from the bag itself */
+.soil-bag-ready-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--ink-faint);
+  font-style: italic;
+  padding: var(--space-3) 0;
+}
+
+.soil-bag-ready-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.soil-bag-ready-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(139, 90, 43, 0.05);
+  border: 1px solid rgba(139, 90, 43, 0.2);
+  transition: background 150ms ease;
+}
+
+.soil-bag-ready-row:hover {
+  background: rgba(139, 90, 43, 0.11);
+}
+
+.soil-bag-ready-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.soil-bag-ready-name {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.soil-bag-ready-meta {
+  font-family: var(--font-ascii);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
 }
 
 .soil-bag-empty {
