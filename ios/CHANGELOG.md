@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-07-25
+
+### Fixed
+- Tree nodes are reliably tappable again. Branch nodes on the radial map and twig nodes in the branch view paired a tap gesture with a 0.1s long-press used only for the pressed-down visual; SwiftUI arbitrated the two against each other, so any tap held longer than 0.1s satisfied the long press and cancelled the tap. Since a normal tap runs 80–150ms, roughly half of all taps were being swallowed. Nodes are now real buttons with the press visual driven by the button style, which also gives them proper accessibility traits. The same fix applies to the back-to-trunk button.
+
 ## [0.4.1] - 2026-06-23
 
 ### Added
