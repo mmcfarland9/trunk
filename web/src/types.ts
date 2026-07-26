@@ -145,6 +145,11 @@ export type AppElements = {
   waterCanStatusReset: HTMLParagraphElement
   waterCanEmptyLog: HTMLParagraphElement
   waterCanLogEntries: HTMLDivElement
+  waterCanReadySection: HTMLDivElement
+  waterCanReadyEmpty: HTMLParagraphElement
+  waterCanReadyList: HTMLDivElement
+  waterCanReadyActions: HTMLDivElement
+  waterCanWaterAll: HTMLButtonElement
   waterMeter: HTMLDivElement
   sunLogDialog: HTMLDivElement
   sunLogDialogClose: HTMLButtonElement
@@ -162,6 +167,11 @@ export type AppElements = {
   soilBagDialogClose: HTMLButtonElement
   soilBagDialogEmpty: HTMLParagraphElement
   soilBagDialogEntries: HTMLDivElement
+  soilBagStatusText: HTMLParagraphElement
+  soilBagStatusFill: HTMLDivElement
+  soilBagStatusMeta: HTMLParagraphElement
+  soilBagReadyEmpty: HTMLParagraphElement
+  soilBagReadyList: HTMLDivElement
   soilMeter: HTMLDivElement
   accountDialog: HTMLDivElement
   accountDialogClose: HTMLButtonElement

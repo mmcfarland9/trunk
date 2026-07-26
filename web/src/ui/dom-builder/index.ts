@@ -204,6 +204,31 @@ function assembleElements(
       '.water-can-log-entries',
       'water can log entries container',
     ),
+    waterCanReadySection: requireElement<HTMLDivElement>(
+      dialogsResult.waterCanDialog,
+      '.water-can-ready-section',
+      'water can ready section',
+    ),
+    waterCanReadyEmpty: requireElement<HTMLParagraphElement>(
+      dialogsResult.waterCanDialog,
+      '.water-can-ready-empty',
+      'water can ready empty text',
+    ),
+    waterCanReadyList: requireElement<HTMLDivElement>(
+      dialogsResult.waterCanDialog,
+      '.water-can-ready-list',
+      'water can ready list container',
+    ),
+    waterCanReadyActions: requireElement<HTMLDivElement>(
+      dialogsResult.waterCanDialog,
+      '.water-can-ready-actions',
+      'water can ready actions container',
+    ),
+    waterCanWaterAll: requireElement<HTMLButtonElement>(
+      dialogsResult.waterCanDialog,
+      '.water-can-water-all',
+      'water can water-all button',
+    ),
     waterMeter: headerResult.waterMeter,
     sunLogDialog: dialogsResult.sunLogDialog,
     sunLogDialogClose: requireElement<HTMLButtonElement>(
@@ -272,6 +297,31 @@ function assembleElements(
       dialogsResult.soilBagDialog,
       '.soil-bag-entries',
       'soil bag entries container',
+    ),
+    soilBagStatusText: requireElement<HTMLParagraphElement>(
+      dialogsResult.soilBagDialog,
+      '.soil-bag-status-text',
+      'soil bag status text',
+    ),
+    soilBagStatusFill: requireElement<HTMLDivElement>(
+      dialogsResult.soilBagDialog,
+      '.soil-bag-status-fill',
+      'soil bag status fill bar',
+    ),
+    soilBagStatusMeta: requireElement<HTMLParagraphElement>(
+      dialogsResult.soilBagDialog,
+      '.soil-bag-status-meta',
+      'soil bag status meta text',
+    ),
+    soilBagReadyEmpty: requireElement<HTMLParagraphElement>(
+      dialogsResult.soilBagDialog,
+      '.soil-bag-ready-empty',
+      'soil bag ready empty text',
+    ),
+    soilBagReadyList: requireElement<HTMLDivElement>(
+      dialogsResult.soilBagDialog,
+      '.soil-bag-ready-list',
+      'soil bag ready list container',
     ),
     soilMeter: headerResult.soilMeter,
     accountDialog: dialogsResult.accountDialog,

@@ -91,6 +91,14 @@ function createWaterCanDialog(): HTMLDivElement {
           <p class="water-can-status-text"></p>
           <p class="water-can-status-reset hidden"></p>
         </div>
+        <div class="water-can-section water-can-ready-section">
+          <h3 class="water-can-section-title">Ready to Water</h3>
+          <p class="water-can-ready-empty"></p>
+          <div class="water-can-ready-list"></div>
+          <div class="water-can-ready-actions">
+            <button type="button" class="action-btn action-btn-progress action-btn-water water-can-water-all">Water your sprouts</button>
+          </div>
+        </div>
         <div class="water-can-section water-can-log-section">
           <h3 class="water-can-section-title">Water Log</h3>
           <p class="water-can-empty-log">No water entries yet.</p>
@@ -145,8 +153,21 @@ function createSoilBagDialog(): HTMLDivElement {
         <button type="button" class="soil-bag-dialog-close" aria-label="Close dialog">×</button>
       </div>
       <div class="soil-bag-dialog-body">
-        <p class="soil-bag-empty">No soil activity yet.</p>
-        <div class="soil-bag-entries"></div>
+        <div class="soil-bag-status-box">
+          <p class="soil-bag-status-text"></p>
+          <div class="soil-bag-status-track"><div class="soil-bag-status-fill"></div></div>
+          <p class="soil-bag-status-meta"></p>
+        </div>
+        <div class="soil-bag-section soil-bag-ready-section">
+          <h3 class="soil-bag-section-title">Ready to Harvest</h3>
+          <p class="soil-bag-ready-empty"></p>
+          <div class="soil-bag-ready-list"></div>
+        </div>
+        <div class="soil-bag-section soil-bag-log-section">
+          <h3 class="soil-bag-section-title">Soil Log</h3>
+          <p class="soil-bag-empty">No soil activity yet.</p>
+          <div class="soil-bag-entries"></div>
+        </div>
       </div>
     </div>
   `
