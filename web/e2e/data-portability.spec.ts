@@ -26,6 +26,10 @@ test.describe('Data Portability - Persistence', () => {
     })
     await page.waitForSelector('.twig-view:not(.hidden)')
 
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+
+    await page.focus('.sprout-title-input')
+
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Persist Test')
     await page.fill('.sprout-title-input', 'Should Persist')
@@ -69,6 +73,10 @@ test.describe('Data Portability - Persistence', () => {
       twig?.click()
     })
     await page.waitForSelector('.twig-view:not(.hidden)')
+
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+
+    await page.focus('.sprout-title-input')
 
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Test')
