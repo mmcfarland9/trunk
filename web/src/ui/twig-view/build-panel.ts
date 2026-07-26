@@ -23,34 +23,38 @@ export function buildPanel(mapPanel: HTMLElement): HTMLDivElement {
     <div class="twig-view-body">
       <div class="sprout-column sprout-drafts">
         <h3 class="column-title">New</h3>
-        <div class="sprout-draft-form">
-          <label class="sprout-field-label">Leaf <span class="field-hint">(saga)</span></label>
-          <select class="sprout-leaf-select">
-            <option value="" disabled selected>Select a leaf...</option>
-            <option value="__new__">+ Create new leaf</option>
-          </select>
-          <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
-          <p class="sprout-section-title">Sprout <span class="field-hint">(task)</span></p>
-          <input type="text" class="sprout-title-input" placeholder="Describe this sprout." maxlength="60" />
-          <label class="sprout-field-label">Season <span class="field-hint">(period)</span></label>
-          <div class="sprout-season-selector">
-            ${SEASONS.map((s) => `<button type="button" class="sprout-season-btn" data-season="${s}" aria-pressed="false">${s}</button>`).join('')}
+        <div class="sprout-draft-form is-collapsed">
+          <div class="sprout-draft-add">
+            <input type="text" class="sprout-title-input" placeholder="Plant a new sprout..." maxlength="60" />
+            <button type="button" class="sprout-draft-toggle" aria-expanded="false" aria-label="Expand sprout form">+</button>
           </div>
-          <div class="sprout-end-date"></div>
-          <label class="sprout-field-label">Environment <span class="field-hint">(difficulty)</span></label>
-          <div class="sprout-environment-selector">
-            ${ENVIRONMENTS.map((e) => `<button type="button" class="sprout-env-btn" data-env="${e}" aria-pressed="false">${getEnvironmentLabel(e)}</button>`).join('')}
-          </div>
-          <div class="env-hint-area">
-            ${ENVIRONMENTS.map((e) => `<span class="env-hint" data-for="${e}">${getEnvironmentFormHint(e)}</span>`).join('')}
-          </div>
-          <label class="sprout-field-label">Bloom <span class="field-hint">(outcomes)</span></label>
-          <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
-          <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
-          <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
-          <div class="sprout-soil-cost" aria-live="polite"></div>
-          <div class="action-btn-group action-btn-group-right">
-            <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
+          <div class="sprout-draft-details">
+            <label class="sprout-field-label">Leaf <span class="field-hint">(saga)</span></label>
+            <select class="sprout-leaf-select">
+              <option value="" disabled selected>Select a leaf...</option>
+              <option value="__new__">+ Create new leaf</option>
+            </select>
+            <input type="text" class="sprout-new-leaf-name hidden" placeholder="New leaf name" maxlength="40" />
+            <label class="sprout-field-label">Season <span class="field-hint">(period)</span></label>
+            <div class="sprout-season-selector">
+              ${SEASONS.map((s) => `<button type="button" class="sprout-season-btn" data-season="${s}" aria-pressed="false">${s}</button>`).join('')}
+            </div>
+            <div class="sprout-end-date"></div>
+            <label class="sprout-field-label">Environment <span class="field-hint">(difficulty)</span></label>
+            <div class="sprout-environment-selector">
+              ${ENVIRONMENTS.map((e) => `<button type="button" class="sprout-env-btn" data-env="${e}" aria-pressed="false">${getEnvironmentLabel(e)}</button>`).join('')}
+            </div>
+            <div class="env-hint-area">
+              ${ENVIRONMENTS.map((e) => `<span class="env-hint" data-for="${e}">${getEnvironmentFormHint(e)}</span>`).join('')}
+            </div>
+            <label class="sprout-field-label">Bloom <span class="field-hint">(outcomes)</span></label>
+            <input type="text" class="sprout-wither-input" placeholder="What does withering look like?" maxlength="60" />
+            <input type="text" class="sprout-budding-input" placeholder="What does budding look like?" maxlength="60" />
+            <input type="text" class="sprout-flourish-input" placeholder="What does flourishing look like?" maxlength="60" />
+            <div class="sprout-soil-cost" aria-live="polite"></div>
+            <div class="action-btn-group action-btn-group-right">
+              <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-set-btn" disabled></button>
+            </div>
           </div>
         </div>
         <div class="seedlings-section">
@@ -94,6 +98,8 @@ export function getElements(container: HTMLDivElement) {
   return {
     titleInput: container.querySelector<HTMLInputElement>('.twig-title-input')!,
     noteInput: container.querySelector<HTMLTextAreaElement>('.twig-note-input')!,
+    draftForm: container.querySelector<HTMLDivElement>('.sprout-draft-form')!,
+    draftToggle: container.querySelector<HTMLButtonElement>('.sprout-draft-toggle')!,
     sproutTitleInput: container.querySelector<HTMLInputElement>('.sprout-title-input')!,
     seasonBtns: container.querySelectorAll<HTMLButtonElement>('.sprout-season-btn'),
     endDateDisplay: container.querySelector<HTMLDivElement>('.sprout-end-date')!,

@@ -60,6 +60,8 @@ test.describe('Resource Management', () => {
     const initialSoil = parseFloat(initialText?.split('/')[0] || '10')
 
     // Create a sprout
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Test Saga')
     await page.fill('.sprout-title-input', 'Test Sprout')
@@ -192,6 +194,8 @@ test.describe('Resource Management', () => {
 
     // Create 5 sprouts (2 * 5 = 10 soil)
     for (let i = 0; i < 5; i++) {
+      // Draft form starts collapsed; focusing the title expands it (idempotent).
+      await page.focus('.sprout-title-input')
       await page.selectOption('.sprout-leaf-select', '__new__')
       await page.fill('.sprout-new-leaf-name', `Saga ${i}`)
       await page.fill('.sprout-title-input', `Sprout ${i}`)
@@ -207,6 +211,8 @@ test.describe('Resource Management', () => {
     }
 
     // Try to create one more sprout
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Extra Saga')
     await page.fill('.sprout-title-input', 'Extra Sprout')

@@ -61,6 +61,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     await navigateToTwig(page)
 
     // Select "new leaf" and provide name
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'My Saga')
 
@@ -96,6 +98,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     await navigateToTwig(page)
 
     // Create first sprout with a new leaf
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Existing Saga')
     await page.fill('.sprout-title-input', 'First Sprout')
@@ -132,6 +136,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     await navigateToTwig(page)
 
     // Create first sprout with new leaf
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Shared Saga')
     await page.fill('.sprout-title-input', 'First Goal')
@@ -155,6 +161,8 @@ test.describe('Leaf/Saga Lifecycle and Navigation', () => {
     await reopenTwig(page)
 
     // Select the existing leaf and create second sprout
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', leafId)
     await page.fill('.sprout-title-input', 'Second Goal')
     await page.click('.sprout-season-btn[data-season="1m"]')

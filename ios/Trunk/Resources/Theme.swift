@@ -230,3 +230,28 @@ extension ButtonStyle where Self == TrunkButtonStyle {
     static var trunkSun: TrunkButtonStyle { TrunkButtonStyle(variant: .sun) }
     static var trunkDestructive: TrunkButtonStyle { TrunkButtonStyle(variant: .destructive) }
 }
+
+/// Adds only a press-down scale — no chrome — for views that draw their own
+/// appearance (tree branch nodes, twig nodes).
+///
+/// Exists so those nodes can be real `Button`s. They previously paired
+/// `.onTapGesture` with `.onLongPressGesture(minimumDuration: 0.1)` purely to
+/// drive the pressed visual, but that long press competes with the tap in
+/// gesture arbitration: any press held longer than 0.1s satisfied the long
+/// press and cancelled the tap, so nodes intermittently didn't respond.
+struct PressScaleButtonStyle: ButtonStyle {
+    var pressedScale: CGFloat = 0.95
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? pressedScale : 1.0)
+            .animation(.trunkQuick, value: configuration.isPressed)
+    }
+}
+
+extension ButtonStyle where Self == PressScaleButtonStyle {
+    static var pressScale: PressScaleButtonStyle { PressScaleButtonStyle() }
+    static func pressScale(_ scale: CGFloat) -> PressScaleButtonStyle {
+        PressScaleButtonStyle(pressedScale: scale)
+    }
+}

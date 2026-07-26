@@ -232,7 +232,6 @@ struct TwigNode: View, Equatable {
     let activeSproutCount: Int
     let onTap: () -> Void
 
-    @State private var isPressed = false
 
     // Compare data properties only — skip @State and the onTap closure.
     // Allows SwiftUI to skip body re-evaluation (and keep the tap gesture
@@ -246,41 +245,35 @@ struct TwigNode: View, Equatable {
     }
 
     var body: some View {
-        VStack(spacing: 1) {
-            // Twig box using lighter box characters
-            VStack(spacing: 0) {
-                Text("\u{250C}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2510}")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(hasSprouts ? Color.twig : Color.inkFaint.opacity(0.4))
+        Button(action: onTap) {
+            VStack(spacing: 1) {
+                // Twig box using lighter box characters
+                VStack(spacing: 0) {
+                    Text("\u{250C}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2510}")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundStyle(hasSprouts ? Color.twig : Color.inkFaint.opacity(0.4))
 
-                Text(label)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(hasSprouts ? Color.ink : Color.inkFaint)
-                    .lineLimit(1)
+                    Text(label)
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(hasSprouts ? Color.ink : Color.inkFaint)
+                        .lineLimit(1)
 
-                Text("\u{2514}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2518}")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(hasSprouts ? Color.twig : Color.inkFaint.opacity(0.4))
+                    Text("\u{2514}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2518}")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundStyle(hasSprouts ? Color.twig : Color.inkFaint.opacity(0.4))
+                }
+
+                // Sprout indicator
+                if hasSprouts {
+                    Text("*\(activeSproutCount)")
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundStyle(Color.twig)
+                }
             }
-
-            // Sprout indicator
-            if hasSprouts {
-                Text("*\(activeSproutCount)")
-                    .font(.system(size: 8, design: .monospaced))
-                    .foregroundStyle(Color.twig)
-            }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
-        .frame(minWidth: 44, minHeight: 44)
-        .scaleEffect(isPressed ? 0.92 : 1.0)
-        .animation(.trunkQuick, value: isPressed)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onTap()
-        }
-        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
-        .accessibilityAddTraits(.isButton)
+        .buttonStyle(.pressScale(0.92))
         .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
         .accessibilityIdentifier("twig-\(label)")
     }
@@ -328,7 +321,6 @@ struct BranchGuideLine: View {
 
 struct BackButton: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var isPressed = false
 
     var body: some View {
         Button {
@@ -344,13 +336,9 @@ struct BackButton: View {
             }
             .foregroundStyle(Color.inkFaint)
             .frame(minHeight: 44)
-            .scaleEffect(isPressed ? 0.92 : 1.0)
-            .animation(.trunkQuick, value: isPressed)
         }
+        .buttonStyle(.pressScale(0.92))
         .accessibilityLabel("Back to trunk")
-        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
     }
 }
 

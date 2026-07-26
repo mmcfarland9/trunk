@@ -161,10 +161,22 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.seedlingsList.innerHTML = renderSeedlings(nodeId)
   }
 
+  /** Show or hide the draft form's detail fields (leaf, season, environment, bloom). */
+  function setDraftExpanded(expanded: boolean): void {
+    elements.draftForm.classList.toggle('is-collapsed', !expanded)
+    elements.draftToggle.setAttribute('aria-expanded', String(expanded))
+    elements.draftToggle.textContent = expanded ? '−' : '+'
+    elements.draftToggle.setAttribute(
+      'aria-label',
+      expanded ? 'Collapse sprout form' : 'Expand sprout form',
+    )
+  }
+
   function prefillPlantFromSeedling(seedlingId: string): void {
     const seedling = getSeedlingById(seedlingId)
     if (!seedling) return
     state.plantingSeedlingId = seedlingId
+    setDraftExpanded(true)
     elements.sproutTitleInput.value = seedling.title
     elements.sproutTitleInput.focus()
     updateForm()
@@ -256,8 +268,17 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     for (const h of elements.envHints) h.classList.remove('is-visible')
     elements.endDateDisplay.textContent = ''
     elements.soilCostDisplay.textContent = ''
+    setDraftExpanded(false)
     updateForm()
   }
+
+  // Expand the draft form on any engagement with it, and let the toggle close it.
+  elements.sproutTitleInput.addEventListener('focus', () => setDraftExpanded(true))
+  elements.draftToggle.addEventListener('click', () => {
+    const expanded = elements.draftForm.classList.contains('is-collapsed')
+    setDraftExpanded(expanded)
+    if (expanded) elements.sproutTitleInput.focus()
+  })
 
   // Season selector
   elements.seasonBtns.forEach((btn) => {

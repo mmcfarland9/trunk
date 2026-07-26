@@ -121,22 +121,49 @@
   padding: 0.6rem;
 }
 
-/* Sprout section title */
-.sprout-section-title {
-  margin: var(--space-2) 0 0;
-  font-family: var(--font-ascii);
-  font-size: calc(var(--char) * 0.65);
-  font-weight: 500;
-  color: var(--ink-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/*
+ * Collapsed by default so the New column reads as a single add-row, uniform
+ * with the Seedlings section below it. Expands on focus/toggle and re-collapses
+ * after planting, which keeps the whole twig view on one screen at 100% zoom.
+ */
+.sprout-draft-form.is-collapsed .sprout-draft-details {
+  display: none;
 }
 
-.sprout-section-title .field-hint {
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
-  opacity: 0.7;
+.sprout-draft-add {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.sprout-draft-add .sprout-title-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sprout-draft-toggle {
+  flex: none;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-faint);
+  line-height: 1;
+}
+
+.sprout-draft-toggle:hover {
+  background: var(--twig);
+  color: white;
+  border-color: var(--twig);
+}
+
+.sprout-draft-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 /* Leaf select dropdown */

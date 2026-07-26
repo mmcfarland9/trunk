@@ -34,6 +34,8 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
 
     // Fill out the sprout form
     // First, create a new leaf (required)
+    // Draft form starts collapsed; focusing the title expands it (idempotent).
+    await page.focus('.sprout-title-input')
     await page.selectOption('.sprout-leaf-select', '__new__')
     await page.fill('.sprout-new-leaf-name', 'Test Saga')
 
@@ -49,9 +51,17 @@ test.describe('Sprout Lifecycle - Actual Behavior', () => {
     // Take screenshot of filled form
     await page.screenshot({ path: 'e2e/screenshots/02-form-filled.png' })
 
+    // Form is expanded while filling it out
+    await expect(page.locator('.sprout-draft-form')).not.toHaveClass(/is-collapsed/)
+
     // Click Plant button
     await page.click('.sprout-set-btn')
     await page.waitForTimeout(300)
+
+    // Planting resets the draft, which re-collapses it back to the single
+    // add-row so the New column stays compact.
+    await expect(page.locator('.sprout-draft-form')).toHaveClass(/is-collapsed/)
+    await expect(page.locator('.sprout-draft-toggle')).toHaveAttribute('aria-expanded', 'false')
 
     // Take screenshot after planting
     await page.screenshot({ path: 'e2e/screenshots/03-after-planting.png' })
