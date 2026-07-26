@@ -322,7 +322,6 @@ struct InteractiveBranchNode: View, Equatable {
     let activeSproutCount: Int
     let onTap: () -> Void
 
-    @State private var isPressed = false
 
     // Compare data properties only — skip closure and @State.
     // Allows SwiftUI to skip body re-evaluation inside TimelineView
@@ -337,42 +336,37 @@ struct InteractiveBranchNode: View, Equatable {
         let label = SharedConstants.Tree.branchName(index)
         let boxLines = formatBoxLabel(label)
 
-        VStack(spacing: 2) {
-            // Unicode box with rounded heavy borders
-            VStack(spacing: 0) {
-                Text(boxLines.topBorder)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint.opacity(0.5))
+        Button(action: onTap) {
+            VStack(spacing: 2) {
+                // Unicode box with rounded heavy borders
+                VStack(spacing: 0) {
+                    Text(boxLines.topBorder)
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint.opacity(0.5))
 
-                ForEach(Array(boxLines.middleRows.enumerated()), id: \.offset) { _, row in
-                    Text(row)
-                        .font(.system(size: 15, design: .monospaced))
-                        .foregroundStyle(hasActiveSprouts ? Color.wood : Color.inkFaint)
+                    ForEach(Array(boxLines.middleRows.enumerated()), id: \.offset) { _, row in
+                        Text(row)
+                            .font(.system(size: 15, design: .monospaced))
+                            .foregroundStyle(hasActiveSprouts ? Color.wood : Color.inkFaint)
+                    }
+
+                    Text(boxLines.bottomBorder)
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(Color.inkFaint.opacity(0.5))
                 }
 
-                Text(boxLines.bottomBorder)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(Color.inkFaint.opacity(0.5))
+                // Sprout indicator
+                if activeSproutCount > 0 {
+                    Text("*\(activeSproutCount)")
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(Color.twig)
+                }
             }
-
-            // Sprout indicator
-            if activeSproutCount > 0 {
-                Text("*\(activeSproutCount)")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(Color.twig)
-            }
+            .padding(TrunkTheme.space2)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
-        .padding(TrunkTheme.space2)
-        .frame(minWidth: 44, minHeight: 44)
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.trunkQuick, value: isPressed)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onTap()
-        }
-        .onLongPressGesture(minimumDuration: 0.1, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
+        .buttonStyle(.pressScale)
         .accessibilityLabel("\(label), \(activeSproutCount) active sprouts")
         .accessibilityIdentifier("branch-\(label)")
     }
