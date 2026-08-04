@@ -116,52 +116,96 @@ export function renderActiveCard(s: Sprout): string {
 }
 
 /**
+ * Renders the ordered node timeline for a leaf: one node per sprout, oldest
+ * first, so a sprout reads as a segment of an ongoing saga rather than a
+ * standalone card. Nodes are inert — the surrounding leaf group carries the
+ * click that opens the leaf's history.
+ */
+function renderLeafTimeline(sprouts: Sprout[], currentId?: string): string {
+  const ordered = [...sprouts].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  )
+
+  const nodes = ordered
+    .map((s, i) => {
+      const position = `${i + 1}/${ordered.length}`
+      const when = s.harvestedAt ? formatDate(new Date(s.harvestedAt)) : ''
+
+      let cls = 'leaf-node'
+      let glyph = '◦'
+      let detail = ''
+
+      if (s.state === 'completed') {
+        cls += ' is-completed'
+        glyph = '●'
+        detail = `${getResultEmoji(s.result || 1)} ${s.result || 1}/5${when ? ` · ${when}` : ''}`
+      } else if (s.state === 'uprooted') {
+        cls += ' is-uprooted'
+        glyph = '×'
+        detail = 'uprooted'
+      } else {
+        cls += ' is-active'
+        glyph = '◉'
+        detail = 'growing now'
+      }
+
+      if (s.id === currentId) cls += ' is-current'
+
+      const label = `${position} · ${s.title}${detail ? ` · ${detail}` : ''}`
+      return `<span class="${cls}" role="listitem" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${glyph}</span>`
+    })
+    .join('')
+
+  return `<div class="leaf-timeline" role="list">${nodes}</div>`
+}
+
+/** Short summary of a leaf's progress, e.g. "3 done · 1 growing". */
+function leafProgressLabel(sprouts: Sprout[]): string {
+  const done = sprouts.filter((s) => s.state === 'completed').length
+  const growing = sprouts.filter((s) => s.state === 'active').length
+  const parts: string[] = []
+  if (done > 0) parts.push(`${done} done`)
+  if (growing > 0) parts.push(`${growing} growing`)
+  return parts.join(' · ') || 'just planted'
+}
+
+/**
  * Renders a leaf card (saga view).
+ *
+ * Every leaf — even one holding a single sprout — renders with its name and
+ * timeline, so it's always clear which saga a sprout belongs to and where in
+ * the sequence it sits.
  */
 export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boolean): string {
   const state = getState()
   const leaf = getLeafById(state, leafId)
   const leafName = leaf?.name || 'Unnamed Saga'
 
-  if (isGrowing) {
-    // Get all active sprouts for this leaf
-    const activeSprouts = sprouts
-      .filter((s) => s.state === 'active')
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  const shown = isGrowing
+    ? sprouts
+        .filter((s) => s.state === 'active')
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    : sprouts
+        .filter((s) => s.state === 'completed')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 1)
 
-    if (activeSprouts.length === 0) return ''
+  if (shown.length === 0) return ''
 
-    // If only one active sprout, render normally in a leaf wrapper
-    if (activeSprouts.length === 1) {
-      return `
-        <div class="leaf-card" data-leaf-id="${escapeHtml(leafId)}" data-action="open-leaf">
-          ${renderActiveCard(activeSprouts[0])}
-        </div>
-      `
-    }
+  const cards = isGrowing
+    ? shown.map((s) => renderActiveCard(s)).join('')
+    : shown.map((s) => renderHistoryCard(s)).join('')
 
-    // Multiple active sprouts - render each as full card, grouped with border and name
-    return `
-      <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}" data-action="open-leaf">
-        <div class="leaf-card-group-header">${escapeHtml(leafName)}</div>
-        <div class="leaf-card-group-sprouts">
-          ${activeSprouts.map((s) => renderActiveCard(s)).join('')}
-        </div>
-      </div>
-    `
-  }
-  // Cultivated - show most recent completed sprout
-  const completedSprouts = sprouts.filter((s) => s.state === 'completed')
-  const topSprout = completedSprouts.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )[0]
-
-  if (!topSprout) return ''
-
-  const layerCount = Math.min(completedSprouts.length, 3)
   return `
-      <div class="leaf-card" data-leaf-id="${escapeHtml(leafId)}" data-layers="${layerCount}" data-action="open-leaf">
-        ${renderHistoryCard(topSprout)}
+      <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}" data-action="open-leaf">
+        <div class="leaf-card-group-header">
+          <span class="leaf-group-name">${escapeHtml(leafName)}</span>
+          <span class="leaf-group-progress">${escapeHtml(leafProgressLabel(sprouts))}</span>
+        </div>
+        ${renderLeafTimeline(sprouts, shown[0]?.id)}
+        <div class="leaf-card-group-sprouts">
+          ${cards}
+        </div>
       </div>
     `
 }

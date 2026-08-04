@@ -693,12 +693,66 @@
 }
 
 .leaf-card-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
   padding: var(--space-2);
   font-family: var(--font-ascii);
   font-size: var(--text-xs);
   font-weight: 500;
   color: var(--ink-light);
+}
+
+.leaf-group-name {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaf-group-progress {
+  flex: none;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+/* Ordered node timeline — one node per sprout, oldest first, so a card reads
+   as a segment of a saga rather than a standalone goal. */
+.leaf-timeline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  padding: 0 var(--space-2) var(--space-2);
   border-bottom: 1px solid var(--border);
+  font-family: var(--font-ascii);
+  line-height: 1;
+}
+
+.leaf-node {
+  font-size: var(--text-sm);
+  cursor: help;
+}
+
+.leaf-node.is-completed {
+  color: var(--twig);
+}
+
+.leaf-node.is-active {
+  color: var(--wood);
+}
+
+.leaf-node.is-uprooted {
+  color: var(--ink-faint);
+  opacity: 0.6;
+}
+
+.leaf-node.is-current {
+  outline: 1px solid var(--border-strong);
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 
 .leaf-card-group-sprouts {
