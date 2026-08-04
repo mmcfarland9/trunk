@@ -259,7 +259,10 @@ struct SproutActionsView: View {
                 .disabled(isUprooting)
                 .confirmationDialog("Are you sure you want to uproot this sprout?", isPresented: $showUprootConfirmation, titleVisibility: .visible) {
                     Button("Uproot", role: .destructive) {
-                        uprootSprout()
+                        uprootSprout(keepAsSeedling: false)
+                    }
+                    Button("Uproot & Keep as Seedling", role: .destructive) {
+                        uprootSprout(keepAsSeedling: true)
                     }
                     Button("Cancel", role: .cancel) { }
                 }
@@ -334,11 +337,23 @@ struct SproutActionsView: View {
 
     // MARK: - Uproot
 
-    private func uprootSprout() {
+    /// Uproots the sprout, optionally preserving its title as a seedling.
+    ///
+    /// Keeping the idea costs no extra soil: the price of breaking the
+    /// commitment is already paid by `uprootRefundRate`, and seedlings are free
+    /// to create at any time. This is only a shortcut for what a user could do
+    /// by hand — uproot, then retype the title as a seedling.
+    private func uprootSprout(keepAsSeedling: Bool) {
         isUprooting = true
         errorMessage = nil
 
         let soilReturned = sprout.soilCost * SharedConstants.Soil.uprootRefundRate
+        let seedlingTitle = String(
+            sprout.title
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .prefix(SharedConstants.Validation.maxSeedlingTitleLength)
+        )
+        let twigId = sprout.twigId
 
         Task {
             do {
@@ -348,6 +363,18 @@ struct SproutActionsView: View {
                 ])
             } catch {
                 print("Uproot push failed (queued for retry): \(error)")
+            }
+
+            if keepAsSeedling {
+                do {
+                    try await SyncService.shared.pushEvent(type: "seedling_created", payload: [
+                        "seedlingId": .string("seedling-\(UUID().uuidString.lowercased())"),
+                        "twigId": .string(twigId),
+                        "title": .string(seedlingTitle)
+                    ])
+                } catch {
+                    print("Seedling create push failed (queued for retry): \(error)")
+                }
             }
         }
 

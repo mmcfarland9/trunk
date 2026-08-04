@@ -113,6 +113,27 @@
   font-weight: normal;
 }
 
+/* Confirm dialog opt-in checkbox (e.g. keep an uprooted idea as a seedling) */
+.confirm-dialog-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  cursor: pointer;
+}
+
+.confirm-dialog-checkbox.hidden {
+  display: none;
+}
+
+.confirm-dialog-checkbox-input {
+  cursor: pointer;
+  accent-color: var(--twig);
+}
+
 /* Sprout Draft Form */
 .sprout-draft-form {
   display: flex;

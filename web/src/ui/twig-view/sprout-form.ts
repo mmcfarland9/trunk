@@ -7,7 +7,7 @@ export type FormState = {
   selectedSeason: SproutSeason | null
   selectedEnvironment: SproutEnvironment | null
   currentTwigNode: HTMLButtonElement | null
-  confirmResolve: ((value: boolean) => void) | null
+  confirmResolve: ((value: { confirmed: boolean; checked: boolean }) => void) | null
   plantingSeedlingId: string | null
 }
 
