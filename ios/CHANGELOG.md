@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-08-04
+
+### Changed
+- Web only: the twig view now shows every leaf as an ordered node timeline — leaf name, a progress summary, and one node per sprout in plant order (filled for harvested, outlined for the one growing, struck for uprooted). Previously a leaf only showed its name when two sprouts were active at once, so the common case of one growing sprout behind several finished ones rendered with no leaf name, no history, and no sense of position. Leaf groups also gained a left accent rail, matching the leaves list on iOS, so a saga is no longer visually identical to a lone sprout card.
+- No iOS changes in this release; the version moves so the Xcode Cloud build-number train stays collision-free.
+
 ## [0.4.4] - 2026-08-03
 
 ### Added
