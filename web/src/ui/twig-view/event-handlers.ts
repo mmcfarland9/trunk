@@ -25,6 +25,7 @@ type EventHandlerCallbacks = {
     bloomWither?: string
     bloomBudding?: string
     bloomFlourish?: string
+    leafId?: string
   }) => void
 }
 
@@ -154,6 +155,7 @@ export function handleHarvestAction(
       bloomWither: sprout.bloomWither,
       bloomBudding: sprout.bloomBudding,
       bloomFlourish: sprout.bloomFlourish,
+      leafId: sprout.leafId,
     })
   }
 }

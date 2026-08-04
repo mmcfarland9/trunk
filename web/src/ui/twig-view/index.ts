@@ -1,10 +1,13 @@
 import {
   appendEvent,
   type DerivedLeaf,
+  type DerivedSprout,
   generateLeafId,
   generateSproutId,
+  getLeafById,
   getLeavesForTwig,
   getSeedlingsForTwig,
+  getSproutsByLeaf,
   getSproutsForTwig,
   getState,
   toSprout,
@@ -54,6 +57,7 @@ type TwigViewCallbacks = {
     bloomWither?: string
     bloomBudding?: string
     bloomFlourish?: string
+    leafId?: string
   }) => void
 }
 
@@ -172,6 +176,30 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     )
   }
 
+  /** Applies a season selection to state + button UI (null clears the selection). */
+  function applySeasonSelection(season: SproutSeason | null): void {
+    state.selectedSeason = season
+    elements.seasonBtns.forEach((b) => {
+      const isActive = b.dataset.season === season
+      b.classList.toggle('is-active', isActive)
+      b.setAttribute('aria-pressed', String(isActive))
+    })
+    elements.endDateDisplay.textContent = season ? `Ends on ${formatDate(getEndDate(season))}` : ''
+  }
+
+  /** Applies an environment selection to state + button/hint UI (null clears it). */
+  function applyEnvironmentSelection(environment: SproutEnvironment | null): void {
+    state.selectedEnvironment = environment
+    elements.envBtns.forEach((b) => {
+      const isActive = b.dataset.env === environment
+      b.classList.toggle('is-active', isActive)
+      b.setAttribute('aria-pressed', String(isActive))
+    })
+    for (const h of elements.envHints) {
+      h.classList.toggle('is-visible', h.dataset.for === environment)
+    }
+  }
+
   function prefillPlantFromSeedling(seedlingId: string): void {
     const seedling = getSeedlingById(seedlingId)
     if (!seedling) return
@@ -180,6 +208,49 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.sproutTitleInput.value = seedling.title
     elements.sproutTitleInput.focus()
     updateForm()
+  }
+
+  /** Returns the most recently planted sprout on a leaf, whatever its state. */
+  function findLatestSproutOnLeaf(leafId: string): DerivedSprout | null {
+    const sprouts = getSproutsByLeaf(getState(), leafId)
+    let latest: DerivedSprout | null = null
+    for (const sprout of sprouts) {
+      if (!latest || sprout.plantedAt > latest.plantedAt) latest = sprout
+    }
+    return latest
+  }
+
+  /**
+   * Continues a leaf: expands the draft form, preselects the leaf, and seeds the
+   * fields from that leaf's most recent sprout. Everything stays editable.
+   */
+  function prefillPlantFromLeaf(leafId: string): void {
+    if (!getLeafById(getState(), leafId)) return
+
+    // The select is populated per-twig in open(); if this leaf's option isn't
+    // there yet, repopulate first or the value assignment silently no-ops.
+    const hasOption = Array.from(elements.leafSelect.options).some((o) => o.value === leafId)
+    if (!hasOption) doPopulateLeafSelect()
+
+    state.plantingSeedlingId = null
+    setDraftExpanded(true)
+
+    elements.leafSelect.value = leafId
+    elements.newLeafNameInput.value = ''
+    elements.newLeafNameInput.classList.add('hidden')
+
+    const source = findLatestSproutOnLeaf(leafId)
+    if (source) {
+      elements.sproutTitleInput.value = source.title
+      elements.witherInput.value = source.bloomWither ?? ''
+      elements.buddingInput.value = source.bloomBudding ?? ''
+      elements.flourishInput.value = source.bloomFlourish ?? ''
+      applySeasonSelection(source.season)
+      applyEnvironmentSelection(source.environment)
+    }
+
+    updateForm()
+    elements.sproutTitleInput.focus()
   }
 
   // Delegated click handler
@@ -247,8 +318,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
   })
 
   function resetForm(): void {
-    state.selectedSeason = null
-    state.selectedEnvironment = null
     state.plantingSeedlingId = null
     elements.sproutTitleInput.value = ''
     elements.witherInput.value = ''
@@ -257,16 +326,8 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     elements.leafSelect.value = ''
     elements.newLeafNameInput.value = ''
     elements.newLeafNameInput.classList.add('hidden')
-    elements.seasonBtns.forEach((btn) => {
-      btn.classList.remove('is-active')
-      btn.setAttribute('aria-pressed', 'false')
-    })
-    elements.envBtns.forEach((btn) => {
-      btn.classList.remove('is-active')
-      btn.setAttribute('aria-pressed', 'false')
-    })
-    for (const h of elements.envHints) h.classList.remove('is-visible')
-    elements.endDateDisplay.textContent = ''
+    applySeasonSelection(null)
+    applyEnvironmentSelection(null)
     elements.soilCostDisplay.textContent = ''
     setDraftExpanded(false)
     updateForm()
@@ -285,18 +346,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     btn.addEventListener('click', () => {
       const season = btn.dataset.season as SproutSeason
       if (!SEASONS.includes(season)) return
-      state.selectedSeason = state.selectedSeason === season ? null : season
-      elements.seasonBtns.forEach((b) => {
-        const isActive = b.dataset.season === state.selectedSeason
-        b.classList.toggle('is-active', isActive)
-        b.setAttribute('aria-pressed', String(isActive))
-      })
-      if (state.selectedSeason) {
-        const endDate = getEndDate(state.selectedSeason)
-        elements.endDateDisplay.textContent = `Ends on ${formatDate(endDate)}`
-      } else {
-        elements.endDateDisplay.textContent = ''
-      }
+      applySeasonSelection(state.selectedSeason === season ? null : season)
       updateForm()
     })
   })
@@ -306,15 +356,7 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     btn.addEventListener('click', () => {
       const env = btn.dataset.env as SproutEnvironment
       if (!ENVIRONMENTS.includes(env)) return
-      state.selectedEnvironment = state.selectedEnvironment === env ? null : env
-      elements.envBtns.forEach((b) => {
-        const isActive = b.dataset.env === state.selectedEnvironment
-        b.classList.toggle('is-active', isActive)
-        b.setAttribute('aria-pressed', String(isActive))
-      })
-      for (const h of elements.envHints) {
-        h.classList.toggle('is-visible', h.dataset.for === state.selectedEnvironment)
-      }
+      applyEnvironmentSelection(state.selectedEnvironment === env ? null : env)
       updateForm()
     })
   })
@@ -463,5 +505,6 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
     refresh,
     cleanup: cleanupKeyboard,
     prefillPlantFromSeedling,
+    prefillPlantFromLeaf,
   }
 }

@@ -12,6 +12,10 @@ struct CreateSproutView: View {
     @Bindable var progression: ProgressionViewModel
     var initialTitle: String?
     var plantingSeedlingId: String?
+    /// Leaf to preselect in the picker (used when continuing an existing leaf).
+    var preselectedLeafId: String?
+    /// Editable starting values copied from a previous sprout on the same leaf.
+    var template: SproutTemplate?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -26,6 +30,9 @@ struct CreateSproutView: View {
     @State private var newLeafName = ""
     @State private var isPlanting = false
     @State private var errorMessage: String?
+    /// Prefill is one-shot: `.onAppear` can fire again (e.g. after the new-leaf
+    /// alert), and re-applying the template would clobber the user's edits.
+    @State private var didPrefill = false
 
     // Cached leaves (refreshed on appear/version change, not per keystroke)
     @State private var twigLeaves: [DerivedLeaf] = []
@@ -306,12 +313,37 @@ struct CreateSproutView: View {
         }
         .onAppear {
             twigLeaves = getLeavesForTwig(from: EventStore.shared.getState(), twigId: nodeId)
-            if let initialTitle, title.isEmpty {
-                title = initialTitle
-            }
+            applyPrefill()
         }
         .onChange(of: progression.version) {
             twigLeaves = getLeavesForTwig(from: EventStore.shared.getState(), twigId: nodeId)
+        }
+    }
+
+    /// Seed the form from `initialTitle` (seedling path) and/or `template`
+    /// (continue-a-leaf path). Everything applied here stays editable.
+    private func applyPrefill() {
+        guard !didPrefill else { return }
+        didPrefill = true
+
+        if title.isEmpty {
+            if let initialTitle {
+                title = initialTitle
+            } else if let template {
+                title = template.title
+            }
+        }
+
+        if let template {
+            season = template.season
+            environment = template.environment
+            if bloomWither.isEmpty { bloomWither = template.bloomWither }
+            if bloomBudding.isEmpty { bloomBudding = template.bloomBudding }
+            if bloomFlourish.isEmpty { bloomFlourish = template.bloomFlourish }
+        }
+
+        if selectedLeafId == nil, let preselectedLeafId {
+            selectedLeafId = preselectedLeafId
         }
     }
 

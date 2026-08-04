@@ -766,6 +766,17 @@ func getSproutsForTwig(from state: DerivedState, twigId: String) -> [DerivedSpro
     return state.sprouts.values.filter { $0.twigId == twigId }
 }
 
+/// Get all sprouts for a specific leaf (unordered)
+func getSproutsForLeaf(from state: DerivedState, leafId: String) -> [DerivedSprout] {
+    return state.sprouts.values.filter { $0.leafId == leafId }
+}
+
+/// Get the most recently planted sprout on a leaf, whatever its state
+/// (active, completed, or uprooted). Returns nil when the leaf has no sprouts.
+func mostRecentSproutForLeaf(from state: DerivedState, leafId: String) -> DerivedSprout? {
+    return getSproutsForLeaf(from: state, leafId: leafId).max { $0.plantedAt < $1.plantedAt }
+}
+
 /// Get all leaves for a specific twig
 func getLeavesForTwig(from state: DerivedState, twigId: String) -> [DerivedLeaf] {
     return state.leaves.values.filter { $0.twigId == twigId }

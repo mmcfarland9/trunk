@@ -45,6 +45,24 @@ export function initDialogs(
     },
   })
 
+  /**
+   * "Continue a leaf": navigate to the leaf's twig and seed the plant form from
+   * the leaf's most recent sprout. Used by the leaf view's continue button and
+   * by the post-harvest prompt.
+   */
+  function continueLeaf(leafId: string, twigId: string): void {
+    const twig = ctx.nodeLookup.get(twigId)
+    if (!twig) return
+    const branchIndex = Number.parseInt(twig.dataset.branchIndex ?? '', 10)
+    if (Number.isNaN(branchIndex)) return
+
+    ctx.leafView?.close()
+    // enterTwigView opens the twig view, which repopulates the leaf select —
+    // the option must exist before prefill assigns it.
+    enterTwigView(twig, branchIndex, ctx, navCallbacks)
+    ctx.twigView?.prefillPlantFromLeaf(leafId)
+  }
+
   const harvestDialogApi = initHarvestDialog(ctx, {
     onSoilMeterChange: () => updateSoilMeter(ctx.elements),
     onHarvestComplete: () => {
@@ -53,6 +71,7 @@ export function initDialogs(
       charts.updateSoil()
       charts.updateRadar()
     },
+    onContinueLeaf: continueLeaf,
   })
 
   // Late-binding container for sun log populate function
@@ -116,6 +135,7 @@ export function initDialogs(
         bloomWither: sprout.bloomWither,
         bloomBudding: sprout.bloomBudding,
         bloomFlourish: sprout.bloomFlourish,
+        leafId: sprout.leafId,
       })
     },
   })
@@ -223,6 +243,7 @@ export function initDialogs(
       charts.updateSoil()
       charts.updateRadar()
     },
+    onContinueLeaf: continueLeaf,
   })
 
   // Complete the context with twig and leaf views
@@ -254,6 +275,7 @@ export function initDialogs(
         bloomWither: sprout.bloomWither,
         bloomBudding: sprout.bloomBudding,
         bloomFlourish: sprout.bloomFlourish,
+        leafId: sprout.leafId,
       })
     },
     (seedling) => {
@@ -302,6 +324,7 @@ export function initDialogs(
           bloomWither: ready.bloomWither,
           bloomBudding: ready.bloomBudding,
           bloomFlourish: ready.bloomFlourish,
+          leafId: ready.leafId,
         })
         return true
       },
