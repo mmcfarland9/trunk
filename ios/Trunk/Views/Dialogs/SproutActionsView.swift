@@ -19,6 +19,7 @@ struct SproutActionsView: View {
     @State private var isUprooting = false
     @State private var errorMessage: String?
     @State private var showUprootConfirmation = false
+    @State private var continueContext: ContinueLeafContext?
 
     private var hasBloomDescriptions: Bool {
         sprout.bloomWither?.isEmpty == false ||
@@ -139,6 +140,18 @@ struct SproutActionsView: View {
         .sheet(isPresented: $showingEditSheet) {
             NavigationStack {
                 EditSproutView(sprout: sprout, progression: progression)
+            }
+        }
+        // .sheet(item:) rather than isPresented — see SproutsView's seedling
+        // flow: the isPresented + `if let` pairing races and can render blank.
+        .sheet(item: $continueContext) { ctx in
+            NavigationStack {
+                CreateSproutView(
+                    nodeId: ctx.twigId,
+                    progression: progression,
+                    preselectedLeafId: ctx.leafId,
+                    template: ctx.template
+                )
             }
         }
     }
@@ -306,6 +319,23 @@ struct SproutActionsView: View {
                 }
             }
             .paperCard()
+
+            // Reachable from a finished sprout too, not just the leaf's own
+            // screen or the post-harvest prompt — same prefilled flow.
+            Button {
+                HapticManager.tap()
+                continueContext = ContinueLeafContext(
+                    continuing: sprout,
+                    state: EventStore.shared.getState()
+                )
+            } label: {
+                HStack(spacing: TrunkTheme.space1) {
+                    Text("🌱")
+                    Text("CONTINUE THIS LEAF")
+                }
+            }
+            .buttonStyle(.trunk)
+            .accessibilityHint("Plants a new sprout on this leaf, pre-filled from this one")
         }
     }
 
