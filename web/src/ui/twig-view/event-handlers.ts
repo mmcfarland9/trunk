@@ -2,12 +2,15 @@ import { appendEvent, getLeavesForTwig, getSproutsForTwig, getState, toSprout } 
 import type { SproutEditedEvent } from '../../events/types'
 import {
   MAX_BLOOM_LENGTH,
+  MAX_SEEDLING_TITLE_LENGTH,
   MAX_TITLE_LENGTH,
   SOIL_UPROOT_REFUND_RATE,
 } from '../../generated/constants'
 import type { Sprout, SproutEnvironment, SproutSeason } from '../../types'
 import { escapeHtml } from '../../utils/escape-html'
 import { getEnvironmentLabel, getSeasonLabel } from '../../utils/sprout-labels'
+import type { ConfirmOptions, ConfirmResult } from './confirm'
+import { createSeedling } from './seedlings'
 import type { FormState } from './sprout-form'
 
 type EventHandlerCallbacks = {
@@ -30,7 +33,7 @@ type EventHandlerCallbacks = {
 }
 
 type ConfirmDialog = {
-  show: (message: string, confirmLabel?: string) => Promise<boolean>
+  show: (message: string, options?: ConfirmOptions) => Promise<ConfirmResult>
 }
 
 /**
@@ -69,7 +72,10 @@ export async function handleDeleteAction(
     ? `Are you sure you want to uproot this sprout? This will only affect the most recent part of this leaf's history.${soilMsg}`
     : `Are you sure you want to uproot this sprout?${soilMsg}`
 
-  const confirmed = await confirmDialog.show(confirmMsg, 'Uproot')
+  const { confirmed, checked: keepAsSeedling } = await confirmDialog.show(confirmMsg, {
+    confirmLabel: 'Uproot',
+    checkboxLabel: 'Keep the idea as a seedling',
+  })
   if (!confirmed) return
 
   appendEvent({
@@ -78,6 +84,15 @@ export async function handleDeleteAction(
     sproutId: sprout.id,
     soilReturned: soilReturn,
   })
+
+  // Rescuing the idea is free and costs no extra soil — the commitment price is
+  // already paid by the uproot refund rate. This is only a shortcut for what a
+  // user could do by hand: uproot, then retype the title as a seedling.
+  if (keepAsSeedling) {
+    const twigId = state.currentTwigNode?.dataset.nodeId
+    if (twigId) createSeedling(twigId, sprout.title.slice(0, MAX_SEEDLING_TITLE_LENGTH))
+  }
+
   callbacks.onSoilChange?.()
   renderSprouts()
 }

@@ -113,6 +113,52 @@
   font-weight: normal;
 }
 
+/* Continue action on a cultivated card — restarts the leaf from the twig view
+   without detouring through the leaf log. */
+.sprout-history-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.sprout-continue-btn {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.sprout-history-card:hover .sprout-continue-btn,
+.sprout-continue-btn:focus-visible {
+  opacity: 1;
+}
+
+/* Touch and keyboard users get no hover, so keep it always visible there. */
+@media (hover: none) {
+  .sprout-continue-btn {
+    opacity: 1;
+  }
+}
+
+/* Confirm dialog opt-in checkbox (e.g. keep an uprooted idea as a seedling) */
+.confirm-dialog-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+  cursor: pointer;
+}
+
+.confirm-dialog-checkbox.hidden {
+  display: none;
+}
+
+.confirm-dialog-checkbox-input {
+  cursor: pointer;
+  accent-color: var(--twig);
+}
+
 /* Sprout Draft Form */
 .sprout-draft-form {
   display: flex;

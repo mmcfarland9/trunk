@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-08-03
+
+### Added
+- Continue a leaf straight from a finished sprout: a completed sprout's detail now offers "Continue this leaf", opening the create form pre-filled from it. Continuing is now reachable from the leaf itself, the post-harvest prompt, and any completed sprout — all landing in the same pre-filled form.
+- Uprooting offers to keep the sprout's idea as a seedling, via a new "Uproot & Keep as Seedling" option in the uproot confirmation. Costs no extra soil: uprooting already returns only 25%, and seedlings have always been free to create, so this only saves retyping the title.
+
+### Fixed
+- The `navigation` Maestro E2E flow tapped a "Sprouts" tab that no longer exists (the tab bar is Trunk / Today / Garden), so it had been failing silently. Now points at Garden; all 8 flows pass.
+
 ## [0.4.3] - 2026-08-03
 
 ### Added

@@ -6,6 +6,20 @@ type ConfirmElements = {
   confirmMessage: HTMLParagraphElement
   confirmCancelBtn: HTMLButtonElement
   confirmConfirmBtn: HTMLButtonElement
+  confirmCheckbox: HTMLLabelElement
+  confirmCheckboxInput: HTMLInputElement
+  confirmCheckboxLabel: HTMLSpanElement
+}
+
+export type ConfirmOptions = {
+  confirmLabel?: string
+  /** Renders an opt-in checkbox above the actions; its state comes back as `checked`. */
+  checkboxLabel?: string
+}
+
+export type ConfirmResult = {
+  confirmed: boolean
+  checked: boolean
 }
 
 /**
@@ -15,12 +29,23 @@ type ConfirmElements = {
 export function setupConfirmDialog(
   elements: ConfirmElements,
   state: FormState,
-): (message: string, confirmLabel?: string) => Promise<boolean> {
+): (message: string, options?: ConfirmOptions) => Promise<ConfirmResult> {
   let releaseFocusTrap: (() => void) | null = null
 
-  function showConfirm(message: string, confirmLabel: string = 'Uproot'): Promise<boolean> {
+  function showConfirm(message: string, options: ConfirmOptions = {}): Promise<ConfirmResult> {
     elements.confirmMessage.textContent = message
-    elements.confirmConfirmBtn.textContent = confirmLabel
+    elements.confirmConfirmBtn.textContent = options.confirmLabel ?? 'Uproot'
+
+    // The checkbox is opt-in per call and always starts unchecked, so a prior
+    // confirmation can never silently carry its choice into the next one.
+    elements.confirmCheckboxInput.checked = false
+    if (options.checkboxLabel) {
+      elements.confirmCheckboxLabel.textContent = options.checkboxLabel
+      elements.confirmCheckbox.classList.remove('hidden')
+    } else {
+      elements.confirmCheckbox.classList.add('hidden')
+    }
+
     elements.confirmDialog.classList.remove('hidden')
     const dialogBox = elements.confirmDialog.querySelector<HTMLElement>('[role="alertdialog"]')
     if (dialogBox) releaseFocusTrap = trapFocus(dialogBox)
@@ -29,12 +54,15 @@ export function setupConfirmDialog(
     })
   }
 
-  function hideConfirm(result: boolean): void {
+  function hideConfirm(confirmed: boolean): void {
     releaseFocusTrap?.()
     releaseFocusTrap = null
     elements.confirmDialog.classList.add('hidden')
     if (state.confirmResolve) {
-      state.confirmResolve(result)
+      state.confirmResolve({
+        confirmed,
+        checked: confirmed && elements.confirmCheckboxInput.checked,
+      })
       state.confirmResolve = null
     }
   }

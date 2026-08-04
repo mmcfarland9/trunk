@@ -16,10 +16,10 @@ name: Navigation - Tab Bar and Tree Navigation
 # Verify Today tab is visible and selected
 - assertVisible: "Today"
 
-# Navigate to Sprouts tab
-- tapOn: "Sprouts"
+# Navigate to Garden tab (browses sprouts, seedlings and leaves)
+- tapOn: "Garden"
 - extendedWaitUntil:
-    visible: "SPROUTS"
+    visible: "GARDEN"
     timeout: 5000
 
 # Navigate back to Today

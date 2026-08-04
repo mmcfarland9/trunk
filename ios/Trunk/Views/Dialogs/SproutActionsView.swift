@@ -19,6 +19,7 @@ struct SproutActionsView: View {
     @State private var isUprooting = false
     @State private var errorMessage: String?
     @State private var showUprootConfirmation = false
+    @State private var continueContext: ContinueLeafContext?
 
     private var hasBloomDescriptions: Bool {
         sprout.bloomWither?.isEmpty == false ||
@@ -141,6 +142,18 @@ struct SproutActionsView: View {
                 EditSproutView(sprout: sprout, progression: progression)
             }
         }
+        // .sheet(item:) rather than isPresented — see SproutsView's seedling
+        // flow: the isPresented + `if let` pairing races and can render blank.
+        .sheet(item: $continueContext) { ctx in
+            NavigationStack {
+                CreateSproutView(
+                    nodeId: ctx.twigId,
+                    progression: progression,
+                    preselectedLeafId: ctx.leafId,
+                    template: ctx.template
+                )
+            }
+        }
     }
 
     // MARK: - Active State
@@ -259,7 +272,10 @@ struct SproutActionsView: View {
                 .disabled(isUprooting)
                 .confirmationDialog("Are you sure you want to uproot this sprout?", isPresented: $showUprootConfirmation, titleVisibility: .visible) {
                     Button("Uproot", role: .destructive) {
-                        uprootSprout()
+                        uprootSprout(keepAsSeedling: false)
+                    }
+                    Button("Uproot & Keep as Seedling", role: .destructive) {
+                        uprootSprout(keepAsSeedling: true)
                     }
                     Button("Cancel", role: .cancel) { }
                 }
@@ -303,6 +319,23 @@ struct SproutActionsView: View {
                 }
             }
             .paperCard()
+
+            // Reachable from a finished sprout too, not just the leaf's own
+            // screen or the post-harvest prompt — same prefilled flow.
+            Button {
+                HapticManager.tap()
+                continueContext = ContinueLeafContext(
+                    continuing: sprout,
+                    state: EventStore.shared.getState()
+                )
+            } label: {
+                HStack(spacing: TrunkTheme.space1) {
+                    Text("🌱")
+                    Text("CONTINUE THIS LEAF")
+                }
+            }
+            .buttonStyle(.trunk)
+            .accessibilityHint("Plants a new sprout on this leaf, pre-filled from this one")
         }
     }
 
@@ -334,11 +367,23 @@ struct SproutActionsView: View {
 
     // MARK: - Uproot
 
-    private func uprootSprout() {
+    /// Uproots the sprout, optionally preserving its title as a seedling.
+    ///
+    /// Keeping the idea costs no extra soil: the price of breaking the
+    /// commitment is already paid by `uprootRefundRate`, and seedlings are free
+    /// to create at any time. This is only a shortcut for what a user could do
+    /// by hand — uproot, then retype the title as a seedling.
+    private func uprootSprout(keepAsSeedling: Bool) {
         isUprooting = true
         errorMessage = nil
 
         let soilReturned = sprout.soilCost * SharedConstants.Soil.uprootRefundRate
+        let seedlingTitle = String(
+            sprout.title
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .prefix(SharedConstants.Validation.maxSeedlingTitleLength)
+        )
+        let twigId = sprout.twigId
 
         Task {
             do {
@@ -348,6 +393,18 @@ struct SproutActionsView: View {
                 ])
             } catch {
                 print("Uproot push failed (queued for retry): \(error)")
+            }
+
+            if keepAsSeedling {
+                do {
+                    try await SyncService.shared.pushEvent(type: "seedling_created", payload: [
+                        "seedlingId": .string("seedling-\(UUID().uuidString.lowercased())"),
+                        "twigId": .string(twigId),
+                        "title": .string(seedlingTitle)
+                    ])
+                } catch {
+                    print("Seedling create push failed (queued for retry): \(error)")
+                }
             }
         }
 

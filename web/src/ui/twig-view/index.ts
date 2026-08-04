@@ -302,6 +302,14 @@ export function buildTwigView(mapPanel: HTMLElement, callbacks: TwigViewCallback
         handleHarvestAction(actionEl, state, callbacks)
         break
       }
+      case 'continue-leaf': {
+        // stopPropagation matters: the card itself carries data-action="open-leaf",
+        // so without it the leaf log would open on top of the prefilled form.
+        e.stopPropagation()
+        const leafId = actionEl.dataset.leafId
+        if (leafId) prefillPlantFromLeaf(leafId)
+        break
+      }
       case 'edit': {
         e.stopPropagation()
         const card = actionEl.closest('.sprout-card') as HTMLElement

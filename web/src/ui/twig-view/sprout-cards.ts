@@ -53,6 +53,13 @@ export function renderHistoryCard(s: Sprout): string {
         <span class="sprout-card-date">${s.harvestedAt ? formatDate(new Date(s.harvestedAt)) : ''}</span>
       </div>
       ${s.reflection ? `<p class="sprout-card-reflection">${escapeHtml(s.reflection)}</p>` : ''}
+      ${
+        hasLeaf
+          ? `<div class="sprout-card-actions sprout-history-actions">
+        <button type="button" class="action-btn action-btn-progress action-btn-twig sprout-continue-btn" data-action="continue-leaf" data-leaf-id="${escapeHtml(s.leafId || '')}" aria-label="Continue this leaf">continue</button>
+      </div>`
+          : ''
+      }
     </div>
   `
 }
