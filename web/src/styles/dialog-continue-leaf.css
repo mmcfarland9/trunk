@@ -1,0 +1,59 @@
+/* === Continue Leaf Prompt (post-harvest) === */
+.continue-leaf-prompt {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 200;
+  animation: fade-in 150ms ease;
+}
+
+.continue-leaf-prompt.hidden {
+  display: none;
+}
+
+.continue-leaf-prompt-box {
+  background: var(--paper);
+  border: 1px solid var(--border-strong);
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  animation: scale-in 200ms ease;
+}
+
+.continue-leaf-prompt-box::before {
+  content: '┌────────────────────────┐';
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+}
+
+.continue-leaf-prompt-box::after {
+  content: '└────────────────────────┘';
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-2));
+}
+
+.continue-leaf-prompt-message {
+  margin: 0;
+  font-family: var(--font-ascii);
+  font-size: var(--text-base);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.continue-leaf-prompt-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}

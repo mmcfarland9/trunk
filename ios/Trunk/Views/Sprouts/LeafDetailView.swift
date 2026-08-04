@@ -9,9 +9,14 @@ import SwiftUI
 
 struct LeafDetailView: View {
     let leafId: String
+    @Bindable var progression: ProgressionViewModel
+
+    /// Cached so the view re-renders after a sprout is planted from here.
+    @State private var cachedState: DerivedState?
+    @State private var continueContext: ContinueLeafContext?
 
     private var state: DerivedState {
-        EventStore.shared.getState()
+        cachedState ?? EventStore.shared.getState()
     }
 
     private var leaf: DerivedLeaf? {
@@ -24,8 +29,7 @@ struct LeafDetailView: View {
     }
 
     private var sproutsForLeaf: [DerivedSprout] {
-        state.sprouts.values
-            .filter { $0.leafId == leafId }
+        getSproutsForLeaf(from: state, leafId: leafId)
             .sorted { $0.plantedAt > $1.plantedAt }
     }
 
@@ -56,9 +60,13 @@ struct LeafDetailView: View {
                         metadataSection(leaf)
                             .animatedCard(index: 0)
 
+                        // Continue this leaf
+                        continueSection(leaf)
+                            .animatedCard(index: 1)
+
                         // Associated sprouts
                         sproutsSection
-                            .animatedCard(index: 1)
+                            .animatedCard(index: 2)
                     }
                     .padding(TrunkTheme.space4)
                 }
@@ -79,6 +87,66 @@ struct LeafDetailView: View {
                     .lineLimit(1)
             }
         }
+        .onAppear {
+            cachedState = EventStore.shared.getState()
+        }
+        .onChange(of: progression.version) {
+            cachedState = EventStore.shared.getState()
+        }
+        .sheet(item: $continueContext) { ctx in
+            NavigationStack {
+                CreateSproutView(
+                    nodeId: ctx.twigId,
+                    progression: progression,
+                    preselectedLeafId: ctx.leafId,
+                    template: ctx.template
+                )
+            }
+        }
+    }
+
+    // MARK: - Continue Section
+
+    /// Plants another sprout into this leaf, pre-filled from its most recent
+    /// sprout. Results in a plain `sprout_planted` event — no new event types.
+    private func continueSection(_ leaf: DerivedLeaf) -> some View {
+        VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+            Text("CONTINUE")
+                .monoLabel(size: TrunkTheme.textXs)
+
+            VStack(alignment: .leading, spacing: TrunkTheme.space2) {
+                Button {
+                    HapticManager.tap()
+                    continueContext = ContinueLeafContext(leaf: leaf, state: state)
+                } label: {
+                    HStack(spacing: TrunkTheme.space1) {
+                        Text("🌱")
+                        Text("CONTINUE THIS LEAF")
+                    }
+                }
+                .buttonStyle(.trunk)
+                .accessibilityHint("Plants a new sprout on this leaf")
+
+                Text(continueHint)
+                    .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                    .foregroundStyle(Color.inkFaint)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(TrunkTheme.space3)
+            .background(Color.paper)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+    }
+
+    private var continueHint: String {
+        if let recent = mostRecentSproutForLeaf(from: state, leafId: leafId) {
+            return "Plant another sprout here, pre-filled from \"\(recent.title)\". Everything stays editable."
+        }
+        return "Plant the first sprout on this leaf."
     }
 
     // MARK: - Metadata Section

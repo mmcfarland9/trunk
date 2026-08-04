@@ -8,6 +8,7 @@ type LeafViewCallbacks = {
   onClose: () => void
   onSave: () => void
   onSoilChange?: () => void
+  onContinueLeaf?: (leafId: string, twigId: string) => void
 }
 
 // Unified log entry types
@@ -40,6 +41,7 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
   container.innerHTML = `
     <div class="leaf-view-box">
+      <button type="button" class="leaf-continue-btn">+ continue leaf</button>
       <button type="button" class="leaf-close-btn">× close</button>
       <div class="leaf-view-body">
         <div class="leaf-log" role="list"></div>
@@ -51,10 +53,12 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
   // Element references
   const backBtn = container.querySelector<HTMLButtonElement>('.leaf-close-btn')!
+  const continueBtn = container.querySelector<HTMLButtonElement>('.leaf-continue-btn')!
   const logEl = container.querySelector<HTMLDivElement>('.leaf-log')!
 
   // State
   let currentLeafId: string | null = null
+  let currentTwigId: string | null = null
 
   function getSprouts(): Sprout[] {
     if (!currentLeafId) return []
@@ -227,6 +231,11 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
     callbacks.onClose()
   })
 
+  continueBtn.addEventListener('click', () => {
+    if (!currentLeafId || !currentTwigId) return
+    callbacks.onContinueLeaf?.(currentLeafId, currentTwigId)
+  })
+
   function isOpen(): boolean {
     return container.classList.contains('is-open')
   }
@@ -263,14 +272,16 @@ export function buildLeafView(mapPanel: HTMLElement, callbacks: LeafViewCallback
 
   return {
     container,
-    open(leafId: string, _twigId: string, _branchIndex: number) {
+    open(leafId: string, twigId: string, _branchIndex: number) {
       currentLeafId = leafId
+      currentTwigId = twigId
       render()
       container.classList.add('is-open')
     },
     close() {
       container.classList.remove('is-open')
       currentLeafId = null
+      currentTwigId = null
     },
     isOpen,
   }

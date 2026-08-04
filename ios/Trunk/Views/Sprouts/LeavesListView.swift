@@ -11,6 +11,7 @@ struct LeavesListView: View {
     let leaves: [DerivedLeaf]
     let totalCount: Int
     let state: DerivedState
+    @Bindable var progression: ProgressionViewModel
     @Binding var searchText: String
 
     var body: some View {
@@ -96,7 +97,7 @@ struct LeavesListView: View {
         LazyVStack(spacing: TrunkTheme.space2) {
             ForEach(leaves, id: \.id) { leaf in
                 NavigationLink {
-                    LeafDetailView(leafId: leaf.id)
+                    LeafDetailView(leafId: leaf.id, progression: progression)
                 } label: {
                     LeafListRow(leaf: leaf, state: state)
                 }

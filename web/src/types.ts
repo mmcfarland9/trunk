@@ -81,6 +81,7 @@ export type TwigViewApi = {
   refresh: () => void
   cleanup: () => void
   prefillPlantFromSeedling: (seedlingId: string) => void
+  prefillPlantFromLeaf: (leafId: string) => void
 }
 
 export type LeafViewApi = {

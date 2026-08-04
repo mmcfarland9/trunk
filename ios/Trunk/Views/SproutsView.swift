@@ -55,6 +55,7 @@ struct SproutsView: View {
                             leaves: viewModel.filteredLeaves(),
                             totalCount: viewModel.leafCount,
                             state: viewModel.cachedState ?? EventStore.shared.getState(),
+                            progression: progression,
                             searchText: $viewModel.searchText
                         )
                     }

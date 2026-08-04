@@ -53,6 +53,25 @@
   color: var(--ink);
 }
 
+.leaf-continue-btn {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  background: transparent;
+  border: none;
+  font-family: var(--font-ascii);
+  font-size: var(--text-sm);
+  color: var(--twig);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  transition: color 150ms ease;
+  z-index: 1;
+}
+
+.leaf-continue-btn:hover {
+  color: var(--ink);
+}
+
 .leaf-view-body {
   flex: 1;
   overflow-y: auto;

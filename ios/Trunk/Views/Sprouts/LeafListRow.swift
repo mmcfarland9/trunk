@@ -16,7 +16,7 @@ struct LeafListRow: View {
     }
 
     private var sproutsForLeaf: [DerivedSprout] {
-        state.sprouts.values.filter { $0.leafId == leaf.id }
+        getSproutsForLeaf(from: state, leafId: leaf.id)
     }
 
     private var activeSproutCount: Int {

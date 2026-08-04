@@ -18,6 +18,8 @@ struct HarvestSproutView: View {
     @State private var animateSelection = false
     @State private var reflection: String = ""
     @State private var errorMessage: String?
+    @State private var showContinuePrompt = false
+    @State private var continueContext: ContinueLeafContext?
 
     private var resultEmojis: [(Int, String)] {
         [
@@ -264,6 +266,34 @@ struct HarvestSproutView: View {
                     .foregroundStyle(Color.wood)
             }
         }
+        // Offered after the harvest lands, so it works identically from every
+        // call site (SproutActionsView, TodayView) without their involvement.
+        .alert("Continue this leaf?", isPresented: $showContinuePrompt) {
+            Button("Not now", role: .cancel) {
+                dismiss()
+            }
+            Button("Continue") {
+                // Fall back to dismissing if the leaf vanished between the
+                // prompt and the tap — never strand the user on this sheet.
+                if let ctx = ContinueLeafContext(continuing: sprout, state: EventStore.shared.getState()) {
+                    continueContext = ctx
+                } else {
+                    dismiss()
+                }
+            }
+        } message: {
+            Text("Plant another sprout on this leaf, pre-filled from your last one.")
+        }
+        .sheet(item: $continueContext, onDismiss: { dismiss() }) { ctx in
+            NavigationStack {
+                CreateSproutView(
+                    nodeId: ctx.twigId,
+                    progression: progression,
+                    preselectedLeafId: ctx.leafId,
+                    template: ctx.template
+                )
+            }
+        }
     }
 
     private func harvestSprout() {
@@ -300,8 +330,17 @@ struct HarvestSproutView: View {
             HapticManager.impact()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            dismiss()
+            if canContinueLeaf {
+                showContinuePrompt = true
+            } else {
+                dismiss()
+            }
         }
+    }
+
+    /// Only offer to continue when the harvested sprout resolves to a real leaf.
+    private var canContinueLeaf: Bool {
+        !sprout.leafId.isEmpty && EventStore.shared.getState().leaves[sprout.leafId] != nil
     }
 }
 
