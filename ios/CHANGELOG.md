@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-08-03
+
+### Added
+- Continue a leaf: finishing a sprout no longer dead-ends its saga. A leaf's detail screen gains a "Continue this leaf" action, and harvesting now offers to continue that leaf right away. Either path opens the create-sprout form with the leaf preselected and the title, season, environment, and bloom copied from the leaf's most recent sprout — all editable before planting. Normal soil cost; no data or schema changes.
+- Continuing works from any finished sprout regardless of result, so a withered sprout can be retried the same way a flourishing one is extended.
+
 ## [0.4.2] - 2026-07-25
 
 ### Fixed
