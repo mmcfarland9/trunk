@@ -1,8 +1,8 @@
 /**
- * Tests for the leaf timeline in ui/twig-view/sprout-cards.ts.
+ * Tests for leaf group rendering in ui/twig-view/sprout-cards.ts.
  *
- * Every leaf renders with its name and an ordered node per sprout, so a card
- * reads as a segment of an ongoing saga rather than a standalone goal.
+ * Every leaf renders with its name and a progress summary, and carries a
+ * data-layers depth cue so a saga with history reads as a stack of sheets.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -39,7 +39,7 @@ function makeSprout(over: Partial<Sprout> & { id: string }): Sprout {
   } as Sprout
 }
 
-/** Oldest -> newest, mixed states. */
+/** 2 completed + 1 uprooted + 1 active. */
 function saga(): Sprout[] {
   return [
     makeSprout({
@@ -68,7 +68,11 @@ function saga(): Sprout[] {
   ]
 }
 
-describe('leaf timeline', () => {
+function layersOf(html: string): string | null {
+  return html.match(/data-layers="(\d+)"/)?.[1] ?? null
+}
+
+describe('leaf group rendering', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getLeafById).mockReturnValue({
@@ -79,50 +83,48 @@ describe('leaf timeline', () => {
     })
   })
 
-  it('renders one node per sprout in the leaf', () => {
-    const html = renderLeafCard('leaf-1', saga(), true)
-    expect((html.match(/class="leaf-node/g) || []).length).toBe(4)
-  })
-
-  it('marks each node by state', () => {
-    const html = renderLeafCard('leaf-1', saga(), true)
-    expect((html.match(/is-completed/g) || []).length).toBe(2)
-    expect((html.match(/is-uprooted/g) || []).length).toBe(1)
-    expect((html.match(/is-active/g) || []).length).toBe(1)
-  })
-
-  it('orders nodes oldest first regardless of input order', () => {
-    const shuffled = [saga()[3], saga()[1], saga()[2], saga()[0]]
-    const html = renderLeafCard('leaf-1', shuffled, true)
-    const order = [...html.matchAll(/aria-label="(\d+)\/4 · (\w+)/g)].map((m) => m[2])
-    expect(order).toEqual(['may', 'june', 'july', 'august'])
-  })
-
   it('shows the leaf name even when the leaf holds a single sprout', () => {
     const html = renderLeafCard('leaf-1', [makeSprout({ id: 'only', title: 'solo' })], true)
     expect(html).toContain('Step Count')
-    expect((html.match(/class="leaf-node/g) || []).length).toBe(1)
   })
 
-  it('summarises progress across all states', () => {
-    // The saga is 2 completed + 1 uprooted + 1 active: uprooted counts toward
-    // neither, so it must not inflate "done".
+  it('summarises progress, excluding uprooted from "done"', () => {
     const html = renderLeafCard('leaf-1', saga(), true)
     expect(html).toContain('2 done · 1 growing')
   })
 
-  it('says "just planted" when nothing is done or growing', () => {
-    const html = renderLeafCard('leaf-1', [makeSprout({ id: 'u', state: 'uprooted' })], false)
-    // Nothing completed, so the cultivated card renders empty rather than lying.
-    expect(html).toBe('')
+  it('renders nothing in either column for a leaf that is only uprooted', () => {
+    // Growing shows actives and Cultivated shows completeds, so a leaf whose
+    // every sprout was uprooted has nothing to show anywhere — it should not
+    // render an empty shell.
+    const onlyUprooted = [makeSprout({ id: 'u', state: 'uprooted' })]
+    expect(renderLeafCard('leaf-1', onlyUprooted, true)).toBe('')
+    expect(renderLeafCard('leaf-1', onlyUprooted, false)).toBe('')
   })
 
-  it('counts the full saga on a cultivated card, not just the shown sprout', () => {
+  it('renders no extra depth for a single-sprout leaf', () => {
+    const html = renderLeafCard('leaf-1', [makeSprout({ id: 'only' })], true)
+    expect(layersOf(html)).toBe('1')
+  })
+
+  it('deepens the stack with the whole saga, not just the shown sprout', () => {
+    // Cultivated shows one card, but depth reflects the leaf's full history.
     const done = saga().filter((s) => s.state !== 'active')
     const html = renderLeafCard('leaf-1', done, false)
-    // One card shown, but every sprout still gets a node.
-    expect((html.match(/class="leaf-node/g) || []).length).toBe(3)
+    expect(layersOf(html)).toBe('3')
     expect((html.match(/class="sprout-card /g) || []).length).toBe(1)
+  })
+
+  it('caps depth at 3 sheets however long the saga gets', () => {
+    const many = Array.from({ length: 9 }, (_, i) =>
+      makeSprout({ id: `s${i}`, state: 'completed', result: 3 }),
+    )
+    expect(layersOf(renderLeafCard('leaf-1', many, false))).toBe('3')
+  })
+
+  it('renders an empty string when the column has nothing to show', () => {
+    const html = renderLeafCard('leaf-1', [makeSprout({ id: 'u', state: 'uprooted' })], false)
+    expect(html).toBe('')
   })
 
   it('escapes leaf names and sprout titles', () => {
