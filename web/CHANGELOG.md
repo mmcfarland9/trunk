@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-04
+
+### Added
+- Continue a leaf: finishing a sprout no longer dead-ends its saga. Reachable from four places — the leaf's own view, a prompt right after harvesting, a `continue` action on a cultivated card, and a completed sprout — all opening the plant form pre-filled from the leaf's most recent sprout (leaf preselected, plus title, season, environment and bloom), everything editable. Normal soil cost, no new event type: it produces an ordinary `sprout_planted` carrying the existing `leafId`. Works from any finished sprout regardless of result, so a withered 1/5 can be retried the same way a flourishing 5/5 is extended.
+- Leaf timelines in the twig view: every leaf now renders its name, a progress summary, and one node per sprout in plant order — filled for harvested, ringed for the one shown, struck for uprooted. Previously a leaf only showed its name when two sprouts were active at once, so the common case of one growing sprout behind several finished ones had no leaf name, no history, and no sense of position.
+- Uprooting offers to keep the sprout's idea as a seedling. Costs no extra soil — uprooting already returns only 25% and seedlings have always been free, so this only saves retyping the title.
+- The Soil and Water meter menus are actionable instead of read-only logs: the Watering Can lists the sprouts due today with one-click watering and a batch action, and the Soil Bag shows available/capacity plus the sprouts ready to harvest.
+- Twig subtitles: the twig view header shows each twig's ornamental synonyms beneath the title.
+- Plant a seedling directly from the sidebar tray — navigates to its twig and pre-fills the form.
+
+### Changed
+- The New Sprout form starts collapsed as a single add-row, uniform with the Seedlings section below it, and expands on focus. It was a permanently-open ~440px form that overflowed the column at 1280x800 even with no seedlings present.
+- Leaf groups carry a left accent rail and tinted header so a saga is no longer visually identical to a lone sprout card; the two previously shared byte-identical styling.
+
+### Fixed
+- The leaf progress rule (done/growing, excluding uprooted) now lives in derivation and is covered by a cross-platform parity fixture, so the web and iOS implementations can't silently drift.
+
+## [0.2.0] - 2026-03-22
+
 ### Added
 - Seedlings: pre-sprout backlog system for capturing ideas on twigs before committing soil. Create, edit, delete, and plant seedlings from the twig view. "Set" pre-fills the sprout planting form with the seedling title, deleting the seedling only after the sprout is successfully planted. Seedlings section in sidebar shows all ideas across twigs with branch/twig filtering. Three new event types (seedling_created, seedling_edited, seedling_deleted) flow through existing event-sourced sync — zero new tables, zero new infrastructure. Validation enforces 60-char title limit at both UI and event boundary.
 - Water dialog suggestions: up to 3 least-recently-watered sprouts shown as quick-access shortcuts at the top of the water dialog — clicking a suggestion scrolls to and highlights that sprout's section; suggestions dim when watered; hidden when all active sprouts are already watered today

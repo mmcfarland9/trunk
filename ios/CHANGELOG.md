@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-08-04
+
+### Added
+- Leaf progress now shows as an ordered node timeline — one node per sprout in plant order, filled for harvested, ringed for the one in view, struck for uprooted. Appears on sprout rows in twig detail, on a leaf's own screen, and in the leaves list. A sprout deep into an ongoing saga previously looked identical to a fresh one-off.
+
+### Fixed
+- The leaf progress rule (done/growing, excluding uprooted) moved into derivation and is now covered by a cross-platform parity fixture, so the iOS and web implementations can't silently drift apart.
+- Removed the question-mark hover cursor from web timeline nodes.
+
 ## [0.4.5] - 2026-08-04
 
 ### Changed

@@ -14,6 +14,7 @@ export type {
   WateringStreak,
 } from './derive'
 export {
+  countLeafProgress,
   deriveState,
   deriveSunAvailable,
   deriveWaterAvailable,
@@ -25,6 +26,7 @@ export {
   getAllWaterEntries,
   getCompletedSprouts,
   getLeafById,
+  getLeafProgress,
   getLeavesForTwig,
   getSeedlingsForTwig,
   getSproutsByLeaf,

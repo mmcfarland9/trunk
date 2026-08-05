@@ -2,7 +2,6 @@
   "_version": 4,
   "_description": "Cross-platform parity test: events with expected derivation results. Both web and iOS must produce identical outputs.",
   "_testDate": "2026-01-29T14:00:00Z",
-
   "events": [
     {
       "type": "leaf_created",
@@ -83,31 +82,24 @@
       "content": "Morning stretch routine"
     }
   ],
-
   "expectedState": {
     "_asOf": "2026-01-29T14:00:00Z",
     "_note": "Test with now=2026-01-29T14:00:00Z (Wednesday), week reset was Monday Jan 27 at 6am, day reset was Jan 29 at 6am",
-
     "soilCapacity": 10.85,
     "soilAvailable": 2.5,
-
     "sproutCount": 3,
     "activeSproutCount": 2,
     "completedSproutCount": 1,
-
     "leafCount": 1,
     "sunEntryCount": 1,
-
     "waterAvailable": {
       "_note": "No waters since Jan 29 6am reset. Last water was Jan 28. Capacity=3, used=0",
       "value": 3
     },
-
     "sunAvailable": {
       "_note": "1 sun on Jan 27 at 11am (after Mon 6am reset). Capacity=1, used=1",
       "value": 0
     },
-
     "sproutDetails": {
       "sprout-parity-1": {
         "state": "completed",
@@ -124,42 +116,95 @@
         "waterEntryCount": 1
       }
     },
-
     "sproutsForTwig": {
       "branch-0-twig-0": 2,
       "branch-1-twig-0": 1
     },
-
     "leavesForTwig": {
       "branch-0-twig-0": 1,
       "branch-1-twig-0": 0
     },
-
+    "leafProgress": {
+      "leaf-parity-1": {
+        "done": 1,
+        "growing": 2,
+        "total": 3
+      }
+    },
     "radarScores": {
       "_note": "Per-branch engagement scores (0-1), branch index 0-7. Weighted total / ceiling(100). Web computeBranchEngagement / iOS DerivedState.radarScores must match. Branch 0: plant(2)+plant(5)+harvest(2*0.85)+2 water(0.05) = 8.8/100. Branch 1: plant(10)+1 water(0.05)+1 sun(0.35) = 10.4... see rawTotals.",
-      "values": [0.0915, 0.1005, 0, 0, 0, 0, 0, 0]
+      "values": [
+        0.0915,
+        0.1005,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
     },
-
     "wateringStreak": {
-      "_note": "Day-bucketed (6am-local boundary) watering streak as of testDate, computed in UTC (both CI runners + the pinned test TZ use UTC). Water days = {Jan 27, Jan 28}. testDate Jan 29 is not watered, so the current streak is the run ending yesterday: Jan 28 + Jan 27 = 2. longest = 2. NOTE: streak is timezone-sensitive by design (6am LOCAL reset) — this fixture is only valid under a pinned UTC timezone.",
+      "_note": "Day-bucketed (6am-local boundary) watering streak as of testDate, computed in UTC (both CI runners + the pinned test TZ use UTC). Water days = {Jan 27, Jan 28}. testDate Jan 29 is not watered, so the current streak is the run ending yesterday: Jan 28 + Jan 27 = 2. longest = 2. NOTE: streak is timezone-sensitive by design (6am LOCAL reset) \u2014 this fixture is only valid under a pinned UTC timezone.",
       "current": 2,
       "longest": 2
     }
   },
-
   "soilCalculation": {
     "_note": "Step-by-step soil derivation in timestamp order",
     "steps": [
-      { "event": "initial", "capacity": 10, "available": 10 },
-      { "event": "leaf_created", "capacity": 10, "available": 10, "note": "no soil change" },
-      { "event": "sprout_planted (cost 2)", "capacity": 10, "available": 8 },
-      { "event": "sprout_planted (cost 5)", "capacity": 10, "available": 3 },
-      { "event": "sprout_planted (cost 10)", "capacity": 10, "available": 0, "note": "clamped from -7" },
-      { "event": "sprout_harvested (cap+0.85, return 2)", "capacity": 10.85, "available": 2 },
-      { "event": "sprout_watered (+0.05)", "capacity": 10.85, "available": 2.05 },
-      { "event": "sprout_watered (+0.05)", "capacity": 10.85, "available": 2.1 },
-      { "event": "sun_shone (+0.35)", "capacity": 10.85, "available": 2.45 },
-      { "event": "sprout_watered (+0.05)", "capacity": 10.85, "available": 2.5 }
+      {
+        "event": "initial",
+        "capacity": 10,
+        "available": 10
+      },
+      {
+        "event": "leaf_created",
+        "capacity": 10,
+        "available": 10,
+        "note": "no soil change"
+      },
+      {
+        "event": "sprout_planted (cost 2)",
+        "capacity": 10,
+        "available": 8
+      },
+      {
+        "event": "sprout_planted (cost 5)",
+        "capacity": 10,
+        "available": 3
+      },
+      {
+        "event": "sprout_planted (cost 10)",
+        "capacity": 10,
+        "available": 0,
+        "note": "clamped from -7"
+      },
+      {
+        "event": "sprout_harvested (cap+0.85, return 2)",
+        "capacity": 10.85,
+        "available": 2
+      },
+      {
+        "event": "sprout_watered (+0.05)",
+        "capacity": 10.85,
+        "available": 2.05
+      },
+      {
+        "event": "sprout_watered (+0.05)",
+        "capacity": 10.85,
+        "available": 2.1
+      },
+      {
+        "event": "sun_shone (+0.35)",
+        "capacity": 10.85,
+        "available": 2.45
+      },
+      {
+        "event": "sprout_watered (+0.05)",
+        "capacity": 10.85,
+        "available": 2.5
+      }
     ]
   }
 }

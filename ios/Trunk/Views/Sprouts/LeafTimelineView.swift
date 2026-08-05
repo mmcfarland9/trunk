@@ -23,13 +23,14 @@ struct LeafTimelineView: View {
         sprouts.sorted { $0.plantedAt < $1.plantedAt }
     }
 
-    private var doneCount: Int {
-        sprouts.filter { $0.state == .completed }.count
+    /// Counts come from EventDerivation's countLeafProgress so this view can't
+    /// drift from web — see the leafProgress parity fixture.
+    private var progress: LeafProgress {
+        countLeafProgress(sprouts)
     }
 
-    private var growingCount: Int {
-        sprouts.filter { $0.state == .active }.count
-    }
+    private var doneCount: Int { progress.done }
+    private var growingCount: Int { progress.growing }
 
     /// "3 done · 1 growing" — uprooted sprouts keep their node but never count
     /// as progress.

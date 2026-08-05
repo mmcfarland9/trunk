@@ -739,7 +739,6 @@
 
 .leaf-node {
   font-size: var(--text-sm);
-  cursor: help;
 }
 
 .leaf-node.is-completed {

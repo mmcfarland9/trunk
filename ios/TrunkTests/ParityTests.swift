@@ -32,8 +32,15 @@ struct ParityFixture: Decodable {
         let sproutDetails: [String: SproutDetail]
         let sproutsForTwig: [String: Int]
         let leavesForTwig: [String: Int]
+        let leafProgress: [String: LeafProgressExpected]
         let radarScores: RadarScores
         let wateringStreak: WateringStreakExpected
+    }
+
+    struct LeafProgressExpected: Decodable {
+        let done: Int
+        let growing: Int
+        let total: Int
     }
 
     struct WaterAvailable: Decodable {
@@ -389,6 +396,27 @@ struct DerivationParityTests {
         for (twigId, expectedCount) in fixture.expectedState.leavesForTwig {
             let leaves = getLeavesForTwig(from: state, twigId: twigId)
             #expect(leaves.count == expectedCount)
+        }
+    }
+
+    /// Guards the done/growing rule against drifting from web's
+    /// getLeafProgress — uprooted sprouts count toward total but neither
+    /// done nor growing.
+    @Test("Derives correct progress per leaf")
+    func leafProgressParity() throws {
+        guard let fixture = loadParityFixture() else {
+            Issue.record("Could not load parity fixture")
+            return
+        }
+
+        let events = convertToSyncEvents(fixture.events)
+        let state = deriveState(from: events)
+
+        for (leafId, expected) in fixture.expectedState.leafProgress {
+            let progress = getLeafProgress(from: state, leafId: leafId)
+            #expect(progress.done == expected.done)
+            #expect(progress.growing == expected.growing)
+            #expect(progress.total == expected.total)
         }
     }
 }
