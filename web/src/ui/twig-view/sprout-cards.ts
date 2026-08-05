@@ -117,50 +117,6 @@ export function renderActiveCard(s: Sprout): string {
 }
 
 /**
- * Renders the ordered node timeline for a leaf: one node per sprout, oldest
- * first, so a sprout reads as a segment of an ongoing saga rather than a
- * standalone card. Nodes are inert — the surrounding leaf group carries the
- * click that opens the leaf's history.
- */
-function renderLeafTimeline(sprouts: Sprout[], currentId?: string): string {
-  const ordered = [...sprouts].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-  )
-
-  const nodes = ordered
-    .map((s, i) => {
-      const position = `${i + 1}/${ordered.length}`
-      const when = s.harvestedAt ? formatDate(new Date(s.harvestedAt)) : ''
-
-      let cls = 'leaf-node'
-      let glyph = '◦'
-      let detail = ''
-
-      if (s.state === 'completed') {
-        cls += ' is-completed'
-        glyph = '●'
-        detail = `${getResultEmoji(s.result || 1)} ${s.result || 1}/5${when ? ` · ${when}` : ''}`
-      } else if (s.state === 'uprooted') {
-        cls += ' is-uprooted'
-        glyph = '×'
-        detail = 'uprooted'
-      } else {
-        cls += ' is-active'
-        glyph = '◉'
-        detail = 'growing now'
-      }
-
-      if (s.id === currentId) cls += ' is-current'
-
-      const label = `${position} · ${s.title}${detail ? ` · ${detail}` : ''}`
-      return `<span class="${cls}" role="listitem" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${glyph}</span>`
-    })
-    .join('')
-
-  return `<div class="leaf-timeline" role="list">${nodes}</div>`
-}
-
-/**
  * Short summary of a leaf's progress, e.g. "3 done · 1 growing".
  * Counts come from derive.ts's getLeafProgress so web and iOS can't drift —
  * see the leafProgress parity fixture.
@@ -170,6 +126,8 @@ function leafProgressLabel(sprouts: Sprout[]): string {
   const parts: string[] = []
   if (done > 0) parts.push(`${done} done`)
   if (growing > 0) parts.push(`${growing} growing`)
+  // Defensive fallback: a rendered card always has an active or completed
+  // sprout, so this is unreachable via renderLeafCard.
   return parts.join(' · ') || 'just planted'
 }
 
@@ -201,12 +159,11 @@ export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boo
     : shown.map((s) => renderHistoryCard(s)).join('')
 
   return `
-      <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}" data-action="open-leaf">
+      <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}" data-layers="${Math.min(sprouts.length, 3)}" data-action="open-leaf">
         <div class="leaf-card-group-header">
           <span class="leaf-group-name">${escapeHtml(leafName)}</span>
           <span class="leaf-group-progress">${escapeHtml(leafProgressLabel(sprouts))}</span>
         </div>
-        ${renderLeafTimeline(sprouts, shown[0]?.id)}
         <div class="leaf-card-group-sprouts">
           ${cards}
         </div>

@@ -44,3 +44,42 @@
 .leaf-card .sprout-card {
   margin: 0;
 }
+
+/* ===== Leaf Group Depth =====
+   A leaf holding several sprouts sits on a stack of sheets, so depth reads as
+   "this saga has history" at a glance. The ghost layers are pseudo-elements
+   behind the group's own background, offset down-right; only their corners
+   show. Offsets stay small because .sprout-column clips horizontally. */
+
+.leaf-card-group {
+  position: relative;
+  /* Opaque so the sheets behind it don't show through the face. */
+  background: var(--paper);
+  /* Room for the offset sheets without tripping the column's overflow. */
+  margin-right: 7px;
+  margin-bottom: 7px;
+}
+
+.leaf-card-group[data-layers='2']::before,
+.leaf-card-group[data-layers='3']::before,
+.leaf-card-group[data-layers='3']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--twig);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.leaf-card-group[data-layers='2']::before,
+.leaf-card-group[data-layers='3']::before {
+  transform: translate(3px, 3px);
+  opacity: 0.85;
+}
+
+.leaf-card-group[data-layers='3']::after {
+  transform: translate(6px, 6px);
+  opacity: 0.6;
+}

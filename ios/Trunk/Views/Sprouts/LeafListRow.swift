@@ -48,14 +48,10 @@ struct LeafListRow: View {
                     .foregroundStyle(Color.wood)
                     .lineLimit(1)
 
-                // Sprout count, with the saga's shape alongside it
-                HStack(spacing: TrunkTheme.space2) {
-                    Text(sproutSummary)
-                        .font(.system(size: TrunkTheme.textSm, design: .monospaced))
-                        .foregroundStyle(Color.ink)
-
-                    LeafTimelineView(sprouts: sproutsForLeaf, compact: true)
-                }
+                // Sprout count
+                Text(sproutSummary)
+                    .font(.system(size: TrunkTheme.textSm, design: .monospaced))
+                    .foregroundStyle(Color.ink)
 
                 // Location row
                 Text(locationLabel)

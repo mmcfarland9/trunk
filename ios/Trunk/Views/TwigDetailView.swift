@@ -193,10 +193,16 @@ struct SproutRow: View {
         EventStore.shared.getState().leaves[sprout.leafId]?.name
     }
 
-    /// Siblings on the same leaf, so the row can show where this sprout sits in
-    /// the series rather than looking like a standalone goal.
-    private var leafSprouts: [DerivedSprout] {
-        getSproutsForLeaf(from: EventStore.shared.getState(), leafId: sprout.leafId)
+    /// Where this sprout sits in its leaf's series, so an ongoing saga doesn't
+    /// read as a standalone goal. Counts come from EventDerivation's
+    /// countLeafProgress — the same rule web uses, guarded by parity tests.
+    private var leafProgressLabel: String {
+        let sprouts = getSproutsForLeaf(from: EventStore.shared.getState(), leafId: sprout.leafId)
+        let progress = countLeafProgress(sprouts)
+        var parts: [String] = []
+        if progress.done > 0 { parts.append("\(progress.done) done") }
+        if progress.growing > 0 { parts.append("\(progress.growing) growing") }
+        return parts.joined(separator: " · ")
     }
 
     var body: some View {
@@ -214,11 +220,9 @@ struct SproutRow: View {
                             .foregroundStyle(Color.wood)
                             .lineLimit(1)
 
-                        LeafTimelineView(
-                            sprouts: leafSprouts,
-                            currentSproutId: sprout.id,
-                            compact: true
-                        )
+                        Text(leafProgressLabel)
+                            .font(.system(size: TrunkTheme.textXs, design: .monospaced))
+                            .foregroundStyle(Color.inkFaint)
                     }
                 }
 

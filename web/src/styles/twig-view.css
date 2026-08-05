@@ -681,11 +681,11 @@
 /* A leaf group and a standalone sprout card previously shared the exact same
    1px border, so a saga was indistinguishable from a one-off goal. The left
    accent rail marks "this is a leaf" — matching the rail on iOS's leaves list —
-   and standalone sprouts stay plain-bordered by contrast. */
+   and standalone sprouts stay plain-bordered by contrast. Depth (the stacked
+   sheets behind a multi-sprout leaf) lives in cards.css. */
 .leaf-card-group {
   border: 1px solid var(--border);
   border-left: 3px solid var(--twig);
-  background: transparent;
 }
 
 .leaf-card-group.is-clickable {
@@ -724,41 +724,6 @@
   color: var(--ink-faint);
 }
 
-/* Ordered node timeline — one node per sprout, oldest first, so a card reads
-   as a segment of a saga rather than a standalone goal. */
-.leaf-timeline {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-wrap: wrap;
-  padding: 0 var(--space-2) var(--space-2);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-ascii);
-  line-height: 1;
-}
-
-.leaf-node {
-  font-size: var(--text-sm);
-}
-
-.leaf-node.is-completed {
-  color: var(--twig);
-}
-
-.leaf-node.is-active {
-  color: var(--wood);
-}
-
-.leaf-node.is-uprooted {
-  color: var(--ink-faint);
-  opacity: 0.6;
-}
-
-.leaf-node.is-current {
-  outline: 1px solid var(--border-strong);
-  outline-offset: 2px;
-  border-radius: 50%;
-}
 
 .leaf-card-group-sprouts {
   display: flex;
