@@ -47,7 +47,9 @@ npm run generate       # Regenerate constants from shared/
 | `seedling_edited` | seedlingId, then title?/notes? (sparse merge) |
 | `seedling_deleted` | seedlingId |
 
-**Seedlings**: pre-sprout idea stubs on a twig — no soil cost. "Setting" a seedling pre-fills the plant form, deleting the seedling only after the sprout is planted. Title capped at 60 chars (`MAX_SEEDLING_TITLE_LENGTH`). All seedlings are browsable in a branch-grouped tray (iOS Garden → Seedlings; web sidebar) where they can be planted, edited (title + notes), or deleted in place.
+**Seedlings**: pre-sprout idea stubs on a twig — no soil cost. "Setting" a seedling pre-fills the plant form, deleting the seedling only after the sprout is planted. Title capped at 60 chars (`MAX_SEEDLING_TITLE_LENGTH`). All seedlings are browsable in a branch-grouped tray (iOS Garden → Seedlings; web sidebar) where they can be planted, edited (title + notes), or deleted in place. Uprooting offers to keep the sprout's idea as a seedling — composed as `sprout_uprooted` + `seedling_created`, no new event type. This grants no economic advantage: uprooting already refunds only 25% and seedlings are free, so uproot-then-retype was always available at the same cost.
+
+**Leaves (sagas)**: a leaf groups sequential sprouts on one twig. "Continue a leaf" plants a new sprout into an existing leaf, pre-filled from that leaf's most recent sprout (leaf preselected, plus title/season/environment/bloom, all editable). It emits a plain `sprout_planted` carrying the existing `leafId` — no new event type. Reachable from the leaf view, a post-harvest prompt, a completed sprout card, and a completed sprout's detail. Works from any finished sprout regardless of result: Trunk has **no failure state**, every harvest returns full soil and `result` (1–5) only scales the capacity reward.
 
 **Derivation**: `web/src/events/derive.ts` / `ios/Trunk/Services/EventDerivation.swift` — sorts events, deduplicates by `client_id`, replays into `DerivedState` (soil, sprouts, leaves, seedlings, indexed lookups). Both platforms must produce identical results.
 
@@ -90,6 +92,10 @@ npm run generate       # Regenerate constants from shared/
 **Guard-let on iOS**: `EventDerivation` skips malformed events via `guard let` instead of defaulting to empty/zero. Intentional — prevents bad data from corrupting state.
 
 **Concurrent sync guard**: Web reuses a single `currentSyncPromise`. iOS checks `syncStatus != .syncing`. Don't bypass these.
+
+**Parity fixtures assume UTC**: `shared/test-fixtures/derivation-parity.json` encodes a watering streak, and the streak boundary is 6am **local**. CI runners are UTC, so `wateringStreak` passes there but **fails on a simulator set to any other timezone** — expect one red iOS test locally. It is not a regression; setting the host `TZ` does not reach the simulator.
+
+**A leaf with an active sprout appears only under Growing**, never duplicated into Cultivated. The Growing card carries the leaf's whole history, and `data-layers` (capped at 3) gives it stacked-sheet depth reflecting the full saga, not just the sprouts shown.
 
 **Supabase is optional**: Both platforms handle null client gracefully. App works local-only without credentials.
 

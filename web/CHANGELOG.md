@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Continue a leaf: finishing a sprout no longer dead-ends its saga. Reachable from four places — the leaf's own view, a prompt right after harvesting, a `continue` action on a cultivated card, and a completed sprout — all opening the plant form pre-filled from the leaf's most recent sprout (leaf preselected, plus title, season, environment and bloom), everything editable. Normal soil cost, no new event type: it produces an ordinary `sprout_planted` carrying the existing `leafId`. Works from any finished sprout regardless of result, so a withered 1/5 can be retried the same way a flourishing 5/5 is extended.
-- Leaf headers in the twig view: every leaf now renders its name and a progress summary ("3 done · 1 growing"), and a multi-sprout leaf sits on a stack of offset sheets so its depth reads at a glance. Previously a leaf only showed its name when two sprouts were active at once, so the common case of one growing sprout behind several finished ones had no leaf name and no sense of history.
+- Leaf headers in the twig view: every leaf now renders its name, and a multi-sprout leaf sits on a stack of offset sheets so its depth reads at a glance. Previously a leaf only showed its name when two sprouts were active at once, so the common case of one growing sprout behind several finished ones had no leaf name and no sense of history. Leaf groups also gained a left accent rail, matching the leaves list on iOS, so a saga is no longer visually identical to a lone sprout card.
 - Uprooting offers to keep the sprout's idea as a seedling. Costs no extra soil — uprooting already returns only 25% and seedlings have always been free, so this only saves retyping the title.
 - The Soil and Water meter menus are actionable instead of read-only logs: the Watering Can lists the sprouts due today with one-click watering and a batch action, and the Soil Bag shows available/capacity plus the sprouts ready to harvest.
 - Twig subtitles: the twig view header shows each twig's ornamental synonyms beneath the title.
@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The New Sprout form starts collapsed as a single add-row, uniform with the Seedlings section below it, and expands on focus. It was a permanently-open ~440px form that overflowed the column at 1280x800 even with no seedlings present.
-- Leaf groups carry a left accent rail and tinted header so a saga is no longer visually identical to a lone sprout card; the two previously shared byte-identical styling.
 
 ### Fixed
 - The leaf progress rule (done/growing, excluding uprooted) now lives in derivation and is covered by a cross-platform parity fixture, so the web and iOS implementations can't silently drift.

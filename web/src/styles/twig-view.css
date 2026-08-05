@@ -718,12 +718,6 @@
   white-space: nowrap;
 }
 
-.leaf-group-progress {
-  flex: none;
-  font-weight: 400;
-  color: var(--ink-faint);
-}
-
 
 .leaf-card-group-sprouts {
   display: flex;
