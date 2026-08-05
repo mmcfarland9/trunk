@@ -193,6 +193,12 @@ struct SproutRow: View {
         EventStore.shared.getState().leaves[sprout.leafId]?.name
     }
 
+    /// Siblings on the same leaf, so the row can show where this sprout sits in
+    /// the series rather than looking like a standalone goal.
+    private var leafSprouts: [DerivedSprout] {
+        getSproutsForLeaf(from: EventStore.shared.getState(), leafId: sprout.leafId)
+    }
+
     var body: some View {
         HStack(spacing: TrunkTheme.space3) {
             // State indicator
@@ -202,10 +208,18 @@ struct SproutRow: View {
 
             VStack(alignment: .leading, spacing: TrunkTheme.space1) {
                 if let leafName {
-                    Text(leafName)
-                        .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
-                        .foregroundStyle(Color.wood)
-                        .lineLimit(1)
+                    HStack(spacing: TrunkTheme.space2) {
+                        Text(leafName)
+                            .font(.system(size: TrunkTheme.textSm, weight: .medium, design: .monospaced))
+                            .foregroundStyle(Color.wood)
+                            .lineLimit(1)
+
+                        LeafTimelineView(
+                            sprouts: leafSprouts,
+                            currentSproutId: sprout.id,
+                            compact: true
+                        )
+                    }
                 }
 
                 Text(sprout.title)
