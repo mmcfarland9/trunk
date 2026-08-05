@@ -7,11 +7,17 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../events', () => ({
-  getState: vi.fn(() => ({})),
-  getLeafById: vi.fn(() => ({ id: 'leaf-1', twigId: 'branch-0-twig-0', name: 'Step Count' })),
-  checkSproutWateredToday: vi.fn(() => false),
-}))
+vi.mock('../events', async () => {
+  // countLeafProgress stays REAL: these tests assert the done/growing rule
+  // itself, so stubbing it would test nothing.
+  const actual = await vi.importActual<typeof import('../events')>('../events')
+  return {
+    countLeafProgress: actual.countLeafProgress,
+    getState: vi.fn(() => ({})),
+    getLeafById: vi.fn(() => ({ id: 'leaf-1', twigId: 'branch-0-twig-0', name: 'Step Count' })),
+    checkSproutWateredToday: vi.fn(() => false),
+  }
+})
 
 import { getLeafById } from '../events'
 import type { Sprout } from '../types'

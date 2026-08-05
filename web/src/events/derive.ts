@@ -517,6 +517,35 @@ export function getSproutsByLeaf(state: DerivedState, leafId: string): DerivedSp
 }
 
 /**
+ * Progress across a leaf's sprouts.
+ *
+ * Uprooted sprouts count toward `total` but toward neither `done` nor
+ * `growing`: the attempt belongs in the sequence without being progress.
+ *
+ * Lives here rather than in view code because iOS mirrors it by hand
+ * (`getLeafProgress` in EventDerivation.swift) and shared/test-fixtures
+ * parity tests guard the two against drifting apart.
+ */
+export interface LeafProgress {
+  done: number
+  growing: number
+  total: number
+}
+
+/** Pure counter — use when you already hold the leaf's sprouts. */
+export function countLeafProgress(sprouts: DerivedSprout[]): LeafProgress {
+  return {
+    done: sprouts.filter((s) => s.state === 'completed').length,
+    growing: sprouts.filter((s) => s.state === 'active').length,
+    total: sprouts.length,
+  }
+}
+
+export function getLeafProgress(state: DerivedState, leafId: string): LeafProgress {
+  return countLeafProgress(getSproutsByLeaf(state, leafId))
+}
+
+/**
  * Get all seedlings for a specific twig
  */
 export function getSeedlingsForTwig(state: DerivedState, twigId: string): DerivedSeedling[] {

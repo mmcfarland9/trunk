@@ -771,6 +771,32 @@ func getSproutsForLeaf(from state: DerivedState, leafId: String) -> [DerivedSpro
     return state.sprouts.values.filter { $0.leafId == leafId }
 }
 
+/// Progress across a leaf's sprouts.
+///
+/// Uprooted sprouts count toward `total` but toward neither `done` nor
+/// `growing`: the attempt belongs in the sequence without being progress.
+///
+/// Web mirrors this by hand (`getLeafProgress` in web/src/events/derive.ts);
+/// shared/test-fixtures parity tests guard the two against drifting apart.
+struct LeafProgress: Equatable {
+    let done: Int
+    let growing: Int
+    let total: Int
+}
+
+/// Pure counter — use when you already hold the leaf's sprouts.
+func countLeafProgress(_ sprouts: [DerivedSprout]) -> LeafProgress {
+    LeafProgress(
+        done: sprouts.filter { $0.state == .completed }.count,
+        growing: sprouts.filter { $0.state == .active }.count,
+        total: sprouts.count
+    )
+}
+
+func getLeafProgress(from state: DerivedState, leafId: String) -> LeafProgress {
+    countLeafProgress(getSproutsForLeaf(from: state, leafId: leafId))
+}
+
 /// Get the most recently planted sprout on a leaf, whatever its state
 /// (active, completed, or uprooted). Returns nil when the leaf has no sprouts.
 func mostRecentSproutForLeaf(from state: DerivedState, leafId: String) -> DerivedSprout? {

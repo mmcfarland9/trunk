@@ -15,6 +15,7 @@ import {
   deriveWateringStreak,
   getActiveSprouts,
   getCompletedSprouts,
+  getLeafProgress,
   getLeavesForTwig,
   getSproutsForTwig,
 } from '../events/derive'
@@ -108,6 +109,14 @@ describe('Cross-Platform Parity Tests', () => {
       for (const [twigId, expectedCount] of Object.entries(expected.leavesForTwig)) {
         const leaves = getLeavesForTwig(state, twigId)
         expect(leaves.length).toBe(expectedCount)
+      }
+    })
+
+    it('derives correct progress per leaf', () => {
+      const state = deriveState(events)
+
+      for (const [leafId, expectedProgress] of Object.entries(expected.leafProgress)) {
+        expect(getLeafProgress(state, leafId)).toEqual(expectedProgress)
       }
     })
 

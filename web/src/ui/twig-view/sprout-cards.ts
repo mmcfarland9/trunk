@@ -1,5 +1,6 @@
 import sharedConstants from '../../../../shared/constants.json'
-import { checkSproutWateredToday, getLeafById, getState } from '../../events'
+import { checkSproutWateredToday, countLeafProgress, getLeafById, getState } from '../../events'
+import type { DerivedSprout } from '../../events/derive'
 import type { Sprout } from '../../types'
 import { escapeHtml } from '../../utils/escape-html'
 import { getResultEmoji, getSeasonLabel } from '../../utils/sprout-labels'
@@ -159,10 +160,13 @@ function renderLeafTimeline(sprouts: Sprout[], currentId?: string): string {
   return `<div class="leaf-timeline" role="list">${nodes}</div>`
 }
 
-/** Short summary of a leaf's progress, e.g. "3 done · 1 growing". */
+/**
+ * Short summary of a leaf's progress, e.g. "3 done · 1 growing".
+ * Counts come from derive.ts's getLeafProgress so web and iOS can't drift —
+ * see the leafProgress parity fixture.
+ */
 function leafProgressLabel(sprouts: Sprout[]): string {
-  const done = sprouts.filter((s) => s.state === 'completed').length
-  const growing = sprouts.filter((s) => s.state === 'active').length
+  const { done, growing } = countLeafProgress(sprouts as unknown as DerivedSprout[])
   const parts: string[] = []
   if (done > 0) parts.push(`${done} done`)
   if (growing > 0) parts.push(`${growing} growing`)

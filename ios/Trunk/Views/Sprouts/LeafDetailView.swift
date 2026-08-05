@@ -156,6 +156,15 @@ struct LeafDetailView: View {
             Text("DETAILS")
                 .monoLabel(size: TrunkTheme.textXs)
 
+            // Ordered progress across the saga, before the flat detail rows.
+            if !sproutsForLeaf.isEmpty {
+                LeafTimelineView(sprouts: sproutsForLeaf)
+                    .padding(TrunkTheme.space3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.paper)
+                    .overlay(Rectangle().stroke(Color.border, lineWidth: 1))
+            }
+
             VStack(spacing: 0) {
                 detailRow(label: "Location", value: locationLabel)
 
