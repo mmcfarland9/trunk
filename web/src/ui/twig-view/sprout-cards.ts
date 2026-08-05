@@ -1,6 +1,5 @@
 import sharedConstants from '../../../../shared/constants.json'
-import { checkSproutWateredToday, countLeafProgress, getLeafById, getState } from '../../events'
-import type { DerivedSprout } from '../../events/derive'
+import { checkSproutWateredToday, getLeafById, getState } from '../../events'
 import type { Sprout } from '../../types'
 import { escapeHtml } from '../../utils/escape-html'
 import { getResultEmoji, getSeasonLabel } from '../../utils/sprout-labels'
@@ -117,21 +116,6 @@ export function renderActiveCard(s: Sprout): string {
 }
 
 /**
- * Short summary of a leaf's progress, e.g. "3 done · 1 growing".
- * Counts come from derive.ts's getLeafProgress so web and iOS can't drift —
- * see the leafProgress parity fixture.
- */
-function leafProgressLabel(sprouts: Sprout[]): string {
-  const { done, growing } = countLeafProgress(sprouts as unknown as DerivedSprout[])
-  const parts: string[] = []
-  if (done > 0) parts.push(`${done} done`)
-  if (growing > 0) parts.push(`${growing} growing`)
-  // Defensive fallback: a rendered card always has an active or completed
-  // sprout, so this is unreachable via renderLeafCard.
-  return parts.join(' · ') || 'just planted'
-}
-
-/**
  * Renders a leaf card (saga view).
  *
  * Every leaf — even one holding a single sprout — renders with its name and
@@ -162,7 +146,6 @@ export function renderLeafCard(leafId: string, sprouts: Sprout[], isGrowing: boo
       <div class="leaf-card-group is-clickable" data-leaf-id="${escapeHtml(leafId)}" data-layers="${Math.min(sprouts.length, 3)}" data-action="open-leaf">
         <div class="leaf-card-group-header">
           <span class="leaf-group-name">${escapeHtml(leafName)}</span>
-          <span class="leaf-group-progress">${escapeHtml(leafProgressLabel(sprouts))}</span>
         </div>
         <div class="leaf-card-group-sprouts">
           ${cards}

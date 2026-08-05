@@ -1,8 +1,8 @@
 /**
  * Tests for leaf group rendering in ui/twig-view/sprout-cards.ts.
  *
- * Every leaf renders with its name and a progress summary, and carries a
- * data-layers depth cue so a saga with history reads as a stack of sheets.
+ * Every leaf renders with its name and carries a data-layers depth cue, so a
+ * saga with history reads as a stack of sheets without extra chrome.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -86,11 +86,6 @@ describe('leaf group rendering', () => {
   it('shows the leaf name even when the leaf holds a single sprout', () => {
     const html = renderLeafCard('leaf-1', [makeSprout({ id: 'only', title: 'solo' })], true)
     expect(html).toContain('Step Count')
-  })
-
-  it('summarises progress, excluding uprooted from "done"', () => {
-    const html = renderLeafCard('leaf-1', saga(), true)
-    expect(html).toContain('2 done · 1 growing')
   })
 
   it('renders nothing in either column for a leaf that is only uprooted', () => {
