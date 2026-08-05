@@ -70,3 +70,9 @@ web/reports/
 
 # Superpowers SDD scratch (briefs, reports, review packages, ledger)
 .superpowers/
+
+# Playwright debug screenshots. Written fresh (and byte-differently) by every
+# E2E run and never compared against — they are artifacts, not baselines. When
+# tracked they added ~7.3 MB of new blobs to every push that followed a test
+# run, which is most of why .git grew past 160 MB.
+web/e2e/screenshots/
