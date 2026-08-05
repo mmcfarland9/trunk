@@ -5,14 +5,30 @@
 **Shipping code** (same for both platforms):
 
 ```bash
-# 1. Work on dev — commit and push freely (Vercel makes preview deploys)
+# 1. Work on dev — commit and push freely.
+#    Pushing dev runs CI (and iOS CI when ios/ or shared/ changed).
 git checkout dev
 git commit -am "feat: whatever" && git push
 
-# 2. Release to production — merge dev → main
-git checkout main && git merge dev && git push
-git checkout dev
+# 2. Release to production — one command, from dev.
+#    Bump the version + changelog FIRST; release.sh never touches versions.
+scripts/release.sh
 ```
+
+`scripts/release.sh` does the whole release and closes the step that was
+easiest to forget:
+
+1. Refuses to run on a dirty tree, off `dev`, or out of sync with origin
+2. Merges `dev` → `main` (regular merge) and pushes with `--no-thin`
+3. Waits for both GitHub CI workflows and fails loudly if either does
+4. Waits for Xcode Cloud, then **runs the TestFlight distribute step**
+5. Skips distribution entirely when the release has no `ios/` or `shared/`
+   changes — Xcode Cloud builds on every `main` push regardless, but a build
+   with no iOS changes isn't worth shipping to testers
+
+Use `--dry-run` to see what it would do, `--no-wait` to merge and push without
+waiting. The manual sequence below still works if you'd rather drive it
+yourself.
 
 The moment `main` is pushed:
 

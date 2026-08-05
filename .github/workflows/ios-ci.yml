@@ -13,7 +13,9 @@ name: iOS CI
 
 on:
   push:
-    branches: [main]
+    # dev included so iOS breakage surfaces before it reaches production. The
+    # path filter keeps the (10x-cost) macOS runner off web-only pushes.
+    branches: [main, dev]
     paths: ['ios/**', 'shared/**', '.github/workflows/ios-ci.yml']
   pull_request:
     branches: [main]

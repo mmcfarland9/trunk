@@ -1,8 +1,10 @@
 name: CI
 
+# Runs on dev as well as main: main is production, so verification that only
+# happens there happens *after* release. Catching breakage on dev is the point.
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
 
